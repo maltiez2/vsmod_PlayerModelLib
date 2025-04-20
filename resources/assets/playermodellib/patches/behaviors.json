@@ -1,0 +1,1 @@
+﻿[{"side": "Server", "file": "game:entities/humanoid/player", "op": "add", "path": "/client/behaviors/-", "value": {"code": "PlayerModelLib:CustomModel"}}]

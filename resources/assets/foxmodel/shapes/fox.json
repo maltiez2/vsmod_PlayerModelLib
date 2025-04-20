@@ -1,0 +1,4705 @@
+{
+    "textureWidth": 128,
+    "textureHeight": 128,
+    "textureSizes": {
+      "seraph": [
+        128,
+        128
+      ]
+    },
+    "textures": {
+      "seraph": "foxmodel:entity/humanoid/seraph-naked"
+    },
+    "elements": [
+      {
+        "name": "root",
+        "from": [
+          0,
+          0,
+          0
+        ],
+        "to": [
+          0,
+          0,
+          0
+        ],
+        "rotationOrigin": [
+          8,
+          0,
+          8
+        ],
+        "group": "Scene Collection",
+        "faces": {},
+        "children": [
+          {
+            "name": "LowerTorso",
+            "from": [
+              6,
+              15,
+              5.2
+            ],
+            "to": [
+              11,
+              20,
+              11.2
+            ],
+            "rotationOrigin": [
+              8,
+              15,
+              8.2
+            ],
+            "rotationZ": 3,
+            "group": "Scene Collection",
+            "faces": {
+              "north": {
+                "texture": "#seraph",
+                "uv": [
+                  82,
+                  20,
+                  92,
+                  30
+                ],
+                "autoUv": false
+              },
+              "east": {
+                "texture": "#seraph",
+                "uv": [
+                  114,
+                  20,
+                  126,
+                  30
+                ],
+                "autoUv": false
+              },
+              "south": {
+                "texture": "#seraph",
+                "uv": [
+                  104,
+                  20,
+                  114,
+                  30
+                ],
+                "autoUv": false
+              },
+              "west": {
+                "texture": "#seraph",
+                "uv": [
+                  92,
+                  20,
+                  104,
+                  30
+                ],
+                "autoUv": false
+              },
+              "down": {
+                "texture": "#seraph",
+                "uv": [
+                  80,
+                  30,
+                  68,
+                  20
+                ],
+                "autoUv": false,
+                "rotation": 270
+              },
+              "up": {
+                "texture": "#seraph",
+                "uv": [
+                  68,
+                  10,
+                  80,
+                  20
+                ],
+                "autoUv": false,
+                "rotation": 90
+              }
+            },
+            "children": [
+              {
+                "name": "Tail1",
+                "from": [
+                  3.79,
+                  0.65,
+                  2.22
+                ],
+                "to": [
+                  7.22,
+                  2.15,
+                  3.78
+                ],
+                "rotationOrigin": [
+                  3.79,
+                  1.4,
+                  3
+                ],
+                "rotationZ": -51.57,
+                "group": "Scene Collection",
+                "faces": {
+                  "north": {
+                    "texture": "#seraph",
+                    "uv": [
+                      63,
+                      58,
+                      55,
+                      62
+                    ],
+                    "autoUv": false,
+                    "rotation": 180
+                  },
+                  "east": {
+                    "texture": "#seraph",
+                    "uv": [
+                      24,
+                      68,
+                      28,
+                      72
+                    ],
+                    "autoUv": false
+                  },
+                  "south": {
+                    "texture": "#seraph",
+                    "uv": [
+                      55,
+                      58,
+                      63,
+                      62
+                    ],
+                    "autoUv": false,
+                    "rotation": 180
+                  },
+                  "down": {
+                    "texture": "#seraph",
+                    "uv": [
+                      0,
+                      62,
+                      8,
+                      58
+                    ],
+                    "autoUv": false
+                  },
+                  "up": {
+                    "texture": "#seraph",
+                    "uv": [
+                      0,
+                      58,
+                      8,
+                      62
+                    ],
+                    "autoUv": false
+                  }
+                },
+                "children": [
+                  {
+                    "name": "Tail2",
+                    "from": [
+                      3.03,
+                      -0.26,
+                      -0.27
+                    ],
+                    "to": [
+                      5.43,
+                      1.76,
+                      1.83
+                    ],
+                    "rotationOrigin": [
+                      3.03,
+                      0.75,
+                      0.78
+                    ],
+                    "rotationZ": 7.7,
+                    "group": "Scene Collection",
+                    "faces": {
+                      "north": {
+                        "texture": "#seraph",
+                        "uv": [
+                          56,
+                          57,
+                          51,
+                          63
+                        ],
+                        "autoUv": false,
+                        "rotation": 180
+                      },
+                      "east": {
+                        "texture": "#seraph",
+                        "uv": [
+                          23,
+                          67,
+                          29,
+                          72
+                        ],
+                        "autoUv": false
+                      },
+                      "south": {
+                        "texture": "#seraph",
+                        "uv": [
+                          51,
+                          57,
+                          56,
+                          63
+                        ],
+                        "autoUv": false,
+                        "rotation": 180
+                      },
+                      "west": {
+                        "texture": "#seraph",
+                        "uv": [
+                          29,
+                          67,
+                          23,
+                          72
+                        ],
+                        "autoUv": false
+                      },
+                      "down": {
+                        "texture": "#seraph",
+                        "uv": [
+                          7,
+                          63,
+                          12,
+                          57
+                        ],
+                        "autoUv": false
+                      },
+                      "up": {
+                        "texture": "#seraph",
+                        "uv": [
+                          7,
+                          57,
+                          12,
+                          63
+                        ],
+                        "autoUv": false
+                      }
+                    },
+                    "children": [
+                      {
+                        "name": "Tail3",
+                        "from": [
+                          1.76,
+                          -0.46,
+                          -0.48
+                        ],
+                        "to": [
+                          6.6,
+                          2.48,
+                          2.59
+                        ],
+                        "rotationOrigin": [
+                          1.76,
+                          1.01,
+                          1.05
+                        ],
+                        "rotationZ": 7.7,
+                        "group": "Scene Collection",
+                        "faces": {
+                          "north": {
+                            "texture": "#seraph",
+                            "uv": [
+                              52,
+                              56,
+                              42,
+                              64
+                            ],
+                            "autoUv": false,
+                            "rotation": 180
+                          },
+                          "east": {
+                            "texture": "#seraph",
+                            "uv": [
+                              22,
+                              66,
+                              30,
+                              74
+                            ],
+                            "autoUv": false
+                          },
+                          "south": {
+                            "texture": "#seraph",
+                            "uv": [
+                              42,
+                              56,
+                              52,
+                              64
+                            ],
+                            "autoUv": false,
+                            "rotation": 180
+                          },
+                          "west": {
+                            "texture": "#seraph",
+                            "uv": [
+                              30,
+                              66,
+                              22,
+                              74
+                            ],
+                            "autoUv": false
+                          },
+                          "down": {
+                            "texture": "#seraph",
+                            "uv": [
+                              11,
+                              64,
+                              21,
+                              56
+                            ],
+                            "autoUv": false
+                          },
+                          "up": {
+                            "texture": "#seraph",
+                            "uv": [
+                              11,
+                              56,
+                              21,
+                              64
+                            ],
+                            "autoUv": false
+                          }
+                        },
+                        "children": [
+                          {
+                            "name": "Tail4",
+                            "from": [
+                              4.48,
+                              0.27,
+                              0.28
+                            ],
+                            "to": [
+                              7.33,
+                              2.67,
+                              2.78
+                            ],
+                            "rotationOrigin": [
+                              4.48,
+                              1.47,
+                              1.53
+                            ],
+                            "rotationZ": 7.7,
+                            "group": "Scene Collection",
+                            "faces": {
+                              "north": {
+                                "texture": "#seraph",
+                                "uv": [
+                                  42,
+                                  57,
+                                  37,
+                                  63
+                                ],
+                                "autoUv": false,
+                                "rotation": 180
+                              },
+                              "east": {
+                                "texture": "#seraph",
+                                "uv": [
+                                  8,
+                                  66,
+                                  16,
+                                  74
+                                ],
+                                "autoUv": false
+                              },
+                              "south": {
+                                "texture": "#seraph",
+                                "uv": [
+                                  37,
+                                  57,
+                                  42,
+                                  63
+                                ],
+                                "autoUv": false,
+                                "rotation": 180
+                              },
+                              "west": {
+                                "texture": "#seraph",
+                                "uv": [
+                                  29,
+                                  67,
+                                  23,
+                                  73
+                                ],
+                                "autoUv": false
+                              },
+                              "down": {
+                                "texture": "#seraph",
+                                "uv": [
+                                  21,
+                                  63,
+                                  26,
+                                  57
+                                ],
+                                "autoUv": false,
+                                "rotation": 180
+                              },
+                              "up": {
+                                "texture": "#seraph",
+                                "uv": [
+                                  21,
+                                  57,
+                                  26,
+                                  63
+                                ],
+                                "autoUv": false
+                              }
+                            },
+                            "children": [
+                              {
+                                "name": "Tail5",
+                                "from": [
+                                  2.35,
+                                  0.31,
+                                  0.32
+                                ],
+                                "to": [
+                                  4.94,
+                                  2.09,
+                                  2.18
+                                ],
+                                "rotationOrigin": [
+                                  2.35,
+                                  1.2,
+                                  1.25
+                                ],
+                                "rotationZ": 7.7,
+                                "group": "Scene Collection",
+                                "faces": {
+                                  "north": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      38,
+                                      57,
+                                      31,
+                                      63
+                                    ],
+                                    "autoUv": false,
+                                    "rotation": 180
+                                  },
+                                  "east": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      1,
+                                      66,
+                                      7,
+                                      72
+                                    ],
+                                    "autoUv": false
+                                  },
+                                  "south": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      31,
+                                      57,
+                                      38,
+                                      63
+                                    ],
+                                    "autoUv": false,
+                                    "rotation": 180
+                                  },
+                                  "west": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      28,
+                                      67,
+                                      24,
+                                      72
+                                    ],
+                                    "autoUv": false
+                                  },
+                                  "down": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      31,
+                                      63,
+                                      25,
+                                      57
+                                    ],
+                                    "autoUv": false
+                                  },
+                                  "up": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      25,
+                                      57,
+                                      31,
+                                      63
+                                    ],
+                                    "autoUv": false
+                                  }
+                                },
+                                "children": []
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "UpperFootL",
+                "from": [
+                  0.4,
+                  -6,
+                  3
+                ],
+                "to": [
+                  4.6,
+                  3,
+                  6.2
+                ],
+                "rotationOrigin": [
+                  1.5,
+                  0.5,
+                  4.3
+                ],
+                "rotationX": -3,
+                "rotationY": 0,
+                "rotationZ": -5,
+                "group": "Scene Collection",
+                "faces": {
+                  "north": {
+                    "texture": "#seraph",
+                    "uv": [
+                      32,
+                      74,
+                      40,
+                      92
+                    ],
+                    "autoUv": false
+                  },
+                  "east": {
+                    "texture": "#seraph",
+                    "uv": [
+                      54,
+                      74,
+                      60,
+                      92
+                    ],
+                    "autoUv": false
+                  },
+                  "south": {
+                    "texture": "#seraph",
+                    "uv": [
+                      46,
+                      74,
+                      54,
+                      92
+                    ],
+                    "autoUv": false
+                  },
+                  "west": {
+                    "texture": "#seraph",
+                    "uv": [
+                      40,
+                      74,
+                      46,
+                      92
+                    ],
+                    "autoUv": false
+                  },
+                  "down": {
+                    "texture": "#seraph",
+                    "uv": [
+                      46,
+                      100,
+                      40,
+                      92
+                    ],
+                    "autoUv": false,
+                    "rotation": 270
+                  },
+                  "up": {
+                    "texture": "#seraph",
+                    "uv": [
+                      40,
+                      66,
+                      46,
+                      74
+                    ],
+                    "autoUv": false,
+                    "rotation": 90
+                  }
+                },
+                "children": [
+                  {
+                    "name": "LowerFootL",
+                    "from": [
+                      0.1,
+                      -9,
+                      0.1
+                    ],
+                    "to": [
+                      4.1,
+                      1,
+                      3.1
+                    ],
+                    "rotationOrigin": [
+                      2.1,
+                      0.5,
+                      1.4
+                    ],
+                    "rotationX": 2,
+                    "rotationY": 0,
+                    "rotationZ": 2,
+                    "group": "Scene Collection",
+                    "faces": {
+                      "north": {
+                        "texture": "#seraph",
+                        "uv": [
+                          32,
+                          100,
+                          40,
+                          120
+                        ],
+                        "autoUv": false
+                      },
+                      "east": {
+                        "texture": "#seraph",
+                        "uv": [
+                          54,
+                          100,
+                          60,
+                          120
+                        ],
+                        "autoUv": false
+                      },
+                      "south": {
+                        "texture": "#seraph",
+                        "uv": [
+                          46,
+                          100,
+                          54,
+                          120
+                        ],
+                        "autoUv": false
+                      },
+                      "west": {
+                        "texture": "#seraph",
+                        "uv": [
+                          40,
+                          100,
+                          46,
+                          120
+                        ],
+                        "autoUv": false
+                      },
+                      "down": {
+                        "texture": "#seraph",
+                        "uv": [
+                          46,
+                          128,
+                          40,
+                          120
+                        ],
+                        "autoUv": false,
+                        "rotation": 270
+                      },
+                      "up": {
+                        "texture": "#seraph",
+                        "uv": [
+                          40,
+                          92,
+                          46,
+                          100
+                        ],
+                        "autoUv": false,
+                        "rotation": 90
+                      }
+                    },
+                    "children": []
+                  },
+                  {
+                    "name": "FootAttachmentL",
+                    "from": [
+                      2,
+                      5,
+                      3.2
+                    ],
+                    "to": [
+                      2,
+                      5,
+                      3.2
+                    ],
+                    "uv": [
+                      0,
+                      0
+                    ],
+                    "rotationOrigin": [
+                      2,
+                      5,
+                      3.2
+                    ],
+                    "faces": {
+                      "north": {
+                        "texture": "#seraph",
+                        "uv": [
+                          0,
+                          0.5,
+                          0.5,
+                          1
+                        ]
+                      },
+                      "east": {
+                        "texture": "#seraph",
+                        "uv": [
+                          0.5,
+                          0.5,
+                          1,
+                          1
+                        ]
+                      },
+                      "south": {
+                        "texture": "#seraph",
+                        "uv": [
+                          1,
+                          0.5,
+                          1.5,
+                          1
+                        ]
+                      },
+                      "west": {
+                        "texture": "#seraph",
+                        "uv": [
+                          1.5,
+                          0.5,
+                          2,
+                          1
+                        ]
+                      },
+                      "up": {
+                        "texture": "#seraph",
+                        "uv": [
+                          0,
+                          0,
+                          0.5,
+                          0.5
+                        ]
+                      },
+                      "down": {
+                        "texture": "#seraph",
+                        "uv": [
+                          0.5,
+                          0,
+                          1,
+                          0.5
+                        ]
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "name": "UpperFootR",
+                "from": [
+                  0.4,
+                  -6,
+                  -0.2
+                ],
+                "to": [
+                  4.6,
+                  3,
+                  3
+                ],
+                "rotationOrigin": [
+                  1.5,
+                  0.5,
+                  1.3
+                ],
+                "rotationX": 3,
+                "rotationY": 0,
+                "rotationZ": -5,
+                "group": "Scene Collection",
+                "faces": {
+                  "north": {
+                    "texture": "#seraph",
+                    "uv": [
+                      8,
+                      74,
+                      16,
+                      92
+                    ],
+                    "autoUv": false
+                  },
+                  "east": {
+                    "texture": "#seraph",
+                    "uv": [
+                      2,
+                      74,
+                      8,
+                      92
+                    ],
+                    "autoUv": false
+                  },
+                  "south": {
+                    "texture": "#seraph",
+                    "uv": [
+                      22,
+                      74,
+                      30,
+                      92
+                    ],
+                    "autoUv": false
+                  },
+                  "west": {
+                    "texture": "#seraph",
+                    "uv": [
+                      16,
+                      74,
+                      22,
+                      92
+                    ],
+                    "autoUv": false
+                  },
+                  "down": {
+                    "texture": "#seraph",
+                    "uv": [
+                      22,
+                      100,
+                      16,
+                      92
+                    ],
+                    "autoUv": false,
+                    "rotation": 270
+                  },
+                  "up": {
+                    "texture": "#seraph",
+                    "uv": [
+                      16,
+                      66,
+                      22,
+                      74
+                    ],
+                    "autoUv": false,
+                    "rotation": 90
+                  }
+                },
+                "children": [
+                  {
+                    "name": "LowerFootR",
+                    "from": [
+                      0.1,
+                      -9,
+                      0.1
+                    ],
+                    "to": [
+                      4.1,
+                      1,
+                      3.1
+                    ],
+                    "rotationOrigin": [
+                      2.1,
+                      0.5,
+                      1.4
+                    ],
+                    "rotationX": -2,
+                    "rotationY": 0,
+                    "rotationZ": 2,
+                    "group": "Scene Collection",
+                    "faces": {
+                      "north": {
+                        "texture": "#seraph",
+                        "uv": [
+                          8,
+                          100,
+                          16,
+                          120
+                        ],
+                        "autoUv": false
+                      },
+                      "east": {
+                        "texture": "#seraph",
+                        "uv": [
+                          2,
+                          100,
+                          8,
+                          120
+                        ],
+                        "autoUv": false
+                      },
+                      "south": {
+                        "texture": "#seraph",
+                        "uv": [
+                          22,
+                          100,
+                          30,
+                          120
+                        ],
+                        "autoUv": false
+                      },
+                      "west": {
+                        "texture": "#seraph",
+                        "uv": [
+                          16,
+                          100,
+                          22,
+                          120
+                        ],
+                        "autoUv": false
+                      },
+                      "down": {
+                        "texture": "#seraph",
+                        "uv": [
+                          22,
+                          128,
+                          16,
+                          120
+                        ],
+                        "autoUv": false,
+                        "rotation": 270
+                      },
+                      "up": {
+                        "texture": "#seraph",
+                        "uv": [
+                          16,
+                          92,
+                          22,
+                          100
+                        ],
+                        "autoUv": false,
+                        "rotation": 90
+                      }
+                    },
+                    "children": []
+                  },
+                  {
+                    "name": "FootAttachmentR",
+                    "from": [
+                      2,
+                      5,
+                      -0.2
+                    ],
+                    "to": [
+                      2,
+                      5,
+                      -0.2
+                    ],
+                    "uv": [
+                      0,
+                      0
+                    ],
+                    "rotationOrigin": [
+                      2,
+                      5,
+                      -0.2
+                    ],
+                    "faces": {
+                      "north": {
+                        "texture": "#seraph",
+                        "uv": [
+                          0,
+                          0.5,
+                          0.5,
+                          1
+                        ]
+                      },
+                      "east": {
+                        "texture": "#seraph",
+                        "uv": [
+                          0.5,
+                          0.5,
+                          1,
+                          1
+                        ]
+                      },
+                      "south": {
+                        "texture": "#seraph",
+                        "uv": [
+                          1,
+                          0.5,
+                          1.5,
+                          1
+                        ]
+                      },
+                      "west": {
+                        "texture": "#seraph",
+                        "uv": [
+                          1.5,
+                          0.5,
+                          2,
+                          1
+                        ]
+                      },
+                      "up": {
+                        "texture": "#seraph",
+                        "uv": [
+                          0,
+                          0,
+                          0.5,
+                          0.5
+                        ]
+                      },
+                      "down": {
+                        "texture": "#seraph",
+                        "uv": [
+                          0.5,
+                          0,
+                          1,
+                          0.5
+                        ]
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "name": "UpperTorso",
+                "from": [
+                  0,
+                  4.3,
+                  -0.1
+                ],
+                "to": [
+                  5,
+                  9.3,
+                  6.1
+                ],
+                "rotationOrigin": [
+                  2,
+                  5,
+                  3
+                ],
+                "rotationZ": -6,
+                "group": "Scene Collection",
+                "faces": {
+                  "north": {
+                    "texture": "#seraph",
+                    "uv": [
+                      82,
+                      10,
+                      92,
+                      20
+                    ],
+                    "autoUv": false
+                  },
+                  "east": {
+                    "texture": "#seraph",
+                    "uv": [
+                      114,
+                      10,
+                      126,
+                      20
+                    ],
+                    "autoUv": false
+                  },
+                  "south": {
+                    "texture": "#seraph",
+                    "uv": [
+                      104,
+                      10,
+                      114,
+                      20
+                    ],
+                    "autoUv": false
+                  },
+                  "west": {
+                    "texture": "#seraph",
+                    "uv": [
+                      92,
+                      10,
+                      104,
+                      20
+                    ],
+                    "autoUv": false
+                  },
+                  "down": {
+                    "texture": "#seraph",
+                    "uv": [
+                      80,
+                      20,
+                      68,
+                      10
+                    ],
+                    "autoUv": false,
+                    "rotation": 270
+                  },
+                  "up": {
+                    "texture": "#seraph",
+                    "uv": [
+                      92,
+                      0,
+                      104,
+                      10
+                    ],
+                    "autoUv": false,
+                    "rotation": 90
+                  }
+                },
+                "children": [
+                  {
+                    "name": "Neck",
+                    "from": [
+                      1.5,
+                      3.9,
+                      1.6
+                    ],
+                    "to": [
+                      4.5,
+                      7.9,
+                      4.6
+                    ],
+                    "rotationOrigin": [
+                      3.2,
+                      3.6,
+                      3.1
+                    ],
+                    "rotationZ": 12,
+                    "group": "Scene Collection",
+                    "faces": {
+                      "north": {
+                        "texture": "#seraph",
+                        "uv": [
+                          24,
+                          2,
+                          30,
+                          10
+                        ],
+                        "autoUv": false
+                      },
+                      "east": {
+                        "texture": "#seraph",
+                        "uv": [
+                          42,
+                          2,
+                          48,
+                          10
+                        ],
+                        "autoUv": false
+                      },
+                      "south": {
+                        "texture": "#seraph",
+                        "uv": [
+                          36,
+                          2,
+                          42,
+                          10
+                        ],
+                        "autoUv": false
+                      },
+                      "west": {
+                        "texture": "#seraph",
+                        "uv": [
+                          30,
+                          2,
+                          36,
+                          10
+                        ],
+                        "autoUv": false
+                      },
+                      "down": {
+                        "texture": "#seraph",
+                        "uv": [
+                          101.78,
+                          42.11,
+                          59.71,
+                          0.04
+                        ],
+                        "autoUv": false,
+                        "rotation": 270
+                      },
+                      "up": {
+                        "texture": "#seraph",
+                        "uv": [
+                          30,
+                          2,
+                          36,
+                          8
+                        ],
+                        "autoUv": false,
+                        "rotation": 90
+                      }
+                    },
+                    "children": [
+                      {
+                        "name": "Head",
+                        "from": [
+                          -1.16,
+                          2,
+                          -1
+                        ],
+                        "to": [
+                          4.1,
+                          6.16,
+                          4
+                        ],
+                        "rotationOrigin": [
+                          2.7,
+                          2,
+                          1.5
+                        ],
+                        "rotationZ": -7,
+                        "group": "Scene Collection",
+                        "faces": {
+                          "north": {
+                            "texture": "#seraph",
+                            "uv": [
+                              0,
+                              12,
+                              12,
+                              22
+                            ],
+                            "autoUv": false
+                          },
+                          "east": {
+                            "texture": "#seraph",
+                            "uv": [
+                              34,
+                              12,
+                              44,
+                              22
+                            ],
+                            "autoUv": false
+                          },
+                          "south": {
+                            "texture": "#seraph",
+                            "uv": [
+                              22,
+                              12,
+                              34,
+                              22
+                            ],
+                            "autoUv": false
+                          },
+                          "west": {
+                            "texture": "#seraph",
+                            "uv": [
+                              12,
+                              12,
+                              22,
+                              22
+                            ],
+                            "autoUv": false
+                          },
+                          "down": {
+                            "texture": "#seraph",
+                            "uv": [
+                              12,
+                              34,
+                              22,
+                              22
+                            ],
+                            "autoUv": false,
+                            "rotation": 90
+                          },
+                          "up": {
+                            "texture": "#seraph",
+                            "uv": [
+                              12,
+                              0,
+                              22,
+                              12
+                            ],
+                            "autoUv": false,
+                            "rotation": 90
+                          }
+                        },
+                        "children": [
+                          {
+                            "name": "LeftEarBase",
+                            "from": [
+                              0.56,
+                              3.43,
+                              2.85
+                            ],
+                            "to": [
+                              2.4,
+                              4.71,
+                              5.01
+                            ],
+                            "rotationOrigin": [
+                              1.48,
+                              3.43,
+                              3.93
+                            ],
+                            "rotationX": 40.04,
+                            "rotationY": -1.62,
+                            "rotationZ": 14.72,
+                            "group": "Scene Collection",
+                            "faces": {
+                              "north": {
+                                "texture": "#seraph",
+                                "uv": [
+                                  1,
+                                  50,
+                                  6,
+                                  53
+                                ],
+                                "autoUv": false
+                              },
+                              "east": {
+                                "texture": "#seraph",
+                                "uv": [
+                                  40,
+                                  32,
+                                  48,
+                                  37
+                                ],
+                                "autoUv": false
+                              },
+                              "south": {
+                                "texture": "#seraph",
+                                "uv": [
+                                  6,
+                                  50,
+                                  1,
+                                  53
+                                ],
+                                "autoUv": false
+                              },
+                              "west": {
+                                "texture": "#seraph",
+                                "uv": [
+                                  13,
+                                  50,
+                                  7,
+                                  53
+                                ],
+                                "autoUv": false
+                              },
+                              "up": {
+                                "texture": "#seraph",
+                                "uv": [
+                                  50,
+                                  32,
+                                  57,
+                                  37
+                                ],
+                                "autoUv": false,
+                                "rotation": 270
+                              }
+                            },
+                            "children": [
+                              {
+                                "name": "LeftEar2",
+                                "from": [
+                                  0,
+                                  1.28,
+                                  0.36
+                                ],
+                                "to": [
+                                  1.71,
+                                  2.3,
+                                  1.8
+                                ],
+                                "rotationOrigin": [
+                                  0,
+                                  1.28,
+                                  1.08
+                                ],
+                                "rotationX": 0,
+                                "rotationY": 0,
+                                "rotationZ": 0,
+                                "group": "Scene Collection",
+                                "faces": {
+                                  "north": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      2,
+                                      47,
+                                      6,
+                                      50
+                                    ],
+                                    "autoUv": false
+                                  },
+                                  "east": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      42,
+                                      29,
+                                      46,
+                                      32
+                                    ],
+                                    "autoUv": false
+                                  },
+                                  "south": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      6,
+                                      47,
+                                      2,
+                                      50
+                                    ],
+                                    "autoUv": false
+                                  },
+                                  "west": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      12,
+                                      47,
+                                      8,
+                                      50
+                                    ],
+                                    "autoUv": false
+                                  },
+                                  "up": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      50,
+                                      25,
+                                      55,
+                                      31
+                                    ],
+                                    "autoUv": false,
+                                    "rotation": 270
+                                  }
+                                },
+                                "children": [
+                                  {
+                                    "name": "LeftEar3",
+                                    "from": [
+                                      0,
+                                      1.02,
+                                      0
+                                    ],
+                                    "to": [
+                                      1.31,
+                                      1.66,
+                                      1.27
+                                    ],
+                                    "rotationOrigin": [
+                                      0,
+                                      1.02,
+                                      0.64
+                                    ],
+                                    "rotationX": 0,
+                                    "rotationY": 0,
+                                    "rotationZ": 0,
+                                    "group": "Scene Collection",
+                                    "faces": {
+                                      "north": {
+                                        "texture": "#seraph",
+                                        "uv": [
+                                          3,
+                                          45,
+                                          6,
+                                          47
+                                        ],
+                                        "autoUv": false
+                                      },
+                                      "east": {
+                                        "texture": "#seraph",
+                                        "uv": [
+                                          42,
+                                          26,
+                                          46,
+                                          29
+                                        ],
+                                        "autoUv": false
+                                      },
+                                      "south": {
+                                        "texture": "#seraph",
+                                        "uv": [
+                                          6,
+                                          45,
+                                          3,
+                                          47
+                                        ],
+                                        "autoUv": false
+                                      },
+                                      "west": {
+                                        "texture": "#seraph",
+                                        "uv": [
+                                          11,
+                                          46,
+                                          9,
+                                          47
+                                        ],
+                                        "autoUv": false
+                                      },
+                                      "up": {
+                                        "texture": "#seraph",
+                                        "uv": [
+                                          50,
+                                          25,
+                                          55,
+                                          29
+                                        ],
+                                        "autoUv": false,
+                                        "rotation": 270
+                                      }
+                                    },
+                                    "children": [
+                                      {
+                                        "name": "LeftEar4",
+                                        "from": [
+                                          0,
+                                          0.64,
+                                          0
+                                        ],
+                                        "to": [
+                                          0.79,
+                                          1.15,
+                                          0.76
+                                        ],
+                                        "rotationOrigin": [
+                                          0,
+                                          0.64,
+                                          0.38
+                                        ],
+                                        "rotationX": 0,
+                                        "rotationY": 0,
+                                        "rotationZ": 0,
+                                        "group": "Scene Collection",
+                                        "faces": {
+                                          "north": {
+                                            "texture": "#seraph",
+                                            "uv": [
+                                              4,
+                                              44,
+                                              6,
+                                              45
+                                            ],
+                                            "autoUv": false
+                                          },
+                                          "east": {
+                                            "texture": "#seraph",
+                                            "uv": [
+                                              43,
+                                              25,
+                                              45,
+                                              26
+                                            ],
+                                            "autoUv": false
+                                          },
+                                          "south": {
+                                            "texture": "#seraph",
+                                            "uv": [
+                                              6,
+                                              44,
+                                              4,
+                                              45
+                                            ],
+                                            "autoUv": false
+                                          },
+                                          "west": {
+                                            "texture": "#seraph",
+                                            "uv": [
+                                              11,
+                                              45,
+                                              9,
+                                              46
+                                            ],
+                                            "autoUv": false
+                                          },
+                                          "up": {
+                                            "texture": "#seraph",
+                                            "uv": [
+                                              51,
+                                              25,
+                                              54,
+                                              28
+                                            ],
+                                            "autoUv": false,
+                                            "rotation": 270
+                                          }
+                                        },
+                                        "children": [
+                                          {
+                                            "name": "LeftEar5",
+                                            "from": [
+                                              0,
+                                              0.51,
+                                              0
+                                            ],
+                                            "to": [
+                                              0.53,
+                                              0.9,
+                                              0.38
+                                            ],
+                                            "rotationOrigin": [
+                                              0,
+                                              0.51,
+                                              0.19
+                                            ],
+                                            "rotationX": 0,
+                                            "rotationY": 0,
+                                            "rotationZ": 0,
+                                            "group": "Scene Collection",
+                                            "faces": {
+                                              "north": {
+                                                "texture": "#seraph",
+                                                "uv": [
+                                                  5,
+                                                  43,
+                                                  6,
+                                                  44
+                                                ],
+                                                "autoUv": false
+                                              },
+                                              "east": {
+                                                "texture": "#seraph",
+                                                "uv": [
+                                                  43,
+                                                  23,
+                                                  45,
+                                                  25
+                                                ],
+                                                "autoUv": false
+                                              },
+                                              "south": {
+                                                "texture": "#seraph",
+                                                "uv": [
+                                                  6,
+                                                  43,
+                                                  5,
+                                                  44
+                                                ],
+                                                "autoUv": false
+                                              },
+                                              "west": {
+                                                "texture": "#seraph",
+                                                "uv": [
+                                                  9,
+                                                  44,
+                                                  10,
+                                                  45
+                                                ],
+                                                "autoUv": false
+                                              },
+                                              "up": {
+                                                "texture": "#seraph",
+                                                "uv": [
+                                                  52,
+                                                  25,
+                                                  53,
+                                                  27
+                                                ],
+                                                "autoUv": false,
+                                                "rotation": 270
+                                              }
+                                            },
+                                            "children": []
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "name": "mouth",
+                            "from": [
+                              -2.06,
+                              0.47,
+                              2
+                            ],
+                            "to": [
+                              -1.86,
+                              0.77,
+                              3
+                            ],
+                            "rotationOrigin": [
+                              -1.06,
+                              0.42,
+                              3
+                            ],
+                            "rotationZ": 0,
+                            "group": "Scene Collection",
+                            "faces": {
+                              "north": {
+                                "texture": "#seraph",
+                                "uv": [
+                                  78,
+                                  2,
+                                  79,
+                                  3
+                                ],
+                                "autoUv": false
+                              },
+                              "east": {
+                                "texture": "#seraph",
+                                "uv": [
+                                  82,
+                                  2,
+                                  84,
+                                  3
+                                ],
+                                "autoUv": false
+                              },
+                              "south": {
+                                "texture": "#seraph",
+                                "uv": [
+                                  81,
+                                  2,
+                                  82,
+                                  3
+                                ],
+                                "autoUv": false
+                              },
+                              "west": {
+                                "texture": "#seraph",
+                                "uv": [
+                                  79,
+                                  2,
+                                  81,
+                                  3
+                                ],
+                                "autoUv": false
+                              },
+                              "down": {
+                                "texture": "#seraph",
+                                "uv": [
+                                  81,
+                                  4,
+                                  79,
+                                  3
+                                ],
+                                "autoUv": false,
+                                "rotation": 270
+                              },
+                              "up": {
+                                "texture": "#seraph",
+                                "uv": [
+                                  79,
+                                  1,
+                                  81,
+                                  2
+                                ],
+                                "autoUv": false,
+                                "rotation": 90
+                              }
+                            },
+                            "children": [
+                              {
+                                "name": "mouth L",
+                                "from": [
+                                  0.05,
+                                  -0.01,
+                                  -0.6
+                                ],
+                                "to": [
+                                  1.65,
+                                  0.29,
+                                  0.8
+                                ],
+                                "rotationOrigin": [
+                                  1,
+                                  0,
+                                  0.4
+                                ],
+                                "rotationX": 1,
+                                "rotationY": 0,
+                                "rotationZ": 0,
+                                "group": "Scene Collection",
+                                "faces": {
+                                  "north": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      62,
+                                      5,
+                                      65,
+                                      6
+                                    ],
+                                    "autoUv": false
+                                  },
+                                  "east": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      70,
+                                      5,
+                                      72,
+                                      6
+                                    ],
+                                    "autoUv": false
+                                  },
+                                  "south": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      67,
+                                      5,
+                                      70,
+                                      6
+                                    ],
+                                    "autoUv": false
+                                  },
+                                  "west": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      65,
+                                      5,
+                                      67,
+                                      6
+                                    ],
+                                    "autoUv": false
+                                  },
+                                  "down": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      67,
+                                      9,
+                                      65,
+                                      6
+                                    ],
+                                    "autoUv": false,
+                                    "rotation": 270
+                                  },
+                                  "up": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      65,
+                                      2,
+                                      67,
+                                      5
+                                    ],
+                                    "autoUv": false,
+                                    "rotation": 90
+                                  }
+                                },
+                                "children": []
+                              },
+                              {
+                                "name": "mouth R",
+                                "from": [
+                                  0.05,
+                                  -0.01,
+                                  0.4
+                                ],
+                                "to": [
+                                  1.65,
+                                  0.29,
+                                  1.6
+                                ],
+                                "rotationOrigin": [
+                                  1.1,
+                                  0,
+                                  0.4
+                                ],
+                                "rotationX": -1,
+                                "rotationY": 0,
+                                "rotationZ": 0,
+                                "group": "Scene Collection",
+                                "faces": {
+                                  "north": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      56,
+                                      3,
+                                      59,
+                                      4
+                                    ],
+                                    "autoUv": false
+                                  },
+                                  "east": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      64,
+                                      3,
+                                      66,
+                                      4
+                                    ],
+                                    "autoUv": false
+                                  },
+                                  "south": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      61,
+                                      3,
+                                      64,
+                                      4
+                                    ],
+                                    "autoUv": false
+                                  },
+                                  "west": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      59,
+                                      3,
+                                      61,
+                                      4
+                                    ],
+                                    "autoUv": false
+                                  },
+                                  "down": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      61,
+                                      7,
+                                      59,
+                                      4
+                                    ],
+                                    "autoUv": false,
+                                    "rotation": 270
+                                  },
+                                  "up": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      59,
+                                      0,
+                                      61,
+                                      3
+                                    ],
+                                    "autoUv": false,
+                                    "rotation": 90
+                                  }
+                                },
+                                "children": []
+                              }
+                            ]
+                          },
+                          {
+                            "name": "muzzle",
+                            "from": [
+                              -2,
+                              0.6,
+                              1.5
+                            ],
+                            "to": [
+                              0,
+                              1.55,
+                              3.5
+                            ],
+                            "rotationOrigin": [
+                              0,
+                              1.08,
+                              2.5
+                            ],
+                            "rotationZ": 0,
+                            "group": "Scene Collection",
+                            "faces": {
+                              "north": {
+                                "texture": "#seraph",
+                                "uv": [
+                                  44,
+                                  19,
+                                  48,
+                                  22
+                                ],
+                                "autoUv": false
+                              },
+                              "east": {
+                                "texture": "#seraph",
+                                "uv": [
+                                  48,
+                                  19,
+                                  52,
+                                  22
+                                ],
+                                "autoUv": false
+                              },
+                              "south": {
+                                "texture": "#seraph",
+                                "uv": [
+                                  52,
+                                  19,
+                                  56,
+                                  22
+                                ],
+                                "autoUv": false
+                              },
+                              "west": {
+                                "texture": "#seraph",
+                                "uv": [
+                                  56,
+                                  19,
+                                  60,
+                                  22
+                                ],
+                                "autoUv": false
+                              },
+                              "down": {
+                                "texture": "#seraph",
+                                "uv": [
+                                  52,
+                                  19,
+                                  48,
+                                  15
+                                ],
+                                "autoUv": false,
+                                "rotation": 180
+                              },
+                              "up": {
+                                "texture": "#seraph",
+                                "uv": [
+                                  44,
+                                  15,
+                                  48,
+                                  19
+                                ],
+                                "autoUv": false
+                              }
+                            },
+                            "children": [
+                              {
+                                "name": "jaw",
+                                "from": [
+                                  0.11,
+                                  -0.58,
+                                  0.2
+                                ],
+                                "to": [
+                                  2.29,
+                                  -0.02,
+                                  1.8
+                                ],
+                                "rotationOrigin": [
+                                  2.29,
+                                  -0.3,
+                                  1
+                                ],
+                                "rotationZ": -8,
+                                "group": "Scene Collection",
+                                "faces": {
+                                  "north": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      61,
+                                      50,
+                                      65,
+                                      53
+                                    ],
+                                    "autoUv": false
+                                  },
+                                  "east": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      65,
+                                      50,
+                                      69,
+                                      53
+                                    ],
+                                    "autoUv": false
+                                  },
+                                  "south": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      69,
+                                      50,
+                                      73,
+                                      53
+                                    ],
+                                    "autoUv": false
+                                  },
+                                  "west": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      73,
+                                      50,
+                                      77,
+                                      53
+                                    ],
+                                    "autoUv": false
+                                  },
+                                  "down": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      69,
+                                      50,
+                                      65,
+                                      46
+                                    ],
+                                    "autoUv": false,
+                                    "rotation": 180
+                                  },
+                                  "up": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      61,
+                                      46,
+                                      65,
+                                      50
+                                    ],
+                                    "autoUv": false
+                                  }
+                                },
+                                "children": []
+                              },
+                              {
+                                "name": "muzzle_top",
+                                "from": [
+                                  0.51,
+                                  0.69,
+                                  0.5
+                                ],
+                                "to": [
+                                  2.51,
+                                  1.69,
+                                  1.5
+                                ],
+                                "rotationOrigin": [
+                                  2.51,
+                                  1.19,
+                                  1
+                                ],
+                                "rotationZ": 23,
+                                "group": "Scene Collection",
+                                "faces": {
+                                  "north": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      44,
+                                      17,
+                                      48,
+                                      18
+                                    ],
+                                    "autoUv": false
+                                  },
+                                  "east": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      48,
+                                      19,
+                                      52,
+                                      22
+                                    ],
+                                    "autoUv": false
+                                  },
+                                  "south": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      44,
+                                      16,
+                                      48,
+                                      17
+                                    ],
+                                    "autoUv": false
+                                  },
+                                  "west": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      56,
+                                      19,
+                                      60,
+                                      22
+                                    ],
+                                    "autoUv": false
+                                  },
+                                  "down": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      52,
+                                      19,
+                                      48,
+                                      15
+                                    ],
+                                    "autoUv": false,
+                                    "rotation": 180
+                                  },
+                                  "up": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      44,
+                                      16,
+                                      48,
+                                      18
+                                    ],
+                                    "autoUv": false
+                                  }
+                                },
+                                "children": []
+                              },
+                              {
+                                "name": "noze_detail",
+                                "from": [
+                                  -0.07,
+                                  0.25,
+                                  0.8
+                                ],
+                                "to": [
+                                  0.53,
+                                  0.63,
+                                  1.2
+                                ],
+                                "rotationOrigin": [
+                                  0.23,
+                                  0.44,
+                                  1
+                                ],
+                                "rotationZ": -2,
+                                "group": "Scene Collection",
+                                "faces": {
+                                  "north": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      86,
+                                      8,
+                                      87,
+                                      9
+                                    ],
+                                    "autoUv": false
+                                  },
+                                  "east": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      87,
+                                      8,
+                                      89,
+                                      9
+                                    ],
+                                    "autoUv": false
+                                  },
+                                  "south": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      89,
+                                      8,
+                                      90,
+                                      9
+                                    ],
+                                    "autoUv": false
+                                  },
+                                  "west": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      90,
+                                      8,
+                                      92,
+                                      9
+                                    ],
+                                    "autoUv": false
+                                  },
+                                  "down": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      88,
+                                      8,
+                                      87,
+                                      6
+                                    ],
+                                    "autoUv": false,
+                                    "rotation": 180
+                                  },
+                                  "up": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      86,
+                                      7,
+                                      87,
+                                      8
+                                    ],
+                                    "autoUv": false
+                                  }
+                                },
+                                "children": []
+                              },
+                              {
+                                "name": "nuze",
+                                "from": [
+                                  -0.1,
+                                  0.62,
+                                  0.5
+                                ],
+                                "to": [
+                                  0.5,
+                                  1.02,
+                                  1.5
+                                ],
+                                "rotationOrigin": [
+                                  0.2,
+                                  0.82,
+                                  1
+                                ],
+                                "group": "Scene Collection",
+                                "faces": {
+                                  "north": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      86,
+                                      8,
+                                      87,
+                                      9
+                                    ],
+                                    "autoUv": false
+                                  },
+                                  "east": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      87,
+                                      8,
+                                      89,
+                                      9
+                                    ],
+                                    "autoUv": false
+                                  },
+                                  "south": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      89,
+                                      8,
+                                      90,
+                                      9
+                                    ],
+                                    "autoUv": false
+                                  },
+                                  "west": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      90,
+                                      8,
+                                      92,
+                                      9
+                                    ],
+                                    "autoUv": false
+                                  },
+                                  "down": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      88,
+                                      8,
+                                      87,
+                                      6
+                                    ],
+                                    "autoUv": false,
+                                    "rotation": 180
+                                  },
+                                  "up": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      86,
+                                      6,
+                                      87,
+                                      8
+                                    ],
+                                    "autoUv": false
+                                  }
+                                },
+                                "children": []
+                              }
+                            ]
+                          },
+                          {
+                            "name": "RightEarBase",
+                            "from": [
+                              0.54,
+                              3.49,
+                              -0.14
+                            ],
+                            "to": [
+                              2.38,
+                              4.77,
+                              2.02
+                            ],
+                            "rotationOrigin": [
+                              1.46,
+                              3.49,
+                              0.94
+                            ],
+                            "rotationX": -40.04,
+                            "rotationY": 1.62,
+                            "rotationZ": 14.72,
+                            "group": "Scene Collection",
+                            "faces": {
+                              "north": {
+                                "texture": "#seraph",
+                                "uv": [
+                                  1,
+                                  50,
+                                  6,
+                                  53
+                                ],
+                                "autoUv": false
+                              },
+                              "east": {
+                                "texture": "#seraph",
+                                "uv": [
+                                  40,
+                                  32,
+                                  48,
+                                  37
+                                ],
+                                "autoUv": false
+                              },
+                              "south": {
+                                "texture": "#seraph",
+                                "uv": [
+                                  6,
+                                  50,
+                                  1,
+                                  53
+                                ],
+                                "autoUv": false
+                              },
+                              "west": {
+                                "texture": "#seraph",
+                                "uv": [
+                                  7,
+                                  50,
+                                  13,
+                                  53
+                                ],
+                                "autoUv": false
+                              },
+                              "up": {
+                                "texture": "#seraph",
+                                "uv": [
+                                  50,
+                                  32,
+                                  57,
+                                  37
+                                ],
+                                "autoUv": false,
+                                "rotation": 270
+                              }
+                            },
+                            "children": [
+                              {
+                                "name": "RightEar2",
+                                "from": [
+                                  0,
+                                  1.28,
+                                  0.36
+                                ],
+                                "to": [
+                                  1.71,
+                                  2.3,
+                                  1.8
+                                ],
+                                "rotationOrigin": [
+                                  0,
+                                  1.28,
+                                  1.08
+                                ],
+                                "rotationX": 0,
+                                "rotationY": 0,
+                                "rotationZ": 0,
+                                "group": "Scene Collection",
+                                "faces": {
+                                  "north": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      2,
+                                      47,
+                                      6,
+                                      50
+                                    ],
+                                    "autoUv": false
+                                  },
+                                  "east": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      42,
+                                      29,
+                                      46,
+                                      32
+                                    ],
+                                    "autoUv": false
+                                  },
+                                  "south": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      6,
+                                      47,
+                                      2,
+                                      50
+                                    ],
+                                    "autoUv": false
+                                  },
+                                  "west": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      8,
+                                      47,
+                                      12,
+                                      50
+                                    ],
+                                    "autoUv": false
+                                  },
+                                  "up": {
+                                    "texture": "#seraph",
+                                    "uv": [
+                                      50,
+                                      25,
+                                      55,
+                                      31
+                                    ],
+                                    "autoUv": false,
+                                    "rotation": 270
+                                  }
+                                },
+                                "children": [
+                                  {
+                                    "name": "RightEar3",
+                                    "from": [
+                                      0,
+                                      1.02,
+                                      0.17
+                                    ],
+                                    "to": [
+                                      1.31,
+                                      1.66,
+                                      1.44
+                                    ],
+                                    "rotationOrigin": [
+                                      0,
+                                      1.02,
+                                      0.8
+                                    ],
+                                    "rotationX": 0,
+                                    "rotationY": 0,
+                                    "rotationZ": 0,
+                                    "group": "Scene Collection",
+                                    "faces": {
+                                      "north": {
+                                        "texture": "#seraph",
+                                        "uv": [
+                                          3,
+                                          45,
+                                          6,
+                                          47
+                                        ],
+                                        "autoUv": false
+                                      },
+                                      "east": {
+                                        "texture": "#seraph",
+                                        "uv": [
+                                          42,
+                                          26,
+                                          46,
+                                          29
+                                        ],
+                                        "autoUv": false
+                                      },
+                                      "south": {
+                                        "texture": "#seraph",
+                                        "uv": [
+                                          6,
+                                          45,
+                                          3,
+                                          47
+                                        ],
+                                        "autoUv": false
+                                      },
+                                      "west": {
+                                        "texture": "#seraph",
+                                        "uv": [
+                                          9,
+                                          46,
+                                          11,
+                                          47
+                                        ],
+                                        "autoUv": false
+                                      },
+                                      "up": {
+                                        "texture": "#seraph",
+                                        "uv": [
+                                          50,
+                                          25,
+                                          55,
+                                          29
+                                        ],
+                                        "autoUv": false,
+                                        "rotation": 270
+                                      }
+                                    },
+                                    "children": [
+                                      {
+                                        "name": "RightEar4",
+                                        "from": [
+                                          0,
+                                          0.64,
+                                          0.51
+                                        ],
+                                        "to": [
+                                          0.79,
+                                          1.15,
+                                          1.27
+                                        ],
+                                        "rotationOrigin": [
+                                          0,
+                                          0.64,
+                                          0.89
+                                        ],
+                                        "rotationX": 0,
+                                        "rotationY": 0,
+                                        "rotationZ": 0,
+                                        "group": "Scene Collection",
+                                        "faces": {
+                                          "north": {
+                                            "texture": "#seraph",
+                                            "uv": [
+                                              4,
+                                              44,
+                                              6,
+                                              45
+                                            ],
+                                            "autoUv": false
+                                          },
+                                          "east": {
+                                            "texture": "#seraph",
+                                            "uv": [
+                                              43,
+                                              25,
+                                              45,
+                                              26
+                                            ],
+                                            "autoUv": false
+                                          },
+                                          "south": {
+                                            "texture": "#seraph",
+                                            "uv": [
+                                              6,
+                                              44,
+                                              4,
+                                              45
+                                            ],
+                                            "autoUv": false
+                                          },
+                                          "west": {
+                                            "texture": "#seraph",
+                                            "uv": [
+                                              9,
+                                              45,
+                                              11,
+                                              46
+                                            ],
+                                            "autoUv": false
+                                          },
+                                          "up": {
+                                            "texture": "#seraph",
+                                            "uv": [
+                                              51,
+                                              25,
+                                              54,
+                                              28
+                                            ],
+                                            "autoUv": false,
+                                            "rotation": 270
+                                          }
+                                        },
+                                        "children": [
+                                          {
+                                            "name": "RightEar5",
+                                            "from": [
+                                              0,
+                                              0.51,
+                                              0.38
+                                            ],
+                                            "to": [
+                                              0.53,
+                                              0.9,
+                                              0.76
+                                            ],
+                                            "rotationOrigin": [
+                                              0,
+                                              0.51,
+                                              0.57
+                                            ],
+                                            "rotationX": 0,
+                                            "rotationY": 0,
+                                            "rotationZ": 0,
+                                            "group": "Scene Collection",
+                                            "faces": {
+                                              "north": {
+                                                "texture": "#seraph",
+                                                "uv": [
+                                                  5,
+                                                  43,
+                                                  6,
+                                                  44
+                                                ],
+                                                "autoUv": false
+                                              },
+                                              "east": {
+                                                "texture": "#seraph",
+                                                "uv": [
+                                                  43,
+                                                  23,
+                                                  45,
+                                                  25
+                                                ],
+                                                "autoUv": false
+                                              },
+                                              "south": {
+                                                "texture": "#seraph",
+                                                "uv": [
+                                                  6,
+                                                  43,
+                                                  5,
+                                                  44
+                                                ],
+                                                "autoUv": false
+                                              },
+                                              "west": {
+                                                "texture": "#seraph",
+                                                "uv": [
+                                                  9,
+                                                  44,
+                                                  10,
+                                                  45
+                                                ],
+                                                "autoUv": false
+                                              },
+                                              "up": {
+                                                "texture": "#seraph",
+                                                "uv": [
+                                                  52,
+                                                  25,
+                                                  53,
+                                                  27
+                                                ],
+                                                "autoUv": false,
+                                                "rotation": 270
+                                              }
+                                            },
+                                            "children": []
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ],
+                        "attachmentpoints": [
+                          {
+                            "code": "Eyes",
+                            "posX": 2.75728702545166,
+                            "posY": 28.068700790405273,
+                            "posZ": 2.7000000029802322,
+                            "rotationX": 89.999995674289,
+                            "rotationY": -0.00009989864919614294,
+                            "rotationZ": 177.99989339354482
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "name": "UpperArmL",
+                    "from": [
+                      1,
+                      -2.1,
+                      5.4
+                    ],
+                    "to": [
+                      4,
+                      4.9,
+                      7.4
+                    ],
+                    "rotationOrigin": [
+                      2,
+                      4.7,
+                      5.2
+                    ],
+                    "rotationX": -10,
+                    "rotationY": 0,
+                    "rotationZ": 7,
+                    "group": "Scene Collection",
+                    "faces": {
+                      "north": {
+                        "texture": "#seraph",
+                        "uv": [
+                          84,
+                          83,
+                          90,
+                          97
+                        ],
+                        "autoUv": false
+                      },
+                      "east": {
+                        "texture": "#seraph",
+                        "uv": [
+                          100,
+                          83,
+                          104,
+                          97
+                        ],
+                        "autoUv": false
+                      },
+                      "south": {
+                        "texture": "#seraph",
+                        "uv": [
+                          94,
+                          83,
+                          100,
+                          97
+                        ],
+                        "autoUv": false
+                      },
+                      "west": {
+                        "texture": "#seraph",
+                        "uv": [
+                          90,
+                          83,
+                          94,
+                          97
+                        ],
+                        "autoUv": false
+                      },
+                      "down": {
+                        "texture": "#seraph",
+                        "uv": [
+                          94,
+                          103,
+                          90,
+                          97
+                        ],
+                        "autoUv": false,
+                        "rotation": 270
+                      },
+                      "up": {
+                        "texture": "#seraph",
+                        "uv": [
+                          90,
+                          77,
+                          94,
+                          83
+                        ],
+                        "autoUv": false,
+                        "rotation": 90
+                      }
+                    },
+                    "children": [
+                      {
+                        "name": "LowerArmL",
+                        "from": [
+                          0.2,
+                          -7.3,
+                          -0.1
+                        ],
+                        "to": [
+                          2.7,
+                          0.7,
+                          1.9
+                        ],
+                        "rotationOrigin": [
+                          1.4,
+                          0.7,
+                          0.9
+                        ],
+                        "rotationX": 8,
+                        "rotationY": 0,
+                        "rotationZ": -6,
+                        "group": "Scene Collection",
+                        "faces": {
+                          "north": {
+                            "texture": "#seraph",
+                            "uv": [
+                              85,
+                              103,
+                              90,
+                              119
+                            ],
+                            "autoUv": false
+                          },
+                          "east": {
+                            "texture": "#seraph",
+                            "uv": [
+                              99,
+                              103,
+                              103,
+                              119
+                            ],
+                            "autoUv": false
+                          },
+                          "south": {
+                            "texture": "#seraph",
+                            "uv": [
+                              94,
+                              103,
+                              99,
+                              119
+                            ],
+                            "autoUv": false
+                          },
+                          "west": {
+                            "texture": "#seraph",
+                            "uv": [
+                              90,
+                              103,
+                              94,
+                              119
+                            ],
+                            "autoUv": false
+                          },
+                          "down": {
+                            "texture": "#seraph",
+                            "uv": [
+                              94,
+                              124,
+                              90,
+                              119
+                            ],
+                            "autoUv": false,
+                            "rotation": 270
+                          },
+                          "up": {
+                            "texture": "#seraph",
+                            "uv": [
+                              90,
+                              98,
+                              94,
+                              103
+                            ],
+                            "autoUv": false,
+                            "rotation": 90
+                          }
+                        },
+                        "children": [
+                          {
+                            "name": "ItemAnchorL",
+                            "from": [
+                              1.5,
+                              0.5,
+                              1
+                            ],
+                            "to": [
+                              1.5,
+                              0.5,
+                              1
+                            ],
+                            "rotationOrigin": [
+                              1,
+                              1,
+                              1
+                            ],
+                            "rotationX": 0,
+                            "rotationY": 0,
+                            "rotationZ": 0,
+                            "group": "Scene Collection",
+                            "faces": {},
+                            "children": [],
+                            "attachmentpoints": [
+                              {
+                                "code": "LeftHand",
+                                "posX": 1,
+                                "posY": 1,
+                                "posZ": 1,
+                                "rotationX": 0,
+                                "rotationY": 179.999991348578,
+                                "rotationZ": 0
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "ShoulderAttachment",
+                        "from": [
+                          3,
+                          7,
+                          2
+                        ],
+                        "to": [
+                          3,
+                          7,
+                          2
+                        ],
+                        "uv": [
+                          0,
+                          0
+                        ],
+                        "rotationOrigin": [
+                          3,
+                          7,
+                          2
+                        ],
+                        "faces": {
+                          "north": {
+                            "texture": "#seraph",
+                            "uv": [
+                              0,
+                              0.5,
+                              0.5,
+                              1
+                            ]
+                          },
+                          "east": {
+                            "texture": "#seraph",
+                            "uv": [
+                              0.5,
+                              0.5,
+                              1,
+                              1
+                            ]
+                          },
+                          "south": {
+                            "texture": "#seraph",
+                            "uv": [
+                              1,
+                              0.5,
+                              1.5,
+                              1
+                            ]
+                          },
+                          "west": {
+                            "texture": "#seraph",
+                            "uv": [
+                              1.5,
+                              0.5,
+                              2,
+                              1
+                            ]
+                          },
+                          "up": {
+                            "texture": "#seraph",
+                            "uv": [
+                              0,
+                              0,
+                              0.5,
+                              0.5
+                            ]
+                          },
+                          "down": {
+                            "texture": "#seraph",
+                            "uv": [
+                              0.5,
+                              0,
+                              1,
+                              0.5
+                            ]
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "name": "UpperArmR",
+                    "from": [
+                      1,
+                      -2.1,
+                      -1.2
+                    ],
+                    "to": [
+                      4,
+                      4.9,
+                      0.8
+                    ],
+                    "rotationOrigin": [
+                      2,
+                      4.7,
+                      0.8
+                    ],
+                    "rotationX": 10,
+                    "rotationY": 0,
+                    "rotationZ": 7,
+                    "group": "Scene Collection",
+                    "faces": {
+                      "north": {
+                        "texture": "#seraph",
+                        "uv": [
+                          66,
+                          83,
+                          72,
+                          97
+                        ],
+                        "autoUv": false
+                      },
+                      "east": {
+                        "texture": "#seraph",
+                        "uv": [
+                          62,
+                          83,
+                          66,
+                          97
+                        ],
+                        "autoUv": false
+                      },
+                      "south": {
+                        "texture": "#seraph",
+                        "uv": [
+                          76,
+                          83,
+                          82,
+                          97
+                        ],
+                        "autoUv": false
+                      },
+                      "west": {
+                        "texture": "#seraph",
+                        "uv": [
+                          72,
+                          83,
+                          76,
+                          97
+                        ],
+                        "autoUv": false
+                      },
+                      "down": {
+                        "texture": "#seraph",
+                        "uv": [
+                          76,
+                          103,
+                          72,
+                          97
+                        ],
+                        "autoUv": false,
+                        "rotation": 270
+                      },
+                      "up": {
+                        "texture": "#seraph",
+                        "uv": [
+                          72,
+                          77,
+                          76,
+                          83
+                        ],
+                        "autoUv": false,
+                        "rotation": 90
+                      }
+                    },
+                    "children": [
+                      {
+                        "name": "LowerArmR",
+                        "from": [
+                          0.1,
+                          -7.3,
+                          0.1
+                        ],
+                        "to": [
+                          2.6,
+                          0.7,
+                          2.1
+                        ],
+                        "rotationOrigin": [
+                          1.3,
+                          0.7,
+                          1.1
+                        ],
+                        "rotationX": -8,
+                        "rotationY": 0,
+                        "rotationZ": -6,
+                        "group": "Scene Collection",
+                        "faces": {
+                          "north": {
+                            "texture": "#seraph",
+                            "uv": [
+                              67,
+                              103,
+                              72,
+                              119
+                            ],
+                            "autoUv": false
+                          },
+                          "east": {
+                            "texture": "#seraph",
+                            "uv": [
+                              63,
+                              103,
+                              67,
+                              119
+                            ],
+                            "autoUv": false
+                          },
+                          "south": {
+                            "texture": "#seraph",
+                            "uv": [
+                              76,
+                              103,
+                              81,
+                              119
+                            ],
+                            "autoUv": false
+                          },
+                          "west": {
+                            "texture": "#seraph",
+                            "uv": [
+                              72,
+                              103,
+                              76,
+                              119
+                            ],
+                            "autoUv": false
+                          },
+                          "down": {
+                            "texture": "#seraph",
+                            "uv": [
+                              76,
+                              124,
+                              72,
+                              119
+                            ],
+                            "autoUv": false,
+                            "rotation": 270
+                          },
+                          "up": {
+                            "texture": "#seraph",
+                            "uv": [
+                              72,
+                              98,
+                              76,
+                              103
+                            ],
+                            "autoUv": false,
+                            "rotation": 90
+                          }
+                        },
+                        "children": [
+                          {
+                            "name": "ItemAnchor",
+                            "from": [
+                              1.5,
+                              0.5,
+                              1
+                            ],
+                            "to": [
+                              1.5,
+                              0.5,
+                              1
+                            ],
+                            "rotationOrigin": [
+                              1,
+                              1,
+                              1
+                            ],
+                            "rotationX": 0,
+                            "rotationY": 0,
+                            "rotationZ": 0,
+                            "group": "Scene Collection",
+                            "faces": {},
+                            "children": [],
+                            "attachmentpoints": [
+                              {
+                                "code": "RightHand",
+                                "posX": 0,
+                                "posY": 0,
+                                "posZ": 0,
+                                "rotationX": 0,
+                                "rotationY": 179.999991348578,
+                                "rotationZ": 0
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "name": "UpperButtons",
+                    "from": [
+                      -0.1,
+                      0,
+                      2.3
+                    ],
+                    "to": [
+                      -0.1,
+                      5,
+                      3.9
+                    ],
+                    "rotationOrigin": [
+                      -0.1,
+                      5,
+                      2.8
+                    ],
+                    "rotationZ": 0,
+                    "group": "ToBeDeleted",
+                    "faces": {
+                      "up": {
+                        "texture": "#seraph",
+                        "uv": [
+                          0,
+                          0,
+                          0,
+                          1
+                        ],
+                        "autoUv": false,
+                        "rotation": 180
+                      },
+                      "east": {
+                        "texture": "#seraph",
+                        "uv": [
+                          0,
+                          1,
+                          1,
+                          11
+                        ],
+                        "autoUv": false
+                      },
+                      "west": {
+                        "texture": "#seraph",
+                        "uv": [
+                          0,
+                          0,
+                          3,
+                          10
+                        ],
+                        "autoUv": false
+                      }
+                    },
+                    "children": []
+                  }
+                ],
+                "attachmentpoints": [
+                  {
+                    "code": "Back",
+                    "posX": 5,
+                    "posY": 2.9999999403953552,
+                    "posZ": 2.9999998062849045,
+                    "rotationX": 0,
+                    "rotationY": 0,
+                    "rotationZ": 0
+                  }
+                ]
+              },
+              {
+                "name": "LowerBackAttachment",
+                "from": [
+                  5.4,
+                  1.4,
+                  3
+                ],
+                "to": [
+                  5.4,
+                  1.4,
+                  3
+                ],
+                "uv": [
+                  0,
+                  0
+                ],
+                "rotationOrigin": [
+                  5.4,
+                  1.4,
+                  3
+                ],
+                "faces": {
+                  "north": {
+                    "texture": "#seraph",
+                    "uv": [
+                      0,
+                      0.5,
+                      0.5,
+                      1
+                    ]
+                  },
+                  "east": {
+                    "texture": "#seraph",
+                    "uv": [
+                      0.5,
+                      0.5,
+                      1,
+                      1
+                    ]
+                  },
+                  "south": {
+                    "texture": "#seraph",
+                    "uv": [
+                      1,
+                      0.5,
+                      1.5,
+                      1
+                    ]
+                  },
+                  "west": {
+                    "texture": "#seraph",
+                    "uv": [
+                      1.5,
+                      0.5,
+                      2,
+                      1
+                    ]
+                  },
+                  "up": {
+                    "texture": "#seraph",
+                    "uv": [
+                      0,
+                      0,
+                      0.5,
+                      0.5
+                    ]
+                  },
+                  "down": {
+                    "texture": "#seraph",
+                    "uv": [
+                      0.5,
+                      0,
+                      1,
+                      0.5
+                    ]
+                  }
+                }
+              },
+              {
+                "name": "FrontShirtTile",
+                "group": "ToBeDeleted",
+                "from": [
+                  0,
+                  -6,
+                  0
+                ],
+                "to": [
+                  1,
+                  0,
+                  6
+                ],
+                "unwrapMode": 4,
+                "uv": [
+                  45,
+                  15
+                ],
+                "rotationOrigin": [
+                  0,
+                  0,
+                  3
+                ],
+                "rotationZ": -3,
+                "faces": {
+                  "north": {
+                    "texture": "#seraph",
+                    "uv": [
+                      90,
+                      30,
+                      92,
+                      42
+                    ],
+                    "autoUv": false
+                  },
+                  "south": {
+                    "texture": "#seraph",
+                    "uv": [
+                      104,
+                      30,
+                      106,
+                      42
+                    ],
+                    "autoUv": false
+                  },
+                  "west": {
+                    "texture": "#seraph",
+                    "uv": [
+                      92,
+                      30,
+                      104,
+                      42
+                    ],
+                    "autoUv": false
+                  }
+                }
+              },
+              {
+                "name": "BackShirtTile",
+                "group": "ToBeDeleted",
+                "from": [
+                  4,
+                  -5.9,
+                  0
+                ],
+                "to": [
+                  5,
+                  0.1,
+                  6
+                ],
+                "unwrapMode": 2,
+                "uv": [
+                  56,
+                  15
+                ],
+                "rotationOrigin": [
+                  4,
+                  0.1,
+                  3
+                ],
+                "rotationZ": -5,
+                "faces": {
+                  "north": {
+                    "texture": "#seraph",
+                    "uv": [
+                      126,
+                      30,
+                      128,
+                      42
+                    ],
+                    "autoUv": false
+                  },
+                  "east": {
+                    "texture": "#seraph",
+                    "uv": [
+                      114,
+                      30,
+                      126,
+                      42
+                    ],
+                    "autoUv": false
+                  },
+                  "south": {
+                    "texture": "#seraph",
+                    "uv": [
+                      112,
+                      30,
+                      114,
+                      42
+                    ],
+                    "autoUv": false
+                  }
+                }
+              },
+              {
+                "name": "LowerButtons",
+                "group": "ToBeDeleted",
+                "from": [
+                  -0.1,
+                  -1.5,
+                  2.2
+                ],
+                "to": [
+                  -0.1,
+                  4.5,
+                  3.8
+                ],
+                "uv": [
+                  2,
+                  0
+                ],
+                "rotationOrigin": [
+                  -0.1,
+                  4,
+                  3
+                ],
+                "faces": {
+                  "west": {
+                    "texture": "#seraph",
+                    "uv": [
+                      2,
+                      0,
+                      3.5,
+                      6
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "groups": [],
+    "animations": [
+      {
+        "code": "idle1",
+        "name": "idle1",
+        "quantityframes": 50,
+        "onActivityStopped": "EaseOut",
+        "onAnimationEnd": "Repeat",
+        "keyframes": [
+          {
+            "frame": 0,
+            "elements": {
+              "LeftEarBase": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0
+              },
+              "RightEarBase": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0
+              },
+              "Tail1": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0,
+                "offsetX": 0,
+                "offsetY": 0,
+                "offsetZ": 0
+              },
+              "Tail2": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0,
+                "offsetX": 0,
+                "offsetY": 0,
+                "offsetZ": 0
+              },
+              "Tail3": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0,
+                "offsetX": 0,
+                "offsetY": 0,
+                "offsetZ": 0
+              },
+              "Tail4": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0,
+                "offsetX": 0,
+                "offsetY": 0,
+                "offsetZ": 0
+              },
+              "Tail5": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0,
+                "offsetX": 0,
+                "offsetY": 0,
+                "offsetZ": 0
+              },
+              "UpperTorso": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0,
+                "offsetX": 0,
+                "offsetY": 0,
+                "offsetZ": 0
+              }
+            }
+          },
+          {
+            "frame": 20,
+            "elements": {
+              "LeftEarBase": {
+                "rotShortestDistance": true,
+                "rotationX": -1.77,
+                "rotationY": -0.17,
+                "rotationZ": 0.25
+              },
+              "RightEarBase": {
+                "rotShortestDistance": true,
+                "rotationX": 4.93,
+                "rotationY": 0.81,
+                "rotationZ": 0.25
+              },
+              "Tail1": {
+                "rotShortestDistance": true,
+                "rotationX": -0.06,
+                "rotationY": 0.06,
+                "rotationZ": -3.56
+              },
+              "Tail2": {
+                "rotShortestDistance": true,
+                "rotationX": -0.09,
+                "rotationY": -0.01,
+                "rotationZ": -3.56
+              },
+              "Tail3": {
+                "rotShortestDistance": true,
+                "rotationX": -0.09,
+                "rotationY": 0.01,
+                "rotationZ": -3.56
+              },
+              "Tail4": {
+                "rotShortestDistance": true,
+                "rotationX": -0.09,
+                "rotationY": 0.02,
+                "rotationZ": -3.56
+              },
+              "Tail5": {
+                "rotShortestDistance": true,
+                "rotationX": -0.08,
+                "rotationY": 0.03,
+                "rotationZ": -3.56
+              },
+              "UpperTorso": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 1,
+                "offsetX": 0,
+                "offsetY": -0.1,
+                "offsetZ": 0
+              }
+            }
+          },
+          {
+            "frame": 49,
+            "elements": {
+              "LeftEarBase": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0
+              },
+              "RightEarBase": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0
+              },
+              "Tail1": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0,
+                "offsetX": 0,
+                "offsetY": 0,
+                "offsetZ": 0
+              },
+              "Tail2": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0,
+                "offsetX": 0,
+                "offsetY": 0,
+                "offsetZ": 0
+              },
+              "Tail3": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0,
+                "offsetX": 0,
+                "offsetY": 0,
+                "offsetZ": 0
+              },
+              "Tail4": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0,
+                "offsetX": 0,
+                "offsetY": 0,
+                "offsetZ": 0
+              },
+              "Tail5": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0,
+                "offsetX": 0,
+                "offsetY": 0,
+                "offsetZ": 0
+              },
+              "UpperTorso": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0,
+                "offsetX": 0,
+                "offsetY": 0,
+                "offsetZ": 0
+              }
+            }
+          }
+        ]
+      },
+      {
+        "code": "idle1-fp",
+        "name": "idle1-fp",
+        "quantityframes": 50,
+        "onActivityStopped": "EaseOut",
+        "onAnimationEnd": "Repeat",
+        "keyframes": [
+          {
+            "frame": 0,
+            "elements": {
+              "UpperTorso": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0,
+                "offsetX": 0,
+                "offsetY": 0,
+                "offsetZ": 0
+              },
+              "UpperArmR": {
+                "rotShortestDistance": true,
+                "offsetX": 0,
+                "offsetY": 0,
+                "offsetZ": -7
+              },
+              "UpperArmL": {
+                "rotShortestDistance": true,
+                "offsetX": 0,
+                "offsetY": 0,
+                "offsetZ": 7
+              }
+            }
+          },
+          {
+            "frame": 20,
+            "elements": {
+              "UpperTorso": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 1,
+                "offsetX": 0,
+                "offsetY": -0.1,
+                "offsetZ": 0
+              }
+            }
+          },
+          {
+            "frame": 49,
+            "elements": {
+              "UpperTorso": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0,
+                "offsetX": 0,
+                "offsetY": 0,
+                "offsetZ": 0
+              },
+              "UpperArmR": {
+                "rotShortestDistance": true,
+                "offsetX": 0,
+                "offsetY": 0,
+                "offsetZ": -7
+              },
+              "UpperArmL": {
+                "rotShortestDistance": true,
+                "offsetX": 0,
+                "offsetY": 0,
+                "offsetZ": 7
+              }
+            }
+          }
+        ]
+      },
+      {
+        "code": "idle2",
+        "name": "idle2",
+        "quantityframes": 30,
+        "onActivityStopped": "Rewind",
+        "onAnimationEnd": "Repeat",
+        "keyframes": [
+          {
+            "frame": 0,
+            "elements": {
+              "LeftEarBase": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0
+              },
+              "RightEarBase": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0
+              },
+              "Tail1": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0,
+                "offsetX": 0,
+                "offsetY": 0,
+                "offsetZ": 0
+              },
+              "Tail2": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0,
+                "offsetX": 0,
+                "offsetY": 0,
+                "offsetZ": 0
+              },
+              "Tail3": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0,
+                "offsetX": 0,
+                "offsetY": 0,
+                "offsetZ": 0
+              },
+              "Tail4": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0,
+                "offsetX": 0,
+                "offsetY": 0,
+                "offsetZ": 0
+              },
+              "Tail5": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0,
+                "offsetX": 0,
+                "offsetY": 0,
+                "offsetZ": 0
+              },
+              "UpperTorso": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0,
+                "offsetX": 0,
+                "offsetY": 0,
+                "offsetZ": 0
+              },
+              "Neck": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0,
+                "offsetX": 0,
+                "offsetY": 0,
+                "offsetZ": 0
+              },
+              "Head": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0
+              }
+            }
+          },
+          {
+            "frame": 8,
+            "elements": {
+              "RightEarBase": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0
+              },
+              "Tail1": {
+                "rotShortestDistance": true,
+                "rotationX": 1.45,
+                "rotationY": -0.35,
+                "rotationZ": -11
+              },
+              "Tail2": {
+                "rotShortestDistance": true,
+                "rotationX": 0.91,
+                "rotationY": 1.13,
+                "rotationZ": -11.01
+              },
+              "Tail3": {
+                "rotShortestDistance": true,
+                "rotationX": 0.76,
+                "rotationY": 1.19,
+                "rotationZ": -11.01
+              },
+              "Tail4": {
+                "rotShortestDistance": true,
+                "rotationX": 0.61,
+                "rotationY": 1.22,
+                "rotationZ": -11.01
+              },
+              "Tail5": {
+                "rotShortestDistance": true,
+                "rotationX": 0.46,
+                "rotationY": 1.25,
+                "rotationZ": -11.02
+              },
+              "UpperFootR": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0
+              }
+            }
+          },
+          {
+            "frame": 9,
+            "elements": {
+              "UpperTorso": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0
+              },
+              "Neck": {
+                "rotShortestDistance": true,
+                "offsetX": -0.5,
+                "offsetY": 0.2,
+                "offsetZ": 0
+              },
+              "Head": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": -5,
+                "rotationZ": 14.9
+              },
+              "LowerTorso": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0
+              },
+              "LowerFootR": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0
+              },
+              "UpperFootL": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0
+              }
+            }
+          },
+          {
+            "frame": 12,
+            "elements": {
+              "RightEarBase": {
+                "rotShortestDistance": true,
+                "rotationX": 27.77,
+                "rotationY": 6.77,
+                "rotationZ": -2.47
+              },
+              "Neck": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0
+              },
+              "UpperFootR": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 5
+              },
+              "LowerFootR": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 10
+              },
+              "UpperArmR": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 5
+              },
+              "UpperArmL": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": -5
+              }
+            }
+          },
+          {
+            "frame": 18,
+            "elements": {
+              "RightEarBase": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0
+              },
+              "UpperTorso": {
+                "rotShortestDistance": true,
+                "rotationX": -6,
+                "rotationY": 0,
+                "rotationZ": 0.14
+              },
+              "UpperFootR": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0
+              },
+              "LowerTorso": {
+                "rotShortestDistance": true,
+                "rotationX": 6,
+                "rotationY": 0,
+                "rotationZ": -0.06
+              },
+              "LowerFootR": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0
+              },
+              "UpperFootL": {
+                "rotShortestDistance": true,
+                "rotationX": -6,
+                "rotationY": 0,
+                "rotationZ": 0.1
+              }
+            }
+          },
+          {
+            "frame": 20,
+            "elements": {
+              "Tail1": {
+                "rotShortestDistance": true,
+                "rotationX": 4.13,
+                "rotationY": -0.97,
+                "rotationZ": -13.03
+              },
+              "Tail2": {
+                "rotShortestDistance": true,
+                "rotationX": 2.57,
+                "rotationY": 3.22,
+                "rotationZ": -13.2
+              },
+              "Tail3": {
+                "rotShortestDistance": true,
+                "rotationX": 2.16,
+                "rotationY": 3.37,
+                "rotationZ": -13.27
+              },
+              "Tail4": {
+                "rotShortestDistance": true,
+                "rotationX": 1.74,
+                "rotationY": 3.47,
+                "rotationZ": -13.34
+              },
+              "Tail5": {
+                "rotShortestDistance": true,
+                "rotationX": 1.3,
+                "rotationY": 3.54,
+                "rotationZ": -13.41
+              },
+              "UpperTorso": {
+                "rotShortestDistance": true,
+                "rotationX": -3,
+                "rotationY": 0,
+                "rotationZ": 1.04,
+                "offsetX": 0,
+                "offsetY": -0.1,
+                "offsetZ": 0
+              },
+              "UpperArmR": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 5
+              },
+              "UpperArmL": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": -5
+              }
+            }
+          },
+          {
+            "frame": 25,
+            "elements": {
+              "Tail1": {
+                "rotShortestDistance": true,
+                "rotationX": 4.13,
+                "rotationY": -0.97,
+                "rotationZ": -13.03
+              },
+              "Tail2": {
+                "rotShortestDistance": true,
+                "rotationX": 2.57,
+                "rotationY": 3.22,
+                "rotationZ": -13.2
+              },
+              "Tail3": {
+                "rotShortestDistance": true,
+                "rotationX": 2.16,
+                "rotationY": 3.37,
+                "rotationZ": -13.27
+              },
+              "Tail4": {
+                "rotShortestDistance": true,
+                "rotationX": 1.74,
+                "rotationY": 3.47,
+                "rotationZ": -13.34
+              },
+              "Tail5": {
+                "rotShortestDistance": true,
+                "rotationX": 1.3,
+                "rotationY": 3.54,
+                "rotationZ": -13.41
+              }
+            }
+          },
+          {
+            "frame": 29,
+            "elements": {
+              "LeftEarBase": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0
+              },
+              "RightEarBase": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0
+              },
+              "Tail1": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0,
+                "offsetX": 0,
+                "offsetY": 0,
+                "offsetZ": 0
+              },
+              "Tail2": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0,
+                "offsetX": 0,
+                "offsetY": 0,
+                "offsetZ": 0
+              },
+              "Tail3": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0,
+                "offsetX": 0,
+                "offsetY": 0,
+                "offsetZ": 0
+              },
+              "Tail4": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0,
+                "offsetX": 0,
+                "offsetY": 0,
+                "offsetZ": 0
+              },
+              "Tail5": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0,
+                "offsetX": 0,
+                "offsetY": 0,
+                "offsetZ": 0
+              },
+              "UpperTorso": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0,
+                "offsetX": 0,
+                "offsetY": 0,
+                "offsetZ": 0
+              },
+              "Neck": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0,
+                "offsetX": 0,
+                "offsetY": 0,
+                "offsetZ": 0
+              },
+              "Head": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0
+              },
+              "LowerTorso": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0
+              },
+              "UpperFootL": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0
+              }
+            }
+          }
+        ]
+      },
+      {
+        "code": "idle3",
+        "name": "idle3",
+        "quantityframes": 30,
+        "onActivityStopped": "Rewind",
+        "onAnimationEnd": "Repeat",
+        "keyframes": [
+          {
+            "frame": 0,
+            "elements": {
+              "RightEarBase": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0
+              },
+              "LeftEarBase": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0
+              },
+              "Tail1": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0,
+                "offsetX": 0,
+                "offsetY": 0,
+                "offsetZ": 0
+              },
+              "Tail2": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0,
+                "offsetX": 0,
+                "offsetY": 0,
+                "offsetZ": 0
+              },
+              "Tail3": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0,
+                "offsetX": 0,
+                "offsetY": 0,
+                "offsetZ": 0
+              },
+              "Tail4": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0,
+                "offsetX": 0,
+                "offsetY": 0,
+                "offsetZ": 0
+              },
+              "Tail5": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0,
+                "offsetX": 0,
+                "offsetY": 0,
+                "offsetZ": 0
+              },
+              "UpperTorso": {
+                "rotShortestDistance": true,
+                "offsetX": 0,
+                "offsetY": 0,
+                "offsetZ": 0
+              },
+              "UpperArmR": {
+                "rotShortestDistance": true,
+                "rotationX": 5,
+                "rotationY": 0,
+                "rotationZ": -0.1,
+                "offsetX": 0,
+                "offsetY": 0,
+                "offsetZ": 0
+              },
+              "LowerArmR": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0
+              },
+              "UpperArmL": {
+                "rotShortestDistance": true,
+                "rotationX": -5,
+                "rotationY": 0,
+                "rotationZ": -0.1,
+                "offsetX": 0,
+                "offsetY": 0,
+                "offsetZ": 0
+              },
+              "LowerArmL": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0
+              },
+              "Head": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0
+              }
+            }
+          },
+          {
+            "frame": 8,
+            "elements": {
+              "RightEarBase": {
+                "rotShortestDistance": true,
+                "rotationX": 26.71,
+                "rotationY": -0.73,
+                "rotationZ": -3.09
+              },
+              "LeftEarBase": {
+                "rotShortestDistance": true,
+                "rotationX": -26.71,
+                "rotationY": 0.73,
+                "rotationZ": -3.09
+              },
+              "Tail1": {
+                "rotShortestDistance": true,
+                "rotationX": 0.55,
+                "rotationY": 8.63,
+                "rotationZ": -1.34
+              },
+              "Tail2": {
+                "rotShortestDistance": true,
+                "rotationX": -6.44,
+                "rotationY": 5.78,
+                "rotationZ": -0.97
+              },
+              "Tail3": {
+                "rotShortestDistance": true,
+                "rotationX": -5.61,
+                "rotationY": 6.58,
+                "rotationZ": -0.86
+              },
+              "Tail4": {
+                "rotShortestDistance": true,
+                "rotationX": -4.69,
+                "rotationY": 7.26,
+                "rotationZ": -0.71
+              },
+              "Tail5": {
+                "rotShortestDistance": true,
+                "rotationX": -3.68,
+                "rotationY": 7.82,
+                "rotationZ": -0.51
+              },
+              "UpperTorso": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": -5,
+                "offsetX": 0,
+                "offsetY": -0.1,
+                "offsetZ": 0
+              },
+              "UpperArmR": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": -45
+              },
+              "LowerArmR": {
+                "rotShortestDistance": true,
+                "rotationX": -26,
+                "rotationY": -0.59,
+                "rotationZ": 2.63
+              },
+              "UpperArmL": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": -45
+              },
+              "LowerArmL": {
+                "rotShortestDistance": true,
+                "rotationX": 26,
+                "rotationY": 0.59,
+                "rotationZ": 2.63
+              },
+              "Head": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 3
+              }
+            }
+          },
+          {
+            "frame": 16,
+            "elements": {
+              "RightEarBase": {
+                "rotShortestDistance": true,
+                "rotationX": 34.26,
+                "rotationY": 1.11,
+                "rotationZ": -4.6
+              },
+              "LeftEarBase": {
+                "rotShortestDistance": true,
+                "rotationX": -16.03,
+                "rotationY": 2.56,
+                "rotationZ": -4.22
+              },
+              "UpperArmR": {
+                "rotShortestDistance": true,
+                "rotationX": 10,
+                "rotationY": -0.04,
+                "rotationZ": -0.42
+              },
+              "UpperArmL": {
+                "rotShortestDistance": true,
+                "rotationX": -10,
+                "rotationY": 0.04,
+                "rotationZ": -0.42
+              }
+            }
+          },
+          {
+            "frame": 21,
+            "elements": {
+              "RightEarBase": {
+                "rotShortestDistance": true,
+                "rotationX": 26.71,
+                "rotationY": -0.73,
+                "rotationZ": -3.09
+              },
+              "LeftEarBase": {
+                "rotShortestDistance": true,
+                "rotationX": -26.71,
+                "rotationY": 0.73,
+                "rotationZ": -3.09
+              },
+              "Tail1": {
+                "rotShortestDistance": true,
+                "rotationX": -0.49,
+                "rotationY": -7.9,
+                "rotationZ": -1.2
+              },
+              "Tail2": {
+                "rotShortestDistance": true,
+                "rotationX": 5.92,
+                "rotationY": -5.27,
+                "rotationZ": -0.88
+              },
+              "Tail3": {
+                "rotShortestDistance": true,
+                "rotationX": 5.16,
+                "rotationY": -6,
+                "rotationZ": -0.79
+              },
+              "Tail4": {
+                "rotShortestDistance": true,
+                "rotationX": 4.34,
+                "rotationY": -6.63,
+                "rotationZ": -0.65
+              },
+              "Tail5": {
+                "rotShortestDistance": true,
+                "rotationX": 3.43,
+                "rotationY": -7.14,
+                "rotationZ": -0.46
+              },
+              "UpperTorso": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": -5
+              },
+              "UpperArmR": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 22.5,
+                "offsetX": 0,
+                "offsetY": -1,
+                "offsetZ": 0
+              },
+              "UpperArmL": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 22.5,
+                "offsetX": 0,
+                "offsetY": -1,
+                "offsetZ": 0
+              },
+              "Head": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": -5
+              }
+            }
+          },
+          {
+            "frame": 29,
+            "elements": {
+              "RightEarBase": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0
+              },
+              "LeftEarBase": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0
+              },
+              "Tail1": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0,
+                "offsetX": 0,
+                "offsetY": 0,
+                "offsetZ": 0
+              },
+              "Tail2": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0,
+                "offsetX": 0,
+                "offsetY": 0,
+                "offsetZ": 0
+              },
+              "Tail3": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0,
+                "offsetX": 0,
+                "offsetY": 0,
+                "offsetZ": 0
+              },
+              "Tail4": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0,
+                "offsetX": 0,
+                "offsetY": 0,
+                "offsetZ": 0
+              },
+              "Tail5": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0,
+                "offsetX": 0,
+                "offsetY": 0,
+                "offsetZ": 0
+              },
+              "UpperTorso": {
+                "rotShortestDistance": true,
+                "offsetX": 0,
+                "offsetY": 0,
+                "offsetZ": 0
+              },
+              "UpperArmR": {
+                "rotShortestDistance": true,
+                "rotationX": 5,
+                "rotationY": 0,
+                "rotationZ": -0.1,
+                "offsetX": 0,
+                "offsetY": 0,
+                "offsetZ": 0
+              },
+              "LowerArmR": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0
+              },
+              "UpperArmL": {
+                "rotShortestDistance": true,
+                "rotationX": -5,
+                "rotationY": 0,
+                "rotationZ": -0.1,
+                "offsetX": 0,
+                "offsetY": 0,
+                "offsetZ": 0
+              },
+              "LowerArmL": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0
+              },
+              "Head": {
+                "rotShortestDistance": true,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
