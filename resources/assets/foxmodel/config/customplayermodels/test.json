@@ -1,6 +1,7 @@
 {
   "seraph-test": {
     "ShapePath": "game:entity/humanoid/seraph-faceless",
+		"MainTextureCode": "seraph",
     "SkinnableParts": [
 			{
 				"code": "baseskin",

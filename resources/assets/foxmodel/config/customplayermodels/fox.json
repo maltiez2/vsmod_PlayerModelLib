@@ -1,0 +1,104 @@
+{
+  "fox": {
+    "ShapePath": "foxmodel:fox",
+		"MainTextureCode": "foxtexture",
+    "SkinnableParts": [
+			{
+				"code": "baseskin",
+				"type": "texture", 
+				"variants": [
+					{ "code": "skin1", "texture": "foxmodel:entity/humanoid/seraphskinparts/body/skin1" },
+					{ "code": "skin2", "texture": "foxmodel:entity/humanoid/seraphskinparts/body/skin2" },
+					{ "code": "skin3", "texture": "foxmodel:entity/humanoid/seraphskinparts/body/skin3" },
+					{ "code": "skin4", "texture": "foxmodel:entity/humanoid/seraphskinparts/body/skin4" },
+					{ "code": "skin5", "texture": "foxmodel:entity/humanoid/seraphskinparts/body/skin5" },
+					{ "code": "skin6", "texture": "foxmodel:entity/humanoid/seraphskinparts/body/skin6" },
+					{ "code": "skin7", "texture": "foxmodel:entity/humanoid/seraphskinparts/body/skin7" },
+					{ "code": "skin8", "texture": "foxmodel:entity/humanoid/seraphskinparts/body/skin8" },
+					{ "code": "skin9", "texture": "foxmodel:entity/humanoid/seraphskinparts/body/skin9" },
+					{ "code": "skin10", "texture": "foxmodel:entity/humanoid/seraphskinparts/body/skin10" },
+					{ "code": "skin11", "texture": "foxmodel:entity/humanoid/seraphskinparts/body/skin11" },
+					{ "code": "skin12", "texture": "foxmodel:entity/humanoid/seraphskinparts/body/skin12" },
+					{ "code": "skin13", "texture": "foxmodel:entity/humanoid/seraphskinparts/body/skin13" },
+					{ "code": "skin14", "texture": "foxmodel:entity/humanoid/seraphskinparts/body/skin14" },
+					{ "code": "skin15", "texture": "foxmodel:entity/humanoid/seraphskinparts/body/skin15" },
+					{ "code": "skin16", "texture": "foxmodel:entity/humanoid/seraphskinparts/body/skin16" },
+					{ "code": "skin17", "texture": "foxmodel:entity/humanoid/seraphskinparts/body/skin17" },
+					{ "code": "skin18", "texture": "foxmodel:entity/humanoid/seraphskinparts/body/skin18" },
+					{ "code": "skin19", "texture": "foxmodel:entity/humanoid/seraphskinparts/body/skin19" },
+					{ "code": "skin20", "texture": "foxmodel:entity/humanoid/seraphskinparts/body/skin20" }
+				]
+			},
+			{
+				"code": "eyecolor",
+				"type": "texture", 
+				"textureRenderTo": { "x": 108, "y": 0},
+				"variants": [
+					{ "code": "acid-green", "texture": "game:entity/humanoid/seraphskinparts/eyes/acid-green" },
+					{ "code": "aquamarine", "texture": "game:entity/humanoid/seraphskinparts/eyes/aquamarine" },
+					{ "code": "azure", "texture": "game:entity/humanoid/seraphskinparts/eyes/azure" },
+					{ "code": "bitter-lemon", "texture": "game:entity/humanoid/seraphskinparts/eyes/bitter-lemon" },
+					{ "code": "cadmium-orange", "texture": "game:entity/humanoid/seraphskinparts/eyes/cadmium-orange" },
+					{ "code": "citron", "texture": "game:entity/humanoid/seraphskinparts/eyes/citron" },
+					{ "code": "dark-green", "texture": "game:entity/humanoid/seraphskinparts/eyes/dark-green" },
+					{ "code": "forest-green", "texture": "game:entity/humanoid/seraphskinparts/eyes/forest-green" },
+					{ "code": "goldenrod", "texture": "game:entity/humanoid/seraphskinparts/eyes/goldenrod" },
+					{ "code": "jade", "texture": "game:entity/humanoid/seraphskinparts/eyes/jade" },
+					{ "code": "lavander", "texture": "game:entity/humanoid/seraphskinparts/eyes/lavander" },
+					{ "code": "malachite", "texture": "game:entity/humanoid/seraphskinparts/eyes/malachite" },
+					{ "code": "mantis", "texture": "game:entity/humanoid/seraphskinparts/eyes/mantis" },
+					{ "code": "midnight", "texture": "game:entity/humanoid/seraphskinparts/eyes/midnight" },
+					{ "code": "phthalo-blue", "texture": "game:entity/humanoid/seraphskinparts/eyes/phthalo-blue" },
+					{ "code": "purple", "texture": "game:entity/humanoid/seraphskinparts/eyes/purple" },
+					{ "code": "sand", "texture": "game:entity/humanoid/seraphskinparts/eyes/sand" },
+					{ "code": "sapphire", "texture": "game:entity/humanoid/seraphskinparts/eyes/sapphire" }
+				]
+			},
+			{
+				"code": "underwear",
+				"type": "texture", 
+				"useDropDown": true,
+				"textureRenderTo": { "x": 0, "y": 0},
+				"variants": [
+					{ "code": "twopiece", "texture": "game:entity/humanoid/seraphskinparts/underwear/twopiece" },
+					{ "code": "leotard", "texture": "game:entity/humanoid/seraphskinparts/underwear/leotard" },
+					{ "code": "breeches", "texture": "game:entity/humanoid/seraphskinparts/underwear/breeches" }
+				]
+			},
+			{
+				"code": "voicetype",
+				"type": "voice", 
+				"useDropDown": true,
+				"variants": [
+					{ "code": "altoflute", "sound": "sounds/voice/altoflute" },
+					{ "code": "harmonica", "sound": "sounds/voice/harmonica" },
+					{ "code": "oboe", "sound": "sounds/voice/oboe" },
+					{ "code": "clarinet", "sound": "sounds/voice/clarinet" },
+					{ "code": "accordion", "sound": "sounds/voice/accordion" },
+					{ "code": "trumpet", "sound": "sounds/voice/trumpet" },
+					{ "code": "sax", "sound": "sounds/voice/sax" },
+					{ "code": "tuba", "sound": "sounds/voice/tuba" }
+				]
+			},
+			{
+				"code": "voicepitch",
+				"type": "voice", 
+				"colbreak": true,
+				"useDropDown": true,
+				"variants": [
+					{ "code": "verylow" },
+					{ "code": "low" },
+					{ "code": "medium" },
+					{ "code": "high" }
+				]
+			},
+			{
+				"code": "facialexpression",
+				"type": "shape",
+				"variants": [
+					{ "code": "angry", "shape": { "base": "foxmodel:entity/humanoid/seraphskinparts/face/angry" } }
+				]
+			}
+		]
+  }
+}

@@ -26,7 +26,7 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     public override void OnGuiOpened()
     {
         Debug.WriteLine("GuiDialogCreateCustomCharacter opened");
-        
+
         string characterClass = capi.World.Player.Entity.WatchedAttributes.GetString("characterClass");
         if (characterClass != null)
         {
@@ -37,7 +37,16 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             _characterSystem.setCharacterClass(capi.World.Player.Entity, _characterSystem.characterClasses[0].Code, true);
         }
 
-        ComposeGuis();
+        try
+        {
+            ComposeGuis();
+        }
+        catch
+        {
+
+        }
+
+
         EntityShapeRenderer? renderer = capi.World.Player.Entity.Properties.Client.Renderer as EntityShapeRenderer;
         renderer?.TesselateShape();
 
@@ -61,7 +70,7 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         {
             _clientSelectionDone.Invoke(_characterSystem, new object[] { _characterInventory, characterClass.Code, _didSelect }); // thanks Tyron for making methods internal!
         }
-        
+
         capi.World.Player.Entity.GetBehavior<EntityBehaviorPlayerInventory>().hideClothing = false;
         reTesselate();
     }
@@ -236,8 +245,6 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         double ypos = 20 + pad;
 
-
-
         ElementBounds bgBounds = ElementBounds.FixedSize(717, _dlgHeight).WithFixedPadding(GuiStyle.ElementToDialogPadding);
 
         ElementBounds dialogBounds = ElementBounds.FixedSize(757, _dlgHeight + 40).WithAlignment(EnumDialogArea.CenterMiddle)
@@ -260,13 +267,15 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             .BeginChildElements(bgBounds)
         ;
 
+        CustomModelsSystem system = capi.ModLoader.GetModSystem<CustomModelsSystem>();
+
         //capi.World.Player.Entity.hideClothing = false;
         EntityBehaviorPlayerInventory bh = capi.World.Player.Entity.GetBehavior<EntityBehaviorPlayerInventory>();
         bh.hideClothing = false;
 
         if (_curTab == 0)
         {
-            EntityBehaviorExtraSkinnable skinMod = capi.World.Player.Entity.GetBehavior<EntityBehaviorExtraSkinnable>();
+            ExtraSkinnableBehavior skinMod = capi.World.Player.Entity.GetBehavior<ExtraSkinnableBehavior>();
 
             //capi.World.Player.Entity.hideClothing = charNaked;
             bh.hideClothing = _charNaked;
@@ -368,15 +377,30 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
                 }
             }
 
-            createCharacterComposer
-                .AddInset(_insetSlotBounds, 2)
-                .AddToggleButton(Lang.Get("Show dressed"), smallfont, OnToggleDressOnOff, toggleButtonBounds, "showdressedtoggle")
-                .AddButton(Lang.Get("Randomize"), () => { return OnRandomizeSkin(new Dictionary<string, string>()); }, ElementBounds.Fixed(0, _dlgHeight - 25).WithAlignment(EnumDialogArea.LeftFixed).WithFixedPadding(8, 6), CairoFont.WhiteSmallText(), EnumButtonStyle.Small)
-                .AddIf(capi.Settings.String.Exists("lastSkinSelection"))
-                    .AddButton(Lang.Get("Last selection"), () => { return OnRandomizeSkin(_characterSystem.getPreviousSelection()); }, ElementBounds.Fixed(130, _dlgHeight - 25).WithAlignment(EnumDialogArea.LeftFixed).WithFixedPadding(8, 6), CairoFont.WhiteSmallText(), EnumButtonStyle.Small)
-                .EndIf()
-                .AddSmallButton(Lang.Get("Confirm Skin"), OnNext, ElementBounds.Fixed(0, _dlgHeight - 25).WithAlignment(EnumDialogArea.RightFixed).WithFixedPadding(12, 6), EnumButtonStyle.Normal)
-            ;
+            createCharacterComposer.AddInset(_insetSlotBounds, 2);
+            createCharacterComposer.AddToggleButton(Lang.Get("Show dressed"), smallfont, OnToggleDressOnOff, toggleButtonBounds, "showdressedtoggle");
+            createCharacterComposer.AddButton(Lang.Get("Randomize"), () => { return OnRandomizeSkin(new Dictionary<string, string>()); }, ElementBounds.Fixed(0, _dlgHeight - 25).WithAlignment(EnumDialogArea.LeftFixed).WithFixedPadding(8, 6), CairoFont.WhiteSmallText(), EnumButtonStyle.Small);
+            createCharacterComposer.AddIf(capi.Settings.String.Exists("lastSkinSelection"))
+                .AddButton(Lang.Get("Last selection"), () => { return OnRandomizeSkin(_characterSystem.getPreviousSelection()); }, ElementBounds.Fixed(130, _dlgHeight - 25).WithAlignment(EnumDialogArea.LeftFixed).WithFixedPadding(8, 6), CairoFont.WhiteSmallText(), EnumButtonStyle.Small)
+                .EndIf();
+
+            string[] modelValues = system.CustomModels.Keys.ToArray();
+            string[] modelNames = system.CustomModels.Keys.Select(key => new AssetLocation(key)).Select(key => Lang.Get($"{key.Domain}:playermodel-{key.Path}")).ToArray();
+            int modelIndex = 0;
+
+            for (int index = 0; index < modelValues.Length; index++)
+            {
+                if (modelValues[index] == skinMod.CurrentModel)
+                {
+                    modelIndex = index;
+                    break;
+                }
+            }
+
+            createCharacterComposer.AddDropDown(modelValues, modelNames, modelIndex, (variantcode, selected) => onToggleModel(variantcode), ElementBounds.Fixed(430, _dlgHeight - 23).WithFixedSize(150, 25), "dropdown-modelselection");
+
+            createCharacterComposer.AddSmallButton(Lang.Get("Confirm Skin"), OnNext, ElementBounds.Fixed(0, _dlgHeight - 25).WithAlignment(EnumDialogArea.RightFixed).WithFixedPadding(12, 6), EnumButtonStyle.Normal);
+            
 
             createCharacterComposer.GetToggleButton("showdressedtoggle").SetValue(!_charNaked);
         }
@@ -480,6 +504,19 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         string variantCode = skinMod.AvailableSkinPartsByCode[partCode].Variants[index].Code;
 
         skinMod.selectSkinPart(partCode, variantCode);
+    }
+    private void onToggleModel(string modelCode)
+    {
+        EntityBehaviorPlayerInventory bh = capi.World.Player.Entity.GetBehavior<EntityBehaviorPlayerInventory>();
+        bh.doReloadShapeAndSkin = true;
+
+        ExtraSkinnableBehavior skinMod = capi.World.Player.Entity.GetBehavior<ExtraSkinnableBehavior>();
+        CustomModelsSystem system = capi.ModLoader.GetModSystem<CustomModelsSystem>();
+
+        system.SynchronizePlayerModel(modelCode);
+        skinMod.SetCurrentModel(modelCode);
+
+        ComposeGuis();
     }
     private bool OnNext()
     {

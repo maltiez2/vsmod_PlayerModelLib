@@ -1,15 +1,15 @@
-﻿using SkiaSharp;
+﻿using ImGuiNET;
+using Newtonsoft.Json.Linq;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
-using Vintagestory.API.Util;
 using Vintagestory.GameContent;
 
 namespace PlayerModelLib;
 
-public class ExtraSkinnableBehavior : EntityBehaviorExtraSkinnable
+public class ExtraSkinnableBehavior : EntityBehaviorExtraSkinnable, ITexPositionSource
 {
     /*public Dictionary<string, SkinnablePart> AvailableSkinPartsByCode { get; set; } = new Dictionary<string, SkinnablePart>();
     public SkinnablePart[] AvailableSkinParts { get; set; }
@@ -18,7 +18,7 @@ public class ExtraSkinnableBehavior : EntityBehaviorExtraSkinnable
     public string mainTextureCode;
     public List<AppliedSkinnablePartVariant> appliedTemp = new List<AppliedSkinnablePartVariant>();
     protected ITreeAttribute skintree;*/
-    
+
     public ExtraSkinnableBehavior(Entity entity) : base(entity)
     {
     }
@@ -28,9 +28,9 @@ public class ExtraSkinnableBehavior : EntityBehaviorExtraSkinnable
     public Dictionary<string, Shape?> AvailableModels { get; set; } = new();
     public string CurrentModel { get; protected set; } = "seraph";
 
-    /*
-     protected bool DidInit = false;
-     */
+    public Size2i? AtlasSize => ModelSystem?.GetAtlasSize(CurrentModel, entity);
+    public TextureAtlasPosition? this[string textureCode] => ModelSystem?.GetAtlasPosition(CurrentModel, textureCode, entity);
+     
 
     /*public IReadOnlyList<AppliedSkinnablePartVariant> AppliedSkinParts
     {
@@ -58,13 +58,13 @@ public class ExtraSkinnableBehavior : EntityBehaviorExtraSkinnable
 
     public override void Initialize(EntityProperties properties, JsonObject attributes)
     {
-        CustomModelsSystem system = entity.Api.ModLoader.GetModSystem<CustomModelsSystem>();
+        ModelSystem = entity.Api.ModLoader.GetModSystem<CustomModelsSystem>();
 
-        system.LoadDefault(entity);
+        ModelSystem.LoadDefault(entity);
 
-        AvailableSkinPartsByModelCodes = system.SkinParts;
-        AvailableSkinPartsArraysByModelCodes = system.SkinPartsArrays;
-        AvailableModels = system.CustomModels;
+        AvailableSkinPartsByModelCodes = ModelSystem.SkinParts;
+        AvailableSkinPartsArraysByModelCodes = ModelSystem.SkinPartsArrays;
+        AvailableModels = ModelSystem.CustomModels;
 
         skintree = entity.WatchedAttributes.GetTreeAttribute("skinConfig");
         if (skintree == null)
@@ -75,10 +75,10 @@ public class ExtraSkinnableBehavior : EntityBehaviorExtraSkinnable
         string? skinModel = entity.WatchedAttributes.GetString("skinModel");
         if (skinModel == null)
         {
-            entity.WatchedAttributes.SetString("skinModel", system.DefaultModelCode);
-            CurrentModel = system.DefaultModelCode;
+            entity.WatchedAttributes.SetString("skinModel", ModelSystem.DefaultModelCode);
+            CurrentModel = ModelSystem.DefaultModelCode;
         }
-        
+
         AvailableSkinPartsByCode = AvailableSkinPartsByModelCodes[CurrentModel];
         AvailableSkinParts = AvailableSkinPartsArraysByModelCodes[CurrentModel];
 
@@ -95,14 +95,44 @@ public class ExtraSkinnableBehavior : EntityBehaviorExtraSkinnable
         }
         onVoiceConfigChanged();
 
+        
+
+        //AddMainTextures();
+
         ReplaceEntityShape();
     }
 
     public override void OnTesselation(ref Shape entityShape, string shapePathForLogging, ref bool shapeIsCloned, ref string[] willDeleteElements)
     {
+        if (DefaultSkinTexPos == null && entity.Properties.Client.Renderer is EntityShapeRenderer renderer)
+        {
+            DefaultSkinTexPos = renderer.skinTexPos;
+        }
+
+        AddMainTextures();
+
         entity.AnimManager.LoadAnimator(entity.World.Api, entity, entityShape, entity.AnimManager.Animator?.Animations, true);
 
         base.OnTesselation(ref entityShape, shapePathForLogging, ref shapeIsCloned, ref willDeleteElements);
+    }
+
+    public void SetCurrentModel(string code)
+    {
+        skintree = entity.WatchedAttributes["skinConfig"] as ITreeAttribute;
+        CurrentModel = code;
+        AvailableSkinPartsByCode = AvailableSkinPartsByModelCodes[CurrentModel];
+        AvailableSkinParts = AvailableSkinPartsArraysByModelCodes[CurrentModel];
+        mainTextureCode = ModelSystem?.MainTextureCodes[CurrentModel] ?? "seraph";
+        ReplaceEntityShape();
+        entity.MarkShapeModified();
+    }
+
+    public override ITexPositionSource? GetTextureSource(ref EnumHandling handling)
+    {
+        if (CurrentModel == ModelSystem?.DefaultModelCode) return null;
+
+        handling = EnumHandling.PreventSubsequent;
+        return this;
     }
 
     /*public override void OnTesselation(ref Shape entityShape, string shapePathForLogging, ref bool shapeIsCloned, ref string[] willDeleteElements)
@@ -183,7 +213,7 @@ public class ExtraSkinnableBehavior : EntityBehaviorExtraSkinnable
         }
     }*/
 
-    /*public override void OnEntityLoaded()
+    public override void OnEntityLoaded()
     {
         init();
     }
@@ -200,7 +230,7 @@ public class ExtraSkinnableBehavior : EntityBehaviorExtraSkinnable
         {
             ebhtc.OnReloadSkin -= Essr_OnReloadSkin;
         }
-    }*/
+    }
 
     /*public void selectSkinPart(string partCode, string variantCode, bool retesselateShape = true, bool playVoice = true)
     {
@@ -276,7 +306,13 @@ public class ExtraSkinnableBehavior : EntityBehaviorExtraSkinnable
         }
     }*/
 
-    /*protected void init()
+    
+
+    protected CustomModelsSystem? ModelSystem;
+    protected bool DidInit = false;
+    protected TextureAtlasPosition? DefaultSkinTexPos;
+
+    protected void init()
     {
         if (entity.World.Side != EnumAppSide.Client) return;
 
@@ -291,7 +327,7 @@ public class ExtraSkinnableBehavior : EntityBehaviorExtraSkinnable
             ebhtc.OnReloadSkin += Essr_OnReloadSkin;
             DidInit = true;
         }
-    }*/
+    }
 
     protected void onSkinConfigChanged()
     {
@@ -299,6 +335,7 @@ public class ExtraSkinnableBehavior : EntityBehaviorExtraSkinnable
         CurrentModel = entity.WatchedAttributes.GetString("skinModel");
         AvailableSkinPartsByCode = AvailableSkinPartsByModelCodes[CurrentModel];
         AvailableSkinParts = AvailableSkinPartsArraysByModelCodes[CurrentModel];
+        mainTextureCode = ModelSystem?.MainTextureCodes[CurrentModel] ?? "seraph";
         ReplaceEntityShape();
         entity.MarkShapeModified();
     }
@@ -312,9 +349,11 @@ public class ExtraSkinnableBehavior : EntityBehaviorExtraSkinnable
 
     protected void onSkinModelChanged()
     {
+        skintree = entity.WatchedAttributes["skinConfig"] as ITreeAttribute;
         CurrentModel = entity.WatchedAttributes.GetString("skinModel");
         AvailableSkinPartsByCode = AvailableSkinPartsByModelCodes[CurrentModel];
         AvailableSkinParts = AvailableSkinPartsArraysByModelCodes[CurrentModel];
+        mainTextureCode = ModelSystem?.MainTextureCodes[CurrentModel] ?? "seraph";
         ReplaceEntityShape();
         entity.MarkShapeModified();
     }
@@ -432,9 +471,64 @@ public class ExtraSkinnableBehavior : EntityBehaviorExtraSkinnable
         if (AvailableModels[CurrentModel] == null || entity.Properties.Client.Renderer is not EntityShapeRenderer renderer) return;
 
         renderer.OverrideEntityShape = AvailableModels[CurrentModel];
-
+        renderer.skinTexPos = CurrentModel != ModelSystem.DefaultModelCode ? ModelSystem.GetAtlasPosition(CurrentModel, mainTextureCode, entity) : DefaultSkinTexPos;
         renderer.TesselateShape();
 
         entity.AnimManager.LoadAnimator(entity.World.Api, entity, renderer.OverrideEntityShape, entity.AnimManager.Animator?.Animations, true);
+
+        if (entity.Properties.Attributes?["skinBaseTextureKey"].Token is JValue value)
+        {
+            value.Value = ModelSystem.MainTextureCodes[CurrentModel];
+        }
+    }
+
+    protected void AddMainTextures()
+    {
+        foreach ((string modelCode, string textureCode) in ModelSystem.MainTextureCodes)
+        {
+            if (!ModelSystem.MainTextures.ContainsKey(modelCode)) return;
+            
+            CompositeTexture texture = ModelSystem.MainTextures[modelCode];
+
+            entity.Properties.Client.Textures[textureCode] = texture;
+        }
+    }
+
+    protected void Essr_OnReloadSkin(LoadedTexture atlas, TextureAtlasPosition skinTexPos, int textureSubId)
+    {
+        ICoreClientAPI capi = entity.World.Api as ICoreClientAPI;
+
+        foreach (var val in AppliedSkinParts)
+        {
+            SkinnablePart part = AvailableSkinPartsByCode[val.PartCode];
+
+            if (part.Type != EnumSkinnableType.Texture) continue;
+            if (part.TextureTarget != null && part.TextureTarget != mainTextureCode) continue;
+
+            LoadedTexture texture = new LoadedTexture(capi);
+
+            capi.Render.GetOrLoadTexture(val.Texture.Clone().WithPathAppendixOnce(".png"), ref texture);
+
+
+            int posx = part.TextureRenderTo?.X ?? 0;
+            int posy = part.TextureRenderTo?.Y ?? 0;
+
+            capi.EntityTextureAtlas.RenderTextureIntoAtlas(
+                skinTexPos.atlasTextureId,
+                texture,
+                0,
+                0,
+                texture.Width,
+                texture.Height,
+                skinTexPos.x1 * capi.EntityTextureAtlas.Size.Width + posx,
+                skinTexPos.y1 * capi.EntityTextureAtlas.Size.Height + posy,
+                part.Code == "baseskin" ? -1 : 0.005f
+            );
+        }
+
+        var textures = entity.Properties.Client.Textures;
+
+        textures[mainTextureCode].Baked.TextureSubId = textureSubId;
+        textures["skinpart-" + mainTextureCode] = textures[mainTextureCode];
     }
 }

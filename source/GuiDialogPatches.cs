@@ -7,6 +7,8 @@ namespace PlayerModelLib;
 
 public static class GuiDialogPatches
 {
+    public static object NewGuiClassConstructor { get; set; } = AccessTools.Constructor(typeof(GuiDialogCreateCustomCharacter), new Type[] { typeof(ICoreClientAPI), typeof(CharacterSystem) });
+
     [HarmonyPatch(typeof(CharacterSystem), "Event_PlayerJoin")]
     [HarmonyPatchCategory("PlayerModelLibTranspiler")]
     public class GuiDialogPatchPlayerJoin
@@ -19,7 +21,7 @@ public static class GuiDialogPatches
             {
                 if (codes[i].opcode == OpCodes.Newobj)
                 {
-                    codes[i].operand = AccessTools.Constructor(typeof(GuiDialogCreateCustomCharacter), new Type[] { typeof(ICoreClientAPI), typeof(CharacterSystem) });
+                    codes[i].operand = NewGuiClassConstructor;
 
                     return codes;
                 }
@@ -41,7 +43,7 @@ public static class GuiDialogPatches
             {
                 if (codes[i].opcode == OpCodes.Newobj)
                 {
-                    codes[i].operand = AccessTools.Constructor(typeof(GuiDialogCreateCustomCharacter), new Type[] { typeof(ICoreClientAPI), typeof(CharacterSystem) });
+                    codes[i].operand = NewGuiClassConstructor;
 
                     return codes;
                 }
