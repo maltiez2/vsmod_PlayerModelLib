@@ -7,13 +7,15 @@ public sealed class PlayerModelModSystem : ModSystem
 {
     public override void Start(ICoreAPI api)
     {
-        api.RegisterEntityBehaviorClass("PlayerModelLib:CustomModel", typeof(CustomModelBehavior));
+        api.RegisterEntityBehaviorClass("PlayerModelLib:ExtraSkinnable", typeof(ExtraSkinnableBehavior));
 
-        new Harmony("PlayerModelLib").PatchAll();
+        new Harmony("PlayerModelLibTranspiler").PatchAll();
+        OtherPatches.Patch("PlayerModelLib");
     }
 
     public override void Dispose()
     {
         new Harmony("PlayerModelLib").UnpatchAll();
+        OtherPatches.Unpatch("PlayerModelLib");
     }
 }

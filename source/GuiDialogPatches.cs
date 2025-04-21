@@ -1,26 +1,14 @@
 ﻿using HarmonyLib;
 using System.Reflection.Emit;
 using Vintagestory.API.Client;
-using Vintagestory.API.Common;
-using Vintagestory.API.Common.Entities;
 using Vintagestory.GameContent;
 
 namespace PlayerModelLib;
 
 public static class GuiDialogPatches
 {
-    public static void Patch(string harmonyId, ICoreAPI api)
-    {
-
-    }
-
-    public static void Unpatch(string harmonyId, ICoreAPI api)
-    {
-
-    }
-
     [HarmonyPatch(typeof(CharacterSystem), "Event_PlayerJoin")]
-    [HarmonyPatchCategory("playermodellib")]
+    [HarmonyPatchCategory("PlayerModelLibTranspiler")]
     public class GuiDialogPatchPlayerJoin
     {
         [HarmonyTranspiler]
@@ -42,7 +30,7 @@ public static class GuiDialogPatches
     }
 
     [HarmonyPatch(typeof(CharacterSystem), "onCharSelCmd")]
-    [HarmonyPatchCategory("playermodellib")]
+    [HarmonyPatchCategory("PlayerModelLibTranspiler")]
     public class GuiDialogPatchCommand
     {
         [HarmonyTranspiler]
