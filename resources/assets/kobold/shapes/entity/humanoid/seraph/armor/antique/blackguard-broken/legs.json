@@ -1,0 +1,116 @@
+{
+	"editor": {
+		"allAngles": true,
+		"entityTextureMode": true
+	},
+	"textureWidth": 64,
+	"textureHeight": 64,
+	"textureSizes": {
+	},
+	"textures": {
+		"blackguard-destroyed": "entity/humanoid/serapharmor/blackguard/blackguard-broken"
+	},
+	"elements": [
+		{
+			"name": "ArmorUpperLegR",
+			"stepParentName": "UpperFootR",
+			"from": [ -0.2, -0.5, -0.3 ],
+			"to": [ 4.4, 7.0, 3.5 ],
+			"autoUnwrap": false,
+			"uv": [ 16.0, 33.0 ],
+			"rotationOrigin": [ -0.2, -0.5, -0.3 ],
+			"faces": {
+				"north": { "texture": "#blackguard-destroyed", "uv": [ 16.0, 36.5, 20.5, 44.0 ] },
+				"east": { "texture": "#blackguard-destroyed", "uv": [ 28.5, 36.5, 32.0, 44.0 ] },
+				"south": { "texture": "#blackguard-destroyed", "uv": [ 24.0, 36.5, 28.5, 44.0 ] },
+				"west": { "texture": "#blackguard-destroyed", "uv": [ 20.5, 36.5, 24.0, 44.0 ] },
+				"up": { "texture": "#blackguard-destroyed", "uv": [ 16.0, 33.0, 20.5, 36.5 ] },
+				"down": { "texture": "#blackguard-destroyed", "uv": [ 24.0, 39.0, 27.5, 42.5 ], "rotation": 90 }
+			}
+		},
+		{
+			"name": "ArmorUpperLegL",
+			"stepParentName": "UpperFootL",
+			"from": [ -0.2, -0.5, -0.3 ],
+			"to": [ 4.4, 7.0, 3.5 ],
+			"autoUnwrap": false,
+			"uv": [ 0.0, 33.0 ],
+			"rotationOrigin": [ -0.2, -0.5, -0.3 ],
+			"faces": {
+				"north": { "texture": "#blackguard-destroyed", "uv": [ 0.0, 36.5, 4.5, 44.0 ] },
+				"east": { "texture": "#blackguard-destroyed", "uv": [ 12.5, 36.5, 16.0, 44.0 ] },
+				"south": { "texture": "#blackguard-destroyed", "uv": [ 8.0, 36.5, 12.5, 44.0 ] },
+				"west": { "texture": "#blackguard-destroyed", "uv": [ 4.5, 36.5, 8.0, 44.0 ] },
+				"up": { "texture": "#blackguard-destroyed", "uv": [ 0.0, 33.0, 4.5, 36.5 ] },
+				"down": { "texture": "#blackguard-destroyed", "uv": [ 8.0, 40.0, 11.5, 44.5 ], "rotation": 90 }
+			}
+		},
+		{
+			"name": "ArmorLowerLegR",
+			"stepParentName": "LowerFootR",
+			"from": [ -0.3, 0.8, -0.25 ],
+			"to": [ 3.2, 7.3, 3.25 ],
+			"autoUnwrap": false,
+			"uv": [ 16.0, 44.0 ],
+			"rotationOrigin": [ -0.3, 0.8, -0.4 ],
+			"faces": {
+				"north": { "texture": "#blackguard-destroyed", "uv": [ 16.0, 47.5, 20.5, 55.0 ], "autoUv": false },
+				"east": { "texture": "#blackguard-destroyed", "uv": [ 28.5, 47.5, 32.0, 54.0 ] },
+				"south": { "texture": "#blackguard-destroyed", "uv": [ 24.0, 47.5, 28.5, 55.0 ], "autoUv": false },
+				"west": { "texture": "#blackguard-destroyed", "uv": [ 20.5, 47.5, 24.0, 54.0 ] },
+				"up": { "texture": "#blackguard-destroyed", "uv": [ 16.0, 44.0, 19.5, 47.5 ] },
+				"down": { "texture": "#blackguard-destroyed", "uv": [ 24.0, 44.0, 28.5, 47.5 ], "autoUv": false }
+			}
+		},
+		{
+			"name": "ArmorLowerLegL",
+			"stepParentName": "LowerFootL",
+			"from": [ -0.3, 0.8, -0.25 ],
+			"to": [ 3.2, 6.3, 3.25 ],
+			"autoUnwrap": false,
+			"uv": [ 0.0, 44.0 ],
+			"rotationOrigin": [ -0.3, 0.8, -0.4 ],
+			"faces": {
+				"north": { "texture": "#blackguard-destroyed", "uv": [ 0.0, 47.5, 4.5, 55.0 ], "autoUv": false },
+				"east": { "texture": "#blackguard-destroyed", "uv": [ 12.5, 47.5, 16.0, 53.0 ] },
+				"south": { "texture": "#blackguard-destroyed", "uv": [ 8.0, 47.5, 12.5, 55.0 ], "autoUv": false },
+				"west": { "texture": "#blackguard-destroyed", "uv": [ 4.5, 47.5, 8.0, 53.0 ] },
+				"up": { "texture": "#blackguard-destroyed", "uv": [ 0.0, 44.0, 3.5, 47.5 ] },
+				"down": { "texture": "#blackguard-destroyed", "uv": [ 8.0, 44.0, 11.5, 47.5 ] }
+			}
+		},
+		{
+			"name": "ArmorLowerLegR2",
+			"stepParentName": "PawR",
+			"from": [ -0.3, 0.8, -0.25 ],
+			"to": [ 3.2, 7.3, 3.25 ],
+			"autoUnwrap": false,
+			"uv": [ 16.0, 44.0 ],
+			"rotationOrigin": [ -0.3, 0.8, -0.4 ],
+			"faces": {
+				"north": { "texture": "#blackguard-destroyed", "uv": [ 16.0, 50.5, 19.5, 57.0 ] },
+				"east": { "texture": "#blackguard-destroyed", "uv": [ 28.5, 50.5, 32.0, 57.0 ] },
+				"south": { "texture": "#blackguard-destroyed", "uv": [ 24.0, 50.5, 27.5, 57.0 ] },
+				"west": { "texture": "#blackguard-destroyed", "uv": [ 20.5, 50.5, 24.0, 57.0 ] },
+				"up": { "texture": "#blackguard-destroyed", "uv": [ 8.0, 44.0, 12.5, 47.5 ], "autoUv": false },
+				"down": { "texture": "#blackguard-destroyed", "uv": [ 24.0, 44.0, 27.5, 47.5 ] }
+			}
+		},
+		{
+			"name": "ArmorLowerLegL2",
+			"stepParentName": "PawL",
+			"from": [ -0.3, 1.8, -0.25 ],
+			"to": [ 3.2, 7.3, 3.25 ],
+			"autoUnwrap": false,
+			"uv": [ 0.0, 44.0 ],
+			"rotationOrigin": [ -0.3, 1.8, -0.4 ],
+			"faces": {
+				"north": { "texture": "#blackguard-destroyed", "uv": [ 0.0, 51.5, 3.5, 57.0 ] },
+				"east": { "texture": "#blackguard-destroyed", "uv": [ 12.5, 51.5, 16.0, 57.0 ], "autoUv": false },
+				"south": { "texture": "#blackguard-destroyed", "uv": [ 8.0, 51.5, 11.5, 57.0 ] },
+				"west": { "texture": "#blackguard-destroyed", "uv": [ 4.5, 51.5, 8.0, 57.0 ], "autoUv": false },
+				"up": { "texture": "#blackguard-destroyed", "uv": [ 8.0, 44.0, 12.5, 47.5 ], "autoUv": false },
+				"down": { "texture": "#blackguard-destroyed", "uv": [ 8.0, 44.0, 11.5, 47.5 ] }
+			}
+		}
+	]}

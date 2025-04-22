@@ -27,6 +27,7 @@ public class ExtraSkinnableBehavior : EntityBehaviorExtraSkinnable, ITexPosition
     public Dictionary<string, SkinnablePart[]> AvailableSkinPartsArraysByModelCodes { get; set; } = new();
     public Dictionary<string, Shape?> AvailableModels { get; set; } = new();
     public string CurrentModel { get; protected set; } = "seraph";
+    public string MainTextureCode => mainTextureCode;
 
     public Size2i? AtlasSize => ModelSystem?.GetAtlasSize(CurrentModel, entity);
     public TextureAtlasPosition? this[string textureCode] => ModelSystem?.GetAtlasPosition(CurrentModel, textureCode, entity);
@@ -476,10 +477,10 @@ public class ExtraSkinnableBehavior : EntityBehaviorExtraSkinnable, ITexPosition
 
         entity.AnimManager.LoadAnimator(entity.World.Api, entity, renderer.OverrideEntityShape, entity.AnimManager.Animator?.Animations, true);
 
-        if (entity.Properties.Attributes?["skinBaseTextureKey"].Token is JValue value)
+        /*if (entity.Properties.Attributes?["skinBaseTextureKey"].Token is JValue value)
         {
             value.Value = ModelSystem.MainTextureCodes[CurrentModel];
-        }
+        }*/
     }
 
     protected void AddMainTextures()

@@ -1,0 +1,41 @@
+{
+	"editor": {
+		"backDropShape": "entity/humanoid/seraph",
+		"allAngles": true,
+		"entityTextureMode": true
+	},
+	"textureWidth": 64,
+	"textureHeight": 64,
+	"textureSizes": {
+		"seraph": [64,64]
+	},
+	"textures": {
+	},
+	"elements": [
+		{
+			"name": "hidefacialhair",
+			"stepParentName": "Head",
+			"from": [ 0.0, 0.0, 0.0 ],
+			"to": [ 0.0, 0.0, 0.0 ],
+			"uv": [ 0.0, 0.0 ],
+			"faces": {
+			},
+			"children": [
+				{
+					"name": "Cube2",
+					"from": [ -3.1, 1.6, 2.0 ],
+					"to": [ -2.6, 2.2, 3.0 ],
+					"uv": [ 29.25, 0.75 ],
+					"rotationOrigin": [ -3.1, 1.6, 2.0 ],
+					"faces": {
+						"north": { "texture": "#seraph", "uv": [ 29.5, 2.0, 30.0, 2.5 ] },
+						"east": { "texture": "#seraph", "uv": [ 30.0, 2.0, 31.0, 2.5 ] },
+						"south": { "texture": "#seraph", "uv": [ 31.0, 2.0, 31.5, 2.5 ] },
+						"west": { "texture": "#seraph", "uv": [ 31.5, 2.0, 32.5, 2.5 ] },
+						"up": { "texture": "#seraph", "uv": [ 29.5, 1.0, 30.0, 2.0 ] },
+						"down": { "texture": "#seraph", "uv": [ 30.0, 1.0, 30.5, 2.0 ] }
+					}
+				}
+			]
+		}
+	]}

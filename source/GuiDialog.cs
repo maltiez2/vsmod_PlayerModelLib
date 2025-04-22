@@ -22,6 +22,7 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     public GuiDialogCreateCustomCharacter(ICoreClientAPI capi, CharacterSystem characterSystem) : base(capi, characterSystem)
     {
         _characterSystem = characterSystem;
+        _customModelsSystem = capi.ModLoader.GetModSystem<CustomModelsSystem>();
     }
     public override void OnGuiOpened()
     {
@@ -222,6 +223,7 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     private IInventory? _characterInventory;
     private ElementBounds? _insetSlotBounds;
     private readonly CharacterSystem _characterSystem;
+    private readonly CustomModelsSystem _customModelsSystem;
     private int _currentClassIndex = 0;
     private int _curTab = 0;
     private readonly int _rows = 7;
@@ -517,6 +519,8 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         skinMod.SetCurrentModel(modelCode);
 
         ComposeGuis();
+
+        OnRandomizeSkin(new Dictionary<string, string>());
     }
     private bool OnNext()
     {
@@ -545,9 +549,17 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     }
     private void changeClass(int dir)
     {
-        _currentClassIndex = GameMath.Mod(_currentClassIndex + dir, _characterSystem.characterClasses.Count);
+        ExtraSkinnableBehavior skinMod = capi.World.Player.Entity.GetBehavior<ExtraSkinnableBehavior>();
 
-        CharacterClass chclass = _characterSystem.characterClasses[_currentClassIndex];
+        List<CharacterClass> availableClasses = _characterSystem.characterClasses.Where(element => _customModelsSystem.AvailableClasses[skinMod.CurrentModel].Contains(element.Code)).ToList();
+        if (availableClasses.Count == 0)
+        {
+            availableClasses = _characterSystem.characterClasses;
+        }
+        
+        _currentClassIndex = GameMath.Mod(_currentClassIndex + dir, availableClasses.Count);
+
+        CharacterClass chclass = availableClasses[_currentClassIndex];
         Composers["createcharacter"].GetDynamicText("className").SetNewText(Lang.Get("characterclass-" + chclass.Code));
 
         StringBuilder fulldesc = new();

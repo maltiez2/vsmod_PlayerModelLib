@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json.Linq;
 using ProtoBuf;
 using SkiaSharp;
+using System.Collections.Generic;
 using System.Diagnostics;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -8,6 +9,7 @@ using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
+using Vintagestory.API.Util;
 using Vintagestory.GameContent;
 
 namespace PlayerModelLib;
@@ -17,6 +19,8 @@ public class CustomShapeConfig
     public string ShapePath { get; set; } = "";
     public string MainTextureCode { get; set; } = "seraph";
     public SkinnablePart[] SkinnableParts { get; set; } = Array.Empty<SkinnablePart>();
+    public Dictionary<string, string> WearableModelReplacers { get; set; } = new();
+    public string[] AvailableClasses { get; set; } = Array.Empty<string>();
     public string Domain { get; set; } = "game";
 }
 
@@ -34,6 +38,8 @@ public sealed class CustomModelsSystem : ModSystem
     public Dictionary<string, string> MainTextureCodes { get; set; } = new();
     public Dictionary<string, CompositeTexture> MainTextures { get; set; } = new();
     public Dictionary<string, int[]> MainTextureSizes { get; set; } = new();
+    public Dictionary<string, Dictionary<int, string>> WearableShapeReplacers { get; set; } = new();
+    public Dictionary<string, HashSet<string>> AvailableClasses { get; set; } = new();
     public ContainedTextureSource? TextureSource { get; private set; }
     public string DefaultModelCode { get; private set; } = "seraph";
     public Shape? DefaultModel { get; private set; }
@@ -67,6 +73,7 @@ public sealed class CustomModelsSystem : ModSystem
     public override void AssetsFinalize(ICoreAPI api)
     {
         CollectTextures();
+        LoadModelReplacements(api);
     }
     public TextureAtlasPosition? GetAtlasPosition(string modelCode, string textureCode, Entity entity)
     {
@@ -88,7 +95,14 @@ public sealed class CustomModelsSystem : ModSystem
         if (!_textures.ContainsKey(fullCode))
         {
             int textureIndex = entity.WatchedAttributes.GetInt("textureIndex");
-            return _clientApi?.Tesselator.GetTextureSource(entity, null, textureIndex)[textureCode];
+            try
+            {
+                return _clientApi?.Tesselator.GetTextureSource(entity, null, textureIndex)?[textureCode];
+            }
+            catch (Exception exception)
+            {
+                return null;
+            }
         }
 
         return TextureSource?[fullCode];
@@ -131,6 +145,7 @@ public sealed class CustomModelsSystem : ModSystem
     private readonly Dictionary<string, AssetLocation> _textures = new();
     private ICoreClientAPI? _clientApi;
     private readonly Dictionary<string, string> _oldMainTextureCodes = new();
+    private readonly Dictionary<string, Dictionary<string, string>> _wearableModelReplacers = new();
 
     private static Shape? LoadShape(ICoreAPI api, string path)
     {
@@ -151,6 +166,8 @@ public sealed class CustomModelsSystem : ModSystem
 
                 if (shape == null) continue; // @TODO add error logging
 
+                _wearableModelReplacers.Add(code, modelConfig.WearableModelReplacers);
+
                 Dictionary<string, SkinnablePart> partsByCode = LoadParts(api, modelConfig.SkinnableParts);
 
                 CustomModels.Add(code, shape);
@@ -158,6 +175,42 @@ public sealed class CustomModelsSystem : ModSystem
                 SkinPartsArrays.Add(code, modelConfig.SkinnableParts);
                 MainTextureCodes.Add(code, $"{modelConfig.Domain}-{code}-{modelConfig.MainTextureCode}");
                 _oldMainTextureCodes.Add(code, modelConfig.MainTextureCode);
+                AvailableClasses.Add(code, modelConfig.AvailableClasses.ToHashSet());
+            }
+        }
+    }
+    private void LoadModelReplacements(ICoreAPI api)
+    {
+        /*Dictionary<string, Shape> loadedShapes = new();
+        foreach ((_, Dictionary<string, string> paths) in _wearableModelReplacers)
+        {
+            foreach ((_, string path) in paths)
+            {
+                if (loadedShapes.ContainsKey(path)) continue;
+
+                Shape? shape = LoadShape(api, path);
+
+                if (shape == null) continue;
+
+                shape.ResolveReferences(api.Logger, "PlayerModelLib:CustomModel-replace");
+
+                loadedShapes.Add(path, shape);
+            }
+        }*/
+
+        foreach ((string modelCode, Dictionary<string, string> paths) in _wearableModelReplacers)
+        {
+            WearableShapeReplacers.Add(modelCode, new());
+
+            foreach ((string itemCodeWildcard, string path) in paths)
+            {
+                foreach (Item item in api.World.Items)
+                {
+                    if (WildcardUtil.Match(itemCodeWildcard, item.Code?.ToString() ?? ""))
+                    {
+                        WearableShapeReplacers[modelCode].TryAdd(item.Id, path);
+                    }
+                }
             }
         }
     }
@@ -167,18 +220,31 @@ public sealed class CustomModelsSystem : ModSystem
 
         foreach (Shape customShape in CustomModels.Values.OfType<Shape>())
         {
-            IEnumerable<string> existingAnimations = customShape.Animations.Select(entry => entry.Code);
+            if (customShape == DefaultModel) continue;
+
+            HashSet<string> existingAnimations = customShape.Animations.Select(GetAnimationCode).ToHashSet();
 
             foreach ((uint crc32, Animation animation) in DefaultModel.AnimationsByCrc32)
             {
-                if (existingAnimations.Contains(animation.Code)) continue;
+                string code = GetAnimationCode(animation);
 
-                customShape.Animations = customShape.Animations.Append(animation).ToArray();
-                customShape.AnimationsByCrc32.Add(crc32, animation);
+                if (existingAnimations.Contains(code)) continue;
+
+                existingAnimations.Add(code);
+                customShape.Animations = customShape.Animations.Append(animation.Clone()).ToArray();
+                //customShape.AnimationsByCrc32.Add(crc32, customShape.Animations.Last());
             }
 
             customShape.ResolveReferences(api.Logger, "PlayerModelLib:CustomModel-test");
         }
+    }
+    private string GetAnimationCode(Animation anim)
+    {
+        if (anim.Code == null || anim.Code.Length == 0)
+        {
+            return anim.Name.ToLowerInvariant().Replace(" ", "");
+        }
+        return anim.Code.ToLowerInvariant().Replace(" ", "");
     }
     private void HandleChangePlayerModelPacket(IPlayer player, ChangePlayerModelPacket packet)
     {
@@ -364,11 +430,11 @@ public sealed class CustomModelsSystem : ModSystem
                         Base = texturePath
                     };
 
-                    MainTextures[modelCode].Bake(_clientApi.Assets); 
+                    MainTextures[modelCode].Bake(_clientApi.Assets);
 
                     continue;
                 }
-                
+
                 if (_textures.ContainsKey($"{modelCode}-{textureCode}")) continue;
 
                 _textures.Add($"{modelCode}-{textureCode}", texturePath);

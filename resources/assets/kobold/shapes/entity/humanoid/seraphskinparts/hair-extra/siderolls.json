@@ -1,0 +1,89 @@
+{
+	"editor": {
+		"backDropShape": "entity/humanoid/seraph",
+		"allAngles": true,
+		"entityTextureMode": true
+	},
+	"textureWidth": 48,
+	"textureHeight": 48,
+	"textureSizes": {
+		"hair": [48,48],
+		"birch": [16,16]
+	},
+	"textures": {
+	},
+	"elements": [
+		{
+			"name": "sidelow",
+			"stepParentName": "Head",
+			"from": [ 0.0, 0.0, 0.0 ],
+			"to": [ 1.0, 1.0, 1.0 ],
+			"uv": [ 0.0, 0.0 ],
+			"faces": {
+			},
+			"children": [
+				{
+					"name": "RollRight",
+					"from": [ 1.8, 1.0, -1.5 ],
+					"to": [ 4.8, 4.0, 0.0 ],
+					"uv": [ 19.5, 32.0 ],
+					"rotationOrigin": [ 3.3, 2.5, -1.1 ],
+					"rotationZ": 40.0,
+					"faces": {
+						"north": { "texture": "#hair", "uv": [ 19.5, 33.5, 22.5, 36.5 ] },
+						"east": { "texture": "#hair", "uv": [ 22.5, 33.5, 24.0, 36.5 ] },
+						"west": { "texture": "#hair", "uv": [ 24.0, 33.5, 25.5, 36.5 ] },
+						"up": { "texture": "#hair", "uv": [ 19.5, 32.0, 22.5, 33.5 ] },
+						"down": { "texture": "#hair", "uv": [ 22.5, 32.0, 25.5, 33.5 ] }
+					},
+					"children": [
+						{
+							"name": "RollRight2",
+							"from": [ 0.5, 0.5, -0.5 ],
+							"to": [ 2.5, 2.5, 0.0 ],
+							"uv": [ 17.0, 33.0 ],
+							"rotationOrigin": [ 1.5, 1.5, 0.0 ],
+							"faces": {
+								"north": { "texture": "#hair", "uv": [ 17.0, 33.5, 19.0, 35.5 ] },
+								"east": { "texture": "#hair", "uv": [ 19.0, 33.5, 19.5, 35.5 ] },
+								"west": { "texture": "#hair", "uv": [ 21.5, 33.5, 22.0, 35.5 ] },
+								"up": { "texture": "#hair", "uv": [ 17.0, 33.0, 19.0, 33.5 ] },
+								"down": { "texture": "#hair", "uv": [ 19.0, 33.0, 21.0, 33.5 ] }
+							}
+						}
+					]
+				},
+				{
+					"name": "RollLeft",
+					"from": [ 1.8, 1.0, 5.0 ],
+					"to": [ 4.8, 4.0, 6.5 ],
+					"uv": [ 19.5, 32.0 ],
+					"rotationOrigin": [ 3.3, 2.5, 5.0 ],
+					"rotationZ": 40.0,
+					"faces": {
+						"east": { "texture": "#hair", "uv": [ 19.5, 33.5, 21.0, 36.5 ] },
+						"south": { "texture": "#hair", "uv": [ 21.0, 33.5, 24.0, 36.5 ] },
+						"west": { "texture": "#hair", "uv": [ 24.0, 33.5, 25.5, 36.5 ] },
+						"up": { "texture": "#hair", "uv": [ 19.5, 32.0, 22.5, 33.5 ] },
+						"down": { "texture": "#hair", "uv": [ 22.5, 32.0, 25.5, 33.5 ] }
+					},
+					"children": [
+						{
+							"name": "RollLeft2",
+							"from": [ 0.5, 0.5, 1.5 ],
+							"to": [ 2.5, 2.5, 2.0 ],
+							"uv": [ 1.5, 36.5 ],
+							"rotationOrigin": [ 1.5, 1.5, 1.5 ],
+							"faces": {
+								"east": { "texture": "#hair", "uv": [ 3.5, 37.0, 4.0, 39.0 ] },
+								"south": { "texture": "#hair", "uv": [ 4.0, 37.0, 6.0, 39.0 ] },
+								"west": { "texture": "#hair", "uv": [ 6.0, 37.0, 6.5, 39.0 ] },
+								"up": { "texture": "#hair", "uv": [ 1.5, 36.5, 3.5, 37.0 ] },
+								"down": { "texture": "#hair", "uv": [ 3.5, 36.5, 5.5, 37.0 ] }
+							}
+						}
+					]
+				}
+			]
+		}
+	]}

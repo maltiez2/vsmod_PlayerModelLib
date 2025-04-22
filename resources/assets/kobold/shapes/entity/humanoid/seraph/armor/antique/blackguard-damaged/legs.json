@@ -1,0 +1,157 @@
+{
+	"editor": {
+		"backDropShape": "shapes/entity/humanoid/seraph",
+		"allAngles": true,
+		"entityTextureMode": true
+	},
+	"textureWidth": 64,
+	"textureHeight": 64,
+	"textureSizes": {
+	},
+	"textures": {
+		"blackguard-damaged": "entity/humanoid/serapharmor/blackguard/blackguard-damaged"
+	},
+	"elements": [
+		{
+			"name": "ArmorUpperLegR",
+			"stepParentName": "UpperFootR",
+			"from": [ -0.2, -0.5, -0.3 ],
+			"to": [ 4.4, 7.0, 3.5 ],
+			"autoUnwrap": false,
+			"uv": [ 16.0, 33.0 ],
+			"rotationOrigin": [ -0.2, -0.5, -0.3 ],
+			"faces": {
+				"north": { "texture": "#blackguard-damaged", "uv": [ 16.0, 36.5, 20.5, 44.0 ] },
+				"east": { "texture": "#blackguard-damaged", "uv": [ 28.5, 36.5, 32.0, 44.0 ] },
+				"south": { "texture": "#blackguard-damaged", "uv": [ 24.0, 36.5, 28.5, 44.0 ] },
+				"west": { "texture": "#blackguard-damaged", "uv": [ 20.5, 36.5, 24.0, 44.0 ] },
+				"up": { "texture": "#blackguard-damaged", "uv": [ 16.0, 33.0, 20.5, 36.5 ] },
+				"down": { "texture": "#blackguard-damaged", "uv": [ 24.0, 40.0, 28.5, 43.5 ] }
+			}
+		},
+		{
+			"name": "ArmorUpperLegL",
+			"stepParentName": "UpperFootL",
+			"from": [ -0.2, -0.5, -0.3 ],
+			"to": [ 4.4, 7.0, 3.5 ],
+			"autoUnwrap": false,
+			"uv": [ 0.0, 33.0 ],
+			"rotationOrigin": [ -0.2, -0.5, -0.3 ],
+			"faces": {
+				"north": { "texture": "#blackguard-damaged", "uv": [ 0.0, 36.5, 4.5, 44.0 ] },
+				"east": { "texture": "#blackguard-damaged", "uv": [ 12.5, 36.5, 16.0, 44.0 ] },
+				"south": { "texture": "#blackguard-damaged", "uv": [ 8.0, 36.5, 12.5, 44.0 ] },
+				"west": { "texture": "#blackguard-damaged", "uv": [ 4.5, 36.5, 8.0, 44.0 ] },
+				"up": { "texture": "#blackguard-damaged", "uv": [ 0.0, 33.0, 4.5, 36.5 ] },
+				"down": { "texture": "#blackguard-damaged", "uv": [ 8.0, 40.0, 12.5, 43.5 ] }
+			}
+		},
+		{
+			"name": "ArmorLowerLegR",
+			"stepParentName": "LowerFootR",
+			"from": [ -0.3, -0.2, -0.25 ],
+			"to": [ 3.2, 5.3, 3.25 ],
+			"autoUnwrap": false,
+			"uv": [ 16.0, 44.0 ],
+			"rotationOrigin": [ -0.3, -0.2, -0.4 ],
+			"faces": {
+				"north": { "texture": "#blackguard-damaged", "uv": [ 16.0, 47.5, 19.5, 53.0 ] },
+				"east": { "texture": "#blackguard-damaged", "uv": [ 28.5, 47.5, 32.0, 53.0 ] },
+				"south": { "texture": "#blackguard-damaged", "uv": [ 24.0, 47.5, 27.5, 53.0 ] },
+				"west": { "texture": "#blackguard-damaged", "uv": [ 20.5, 47.5, 24.0, 53.0 ] },
+				"up": { "texture": "#blackguard-damaged", "uv": [ 16.0, 44.0, 19.5, 47.5 ] },
+				"down": { "texture": "#blackguard-damaged", "uv": [ 24.0, 44.0, 27.5, 47.5 ] }
+			}
+		},
+		{
+			"name": "ArmorLowerLegL",
+			"stepParentName": "LowerFootL",
+			"from": [ -0.3, -0.2, -0.25 ],
+			"to": [ 3.2, 5.3, 3.25 ],
+			"autoUnwrap": false,
+			"uv": [ 0.0, 44.0 ],
+			"rotationOrigin": [ -0.3, -0.2, -0.4 ],
+			"faces": {
+				"north": { "texture": "#blackguard-damaged", "uv": [ 0.0, 47.5, 3.5, 53.0 ] },
+				"east": { "texture": "#blackguard-damaged", "uv": [ 12.5, 47.5, 16.0, 53.0 ] },
+				"south": { "texture": "#blackguard-damaged", "uv": [ 8.0, 47.5, 11.5, 53.0 ] },
+				"west": { "texture": "#blackguard-damaged", "uv": [ 4.5, 47.5, 8.0, 53.0 ] },
+				"up": { "texture": "#blackguard-damaged", "uv": [ 0.0, 44.0, 3.5, 47.5 ] },
+				"down": { "texture": "#blackguard-damaged", "uv": [ 8.0, 44.0, 11.5, 47.5 ] }
+			},
+			"children": [
+				{
+					"name": "ArmorLowerLegKnee",
+					"from": [ -0.6, 1.6, -0.2 ],
+					"to": [ 2.4, 3.6, 3.6 ],
+					"autoUnwrap": false,
+					"uv": [ 43.0, 33.5 ],
+					"rotationOrigin": [ -1.6, 1.6, 1.5 ],
+					"rotationX": 6.0,
+					"rotationZ": -6.0,
+					"faces": {
+						"north": { "texture": "#blackguard-damaged", "uv": [ 17.5, 57.0, 20.5, 59.0 ] },
+						"east": { "texture": "#blackguard-damaged", "uv": [ 27.0, 57.0, 30.5, 59.0 ] },
+						"south": { "texture": "#blackguard-damaged", "uv": [ 24.0, 57.0, 27.0, 59.0 ] },
+						"west": { "texture": "#blackguard-damaged", "uv": [ 20.5, 57.0, 24.0, 59.0 ] },
+						"up": { "texture": "#blackguard-damaged", "uv": [ 10.5, 57.0, 14.0, 60.0 ], "rotation": 90 },
+						"down": { "texture": "#blackguard-damaged", "uv": [ 14.0, 57.0, 17.5, 60.0 ], "rotation": 270 }
+					}
+				}
+			]
+		},
+		{
+			"name": "ArmorLowerLegR2",
+			"stepParentName": "PawR",
+			"from": [ -0.3, -0.2, -0.25 ],
+			"to": [ 3.2, 7.3, 3.25 ],
+			"autoUnwrap": false,
+			"uv": [ 16.0, 44.0 ],
+			"rotationOrigin": [ -0.3, -0.2, -0.4 ],
+			"faces": {
+				"north": { "texture": "#blackguard-damaged", "uv": [ 16.0, 50.5, 19.5, 58.0 ] },
+				"east": { "texture": "#blackguard-damaged", "uv": [ 28.5, 49.5, 32.0, 57.0 ] },
+				"south": { "texture": "#blackguard-damaged", "uv": [ 24.0, 49.5, 27.5, 57.0 ] },
+				"west": { "texture": "#blackguard-damaged", "uv": [ 20.5, 49.5, 24.0, 57.0 ] },
+				"up": { "texture": "#blackguard-damaged", "uv": [ 16.0, 44.0, 19.5, 47.5 ] },
+				"down": { "texture": "#blackguard-damaged", "uv": [ 24.0, 44.0, 27.5, 47.5 ] }
+			}
+		},
+		{
+			"name": "ArmorLowerLegL2",
+			"stepParentName": "PawL",
+			"from": [ -0.3, -0.2, -0.25 ],
+			"to": [ 3.2, 8.3, 3.25 ],
+			"autoUnwrap": false,
+			"uv": [ 0.0, 44.0 ],
+			"rotationOrigin": [ -0.3, -0.2, -0.4 ],
+			"faces": {
+				"north": { "texture": "#blackguard-damaged", "uv": [ 0.0, 48.5, 3.5, 57.0 ] },
+				"east": { "texture": "#blackguard-damaged", "uv": [ 12.5, 48.5, 16.0, 57.0 ] },
+				"south": { "texture": "#blackguard-damaged", "uv": [ 8.0, 48.5, 11.5, 57.0 ] },
+				"west": { "texture": "#blackguard-damaged", "uv": [ 4.5, 48.5, 8.0, 57.0 ] },
+				"up": { "texture": "#blackguard-damaged", "uv": [ 0.0, 44.0, 3.5, 47.5 ] },
+				"down": { "texture": "#blackguard-damaged", "uv": [ 8.0, 44.0, 11.5, 47.5 ] }
+			},
+			"children": [
+				{
+					"name": "ArmorLowerLegKnee2",
+					"from": [ -0.6, 7.6, -0.2 ],
+					"to": [ 2.4, 9.6, 3.6 ],
+					"autoUnwrap": false,
+					"uv": [ 43.0, 33.5 ],
+					"rotationOrigin": [ -1.6, 7.6, 1.5 ],
+					"rotationX": 6.0,
+					"rotationZ": -6.0,
+					"faces": {
+						"north": { "texture": "#blackguard-damaged", "uv": [ 17.5, 57.0, 20.5, 59.0 ] },
+						"east": { "texture": "#blackguard-damaged", "uv": [ 27.0, 57.0, 30.5, 59.0 ] },
+						"south": { "texture": "#blackguard-damaged", "uv": [ 24.0, 57.0, 27.0, 59.0 ] },
+						"west": { "texture": "#blackguard-damaged", "uv": [ 20.5, 57.0, 24.0, 59.0 ] },
+						"up": { "texture": "#blackguard-damaged", "uv": [ 10.5, 57.0, 14.0, 60.0 ], "rotation": 90 },
+						"down": { "texture": "#blackguard-damaged", "uv": [ 14.0, 57.0, 17.5, 60.0 ], "rotation": 270 }
+					}
+				}
+			]
+		}
+	]}

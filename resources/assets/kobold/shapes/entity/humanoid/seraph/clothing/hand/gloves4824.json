@@ -1,0 +1,69 @@
+{
+	"editor": {
+		"backDropShape": "entity/humanoid/seraph",
+		"collapsedPaths": "Root/bandN/toothR1,Root/bandN/toothL1",
+		"allAngles": true,
+		"entityTextureMode": true
+	},
+	"textureWidth": 24,
+	"textureHeight": 12,
+	"textureSizes": {
+		"gloves": [24,12]
+	},
+	"textures": {
+		"gloves": "entity/humanoid/seraphclothes/hand/forgotten"
+	},
+	"elements": [
+		{
+			"name": "gloveL",
+			"stepParentName": "LowerArmL",
+			"from": [ 0.0, 0.0, 0.0 ],
+			"to": [ 0.0, 0.0, 0.0 ],
+			"uv": [ 999.0, 999.0 ],
+			"faces": {
+			},
+			"children": [
+				{
+					"name": "Left",
+					"from": [ -0.01, -0.01, -0.01 ],
+					"to": [ 2.51, 7.49, 2.01 ],
+					"unwrapMode": 4,
+					"uv": [ 13.0, 1.0 ],
+					"rotationOrigin": [ -0.01, -0.01, -0.01 ],
+					"faces": {
+						"north": { "texture": "#gloves", "uv": [ 13.0, 1.0, 15.5, 8.5 ] },
+						"east": { "texture": "#gloves", "uv": [ 20.0, 1.0, 22.0, 8.5 ] },
+						"south": { "texture": "#gloves", "uv": [ 17.5, 1.0, 20.0, 8.5 ] },
+						"west": { "texture": "#gloves", "uv": [ 15.5, 1.0, 17.5, 8.5 ] },
+						"down": { "texture": "#gloves", "uv": [ 15.5, 8.5, 17.5, 11.0 ], "rotation": 90 }
+					}
+				}
+			]
+		},
+		{
+			"name": "gloveR",
+			"stepParentName": "LowerArmR",
+			"from": [ 0.0, 0.0, 0.0 ],
+			"to": [ 0.0, 0.0, 0.0 ],
+			"uv": [ 999.0, 999.0 ],
+			"faces": {
+			},
+			"children": [
+				{
+					"name": "Right",
+					"from": [ -0.01, -0.01, -0.01 ],
+					"to": [ 2.51, 7.49, 2.01 ],
+					"unwrapMode": 4,
+					"uv": [ 2.0, 1.0 ],
+					"rotationOrigin": [ -0.01, -0.01, -0.01 ],
+					"faces": {
+						"north": { "texture": "#gloves", "uv": [ 2.0, 1.0, 4.5, 8.5 ] },
+						"east": { "texture": "#gloves", "uv": [ 9.0, 1.0, 11.0, 8.5 ] },
+						"south": { "texture": "#gloves", "uv": [ 6.5, 1.0, 9.0, 8.5 ] },
+						"west": { "texture": "#gloves", "uv": [ 4.5, 1.0, 6.5, 8.5 ] },
+						"down": { "texture": "#gloves", "uv": [ 4.5, 8.5, 6.5, 11.0 ], "rotation": 90 }
+					}
+				}
+			]
+		}
+	]}

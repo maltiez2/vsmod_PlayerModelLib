@@ -1,0 +1,110 @@
+{
+	"editor": {
+		"backDropShape": "entity/humanoid/seraph",
+		"collapsedPaths": "Root/bandN/toothR1,Root/bandN/toothL1",
+		"allAngles": true,
+		"entityTextureMode": true
+	},
+	"textureWidth": 16,
+	"textureHeight": 16,
+	"textureSizes": {
+		"pendants2": [16,16]
+	},
+	"textures": {
+		"pendants2": "entity/humanoid/seraphclothes/emblem/emblems1"
+	},
+	"elements": [
+		{
+			"name": "origin",
+			"stepParentName": "UpperTorso",
+			"from": [ 2.2, 4.6, 2.9 ],
+			"to": [ 2.2, 4.6, 2.9 ],
+			"uv": [ 999.0, 999.0 ],
+			"rotationOrigin": [ 2.2, 4.6, 2.9 ],
+			"faces": {
+			},
+			"children": [
+				{
+					"name": "pendant",
+					"from": [ -2.6, -3.1, -2.3 ],
+					"to": [ -2.1, -0.6, -0.8 ],
+					"unwrapMode": 4,
+					"autoUnwrap": false,
+					"uv": [ 0.0, 0.0 ],
+					"rotationOrigin": [ -2.6, -3.1, -2.3 ],
+					"rotationZ": 1.0,
+					"faces": {
+						"north": { "texture": "#pendants2", "uv": [ 0.5, 0.5, 1.0, 3.0 ] },
+						"east": { "texture": "#pendants2", "uv": [ 2.5, 0.5, 4.0, 3.0 ] },
+						"south": { "texture": "#pendants2", "uv": [ 1.5, 0.5, 2.0, 3.0 ] },
+						"west": { "texture": "#pendants2", "uv": [ 0.5, 0.5, 2.0, 3.0 ] },
+						"up": { "texture": "#pendants2", "uv": [ 0.5, 0.5, 2.0, 1.0 ], "rotation": 90 },
+						"down": { "texture": "#pendants2", "uv": [ 0.5, 2.5, 2.0, 3.0 ], "rotation": 90 }
+					},
+					"children": [
+						{
+							"name": "TipUp",
+							"from": [ 0.0, 2.5, 0.5 ],
+							"to": [ 0.5, 3.0, 1.0 ],
+							"unwrapMode": 4,
+							"autoUnwrap": false,
+							"uv": [ 0.5, -0.5 ],
+							"rotationOrigin": [ 0.0, 2.5, 0.5 ],
+							"faces": {
+								"north": { "texture": "#pendants2", "uv": [ 1.0, 0.0, 1.5, 0.5 ] },
+								"east": { "texture": "#pendants2", "uv": [ 1.0, 0.0, 1.5, 0.5 ], "windMode": [-1,-1,-1,-1], "windData": [1,1,1,1] },
+								"south": { "texture": "#pendants2", "uv": [ 1.0, 0.0, 1.5, 0.5 ] },
+								"west": { "texture": "#pendants2", "uv": [ 1.0, 0.0, 1.5, 0.5 ] },
+								"up": { "texture": "#pendants2", "uv": [ 1.0, 0.0, 1.5, 0.5 ], "rotation": 90, "autoUv": false, "windMode": [-1,-1,-1,-1], "windData": [1,1,1,1] }
+							}
+						},
+						{
+							"name": "TipDown",
+							"from": [ 0.0, -0.5, 0.5 ],
+							"to": [ 0.5, 0.0, 1.0 ],
+							"uv": [ 2.0, 1.5 ],
+							"rotationOrigin": [ 0.0, -0.5, 0.5 ],
+							"faces": {
+								"north": { "texture": "#pendants2", "uv": [ 2.0, 2.0, 2.5, 2.5 ] },
+								"east": { "texture": "#pendants2", "uv": [ 2.5, 2.0, 3.0, 2.5 ] },
+								"south": { "texture": "#pendants2", "uv": [ 3.0, 2.0, 3.5, 2.5 ] },
+								"west": { "texture": "#pendants2", "uv": [ 3.5, 2.0, 4.0, 2.5 ] },
+								"down": { "texture": "#pendants2", "uv": [ 2.5, 1.5, 3.0, 2.0 ] }
+							}
+						},
+						{
+							"name": "TipSouth",
+							"from": [ 0.0, 1.0, 1.5 ],
+							"to": [ 0.5, 2.0, 2.0 ],
+							"uv": [ 2.0, 0.5 ],
+							"rotationOrigin": [ 0.0, 1.0, 1.5 ],
+							"faces": {
+								"east": { "texture": "#pendants2", "uv": [ 2.5, 1.0, 3.0, 2.0 ] },
+								"south": { "texture": "#pendants2", "uv": [ 3.0, 1.0, 3.5, 2.0 ] },
+								"west": { "texture": "#pendants2", "uv": [ 3.5, 1.0, 4.0, 2.0 ] },
+								"up": { "texture": "#pendants2", "uv": [ 2.0, 0.5, 2.5, 1.0 ] },
+								"down": { "texture": "#pendants2", "uv": [ 2.5, 0.5, 3.0, 1.0 ] }
+							}
+						},
+						{
+							"name": "TipNorth",
+							"from": [ 0.0, 1.0, -0.5 ],
+							"to": [ 0.5, 2.0, 0.0 ],
+							"uv": [ 2.0, 0.5 ],
+							"rotationOrigin": [ 0.0, 1.0, -0.5 ],
+							"faces": {
+								"north": { "texture": "#pendants2", "uv": [ 2.0, 1.0, 2.5, 2.0 ] },
+								"east": { "texture": "#pendants2", "uv": [ 2.5, 1.0, 3.0, 2.0 ] },
+								"west": { "texture": "#pendants2", "uv": [ 3.5, 1.0, 4.0, 2.0 ] },
+								"up": { "texture": "#pendants2", "uv": [ 2.0, 0.5, 2.5, 1.0 ] },
+								"down": { "texture": "#pendants2", "uv": [ 2.5, 0.5, 3.0, 1.0 ] }
+							}
+						}
+					]
+				}
+			]
+		}
+	],
+	"animations": [
+	]
+}

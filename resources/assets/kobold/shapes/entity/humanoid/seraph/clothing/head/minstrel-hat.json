@@ -1,0 +1,34 @@
+{
+	"editor": {
+		"backDropShape": "entity/humanoid/seraph-hairless",
+		"allAngles": true,
+		"entityTextureMode": true
+	},
+	"textureWidth": 28,
+	"textureHeight": 12,
+	"textureSizes": {
+		"hat": [28,12]
+	},
+	"textures": {
+		"hat": "entity/humanoid/seraphclothes/head/minstrel-hat"
+	},
+	"elements": [
+		{
+			"name": "hidehat",
+			"stepParentName": "Head",
+			"from": [ -0.55, 1.6, -0.55 ],
+			"to": [ 6.15, 5.6, 5.55 ],
+			"renderPass": 1,
+			"unwrapMode": 4,
+			"uv": [ 0.5, 0.5 ],
+			"rotationOrigin": [ 1.85, 5.67, 2.8 ],
+			"rotationZ": 1.0,
+			"faces": {
+				"north": { "texture": "#hat", "uv": [ 0.5, 7.0, 7.0, 11.0 ] },
+				"east": { "texture": "#hat", "uv": [ 19.5, 7.0, 25.5, 11.0 ] },
+				"south": { "texture": "#hat", "uv": [ 13.0, 7.0, 19.5, 11.0 ] },
+				"west": { "texture": "#hat", "uv": [ 7.0, 7.0, 13.0, 11.0 ] },
+				"up": { "texture": "#hat", "uv": [ 7.0, 0.5, 13.0, 7.0 ], "rotation": 90 }
+			}
+		}
+	]}

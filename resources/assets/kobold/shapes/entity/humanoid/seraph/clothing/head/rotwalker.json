@@ -1,0 +1,33 @@
+{
+	"editor": {
+		"backDropShape": "entity/humanoid/seraph-hairless",
+		"allAngles": true,
+		"entityTextureMode": true
+	},
+	"textureWidth": 24,
+	"textureHeight": 20,
+	"textureSizes": {
+		"surgeon": [24,20]
+	},
+	"textures": {
+		"surgeon": "entity/humanoid/seraphclothes/head/rotwalker"
+	},
+	"elements": [
+		{
+			"name": "hood",
+			"stepParentName": "Head",
+			"from": [ -0.18, -2.93, -0.25 ],
+			"to": [ 6.22, 5.47, 5.15 ],
+			"unwrapMode": 4,
+			"uv": [ 1.0, 1.0 ],
+			"rotationOrigin": [ 2.1481, 1.17, 2.6 ],
+			"rotationZ": 2.0,
+			"faces": {
+				"north": { "texture": "#surgeon", "uv": [ 1.0, 7.0, 7.0, 15.0 ] },
+				"east": { "texture": "#surgeon", "uv": [ 18.0, 7.0, 23.0, 15.0 ] },
+				"south": { "texture": "#surgeon", "uv": [ 12.0, 7.0, 18.0, 15.0 ] },
+				"west": { "texture": "#surgeon", "uv": [ 7.0, 7.0, 12.0, 15.0 ] },
+				"up": { "texture": "#surgeon", "uv": [ 7.0, 1.0, 12.0, 7.0 ], "rotation": 90 }
+			}
+		}
+	]}

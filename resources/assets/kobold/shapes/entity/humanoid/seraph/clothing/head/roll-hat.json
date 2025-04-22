@@ -1,0 +1,47 @@
+{
+	"editor": {
+		"backDropShape": "entity/humanoid/seraph-hairless",
+		"allAngles": true,
+		"entityTextureMode": true
+	},
+	"textureWidth": 28,
+	"textureHeight": 20,
+	"textureSizes": {
+		"hat": [28,20]
+	},
+	"textures": {
+		"hat": "entity/humanoid/seraphclothes/head/roll-hat"
+	},
+	"elements": [
+		{
+			"name": "hidehat",
+			"stepParentName": "Head",
+			"from": [ -0.5, -1.7, -0.55 ],
+			"to": [ 6.2, 5.3, 5.55 ],
+			"unwrapMode": 4,
+			"autoUnwrap": false,
+			"uv": [ 1.5, 12.0 ],
+			"rotationOrigin": [ 1.95, 2.37, 2.8 ],
+			"rotationZ": 1.0,
+			"faces": {
+				"north": { "texture": "#hat", "uv": [ 1.5, 12.0, 8.0, 19.0 ] },
+				"east": { "texture": "#hat", "uv": [ 20.5, 12.0, 26.5, 19.0 ] },
+				"south": { "texture": "#hat", "uv": [ 14.0, 12.0, 20.5, 19.0 ] },
+				"west": { "texture": "#hat", "uv": [ 8.0, 12.0, 14.0, 19.0 ] }
+			},
+			"children": [
+				{
+					"name": "Top",
+					"from": [ 0.0, 7.0, 0.0 ],
+					"to": [ 6.7, 7.0, 6.1 ],
+					"unwrapMode": 5,
+					"unwrapRotation": 1,
+					"uv": [ 8.0, 5.5 ],
+					"rotationOrigin": [ 0.0, 7.0, 0.0 ],
+					"faces": {
+						"up": { "texture": "#hat", "uv": [ 8.0, 5.5, 14.0, 12.0 ], "rotation": 90, "windMode": [-1,-1,-1,-1], "windData": [1,1,1,1] }
+					}
+				}
+			]
+		}
+	]}

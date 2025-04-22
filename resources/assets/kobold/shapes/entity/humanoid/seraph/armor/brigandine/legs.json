@@ -1,0 +1,115 @@
+{
+	"editor": {
+		"backDropShape": "shapes/entity/humanoid/seraph",
+		"allAngles": true,
+		"entityTextureMode": true
+	},
+	"textureWidth": 64,
+	"textureHeight": 64,
+	"textureSizes": {
+	},
+	"textures": {
+		"material": "entity/humanoid/serapharmor/brigandine/bismuthbronze"
+	},
+	"elements": [
+		{
+			"name": "ArmorUpperLegR",
+			"stepParentName": "UpperFootR",
+			"from": [ -0.2, -0.5, -0.3 ],
+			"to": [ 4.4, 9.5, 3.5 ],
+			"uv": [ 16.0, 35.0 ],
+			"rotationOrigin": [ -0.2, -0.5, -0.3 ],
+			"faces": {
+				"north": { "texture": "#material", "uv": [ 16.0, 38.5, 20.5, 48.5 ] },
+				"east": { "texture": "#material", "uv": [ 20.5, 38.5, 24.0, 48.5 ] },
+				"south": { "texture": "#material", "uv": [ 24.0, 38.5, 28.5, 48.5 ] },
+				"west": { "texture": "#material", "uv": [ 28.5, 38.5, 32.0, 48.5 ] },
+				"up": { "texture": "#material", "uv": [ 16.0, 35.0, 20.5, 38.5 ] },
+				"down": { "texture": "#material", "uv": [ 20.5, 35.0, 25.0, 38.5 ] }
+			}
+		},
+		{
+			"name": "ArmorUpperLegL",
+			"stepParentName": "UpperFootL",
+			"from": [ -0.2, -0.5, -0.3 ],
+			"to": [ 4.4, 9.5, 3.5 ],
+			"uv": [ 0.0, 35.0 ],
+			"rotationOrigin": [ -0.2, -0.5, -0.3 ],
+			"faces": {
+				"north": { "texture": "#material", "uv": [ 0.0, 38.5, 4.5, 48.5 ] },
+				"east": { "texture": "#material", "uv": [ 4.5, 38.5, 8.0, 48.5 ] },
+				"south": { "texture": "#material", "uv": [ 8.0, 38.5, 12.5, 48.5 ] },
+				"west": { "texture": "#material", "uv": [ 12.5, 38.5, 16.0, 48.5 ] },
+				"up": { "texture": "#material", "uv": [ 0.0, 35.0, 4.5, 38.5 ] },
+				"down": { "texture": "#material", "uv": [ 4.5, 35.0, 9.0, 38.5 ] }
+			}
+		},
+		{
+			"name": "ArmorLowerLegR",
+			"stepParentName": "LowerFootR",
+			"from": [ -0.3, -0.2, -0.25 ],
+			"to": [ 3.2, 6.3, 3.25 ],
+			"autoUnwrap": false,
+			"uv": [ 16.0, 48.5 ],
+			"rotationOrigin": [ -0.3, -0.2, -0.4 ],
+			"faces": {
+				"north": { "texture": "#material", "uv": [ 16.0, 52.0, 19.5, 58.5 ] },
+				"east": { "texture": "#material", "uv": [ 17.5, 52.0, 21.0, 58.5 ] },
+				"south": { "texture": "#material", "uv": [ 24.0, 52.0, 27.5, 58.5 ] },
+				"west": { "texture": "#material", "uv": [ 28.5, 52.0, 32.0, 58.5 ] },
+				"up": { "texture": "#material", "uv": [ 16.0, 48.5, 19.5, 52.0 ] },
+				"down": { "texture": "#material", "uv": [ 19.5, 48.5, 23.0, 52.0 ] }
+			}
+		},
+		{
+			"name": "ArmorLowerLegL",
+			"stepParentName": "LowerFootL",
+			"from": [ -0.3, -0.2, -0.25 ],
+			"to": [ 3.2, 6.3, 3.25 ],
+			"autoUnwrap": false,
+			"uv": [ 0.0, 48.5 ],
+			"rotationOrigin": [ -0.3, -0.2, -0.4 ],
+			"faces": {
+				"north": { "texture": "#material", "uv": [ 1.0, 52.0, 4.5, 58.5 ] },
+				"east": { "texture": "#material", "uv": [ 4.5, 52.0, 8.0, 58.5 ] },
+				"south": { "texture": "#material", "uv": [ 6.0, 52.0, 9.5, 58.5 ] },
+				"west": { "texture": "#material", "uv": [ 10.5, 52.0, 14.0, 58.5 ] },
+				"up": { "texture": "#material", "uv": [ 0.0, 48.5, 3.5, 52.0 ] },
+				"down": { "texture": "#material", "uv": [ 3.5, 48.5, 7.0, 52.0 ] }
+			}
+		},
+		{
+			"name": "ArmorLowerLegR2",
+			"stepParentName": "PawR",
+			"from": [ -0.3, 0.8, -0.25 ],
+			"to": [ 3.2, 7.3, 3.25 ],
+			"autoUnwrap": false,
+			"uv": [ 16.0, 48.5 ],
+			"rotationOrigin": [ -0.3, 0.8, -0.4 ],
+			"faces": {
+				"north": { "texture": "#material", "uv": [ 16.0, 54.0, 19.5, 60.5 ] },
+				"east": { "texture": "#material", "uv": [ 20.5, 54.0, 24.0, 60.5 ] },
+				"south": { "texture": "#material", "uv": [ 23.0, 54.0, 26.5, 60.5 ] },
+				"west": { "texture": "#material", "uv": [ 20.5, 54.0, 24.0, 60.5 ] },
+				"up": { "texture": "#material", "uv": [ 16.0, 48.5, 19.5, 52.0 ] },
+				"down": { "texture": "#material", "uv": [ 19.5, 48.5, 23.0, 52.0 ] }
+			}
+		},
+		{
+			"name": "ArmorLowerLegL2",
+			"stepParentName": "PawL",
+			"from": [ -0.3, 0.8, -0.25 ],
+			"to": [ 3.2, 7.3, 3.25 ],
+			"autoUnwrap": false,
+			"uv": [ 0.0, 48.5 ],
+			"rotationOrigin": [ -0.3, 0.8, -0.4 ],
+			"faces": {
+				"north": { "texture": "#material", "uv": [ 0.0, 54.0, 3.5, 60.5 ] },
+				"east": { "texture": "#material", "uv": [ 4.5, 54.0, 8.0, 60.5 ] },
+				"south": { "texture": "#material", "uv": [ 9.0, 54.0, 12.5, 60.5 ] },
+				"west": { "texture": "#material", "uv": [ 12.5, 54.0, 16.0, 60.5 ] },
+				"up": { "texture": "#material", "uv": [ 0.0, 48.5, 3.5, 52.0 ] },
+				"down": { "texture": "#material", "uv": [ 3.5, 48.5, 7.0, 52.0 ] }
+			}
+		}
+	]}

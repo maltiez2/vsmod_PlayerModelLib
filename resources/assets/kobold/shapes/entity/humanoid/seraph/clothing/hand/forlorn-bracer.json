@@ -1,0 +1,180 @@
+{
+	"editor": {
+		"collapsedPaths": "Root/bandN/toothR1,Root/bandN/toothL1",
+		"allAngles": true,
+		"entityTextureMode": true
+	},
+	"textureWidth": 24,
+	"textureHeight": 8,
+	"textureSizes": {
+		"gloves": [24,8]
+	},
+	"textures": {
+		"gloves": "entity/humanoid/seraphclothes/hand/forlorn-bracer"
+	},
+	"elements": [
+		{
+			"name": "originL",
+			"stepParentName": "LowerArmL",
+			"from": [ 0.0, 0.0, 0.0 ],
+			"to": [ 0.0, 0.0, 0.0 ],
+			"uv": [ 999.0, 999.0 ],
+			"faces": {
+			},
+			"children": [
+				{
+					"name": "GloveLN",
+					"from": [ -0.1, 1.5, -0.1 ],
+					"to": [ 2.4, 6.0, 0.1 ],
+					"unwrapMode": 1,
+					"autoUnwrap": false,
+					"uv": [ 12.5, 1.0 ],
+					"rotationOrigin": [ -0.1, 1.5, -0.1 ],
+					"faces": {
+						"north": { "texture": "#gloves", "uv": [ 13.5, 1.5, 16.0, 6.0 ] },
+						"south": { "texture": "#gloves", "uv": [ 13.5, 1.5, 16.0, 6.0 ] },
+						"up": { "texture": "#gloves", "uv": [ 13.5, 1.0, 16.0, 1.5 ], "rotation": 180, "windMode": [-1,-1,-1,-1] },
+						"down": { "texture": "#gloves", "uv": [ 13.5, 6.0, 16.0, 6.5 ], "windMode": [-1,-1,-1,-1] }
+					},
+					"children": [
+						{
+							"name": "GloveLW",
+							"from": [ 0.0, 0.0, 0.0 ],
+							"to": [ 0.2, 4.5, 2.2 ],
+							"unwrapMode": 4,
+							"autoUnwrap": false,
+							"uv": [ 15.0, 1.0 ],
+							"rotationOrigin": [ 0.0, 0.0, 0.0 ],
+							"rotationX": 0.0,
+							"rotationY": 0.0,
+							"rotationZ": 0.0,
+							"faces": {
+								"east": { "texture": "#gloves", "uv": [ 15.5, 1.5, 17.5, 6.0 ] },
+								"west": { "texture": "#gloves", "uv": [ 15.5, 1.5, 17.5, 6.0 ] },
+								"up": { "texture": "#gloves", "uv": [ 15.5, 1.0, 17.5, 1.5 ], "rotation": 90 },
+								"down": { "texture": "#gloves", "uv": [ 15.5, 6.0, 17.5, 6.5 ], "rotation": 90 }
+							}
+						},
+						{
+							"name": "GloveLS",
+							"from": [ 0.0, 0.0, 2.0 ],
+							"to": [ 2.7, 4.5, 2.2 ],
+							"unwrapMode": 3,
+							"autoUnwrap": false,
+							"uv": [ 17.5, 1.0 ],
+							"rotationOrigin": [ 0.0, 0.0, 2.0 ],
+							"rotationX": 0.0,
+							"rotationY": 0.0,
+							"rotationZ": 0.0,
+							"faces": {
+								"north": { "texture": "#gloves", "uv": [ 13.0, 1.5, 15.5, 6.0 ] },
+								"south": { "texture": "#gloves", "uv": [ 17.5, 1.5, 20.0, 6.0 ] },
+								"up": { "texture": "#gloves", "uv": [ 17.5, 1.0, 20.0, 1.5 ] },
+								"down": { "texture": "#gloves", "uv": [ 17.5, 6.0, 20.0, 6.5 ], "rotation": 180 }
+							}
+						},
+						{
+							"name": "GloveLE",
+							"from": [ 2.5, 0.0, 0.0 ],
+							"to": [ 2.7, 4.5, 2.2 ],
+							"unwrapMode": 2,
+							"autoUnwrap": false,
+							"uv": [ 20.0, 1.0 ],
+							"rotationOrigin": [ 2.5, 0.0, 0.0 ],
+							"rotationX": 0.0,
+							"rotationY": 0.0,
+							"rotationZ": 0.0,
+							"faces": {
+								"east": { "texture": "#gloves", "uv": [ 20.0, 1.5, 22.0, 6.0 ] },
+								"west": { "texture": "#gloves", "uv": [ 20.0, 1.5, 22.0, 6.0 ] },
+								"up": { "texture": "#gloves", "uv": [ 20.0, 1.0, 22.0, 1.5 ], "rotation": 270 },
+								"down": { "texture": "#gloves", "uv": [ 20.0, 6.0, 22.0, 6.5 ], "rotation": 270 }
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "originR",
+			"stepParentName": "LowerArmR",
+			"from": [ 0.0, 0.0, 0.0 ],
+			"to": [ 0.0, 0.0, 0.0 ],
+			"uv": [ 999.0, 999.0 ],
+			"faces": {
+			},
+			"children": [
+				{
+					"name": "GloveRN",
+					"from": [ -0.1, 1.5, -0.1 ],
+					"to": [ 2.4, 6.0, 0.1 ],
+					"unwrapMode": 1,
+					"autoUnwrap": false,
+					"uv": [ 4.0, 1.0 ],
+					"rotationOrigin": [ -0.1, 1.5, -0.1 ],
+					"faces": {
+						"north": { "texture": "#gloves", "uv": [ 4.0, 1.5, 6.5, 6.0 ] },
+						"south": { "texture": "#gloves", "uv": [ 8.5, 1.5, 11.0, 6.0 ] },
+						"up": { "texture": "#gloves", "uv": [ 4.0, 1.0, 6.5, 1.5 ], "rotation": 180 },
+						"down": { "texture": "#gloves", "uv": [ 4.0, 6.0, 6.5, 6.5 ] }
+					},
+					"children": [
+						{
+							"name": "GloveRW",
+							"from": [ 0.0, 0.0, 0.0 ],
+							"to": [ 0.2, 4.5, 2.2 ],
+							"unwrapMode": 4,
+							"autoUnwrap": false,
+							"uv": [ 2.0, 1.0 ],
+							"rotationOrigin": [ 0.0, 0.0, 0.0 ],
+							"rotationX": 0.0,
+							"rotationY": 0.0,
+							"rotationZ": 0.0,
+							"faces": {
+								"east": { "texture": "#gloves", "uv": [ 2.0, 1.5, 4.0, 6.0 ] },
+								"west": { "texture": "#gloves", "uv": [ 2.0, 1.5, 4.0, 6.0 ] },
+								"up": { "texture": "#gloves", "uv": [ 2.0, 1.0, 4.0, 1.5 ], "rotation": 90 },
+								"down": { "texture": "#gloves", "uv": [ 2.0, 6.0, 4.0, 6.5 ], "rotation": 90 }
+							}
+						},
+						{
+							"name": "GloveRS",
+							"from": [ 0.0, 0.0, 2.0 ],
+							"to": [ 2.7, 4.5, 2.2 ],
+							"unwrapMode": 3,
+							"autoUnwrap": false,
+							"uv": [ 8.5, 1.0 ],
+							"rotationOrigin": [ 0.0, 0.0, 2.0 ],
+							"rotationX": 0.0,
+							"rotationY": 0.0,
+							"rotationZ": 0.0,
+							"faces": {
+								"north": { "texture": "#gloves", "uv": [ 8.5, 1.5, 11.0, 6.0 ] },
+								"south": { "texture": "#gloves", "uv": [ 8.5, 1.5, 11.0, 6.0 ] },
+								"up": { "texture": "#gloves", "uv": [ 8.5, 1.0, 11.0, 1.5 ] },
+								"down": { "texture": "#gloves", "uv": [ 8.5, 6.0, 11.0, 6.5 ], "rotation": 180 }
+							}
+						},
+						{
+							"name": "GloveRE",
+							"from": [ 2.5, 0.0, 0.0 ],
+							"to": [ 2.7, 4.5, 2.2 ],
+							"unwrapMode": 2,
+							"autoUnwrap": false,
+							"uv": [ 6.5, 1.0 ],
+							"rotationOrigin": [ 2.5, 0.0, 0.0 ],
+							"rotationX": 0.0,
+							"rotationY": 0.0,
+							"rotationZ": 0.0,
+							"faces": {
+								"east": { "texture": "#gloves", "uv": [ 6.5, 1.5, 8.5, 6.0 ] },
+								"west": { "texture": "#gloves", "uv": [ 6.5, 1.5, 8.5, 6.0 ] },
+								"up": { "texture": "#gloves", "uv": [ 6.5, 1.0, 8.5, 1.5 ], "rotation": 270 },
+								"down": { "texture": "#gloves", "uv": [ 6.5, 6.0, 8.5, 6.5 ], "rotation": 270 }
+							}
+						}
+					]
+				}
+			]
+		}
+	]}

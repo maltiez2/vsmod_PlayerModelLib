@@ -1,0 +1,124 @@
+{
+	"editor": {
+		"backDropShape": "entity/humanoid/seraph",
+		"collapsedPaths": "Root/hair/ponytail1,Root/bandN/toothR1,Root/hideme,Root/bandN/toothL1",
+		"allAngles": true,
+		"entityTextureMode": true
+	},
+	"textureWidth": 48,
+	"textureHeight": 48,
+	"textureSizes": {
+		"hair": [48,48]
+	},
+	"textures": {
+	},
+	"elements": [
+		{
+			"name": "Hair",
+			"stepParentName": "Head",
+			"from": [ -0.2, -3.1, -0.3 ],
+			"to": [ 6.3, 5.4, 5.2 ],
+			"autoUnwrap": false,
+			"uv": [ 2.0, 2.5 ],
+			"rotationOrigin": [ 3.0, 2.0, 2.5 ],
+			"rotationZ": -1.0,
+			"faces": {
+				"north": { "texture": "#hair", "uv": [ 41.0, 0.0, 47.5, 8.5 ] },
+				"east": { "texture": "#hair", "uv": [ 37.0, 8.5, 42.5, 17.0 ] },
+				"south": { "texture": "#hair", "uv": [ 31.5, 0.0, 38.0, 8.5 ] },
+				"west": { "texture": "#hair", "uv": [ 42.5, 14.5, 48.0, 23.0 ] },
+				"up": { "texture": "#hair", "uv": [ 24.0, 0.0, 29.5, 6.5 ], "rotation": 90 }
+			},
+			"children": [
+				{
+					"name": "bangs",
+					"from": [ 0.0, 0.0, 0.0 ],
+					"to": [ 1.0, 1.0, 1.0 ],
+					"uv": [ 0.0, 0.0 ],
+					"faces": {
+					},
+					"children": [
+						{
+							"name": "StrandLeft1",
+							"from": [ -0.2, 5.7, 3.3 ],
+							"to": [ -0.2, 7.7, 4.8 ],
+							"uv": [ 45.5, 39.5 ],
+							"rotationOrigin": [ -0.2, 7.7, 4.1 ],
+							"rotationX": -30.0,
+							"rotationY": -3.0,
+							"rotationZ": -19.0,
+							"faces": {
+								"west": { "texture": "#hair", "uv": [ 45.5, 39.5, 47.0, 41.5 ] }
+							},
+							"children": [
+								{
+									"name": "StrandLeft2",
+									"from": [ 0.0, -2.0, 0.0 ],
+									"to": [ 0.0, 0.0, 1.5 ],
+									"uv": [ 44.0, 42.0 ],
+									"rotationOrigin": [ 0.0, 0.0, 0.7 ],
+									"rotationZ": 50.0,
+									"faces": {
+										"west": { "texture": "#hair", "uv": [ 44.0, 42.0, 45.5, 44.0 ] }
+									}
+								}
+							]
+						},
+						{
+							"name": "StrandRight",
+							"from": [ 0.0, 5.7, 1.3 ],
+							"to": [ 0.0, 7.7, 2.8 ],
+							"uv": [ 45.5, 39.5 ],
+							"rotationOrigin": [ 0.0, 7.7, 2.1 ],
+							"rotationX": 28.0,
+							"rotationY": -3.0,
+							"rotationZ": -20.0,
+							"faces": {
+								"west": { "texture": "#hair", "uv": [ 45.5, 39.5, 47.0, 41.5 ] }
+							},
+							"children": [
+								{
+									"name": "StrandRight2",
+									"from": [ 0.0, -2.0, 0.0 ],
+									"to": [ 0.0, 0.0, 1.5 ],
+									"uv": [ 44.0, 42.0 ],
+									"rotationOrigin": [ 0.0, 0.0, 0.7 ],
+									"rotationZ": 60.0,
+									"faces": {
+										"west": { "texture": "#hair", "uv": [ 44.0, 42.0, 45.5, 44.0 ] }
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "HairExtension",
+					"from": [ 6.5, -7.0, 0.0 ],
+					"to": [ 6.5, 0.0, 5.5 ],
+					"uv": [ 36.5, 15.5 ],
+					"rotationOrigin": [ 6.5, 0.0, 2.7 ],
+					"rotationZ": -5.0,
+					"faces": {
+						"east": { "texture": "#hair", "uv": [ 36.5, 15.5, 42.0, 22.5 ] }
+					}
+				}
+			]
+		},
+		{
+			"name": "Hair tile upper part",
+			"stepParentName": "Head",
+			"from": [ -0.5, -2.0, -0.5 ],
+			"to": [ 6.5, 5.5, 5.5 ],
+			"autoUnwrap": false,
+			"uv": [ 3.0, 9.0 ],
+			"rotationOrigin": [ 3.0, 5.5, 2.5 ],
+			"faces": {
+				"north": { "texture": "#hair", "uv": [ 0.0, 10.5, 7.0, 18.0 ] },
+				"east": { "texture": "#hair", "uv": [ 28.0, 38.0, 34.0, 45.5 ] },
+				"south": { "texture": "#hair", "uv": [ 12.0, 10.5, 19.0, 18.0 ] },
+				"west": { "texture": "#hair", "uv": [ 6.5, 11.0, 12.5, 18.5 ] },
+				"up": { "texture": "#hair", "uv": [ 26.5, 10.5, 32.5, 17.5 ], "rotation": 90 }
+			}
+		}
+	]}
