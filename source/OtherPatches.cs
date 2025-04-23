@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
+using Vintagestory.API.Datastructures;
 using Vintagestory.GameContent;
 
 namespace PlayerModelLib;
@@ -123,6 +124,23 @@ public static class OtherPatches
 
                         defaultShape?.SubclassForStepParenting(yatayata.GetTexturePrefixCode(stack), damageEffect);
                         defaultShape?.ResolveReferences(entity.World.Logger, currentModel);
+
+                        return;
+                    }
+                }
+
+                if (system.WearableShapeReplacersByShape.TryGetValue(currentModel, out Dictionary<string, string>? replacements2))
+                {
+                    string shapePath = yatayata.GetAttachedShape(stack, "default").Base.ToString();
+
+                    if (replacements2.TryGetValue(shapePath, out string? shape))
+                    {
+                        defaultShape = LoadShape(entity.Api, shape);
+
+                        defaultShape?.SubclassForStepParenting(yatayata.GetTexturePrefixCode(stack), damageEffect);
+                        defaultShape?.ResolveReferences(entity.World.Logger, currentModel);
+
+                        return;
                     }
                 }
             }

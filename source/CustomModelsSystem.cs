@@ -1,7 +1,6 @@
 ﻿using Newtonsoft.Json.Linq;
 using ProtoBuf;
 using SkiaSharp;
-using System.Collections.Generic;
 using System.Diagnostics;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -20,6 +19,7 @@ public class CustomShapeConfig
     public string MainTextureCode { get; set; } = "seraph";
     public SkinnablePart[] SkinnableParts { get; set; } = Array.Empty<SkinnablePart>();
     public Dictionary<string, string> WearableModelReplacers { get; set; } = new();
+    public Dictionary<string, string> WearableModelReplacersByShape { get; set; } = new();
     public string[] AvailableClasses { get; set; } = Array.Empty<string>();
     public string[] SkipClasses { get; set; } = Array.Empty<string>();
     public string[] ExtraTraits { get; set; } = Array.Empty<string>();
@@ -41,6 +41,7 @@ public sealed class CustomModelsSystem : ModSystem
     public Dictionary<string, CompositeTexture> MainTextures { get; set; } = new();
     public Dictionary<string, int[]> MainTextureSizes { get; set; } = new();
     public Dictionary<string, Dictionary<int, string>> WearableShapeReplacers { get; set; } = new();
+    public Dictionary<string, Dictionary<string, string>> WearableShapeReplacersByShape { get; set; } = new();
     public Dictionary<string, HashSet<string>> AvailableClasses { get; set; } = new();
     public Dictionary<string, HashSet<string>> SkipClasses { get; set; } = new();
     public Dictionary<string, string[]> ExtraTraits { get; set; } = new();
@@ -182,6 +183,7 @@ public sealed class CustomModelsSystem : ModSystem
                 AvailableClasses.Add(code, modelConfig.AvailableClasses.ToHashSet());
                 ExtraTraits.Add(code, modelConfig.ExtraTraits);
                 SkipClasses.Add(code, modelConfig.SkipClasses.ToHashSet());
+                WearableShapeReplacersByShape.Add(code, modelConfig.WearableModelReplacersByShape);
             }
         }
     }
@@ -203,7 +205,7 @@ public sealed class CustomModelsSystem : ModSystem
             }
         }
 
-        List<IAsset> modelsConfigs = api.Assets.GetMany("config/modelreplacements");
+        List<IAsset> modelsConfigs = api.Assets.GetMany("config/model-replacements-bycode");
         foreach (IAsset asset in modelsConfigs)
         {
             Dictionary<string, Dictionary<string, string>> replacements = ReplacementsFromAsset(asset);
@@ -221,9 +223,28 @@ public sealed class CustomModelsSystem : ModSystem
                     {
                         if (WildcardUtil.Match(itemCodeWildcard, item.Code?.ToString() ?? ""))
                         {
-                            WearableShapeReplacers[modelCode].TryAdd(item.Id, path);
+                            WearableShapeReplacers[modelCode][item.Id] = path;
                         }
                     }
+                }
+            }
+        }
+
+        List<IAsset> modelsConfigs2 = api.Assets.GetMany("config/model-replacements-byshape");
+        foreach (IAsset asset in modelsConfigs2)
+        {
+            Dictionary<string, Dictionary<string, string>> replacements = ReplacementsFromAsset(asset);
+
+            foreach ((string modelCode, Dictionary<string, string> paths) in replacements)
+            {
+                if (!WearableShapeReplacersByShape.ContainsKey(modelCode))
+                {
+                    WearableShapeReplacersByShape.Add(modelCode, new());
+                }
+
+                foreach ((string fromPath, string toPath) in paths)
+                {
+                    WearableShapeReplacersByShape[modelCode][fromPath] = toPath;
                 }
             }
         }
