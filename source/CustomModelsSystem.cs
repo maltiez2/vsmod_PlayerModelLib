@@ -21,6 +21,8 @@ public class CustomShapeConfig
     public SkinnablePart[] SkinnableParts { get; set; } = Array.Empty<SkinnablePart>();
     public Dictionary<string, string> WearableModelReplacers { get; set; } = new();
     public string[] AvailableClasses { get; set; } = Array.Empty<string>();
+    public string[] SkipClasses { get; set; } = Array.Empty<string>();
+    public string[] ExtraTraits { get; set; } = Array.Empty<string>();
     public string Domain { get; set; } = "game";
 }
 
@@ -40,6 +42,8 @@ public sealed class CustomModelsSystem : ModSystem
     public Dictionary<string, int[]> MainTextureSizes { get; set; } = new();
     public Dictionary<string, Dictionary<int, string>> WearableShapeReplacers { get; set; } = new();
     public Dictionary<string, HashSet<string>> AvailableClasses { get; set; } = new();
+    public Dictionary<string, HashSet<string>> SkipClasses { get; set; } = new();
+    public Dictionary<string, string[]> ExtraTraits { get; set; } = new();
     public ContainedTextureSource? TextureSource { get; private set; }
     public string DefaultModelCode { get; private set; } = "seraph";
     public Shape? DefaultModel { get; private set; }
@@ -176,6 +180,8 @@ public sealed class CustomModelsSystem : ModSystem
                 MainTextureCodes.Add(code, $"{modelConfig.Domain}-{code}-{modelConfig.MainTextureCode}");
                 _oldMainTextureCodes.Add(code, modelConfig.MainTextureCode);
                 AvailableClasses.Add(code, modelConfig.AvailableClasses.ToHashSet());
+                ExtraTraits.Add(code, modelConfig.ExtraTraits);
+                SkipClasses.Add(code, modelConfig.SkipClasses.ToHashSet());
             }
         }
     }
@@ -249,6 +255,7 @@ public sealed class CustomModelsSystem : ModSystem
     private void HandleChangePlayerModelPacket(IPlayer player, ChangePlayerModelPacket packet)
     {
         player.Entity.WatchedAttributes.SetString("skinModel", packet.ModelCode);
+        player.Entity.WatchedAttributes.SetStringArray("extraTraits", ExtraTraits[packet.ModelCode]);
     }
     private Dictionary<string, CustomShapeConfig> FromAsset(IAsset asset)
     {

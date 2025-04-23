@@ -1,4 +1,6 @@
-﻿using System.Diagnostics;
+﻿using CommandLine;
+using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using Vintagestory.API.Client;
@@ -556,7 +558,9 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         {
             availableClasses = _characterSystem.characterClasses;
         }
-        
+
+        availableClasses = availableClasses.Where(element => !_customModelsSystem.SkipClasses[skinMod.CurrentModel].Contains(element.Code)).ToList();
+
         _currentClassIndex = GameMath.Mod(_currentClassIndex + dir, availableClasses.Count);
 
         CharacterClass chclass = availableClasses[_currentClassIndex];
@@ -569,7 +573,41 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         fulldesc.AppendLine();
         fulldesc.AppendLine(Lang.Get("traits-title"));
 
-        IOrderedEnumerable<Trait> chartraits = chclass.Traits.Select(code => _characterSystem.TraitsByCode[code]).OrderBy(trait => (int)trait.Type);
+        
+        IOrderedEnumerable<Trait> chartraitsExtra = _customModelsSystem.ExtraTraits[skinMod.CurrentModel].Select(code => _characterSystem.TraitsByCode[code]).OrderBy(trait => (int)trait.Type);
+        IOrderedEnumerable<Trait> chartraits = chclass.Traits.Where(code => !_customModelsSystem.ExtraTraits[skinMod.CurrentModel].Contains(code)).Select(code => _characterSystem.TraitsByCode[code]).OrderBy(trait => (int)trait.Type);
+
+        foreach (Trait? trait in chartraitsExtra)
+        {
+            attributes.Clear();
+            foreach (KeyValuePair<string, double> val in trait.Attributes)
+            {
+                if (attributes.Length > 0) attributes.Append(", ");
+                attributes.Append(Lang.Get(string.Format(GlobalConstants.DefaultCultureInfo, "charattribute-{0}-{1}", val.Key, val.Value)));
+            }
+
+            if (attributes.Length > 0)
+            {
+                fulldesc.AppendLine(Lang.Get("traitwithattributes", Lang.Get("trait-" + trait.Code), attributes));
+            }
+            else
+            {
+                string desc = Lang.GetIfExists("traitdesc-" + trait.Code);
+                if (desc != null)
+                {
+                    fulldesc.AppendLine(Lang.Get("traitwithattributes", Lang.Get("trait-" + trait.Code), desc));
+                }
+                else
+                {
+                    fulldesc.AppendLine(Lang.Get("trait-" + trait.Code));
+                }
+            }
+        }
+
+        if (chartraitsExtra.Count() != 0)
+        {
+            fulldesc.AppendLine("");
+        }
 
         foreach (Trait? trait in chartraits)
         {
