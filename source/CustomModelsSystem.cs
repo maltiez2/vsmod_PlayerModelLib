@@ -187,23 +187,6 @@ public sealed class CustomModelsSystem : ModSystem
     }
     private void LoadModelReplacements(ICoreAPI api)
     {
-        /*Dictionary<string, Shape> loadedShapes = new();
-        foreach ((_, Dictionary<string, string> paths) in _wearableModelReplacers)
-        {
-            foreach ((_, string path) in paths)
-            {
-                if (loadedShapes.ContainsKey(path)) continue;
-
-                Shape? shape = LoadShape(api, path);
-
-                if (shape == null) continue;
-
-                shape.ResolveReferences(api.Logger, "PlayerModelLib:CustomModel-replace");
-
-                loadedShapes.Add(path, shape);
-            }
-        }*/
-
         foreach ((string modelCode, Dictionary<string, string> paths) in _wearableModelReplacers)
         {
             WearableShapeReplacers.Add(modelCode, new());
@@ -215,6 +198,31 @@ public sealed class CustomModelsSystem : ModSystem
                     if (WildcardUtil.Match(itemCodeWildcard, item.Code?.ToString() ?? ""))
                     {
                         WearableShapeReplacers[modelCode].TryAdd(item.Id, path);
+                    }
+                }
+            }
+        }
+
+        List<IAsset> modelsConfigs = api.Assets.GetMany("config/modelreplacements");
+        foreach (IAsset asset in modelsConfigs)
+        {
+            Dictionary<string, Dictionary<string, string>> replacements = ReplacementsFromAsset(asset);
+
+            foreach ((string modelCode, Dictionary<string, string> paths) in replacements)
+            {
+                if (!WearableShapeReplacers.ContainsKey(modelCode))
+                {
+                    WearableShapeReplacers.Add(modelCode, new());
+                }
+
+                foreach ((string itemCodeWildcard, string path) in paths)
+                {
+                    foreach (Item item in api.World.Items)
+                    {
+                        if (WildcardUtil.Match(itemCodeWildcard, item.Code?.ToString() ?? ""))
+                        {
+                            WearableShapeReplacers[modelCode].TryAdd(item.Id, path);
+                        }
                     }
                 }
             }
@@ -289,6 +297,18 @@ public sealed class CustomModelsSystem : ModSystem
         }
 
         return result;
+    }
+    private Dictionary<string, Dictionary<string, string>> ReplacementsFromAsset(IAsset asset)
+    {
+        try
+        {
+            return JsonObject.FromJson(asset.ToText()).AsObject<Dictionary<string, Dictionary<string, string>>>();
+        }
+        catch (Exception exception)
+        {
+            // @TODO add error logging
+            return new();
+        }
     }
     private Dictionary<string, SkinnablePart> LoadParts(ICoreAPI api, SkinnablePart[] parts)
     {

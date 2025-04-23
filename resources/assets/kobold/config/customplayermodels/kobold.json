@@ -4,7 +4,7 @@
 		"MainTextureCode": "seraph",
 		"AvailableClasses": ["commoner", "hunter"],
 		"WearableModelReplacers": {
-			"game:armor-legs-plate-*": "kobold:entity/humanoid/seraph/armor/plate/legs"
+			
 		},
 		"ExtraTraits": ["precise"],
     "SkinnableParts": [

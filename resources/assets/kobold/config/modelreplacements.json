@@ -1,0 +1,5 @@
+{
+  "kobold:kobold": {
+    "game:armor-legs-plate-*": "kobold:entity/humanoid/seraph/armor/plate/legs"
+  } 
+}
