@@ -422,8 +422,6 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             )
             .FixedUnder(_insetSlotBounds, 4).WithAlignment(EnumDialogArea.LeftFixed).WithFixedPadding(12, 6);
 
-        ScrollPatches.NewBounds(toggleButtonBounds);
-
         ElementBounds bounds = null;
         ElementBounds prevbounds = null;
 
@@ -434,6 +432,8 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         foreach (SkinnablePart? skinpart in skinMod.AvailableSkinParts)
         {
             bounds = ElementBounds.Fixed(leftX, (prevbounds == null || prevbounds.fixedY == 0) ? -10 : prevbounds.fixedY + 8, colorIconSize, colorIconSize);
+
+            //ScrollPatches.NewBounds(bounds);
 
             string code = skinpart.Code;
 
