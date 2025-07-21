@@ -89,6 +89,14 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     }
     public override void OnMouseWheel(MouseWheelEventArgs args)
     {
+        if (focused && _insetSlotBounds?.PointInside(capi.Input.MouseX, capi.Input.MouseY) == true && _currentTab == EnumCreateCharacterTabs.Skin)
+        {
+            _charZoom = GameMath.Clamp(_charZoom + args.deltaPrecise / 10f, 0.5f, 1.2f);
+            _height = GameMath.Clamp(_height, -_heightLimit * _charZoom, _heightLimit * _charZoom);
+            args.SetHandled();
+            return;
+        }
+
         GuiComposer[] array = Composers.ToArray();
         GuiComposer[] array2 = array;
         for (int i = 0; i < array2.Length; i++)
@@ -164,7 +172,12 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     {
         base.OnMouseMove(args);
 
-        if (_rotateCharacter) _yaw -= args.DeltaX / 100f;
+        if (_rotateCharacter)
+        {
+            _yaw -= args.DeltaX / 100f;
+            _height += args.DeltaY / 2f;
+            _height = GameMath.Clamp(_height, -_heightLimit * _charZoom, _heightLimit * _charZoom);
+        }
     }
     public override void OnRenderGUI(float deltaTime)
     {
@@ -214,7 +227,7 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
                     deltaTime,
                     capi.World.Player.Entity,
                     _insetSlotBounds.renderX + pad - GuiElement.scaled(195) * _charZoom + GuiElement.scaled(115 * (1 - _charZoom)),
-                    _insetSlotBounds.renderY + pad + GuiElement.scaled(10 * (1 - _charZoom)),
+                    _insetSlotBounds.renderY + pad + GuiElement.scaled(10 * (1 - _charZoom)) + GuiElement.scaled(_height),
                     (float)GuiElement.scaled(230),
                     _yaw,
                     (float)GuiElement.scaled(330 * _charZoom),
@@ -253,6 +266,8 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     private bool _charNaked = true;
     private readonly int _dlgHeight = 433 + 80;
     private float _yaw = -GameMath.PIHALF + 0.3f;
+    private float _height = 0;
+    private const float _heightLimit = 150;
     private bool _rotateCharacter;
     private readonly Vec4f _lighPos = new Vec4f(-1, -1, 0, 0).NormalizeXYZ();
     private readonly Matrixf _mat = new();
@@ -309,7 +324,7 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
                 ComposeModelTab(composer, system, inventoryBehavior, yPosition, padding, slotSize);
                 break;
             case EnumCreateCharacterTabs.Skin:
-                ComposeSkinTab(composer, system, inventoryBehavior, yPosition, padding, dialogBounds);
+                ComposeSkinTab(composer, system, inventoryBehavior, yPosition, padding, dialogBounds, backgroundBounds);
                 break;
             case EnumCreateCharacterTabs.Class:
                 ComposeClassTab(composer, system, inventoryBehavior, yPosition, padding, slotSize);
@@ -396,7 +411,7 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         ReTesselate();
     }
-    private void ComposeSkinTab(GuiComposer composer, CustomModelsSystem system, EntityBehaviorPlayerInventory inventoryBehavior, double yPosition, double padding, ElementBounds dialogBounds)
+    private void ComposeSkinTab(GuiComposer composer, CustomModelsSystem system, EntityBehaviorPlayerInventory inventoryBehavior, double yPosition, double padding, ElementBounds dialogBounds, ElementBounds backgroundBounds)
     {
         PlayerSkinBehavior skinMod = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
 
@@ -422,18 +437,20 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             )
             .FixedUnder(_insetSlotBounds, 4).WithAlignment(EnumDialogArea.LeftFixed).WithFixedPadding(12, 6);
 
+        
+
         ElementBounds bounds = null;
         ElementBounds prevbounds = null;
 
         double leftX = 0;
 
-        ScrollPatches.PreLoop(composer, skinMod.AvailableSkinParts, dialogBounds, leftColBounds, _insetSlotBounds, toggleButtonBounds, ref leftX);
+        ScrollPatches.PreLoop(composer, skinMod.AvailableSkinParts, backgroundBounds, leftColBounds, _insetSlotBounds, toggleButtonBounds, ref leftX);
 
         foreach (SkinnablePart? skinpart in skinMod.AvailableSkinParts)
         {
             bounds = ElementBounds.Fixed(leftX, (prevbounds == null || prevbounds.fixedY == 0) ? -10 : prevbounds.fixedY + 8, colorIconSize, colorIconSize);
 
-            //ScrollPatches.NewBounds(bounds);
+            ScrollPatches.NewBounds(bounds);
 
             string code = skinpart.Code;
 
@@ -496,10 +513,10 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
             prevbounds = bounds.FlatCopy();
 
-            ScrollPatches.ColBreak(composer, dialogBounds, bounds, ref leftX);
-
             if (skinpart.Colbreak)
             {
+                ScrollPatches.ColBreak(composer, backgroundBounds, bounds, ref leftX);
+
                 leftX = _insetSlotBounds.fixedX + _insetSlotBounds.fixedWidth + 22;
                 prevbounds.fixedY = 0;
             }
