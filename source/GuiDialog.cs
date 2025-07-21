@@ -279,7 +279,24 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         if (_curTab == 0)
         {
-            ExtraSkinnableBehavior skinMod = capi.World.Player.Entity.GetBehavior<ExtraSkinnableBehavior>();
+            PlayerSkinBehavior skinMod = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
+
+            string[] modelValues = system.CustomModels.Keys.ToArray();
+            string[] modelNames = system.CustomModels.Keys.Select(key => new AssetLocation(key)).Select(key => Lang.Get($"{key.Domain}:playermodel-{key.Path}")).ToArray();
+            int modelIndex = 0;
+
+            for (int index = 0; index < modelValues.Length; index++)
+            {
+                if (modelValues[index] == skinMod.CurrentModelCode)
+                {
+                    modelIndex = index;
+                    break;
+                }
+            }
+
+            createCharacterComposer.AddDropDown(modelValues, modelNames, modelIndex, (variantcode, selected) => onToggleModel(variantcode), ElementBounds.Fixed(490, -16).WithFixedSize(180, 25), "dropdown-modelselection");
+
+            createCharacterComposer.AddRichtext("Model:", CairoFont.WhiteSmallText(), ElementBounds.Fixed(440, -13).WithFixedSize(210, 22));
 
             //capi.World.Player.Entity.hideClothing = charNaked;
             bh.hideClothing = _charNaked;
@@ -388,20 +405,9 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
                 .AddButton(Lang.Get("Last selection"), () => { return OnRandomizeSkin(_characterSystem.getPreviousSelection()); }, ElementBounds.Fixed(130, _dlgHeight - 25).WithAlignment(EnumDialogArea.LeftFixed).WithFixedPadding(8, 6), CairoFont.WhiteSmallText(), EnumButtonStyle.Small)
                 .EndIf();
 
-            string[] modelValues = system.CustomModels.Keys.ToArray();
-            string[] modelNames = system.CustomModels.Keys.Select(key => new AssetLocation(key)).Select(key => Lang.Get($"{key.Domain}:playermodel-{key.Path}")).ToArray();
-            int modelIndex = 0;
+            
 
-            for (int index = 0; index < modelValues.Length; index++)
-            {
-                if (modelValues[index] == skinMod.CurrentModel)
-                {
-                    modelIndex = index;
-                    break;
-                }
-            }
-
-            createCharacterComposer.AddDropDown(modelValues, modelNames, modelIndex, (variantcode, selected) => onToggleModel(variantcode), ElementBounds.Fixed(430, _dlgHeight - 23).WithFixedSize(150, 25), "dropdown-modelselection");
+            
 
             createCharacterComposer.AddSmallButton(Lang.Get("Confirm Skin"), OnNext, ElementBounds.Fixed(0, _dlgHeight - 25).WithAlignment(EnumDialogArea.RightFixed).WithFixedPadding(12, 6), EnumButtonStyle.Normal);
             
@@ -514,7 +520,7 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         EntityBehaviorPlayerInventory bh = capi.World.Player.Entity.GetBehavior<EntityBehaviorPlayerInventory>();
         bh.doReloadShapeAndSkin = true;
 
-        ExtraSkinnableBehavior skinMod = capi.World.Player.Entity.GetBehavior<ExtraSkinnableBehavior>();
+        PlayerSkinBehavior skinMod = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
         CustomModelsSystem system = capi.ModLoader.GetModSystem<CustomModelsSystem>();
 
         system.SynchronizePlayerModel(modelCode);
@@ -551,15 +557,15 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     }
     private void changeClass(int dir)
     {
-        ExtraSkinnableBehavior skinMod = capi.World.Player.Entity.GetBehavior<ExtraSkinnableBehavior>();
+        PlayerSkinBehavior skinMod = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
 
-        List<CharacterClass> availableClasses = _characterSystem.characterClasses.Where(element => _customModelsSystem.AvailableClasses[skinMod.CurrentModel].Contains(element.Code)).ToList();
+        List<CharacterClass> availableClasses = _characterSystem.characterClasses.Where(element => _customModelsSystem.CustomModels[skinMod.CurrentModelCode].AvailableClasses.Contains(element.Code)).ToList();
         if (availableClasses.Count == 0)
         {
             availableClasses = _characterSystem.characterClasses;
         }
 
-        availableClasses = availableClasses.Where(element => !_customModelsSystem.SkipClasses[skinMod.CurrentModel].Contains(element.Code)).ToList();
+        availableClasses = availableClasses.Where(element => !_customModelsSystem.CustomModels[skinMod.CurrentModelCode].SkipClasses.Contains(element.Code)).ToList();
 
         _currentClassIndex = GameMath.Mod(_currentClassIndex + dir, availableClasses.Count);
 
@@ -574,8 +580,8 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         fulldesc.AppendLine(Lang.Get("traits-title"));
 
         
-        IOrderedEnumerable<Trait> chartraitsExtra = _customModelsSystem.ExtraTraits[skinMod.CurrentModel].Select(code => _characterSystem.TraitsByCode[code]).OrderBy(trait => (int)trait.Type);
-        IOrderedEnumerable<Trait> chartraits = chclass.Traits.Where(code => !_customModelsSystem.ExtraTraits[skinMod.CurrentModel].Contains(code)).Select(code => _characterSystem.TraitsByCode[code]).OrderBy(trait => (int)trait.Type);
+        IOrderedEnumerable<Trait> chartraitsExtra = _customModelsSystem.CustomModels[skinMod.CurrentModelCode].ExtraTraits.Select(code => _characterSystem.TraitsByCode[code]).OrderBy(trait => (int)trait.Type);
+        IOrderedEnumerable<Trait> chartraits = chclass.Traits.Where(code => !_customModelsSystem.CustomModels[skinMod.CurrentModelCode].ExtraTraits.Contains(code)).Select(code => _characterSystem.TraitsByCode[code]).OrderBy(trait => (int)trait.Type);
 
         foreach (Trait? trait in chartraitsExtra)
         {

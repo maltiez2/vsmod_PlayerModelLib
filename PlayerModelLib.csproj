@@ -3,7 +3,7 @@
   <PropertyGroup>
     <ModName>Player Model Library</ModName>
     <ModType>code</ModType>
-    <ModVersion>0.0.5</ModVersion>
+    <ModVersion>0.0.14</ModVersion>
     <ModId>playermodellib</ModId>
     <Description></Description>
     <Side>Universal</Side>
@@ -20,7 +20,7 @@
 
   <!-- Project settings -->
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -67,6 +67,10 @@
   <ItemGroup>
     <PackageReference Include="VSImGui" Version="0.0.6" />
     <Reference Include="$(GameDirectory)/**/*.dll" Private="false" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="resources\assets\playermodellib\textures\" />
+    <Folder Include="resources\assets\playermodellib\shapes\seraphfaces\" />
   </ItemGroup>
 
   <!-- Forces rebuild -->
