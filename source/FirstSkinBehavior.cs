@@ -128,7 +128,9 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
             return position;
         }
 
-        return ModelSystem?.GetAtlasPosition(CurrentModelCode, textureCode, entity);
+        TextureAtlasPosition? result = ModelSystem?.GetAtlasPosition(CurrentModelCode, textureCode, entity);
+
+        return result ?? ClientApi?.EntityTextureAtlas.UnknownTexturePosition;
     }
 
     public override void OnEntityLoaded()
@@ -206,12 +208,12 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
         renderer.TesselateShape();
 
-        player.Properties.EyeHeight = customModel.EyeHeight;
+        player.Properties.EyeHeight = customModel.EyeHeight * CurrentSize;
         player.Properties.CollisionBoxSize = new Vec2f(customModel.CollisionBox.X, customModel.CollisionBox.Y);
         player.Properties.SelectionBoxSize = new Vec2f(customModel.CollisionBox.X, customModel.CollisionBox.Y);
         Traverse.Create(player.Player).Method("updateColSelBoxes").GetValue();
         player.Properties.Client.Size = CurrentSize;
-        player.LocalEyePos.Y = player.Properties.EyeHeight * CurrentSize;
+        player.LocalEyePos.Y = customModel.EyeHeight * CurrentSize;
     }
 
     protected virtual void AddMainTextures()
@@ -465,7 +467,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
     {
         if (OverlaysTextureSpaces.TryGetValue(code, out int space))
         {
-            api.EntityTextureAtlas.FreeTextureSpace(space);
+            //api.EntityTextureAtlas.FreeTextureSpace(space);
         }
 
         int width = entityShape.TextureSizes[code][0] * 2;

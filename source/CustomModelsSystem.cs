@@ -68,6 +68,11 @@ public class CustomModelData
 public class ChangePlayerModelPacket
 {
     public string ModelCode { get; set; } = "";
+}
+
+[ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
+public class ChangePlayerModelSizePacket
+{
     public float EntitySize { get; set; } = 1;
 }
 
@@ -90,7 +95,8 @@ public sealed class CustomModelsSystem : ModSystem
         _api = api;
         _clientApi = api;
         _clientChannel = api.Network.RegisterChannel("PlayerModelLib:CustomModelsSystem")
-            .RegisterMessageType<ChangePlayerModelPacket>();
+            .RegisterMessageType<ChangePlayerModelPacket>()
+            .RegisterMessageType<ChangePlayerModelSizePacket>();
 
         TextureSource = new(api, api.EntityTextureAtlas, _textures, "PlayerModelLib:CustomModelsSystem");
     }
@@ -99,7 +105,9 @@ public sealed class CustomModelsSystem : ModSystem
         _api = api;
         api.Network.RegisterChannel("PlayerModelLib:CustomModelsSystem")
             .RegisterMessageType<ChangePlayerModelPacket>()
-            .SetMessageHandler<ChangePlayerModelPacket>(HandleChangePlayerModelPacket);
+            .RegisterMessageType<ChangePlayerModelSizePacket>()
+            .SetMessageHandler<ChangePlayerModelPacket>(HandleChangePlayerModelPacket)
+            .SetMessageHandler<ChangePlayerModelSizePacket>(HandleChangePlayerModelSizePacket);
     }
     public override void AssetsLoaded(ICoreAPI api)
     {
@@ -146,12 +154,18 @@ public sealed class CustomModelsSystem : ModSystem
         return TextureSource?.AtlasSize;
     }
 
-    public void SynchronizePlayerModelAndSize(string code, float size)
+    public void SynchronizePlayerModel(string code)
     {
         _clientChannel?.SendPacket(new ChangePlayerModelPacket()
         {
             ModelCode = code,
-            EntitySize = size
+        });
+    }
+    public void SynchronizePlayerModelSize(float size)
+    {
+        _clientChannel?.SendPacket(new ChangePlayerModelSizePacket()
+        {
+            EntitySize = size,
         });
     }
 
@@ -208,7 +222,8 @@ public sealed class CustomModelsSystem : ModSystem
             SkinPartsArray = parts,
             MainTextureCode = PrefixTextureCode(_defaultModelCode, _defaultMainTextureCode),
             CollisionBox = new(playerProperties.CollisionBoxSize.X, playerProperties.CollisionBoxSize.Y),
-            EyeHeight = (float)playerProperties.EyeHeight
+            EyeHeight = (float)playerProperties.EyeHeight,
+            SizeRange = new(0.8f, 1.2f)
         };
 
         CustomModels.Add(_defaultModelCode, defaultModelData);
@@ -254,7 +269,8 @@ public sealed class CustomModelsSystem : ModSystem
                     ExtraTraits = modelConfig.ExtraTraits,
                     WearableShapeReplacersByShape = modelConfig.WearableModelReplacersByShape,
                     CollisionBox = modelConfig.CollisionBox.Length == 0 ? DefaultModelData.CollisionBox : new Vector2(modelConfig.CollisionBox[0], modelConfig.CollisionBox[1]),
-                    EyeHeight = modelConfig.EyeHeight
+                    EyeHeight = modelConfig.EyeHeight,
+                    SizeRange = new(modelConfig.SizeRange[0], modelConfig.SizeRange[1])
                 };
 
                 CustomModels.Add(code, modelData);
@@ -441,8 +457,11 @@ public sealed class CustomModelsSystem : ModSystem
     private void HandleChangePlayerModelPacket(IPlayer player, ChangePlayerModelPacket packet)
     {
         player.Entity.WatchedAttributes.SetString("skinModel", packet.ModelCode);
-        player.Entity.WatchedAttributes.SetFloat("entitySize", packet.EntitySize);
         player.Entity.WatchedAttributes.SetStringArray("extraTraits", CustomModels[packet.ModelCode].ExtraTraits);
+    }
+    private void HandleChangePlayerModelSizePacket(IPlayer player, ChangePlayerModelSizePacket packet)
+    {
+        player.Entity.WatchedAttributes.SetFloat("entitySize", packet.EntitySize);
     }
     private Dictionary<string, CustomModelConfig> FromAsset(IAsset asset)
     {

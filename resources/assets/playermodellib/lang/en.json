@@ -1,3 +1,7 @@
 {
-  "game:playermodel-seraph": "Seraph"
+  "game:playermodel-seraph": "Seraph",
+  "game:tab-model": "Model",
+  "game:modeldesc-seraph": "Standard player model.",
+  "playermodellib:available-classes": "<strong>Available classes:<strong> ",
+  "playermodellib:model-size-slider": "Model size: "
 }

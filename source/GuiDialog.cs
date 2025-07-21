@@ -1,16 +1,23 @@
-﻿using CommandLine;
-using System.Diagnostics;
-using System.Linq;
+﻿using System.Diagnostics;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Util;
+using Vintagestory.Client.NoObf;
 using Vintagestory.GameContent;
 
 namespace PlayerModelLib;
+
+public enum EnumCreateCharacterTabs
+{
+    Model,
+    Skin,
+    Class
+}
 
 public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 {
@@ -44,11 +51,10 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         {
             ComposeGuis();
         }
-        catch
+        catch (Exception exception)
         {
-
+            Debug.WriteLine(exception);
         }
-
 
         EntityShapeRenderer? renderer = capi.World.Player.Entity.Properties.Client.Renderer as EntityShapeRenderer;
         renderer?.TesselateShape();
@@ -75,7 +81,7 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         }
 
         capi.World.Player.Entity.GetBehavior<EntityBehaviorPlayerInventory>().hideClothing = false;
-        reTesselate();
+        ReTesselate();
     }
     public override bool CaptureAllInputs()
     {
@@ -108,7 +114,7 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             }
         }
 
-        if (_insetSlotBounds.PointInside(capi.Input.MouseX, capi.Input.MouseY) && _curTab == 0)
+        if (_insetSlotBounds?.PointInside(capi.Input.MouseX, capi.Input.MouseY) == true && _currentTab == EnumCreateCharacterTabs.Skin)
         {
             _charZoom = GameMath.Clamp(_charZoom + args.deltaPrecise / 5f, 0.5f, 1f);
         }
@@ -146,7 +152,7 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             }
         }
 
-        _rotateCharacter = _insetSlotBounds.PointInside(args.X, args.Y);
+        _rotateCharacter = _insetSlotBounds?.PointInside(args.X, args.Y) ?? false;
     }
     public override void OnMouseUp(MouseEvent args)
     {
@@ -162,6 +168,8 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     }
     public override void OnRenderGUI(float deltaTime)
     {
+        if (_insetSlotBounds == null) return;
+
         foreach (KeyValuePair<string, GuiComposer> item in (IEnumerable<KeyValuePair<string, GuiComposer>>)Composers)
         {
             item.Value.Render(deltaTime);
@@ -188,29 +196,41 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         capi.Render.PushScissor(_insetSlotBounds);
 
-        if (_curTab == 0)
+        switch (_currentTab)
         {
-            capi.Render.RenderEntityToGui(
-                deltaTime,
-                capi.World.Player.Entity,
-                _insetSlotBounds.renderX + pad - GuiElement.scaled(195) * _charZoom + GuiElement.scaled(115 * (1 - _charZoom)),
-                _insetSlotBounds.renderY + pad + GuiElement.scaled(10 * (1 - _charZoom)),
-                (float)GuiElement.scaled(230),
-                _yaw,
-                (float)GuiElement.scaled(330 * _charZoom),
-                ColorUtil.WhiteArgb);
-        }
-        else
-        {
-            capi.Render.RenderEntityToGui(
-                deltaTime,
-                capi.World.Player.Entity,
-                _insetSlotBounds.renderX + pad - GuiElement.scaled(110),
-                _insetSlotBounds.renderY + pad - GuiElement.scaled(15),
-                (float)GuiElement.scaled(230),
-                _yaw,
-                (float)GuiElement.scaled(205),
-                ColorUtil.WhiteArgb);
+            case EnumCreateCharacterTabs.Model:
+                capi.Render.RenderEntityToGui(
+                    deltaTime,
+                    capi.World.Player.Entity,
+                    _insetSlotBounds.renderX + pad - GuiElement.scaled(110),
+                    _insetSlotBounds.renderY + pad - GuiElement.scaled(15),
+                    (float)GuiElement.scaled(230),
+                    _yaw,
+                    (float)GuiElement.scaled(205),
+                    ColorUtil.WhiteArgb);
+                break;
+            case EnumCreateCharacterTabs.Skin:
+                capi.Render.RenderEntityToGui(
+                    deltaTime,
+                    capi.World.Player.Entity,
+                    _insetSlotBounds.renderX + pad - GuiElement.scaled(195) * _charZoom + GuiElement.scaled(115 * (1 - _charZoom)),
+                    _insetSlotBounds.renderY + pad + GuiElement.scaled(10 * (1 - _charZoom)),
+                    (float)GuiElement.scaled(230),
+                    _yaw,
+                    (float)GuiElement.scaled(330 * _charZoom),
+                    ColorUtil.WhiteArgb);
+                break;
+            case EnumCreateCharacterTabs.Class:
+                capi.Render.RenderEntityToGui(
+                    deltaTime,
+                    capi.World.Player.Entity,
+                    _insetSlotBounds.renderX + pad - GuiElement.scaled(110),
+                    _insetSlotBounds.renderY + pad - GuiElement.scaled(15),
+                    (float)GuiElement.scaled(230),
+                    _yaw,
+                    (float)GuiElement.scaled(205),
+                    ColorUtil.WhiteArgb);
+                break;
         }
 
         capi.Render.PopScissor();
@@ -227,7 +247,7 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     private readonly CharacterSystem _characterSystem;
     private readonly CustomModelsSystem _customModelsSystem;
     private int _currentClassIndex = 0;
-    private int _curTab = 0;
+    private EnumCreateCharacterTabs _currentTab = 0;
     private readonly int _rows = 7;
     private float _charZoom = 1f;
     private bool _charNaked = true;
@@ -237,229 +257,306 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     private readonly Vec4f _lighPos = new Vec4f(-1, -1, 0, 0).NormalizeXYZ();
     private readonly Matrixf _mat = new();
     private readonly MethodInfo? _clientSelectionDone = typeof(CharacterSystem).GetMethod("ClientSelectionDone", BindingFlags.NonPublic | BindingFlags.Instance);
+    private float _currentModelSize = 1f;
 
     private void ComposeGuis()
     {
-        double pad = GuiElementItemSlotGridBase.unscaledSlotPadding;
-        double slotsize = GuiElementPassiveItemSlot.unscaledSlotSize;
+        double padding = GuiElementItemSlotGridBase.unscaledSlotPadding;
+        double slotSize = GuiElementPassiveItemSlot.unscaledSlotSize;
+        double yPosition = 20 + padding;
 
         _characterInventory = capi.World.Player.InventoryManager.GetOwnInventory(GlobalConstants.characterInvClassName);
 
         ElementBounds tabBounds = ElementBounds.Fixed(0, -25, 450, 25);
 
-        double ypos = 20 + pad;
+        ElementBounds backgroundBounds = ElementBounds.FixedSize(717, _dlgHeight)
+            .WithFixedPadding(GuiStyle.ElementToDialogPadding);
 
-        ElementBounds bgBounds = ElementBounds.FixedSize(717, _dlgHeight).WithFixedPadding(GuiStyle.ElementToDialogPadding);
-
-        ElementBounds dialogBounds = ElementBounds.FixedSize(757, _dlgHeight + 40).WithAlignment(EnumDialogArea.CenterMiddle)
+        ElementBounds dialogBounds = ElementBounds.FixedSize(757, _dlgHeight + 40)
+            .WithAlignment(EnumDialogArea.CenterMiddle)
             .WithFixedAlignmentOffset(GuiStyle.DialogToScreenPadding, 0);
 
+        GuiTab[] tabs = [
+            new() { Name = Lang.Get("tab-model"), DataInt = 0 },
+            new() { Name = Lang.Get("tab-skinandvoice"), DataInt = 1 },
+            new() { Name = Lang.Get("tab-charclass"), DataInt = 2 },
+        ];
 
-        GuiTab[] tabs = new GuiTab[] {
-            new() { Name = Lang.Get("tab-skinandvoice"), DataInt = 0 },
-            new() { Name = Lang.Get("tab-charclass"), DataInt = 1 },
-          //  new GuiTab() { Name = "Outfit", DataInt = 2 }
+        string tabTitle = _currentTab switch
+        {
+            EnumCreateCharacterTabs.Model => Lang.Get("Select model"),
+            EnumCreateCharacterTabs.Skin => Lang.Get("Customize Skin"),
+            EnumCreateCharacterTabs.Class => Lang.Get("Select character class"),
+            _ => ""
         };
 
-        GuiComposer createCharacterComposer;
-        Composers["createcharacter"] = createCharacterComposer =
-            capi.Gui
+        GuiComposer composer = capi.Gui
             .CreateCompo("createcharacter", dialogBounds)
-            .AddShadedDialogBG(bgBounds, true)
-            .AddDialogTitleBar(_curTab == 0 ? Lang.Get("Customize Skin") : (_curTab == 1 ? Lang.Get("Select character class") : Lang.Get("Select your outfit")), OnTitleBarClose)
+            .AddShadedDialogBG(backgroundBounds, true)
+            .AddDialogTitleBar(tabTitle, OnTitleBarClose)
             .AddHorizontalTabs(tabs, tabBounds, onTabClicked, CairoFont.WhiteSmallText().WithWeight(Cairo.FontWeight.Bold), CairoFont.WhiteSmallText().WithWeight(Cairo.FontWeight.Bold), "tabs")
-            .BeginChildElements(bgBounds)
-        ;
+            .BeginChildElements(backgroundBounds);
+
+        Composers["createcharacter"] = composer;
 
         CustomModelsSystem system = capi.ModLoader.GetModSystem<CustomModelsSystem>();
+        EntityBehaviorPlayerInventory inventoryBehavior = capi.World.Player.Entity.GetBehavior<EntityBehaviorPlayerInventory>() ?? throw new Exception();
+        inventoryBehavior.hideClothing = false;
 
-        //capi.World.Player.Entity.hideClothing = false;
-        EntityBehaviorPlayerInventory bh = capi.World.Player.Entity.GetBehavior<EntityBehaviorPlayerInventory>();
-        bh.hideClothing = false;
-
-        if (_curTab == 0)
+        switch (_currentTab)
         {
-            PlayerSkinBehavior skinMod = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
-
-            string[] modelValues = system.CustomModels.Keys.ToArray();
-            string[] modelNames = system.CustomModels.Keys.Select(key => new AssetLocation(key)).Select(key => Lang.Get($"{key.Domain}:playermodel-{key.Path}")).ToArray();
-            int modelIndex = 0;
-
-            for (int index = 0; index < modelValues.Length; index++)
-            {
-                if (modelValues[index] == skinMod.CurrentModelCode)
-                {
-                    modelIndex = index;
-                    break;
-                }
-            }
-
-            createCharacterComposer.AddDropDown(modelValues, modelNames, modelIndex, (variantcode, selected) => onToggleModel(variantcode), ElementBounds.Fixed(490, -16).WithFixedSize(180, 25), "dropdown-modelselection");
-
-            createCharacterComposer.AddRichtext("Model:", CairoFont.WhiteSmallText(), ElementBounds.Fixed(440, -13).WithFixedSize(210, 22));
-
-            //capi.World.Player.Entity.hideClothing = charNaked;
-            bh.hideClothing = _charNaked;
-
-            EntityShapeRenderer? essr = capi.World.Player.Entity.Properties.Client.Renderer as EntityShapeRenderer;
-            essr.TesselateShape();
-
-            CairoFont smallfont = CairoFont.WhiteSmallText();
-            Cairo.TextExtents textExt = smallfont.GetTextExtents(Lang.Get("Show dressed"));
-            int colorIconSize = 22;
-
-            ElementBounds leftColBounds = ElementBounds.Fixed(0, ypos, 204, _dlgHeight - 59).FixedGrow(2 * pad, 2 * pad);
-
-            _insetSlotBounds = ElementBounds.Fixed(0, ypos + 2, 265, leftColBounds.fixedHeight - 2 * pad - 10).FixedRightOf(leftColBounds, 10);
-            ElementBounds rightColBounds = ElementBounds.Fixed(0, ypos, 54, _dlgHeight - 59).FixedGrow(2 * pad, 2 * pad).FixedRightOf(_insetSlotBounds, 10);
-            ElementBounds toggleButtonBounds = ElementBounds.Fixed(
-                    (int)_insetSlotBounds.fixedX + _insetSlotBounds.fixedWidth / 2 - textExt.Width / RuntimeEnv.GUIScale / 2 - 12,
-                    0,
-                    textExt.Width / RuntimeEnv.GUIScale + 1,
-                    textExt.Height / RuntimeEnv.GUIScale
-                )
-                .FixedUnder(_insetSlotBounds, 4).WithAlignment(EnumDialogArea.LeftFixed).WithFixedPadding(12, 6)
-            ;
-
-            ElementBounds bounds = null;
-            ElementBounds prevbounds = null;
-
-            double leftX = 0;
-
-            foreach (SkinnablePart? skinpart in skinMod.AvailableSkinParts)
-            {
-                bounds = ElementBounds.Fixed(leftX, (prevbounds == null || prevbounds.fixedY == 0) ? -10 : prevbounds.fixedY + 8, colorIconSize, colorIconSize);
-
-                string code = skinpart.Code;
-
-                AppliedSkinnablePartVariant appliedVar = skinMod.AppliedSkinParts.FirstOrDefault(sp => sp.PartCode == code);
-
-                if (skinpart.Type == EnumSkinnableType.Texture && !skinpart.UseDropDown)
-                {
-                    int selectedIndex = 0;
-                    int[] colors = new int[skinpart.Variants.Length];
-
-                    for (int i = 0; i < skinpart.Variants.Length; i++)
-                    {
-                        colors[i] = skinpart.Variants[i].Color;
-
-                        if (appliedVar?.Code == skinpart.Variants[i].Code) selectedIndex = i;
-                    }
-
-                    createCharacterComposer.AddRichtext(Lang.Get("skinpart-" + code), CairoFont.WhiteSmallText(), bounds = bounds.BelowCopy(0, 10).WithFixedSize(210, 22));
-                    createCharacterComposer.AddColorListPicker(colors, (index) => onToggleSkinPartColor(code, index), bounds = bounds.BelowCopy(0, 0).WithFixedSize(colorIconSize, colorIconSize), 180, "picker-" + code);
-
-                    for (int i = 0; i < colors.Length; i++)
-                    {
-                        GuiElementColorListPicker picker = createCharacterComposer.GetColorListPicker("picker-" + code + "-" + i);
-                        picker.ShowToolTip = true;
-                        picker.TooltipText = Lang.Get("color-" + skinpart.Variants[i].Code);
-
-                        //Console.WriteLine("\"" + Lang.Get("color-" + skinpart.Variants[i].Code) + "\": \""+ skinpart.Variants[i].Code + "\"");
-                    }
-
-                    createCharacterComposer.ColorListPickerSetValue("picker-" + code, selectedIndex);
-                }
-                else
-                {
-                    int selectedIndex = 0;
-
-                    string[] names = new string[skinpart.Variants.Length];
-                    string[] values = new string[skinpart.Variants.Length];
-
-                    for (int i = 0; i < skinpart.Variants.Length; i++)
-                    {
-                        names[i] = Lang.Get("skinpart-" + code + "-" + skinpart.Variants[i].Code);
-                        values[i] = skinpart.Variants[i].Code;
-
-                        //Console.WriteLine("\"" + names[i] + "\": \"" + skinpart.Variants[i].Code + "\",");
-
-                        if (appliedVar?.Code == values[i]) selectedIndex = i;
-                    }
-
-
-                    createCharacterComposer.AddRichtext(Lang.Get("skinpart-" + code), CairoFont.WhiteSmallText(), bounds = bounds.BelowCopy(0, 10).WithFixedSize(210, 22));
-
-                    string tooltip = Lang.GetIfExists("skinpartdesc-" + code);
-                    if (tooltip != null)
-                    {
-                        createCharacterComposer.AddHoverText(tooltip, CairoFont.WhiteSmallText(), 300, bounds = bounds.FlatCopy());
-                    }
-
-                    createCharacterComposer.AddDropDown(values, names, selectedIndex, (variantcode, selected) => onToggleSkinPartColor(code, variantcode), bounds = bounds.BelowCopy(0, 0).WithFixedSize(200, 25), "dropdown-" + code);
-                }
-
-                prevbounds = bounds.FlatCopy();
-
-                if (skinpart.Colbreak)
-                {
-                    leftX = _insetSlotBounds.fixedX + _insetSlotBounds.fixedWidth + 22;
-                    prevbounds.fixedY = 0;
-                }
-            }
-
-            createCharacterComposer.AddInset(_insetSlotBounds, 2);
-            createCharacterComposer.AddToggleButton(Lang.Get("Show dressed"), smallfont, OnToggleDressOnOff, toggleButtonBounds, "showdressedtoggle");
-            createCharacterComposer.AddButton(Lang.Get("Randomize"), () => { return OnRandomizeSkin(new Dictionary<string, string>()); }, ElementBounds.Fixed(0, _dlgHeight - 25).WithAlignment(EnumDialogArea.LeftFixed).WithFixedPadding(8, 6), CairoFont.WhiteSmallText(), EnumButtonStyle.Small);
-            createCharacterComposer.AddIf(capi.Settings.String.Exists("lastSkinSelection"))
-                .AddButton(Lang.Get("Last selection"), () => { return OnRandomizeSkin(_characterSystem.getPreviousSelection()); }, ElementBounds.Fixed(130, _dlgHeight - 25).WithAlignment(EnumDialogArea.LeftFixed).WithFixedPadding(8, 6), CairoFont.WhiteSmallText(), EnumButtonStyle.Small)
-                .EndIf();
-
-            
-
-            
-
-            createCharacterComposer.AddSmallButton(Lang.Get("Confirm Skin"), OnNext, ElementBounds.Fixed(0, _dlgHeight - 25).WithAlignment(EnumDialogArea.RightFixed).WithFixedPadding(12, 6), EnumButtonStyle.Normal);
-            
-
-            createCharacterComposer.GetToggleButton("showdressedtoggle").SetValue(!_charNaked);
+            case EnumCreateCharacterTabs.Model:
+                ComposeModelTab(composer, system, inventoryBehavior, yPosition, padding, slotSize);
+                break;
+            case EnumCreateCharacterTabs.Skin:
+                ComposeSkinTab(composer, system, inventoryBehavior, yPosition, padding, dialogBounds);
+                break;
+            case EnumCreateCharacterTabs.Class:
+                ComposeClassTab(composer, system, inventoryBehavior, yPosition, padding, slotSize);
+                break;
         }
 
-        if (_curTab == 1)
-        {
-            EntityShapeRenderer? essr = capi.World.Player.Entity.Properties.Client.Renderer as EntityShapeRenderer;
-            essr.TesselateShape();
-
-            ypos -= 10;
-
-            ElementBounds leftColBounds = ElementBounds.Fixed(0, ypos, 0, _dlgHeight - 47).FixedGrow(2 * pad, 2 * pad);
-            _insetSlotBounds = ElementBounds.Fixed(0, ypos + 25, 190, leftColBounds.fixedHeight - 2 * pad + 10).FixedRightOf(leftColBounds, 10);
-
-            ElementBounds rightSlotBounds = ElementStdBounds.SlotGrid(EnumDialogArea.None, 0, ypos, 1, _rows).FixedGrow(2 * pad, 2 * pad).FixedRightOf(_insetSlotBounds, 10);
-            ElementBounds prevButtonBounds = ElementBounds.Fixed(0, ypos + 25, 35, slotsize - 4).WithFixedPadding(2).FixedRightOf(_insetSlotBounds, 20);
-            ElementBounds centerTextBounds = ElementBounds.Fixed(0, ypos + 25, 200, slotsize - 4 - 8).FixedRightOf(prevButtonBounds, 20);
-
-            ElementBounds charclasssInset = centerTextBounds.ForkBoundingParent(4, 4, 4, 4);
-
-            ElementBounds nextButtonBounds = ElementBounds.Fixed(0, ypos + 25, 35, slotsize - 4).WithFixedPadding(2).FixedRightOf(charclasssInset, 20);
-
-            CairoFont font = CairoFont.WhiteMediumText();
-            centerTextBounds.fixedY += (centerTextBounds.fixedHeight - font.GetFontExtents().Height / RuntimeEnv.GUIScale) / 2;
-
-            ElementBounds charTextBounds = ElementBounds.Fixed(0, 0, 480, 100).FixedUnder(prevButtonBounds, 20).FixedRightOf(_insetSlotBounds, 20);
-
-            createCharacterComposer
-                .AddInset(_insetSlotBounds, 2)
-
-                .AddIconButton("left", (on) => changeClass(-1), prevButtonBounds.FlatCopy())
-                .AddInset(charclasssInset, 2)
-                .AddDynamicText("Commoner", font.Clone().WithOrientation(EnumTextOrientation.Center), centerTextBounds, "className")
-                .AddIconButton("right", (on) => changeClass(1), nextButtonBounds.FlatCopy())
-
-                .AddRichtext("", CairoFont.WhiteDetailText(), charTextBounds, "characterDesc")
-                .AddSmallButton(Lang.Get("Confirm Class"), OnConfirm, ElementBounds.Fixed(0, _dlgHeight - 30).WithAlignment(EnumDialogArea.RightFixed).WithFixedPadding(12, 6), EnumButtonStyle.Normal)
-            ;
-
-            changeClass(0);
-        }
-
-        GuiElementHorizontalTabs tabElem = createCharacterComposer.GetHorizontalTabs("tabs");
+        GuiElementHorizontalTabs tabElem = composer.GetHorizontalTabs("tabs");
         tabElem.unscaledTabSpacing = 20;
         tabElem.unscaledTabPadding = 10;
-        tabElem.activeElement = _curTab;
+        tabElem.activeElement = (int)_currentTab;
 
-        createCharacterComposer.Compose();
+        composer.Compose();
+
+        ScrollPatches.Composed();
     }
+
+    private void ComposeModelTab(GuiComposer composer, CustomModelsSystem system, EntityBehaviorPlayerInventory inventoryBehavior, double yPosition, double padding, double slotSize)
+    {
+        PlayerSkinBehavior skinBehavior = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
+
+        string[] modelValues = system.CustomModels.Keys.ToArray();
+        string[] modelNames = system.CustomModels.Keys.Select(key => new AssetLocation(key)).Select(key => Lang.Get($"{key.Domain}:playermodel-{key.Path}")).ToArray();
+        int modelIndex = 0;
+
+        for (int index = 0; index < modelValues.Length; index++)
+        {
+            if (modelValues[index] == skinBehavior.CurrentModelCode)
+            {
+                modelIndex = index;
+                break;
+            }
+        }
+
+        //modelValues = modelValues.Concat(modelValues).ToArray();
+        //modelNames = modelNames.Concat(modelNames).ToArray();
+
+        yPosition -= 10;
+
+        ElementBounds leftColBounds = ElementBounds.Fixed(0, yPosition, 0, _dlgHeight - 47).FixedGrow(2 * padding, 2 * padding);
+        _insetSlotBounds = ElementBounds.Fixed(0, yPosition + 25, 190, leftColBounds.fixedHeight - 2 * padding + 10).FixedRightOf(leftColBounds, 10);
+
+        ElementBounds centerTextBounds = ElementBounds.Fixed(0, yPosition + 25, 480, slotSize - 4 - 8).FixedRightOf(_insetSlotBounds, 20);
+        ElementBounds dropBoxInset = centerTextBounds.ForkBoundingParent(4, 4, 4, 4);
+
+        CairoFont font = CairoFont.WhiteMediumText();
+        centerTextBounds.fixedY += (centerTextBounds.fixedHeight - font.GetFontExtents().Height / RuntimeEnv.GUIScale) / 2;
+
+        CairoFont dropDownFont = CairoFont.WhiteSmallishText();
+
+        ElementBounds sizeTextBounds = ElementBounds.Fixed(0, 0, 120, 20).FixedUnder(centerTextBounds, 60).FixedRightOf(_insetSlotBounds, 20);
+        ElementBounds sizeSliderBounds = ElementBounds.Fixed(0, 0, 369, 20).FixedUnder(centerTextBounds, 60).FixedRightOf(sizeTextBounds, 0);
+        ElementBounds descriptionTextBounds = ElementBounds.Fixed(0, 0, 480, 100).FixedUnder(sizeSliderBounds, 20).FixedRightOf(_insetSlotBounds, 20);
+
+        composer.AddInset(_insetSlotBounds, 2);
+        composer.AddInset(dropBoxInset, 2);
+
+        GuiElementDropDown dropDown = new(
+            composer.Api,
+            modelValues,
+            modelNames,
+            modelIndex,
+            (variantCode, selected) => onToggleModel(variantCode),
+            centerTextBounds,
+            dropDownFont.Clone().WithOrientation(EnumTextOrientation.Left),
+            multiSelect: false);
+
+        composer.AddInteractiveElement(dropDown, null);
+
+        float minSize = skinBehavior.CurrentModel.SizeRange.X;
+        float maxSize = skinBehavior.CurrentModel.SizeRange.Y;
+        _currentModelSize = GameMath.Clamp(_currentModelSize, minSize, maxSize);
+
+        composer.AddRichtext(Lang.Get("playermodellib:model-size-slider"), CairoFont.WhiteSmallText(), sizeTextBounds);
+        composer.AddSlider(value => { _currentModelSize = value / 100f; OnModelSizeChanged(); return true; }, sizeSliderBounds, "modelSizeSlider");
+        composer.GetSlider("modelSizeSlider").SetValues((int)(_currentModelSize * 100), (int)(minSize * 100), (int)(maxSize * 100), 1, unit: "%");
+
+        composer.AddRichtext("", CairoFont.WhiteDetailText(), descriptionTextBounds, "modelDescription");
+
+        composer.AddSmallButton(Lang.Get("Confirm model"), OnNext, ElementBounds.Fixed(0, _dlgHeight - 30).WithAlignment(EnumDialogArea.RightFixed).WithFixedPadding(12, 6), EnumButtonStyle.Normal);
+
+        string modelDescription = CreateModelDescription(system, skinBehavior.CurrentModelCode);
+
+        composer.GetRichtext("modelDescription").SetNewText(modelDescription, CairoFont.WhiteDetailText());
+
+        ReTesselate();
+    }
+    private void ComposeSkinTab(GuiComposer composer, CustomModelsSystem system, EntityBehaviorPlayerInventory inventoryBehavior, double yPosition, double padding, ElementBounds dialogBounds)
+    {
+        PlayerSkinBehavior skinMod = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
+
+        //capi.World.Player.Entity.hideClothing = charNaked;
+        inventoryBehavior.hideClothing = _charNaked;
+
+        EntityShapeRenderer? essr = capi.World.Player.Entity.Properties.Client.Renderer as EntityShapeRenderer;
+        essr.TesselateShape();
+
+        CairoFont smallfont = CairoFont.WhiteSmallText();
+        Cairo.TextExtents textExt = smallfont.GetTextExtents(Lang.Get("Show dressed"));
+        int colorIconSize = 22;
+
+        ElementBounds leftColBounds = ElementBounds.Fixed(0, yPosition, 204, _dlgHeight - 59).FixedGrow(2 * padding, 2 * padding);
+
+        _insetSlotBounds = ElementBounds.Fixed(0, yPosition + 2, 265, leftColBounds.fixedHeight - 2 * padding - 10).FixedRightOf(leftColBounds, 10);
+        ElementBounds rightColBounds = ElementBounds.Fixed(0, yPosition, 54, _dlgHeight - 59).FixedGrow(2 * padding, 2 * padding).FixedRightOf(_insetSlotBounds, 10);
+        ElementBounds toggleButtonBounds = ElementBounds.Fixed(
+                (int)_insetSlotBounds.fixedX + _insetSlotBounds.fixedWidth / 2 - textExt.Width / RuntimeEnv.GUIScale / 2 - 12,
+                0,
+                textExt.Width / RuntimeEnv.GUIScale + 1,
+                textExt.Height / RuntimeEnv.GUIScale
+            )
+            .FixedUnder(_insetSlotBounds, 4).WithAlignment(EnumDialogArea.LeftFixed).WithFixedPadding(12, 6);
+
+        ScrollPatches.NewBounds(toggleButtonBounds);
+
+        ElementBounds bounds = null;
+        ElementBounds prevbounds = null;
+
+        double leftX = 0;
+
+        ScrollPatches.PreLoop(composer, skinMod.AvailableSkinParts, dialogBounds, leftColBounds, _insetSlotBounds, toggleButtonBounds, ref leftX);
+
+        foreach (SkinnablePart? skinpart in skinMod.AvailableSkinParts)
+        {
+            bounds = ElementBounds.Fixed(leftX, (prevbounds == null || prevbounds.fixedY == 0) ? -10 : prevbounds.fixedY + 8, colorIconSize, colorIconSize);
+
+            string code = skinpart.Code;
+
+            AppliedSkinnablePartVariant appliedVar = skinMod.AppliedSkinParts.FirstOrDefault(sp => sp.PartCode == code);
+
+            if (skinpart.Type == EnumSkinnableType.Texture && !skinpart.UseDropDown)
+            {
+                int selectedIndex = 0;
+                int[] colors = new int[skinpart.Variants.Length];
+
+                for (int i = 0; i < skinpart.Variants.Length; i++)
+                {
+                    colors[i] = skinpart.Variants[i].Color;
+
+                    if (appliedVar?.Code == skinpart.Variants[i].Code) selectedIndex = i;
+                }
+
+                composer.AddRichtext(Lang.Get("skinpart-" + code), CairoFont.WhiteSmallText(), bounds = bounds.BelowCopy(0, 10).WithFixedSize(210, 22));
+                composer.AddColorListPicker(colors, (index) => onToggleSkinPartColor(code, index), bounds = bounds.BelowCopy(0, 0).WithFixedSize(colorIconSize, colorIconSize), 180, "picker-" + code);
+
+                for (int i = 0; i < colors.Length; i++)
+                {
+                    GuiElementColorListPicker picker = composer.GetColorListPicker("picker-" + code + "-" + i);
+                    picker.ShowToolTip = true;
+                    picker.TooltipText = Lang.Get("color-" + skinpart.Variants[i].Code);
+
+                    //Console.WriteLine("\"" + Lang.Get("color-" + skinpart.Variants[i].Code) + "\": \""+ skinpart.Variants[i].Code + "\"");
+                }
+
+                composer.ColorListPickerSetValue("picker-" + code, selectedIndex);
+            }
+            else
+            {
+                int selectedIndex = 0;
+
+                string[] names = new string[skinpart.Variants.Length];
+                string[] values = new string[skinpart.Variants.Length];
+
+                for (int i = 0; i < skinpart.Variants.Length; i++)
+                {
+                    names[i] = Lang.Get("skinpart-" + code + "-" + skinpart.Variants[i].Code);
+                    values[i] = skinpart.Variants[i].Code;
+
+                    //Console.WriteLine("\"" + names[i] + "\": \"" + skinpart.Variants[i].Code + "\",");
+
+                    if (appliedVar?.Code == values[i]) selectedIndex = i;
+                }
+
+
+                composer.AddRichtext(Lang.Get("skinpart-" + code), CairoFont.WhiteSmallText(), bounds = bounds.BelowCopy(0, 10).WithFixedSize(210, 22));
+
+                string tooltip = Lang.GetIfExists("skinpartdesc-" + code);
+                if (tooltip != null)
+                {
+                    composer.AddHoverText(tooltip, CairoFont.WhiteSmallText(), 300, bounds = bounds.FlatCopy());
+                }
+
+                composer.AddDropDown(values, names, selectedIndex, (variantcode, selected) => onToggleSkinPartColor(code, variantcode), bounds = bounds.BelowCopy(0, 0).WithFixedSize(200, 25), "dropdown-" + code);
+            }
+
+            prevbounds = bounds.FlatCopy();
+
+            ScrollPatches.ColBreak(composer, dialogBounds, bounds, ref leftX);
+
+            if (skinpart.Colbreak)
+            {
+                leftX = _insetSlotBounds.fixedX + _insetSlotBounds.fixedWidth + 22;
+                prevbounds.fixedY = 0;
+            }
+        }
+
+        ScrollPatches.PostLoop(composer, toggleButtonBounds);
+
+        composer.AddInset(_insetSlotBounds, 2);
+        composer.AddToggleButton(Lang.Get("Show dressed"), smallfont, OnToggleDressOnOff, toggleButtonBounds, "showdressedtoggle");
+        composer.AddButton(Lang.Get("Randomize"), () => { return OnRandomizeSkin(new Dictionary<string, string>()); }, ElementBounds.Fixed(0, _dlgHeight - 25).WithAlignment(EnumDialogArea.LeftFixed).WithFixedPadding(8, 6), CairoFont.WhiteSmallText(), EnumButtonStyle.Small);
+        composer.AddIf(capi.Settings.String.Exists("lastSkinSelection"))
+            .AddButton(Lang.Get("Last selection"), () => { return OnRandomizeSkin(_characterSystem.getPreviousSelection()); }, ElementBounds.Fixed(130, _dlgHeight - 25).WithAlignment(EnumDialogArea.LeftFixed).WithFixedPadding(8, 6), CairoFont.WhiteSmallText(), EnumButtonStyle.Small)
+            .EndIf();
+
+        composer.AddSmallButton(Lang.Get("Confirm Skin"), OnNext, ElementBounds.Fixed(0, _dlgHeight - 25).WithAlignment(EnumDialogArea.RightFixed).WithFixedPadding(12, 6), EnumButtonStyle.Normal);
+
+        composer.GetToggleButton("showdressedtoggle").SetValue(!_charNaked);
+    }
+    private void ComposeClassTab(GuiComposer composer, CustomModelsSystem system, EntityBehaviorPlayerInventory inventoryBehavior, double yPosition, double padding, double slotSize)
+    {
+        EntityShapeRenderer? essr = capi.World.Player.Entity.Properties.Client.Renderer as EntityShapeRenderer;
+        essr.TesselateShape();
+
+        yPosition -= 10;
+
+        ElementBounds leftColBounds = ElementBounds.Fixed(0, yPosition, 0, _dlgHeight - 47).FixedGrow(2 * padding, 2 * padding);
+        _insetSlotBounds = ElementBounds.Fixed(0, yPosition + 25, 190, leftColBounds.fixedHeight - 2 * padding + 10).FixedRightOf(leftColBounds, 10);
+
+        ElementBounds rightSlotBounds = ElementStdBounds.SlotGrid(EnumDialogArea.None, 0, yPosition, 1, _rows).FixedGrow(2 * padding, 2 * padding).FixedRightOf(_insetSlotBounds, 10);
+        ElementBounds prevButtonBounds = ElementBounds.Fixed(0, yPosition + 25, 35, slotSize - 4).WithFixedPadding(2).FixedRightOf(_insetSlotBounds, 20);
+        ElementBounds centerTextBounds = ElementBounds.Fixed(0, yPosition + 25, 200, slotSize - 4 - 8).FixedRightOf(prevButtonBounds, 20);
+
+        ElementBounds charclasssInset = centerTextBounds.ForkBoundingParent(4, 4, 4, 4);
+
+        ElementBounds nextButtonBounds = ElementBounds.Fixed(0, yPosition + 25, 35, slotSize - 4).WithFixedPadding(2).FixedRightOf(charclasssInset, 20);
+
+        CairoFont font = CairoFont.WhiteMediumText();
+        centerTextBounds.fixedY += (centerTextBounds.fixedHeight - font.GetFontExtents().Height / RuntimeEnv.GUIScale) / 2;
+
+        ElementBounds charTextBounds = ElementBounds.Fixed(0, 0, 480, 100).FixedUnder(prevButtonBounds, 20).FixedRightOf(_insetSlotBounds, 20);
+
+        composer
+            .AddInset(_insetSlotBounds, 2)
+
+            .AddIconButton("left", (on) => ChangeClass(-1), prevButtonBounds.FlatCopy())
+            .AddInset(charclasssInset, 2)
+            .AddDynamicText("Commoner", font.Clone().WithOrientation(EnumTextOrientation.Center), centerTextBounds, "className")
+            .AddIconButton("right", (on) => ChangeClass(1), nextButtonBounds.FlatCopy())
+            .AddRichtext("", CairoFont.WhiteDetailText(), charTextBounds, "characterDesc")
+            .AddSmallButton(Lang.Get("Confirm Class"), OnConfirm, ElementBounds.Fixed(0, _dlgHeight - 30).WithAlignment(EnumDialogArea.RightFixed).WithFixedPadding(12, 6), EnumButtonStyle.Normal)
+        ;
+
+        ChangeClass(0);
+    }
+
+
+
     private bool OnRandomizeSkin(Dictionary<string, string> preselection)
     {
         EntityPlayer entity = capi.World.Player.Entity;
@@ -484,13 +581,13 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             }
             else
             {
-                Composers["createcharacter"].GetDropDown("dropdown-" + partcode).SetSelectedIndex(index);
+                Composers["createcharacter"].GetDropDown("dropdown-" + partcode)?.SetSelectedIndex(index);
             }
         }
 
         //essr.doReloadShapeAndSkin = true;
         bh.doReloadShapeAndSkin = true;
-        reTesselate();
+        ReTesselate();
 
         return true;
     }
@@ -500,7 +597,7 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         EntityBehaviorPlayerInventory bh = capi.World.Player.Entity.GetBehavior<EntityBehaviorPlayerInventory>();
         bh.hideClothing = _charNaked;
         //capi.World.Player.Entity.hideClothing = charNaked;
-        reTesselate();
+        ReTesselate();
     }
     private void onToggleSkinPartColor(string partCode, string variantCode)
     {
@@ -523,8 +620,8 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         PlayerSkinBehavior skinMod = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
         CustomModelsSystem system = capi.ModLoader.GetModSystem<CustomModelsSystem>();
 
-        system.SynchronizePlayerModelAndSize(modelCode, skinMod.CurrentSize);
-        skinMod.SetCurrentModel(modelCode, skinMod.CurrentSize);
+        system.SynchronizePlayerModel(modelCode);
+        skinMod.SetCurrentModel(modelCode, _currentModelSize);
 
         ComposeGuis();
 
@@ -532,13 +629,13 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     }
     private bool OnNext()
     {
-        _curTab = 1;
+        _currentTab = (EnumCreateCharacterTabs)GameMath.Clamp((int)_currentTab + 1, 0, (int)EnumCreateCharacterTabs.Class);
         ComposeGuis();
         return true;
     }
     private void onTabClicked(int tabid)
     {
-        _curTab = tabid;
+        _currentTab = (EnumCreateCharacterTabs)tabid;
         ComposeGuis();
     }
     private bool OnConfirm()
@@ -555,7 +652,7 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     {
         capi.Network.SendPacketClient(packet);
     }
-    private void changeClass(int dir)
+    private void ChangeClass(int dir)
     {
         PlayerSkinBehavior skinMod = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
 
@@ -570,7 +667,7 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         _currentClassIndex = GameMath.Mod(_currentClassIndex + dir, availableClasses.Count);
 
         CharacterClass chclass = availableClasses[_currentClassIndex];
-        Composers["createcharacter"].GetDynamicText("className").SetNewText(Lang.Get("characterclass-" + chclass.Code));
+        Composers["createcharacter"]?.GetDynamicText("className").SetNewText(Lang.Get("characterclass-" + chclass.Code));
 
         StringBuilder fulldesc = new();
         StringBuilder attributes = new();
@@ -579,70 +676,18 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         fulldesc.AppendLine();
         fulldesc.AppendLine(Lang.Get("traits-title"));
 
-        
+
         IOrderedEnumerable<Trait> chartraitsExtra = _customModelsSystem.CustomModels[skinMod.CurrentModelCode].ExtraTraits.Select(code => _characterSystem.TraitsByCode[code]).OrderBy(trait => (int)trait.Type);
         IOrderedEnumerable<Trait> chartraits = chclass.Traits.Where(code => !_customModelsSystem.CustomModels[skinMod.CurrentModelCode].ExtraTraits.Contains(code)).Select(code => _characterSystem.TraitsByCode[code]).OrderBy(trait => (int)trait.Type);
 
-        foreach (Trait? trait in chartraitsExtra)
-        {
-            attributes.Clear();
-            foreach (KeyValuePair<string, double> val in trait.Attributes)
-            {
-                if (attributes.Length > 0) attributes.Append(", ");
-                attributes.Append(Lang.Get(string.Format(GlobalConstants.DefaultCultureInfo, "charattribute-{0}-{1}", val.Key, val.Value)));
-            }
-
-            if (attributes.Length > 0)
-            {
-                fulldesc.AppendLine(Lang.Get("traitwithattributes", Lang.Get("trait-" + trait.Code), attributes));
-            }
-            else
-            {
-                string desc = Lang.GetIfExists("traitdesc-" + trait.Code);
-                if (desc != null)
-                {
-                    fulldesc.AppendLine(Lang.Get("traitwithattributes", Lang.Get("trait-" + trait.Code), desc));
-                }
-                else
-                {
-                    fulldesc.AppendLine(Lang.Get("trait-" + trait.Code));
-                }
-            }
-        }
+        AppendTraits(fulldesc, chartraitsExtra);
 
         if (chartraitsExtra.Count() != 0)
         {
             fulldesc.AppendLine("");
         }
 
-        foreach (Trait? trait in chartraits)
-        {
-            attributes.Clear();
-            foreach (KeyValuePair<string, double> val in trait.Attributes)
-            {
-                if (attributes.Length > 0) attributes.Append(", ");
-                attributes.Append(Lang.Get(string.Format(GlobalConstants.DefaultCultureInfo, "charattribute-{0}-{1}", val.Key, val.Value)));
-            }
-
-            if (attributes.Length > 0)
-            {
-                fulldesc.AppendLine(Lang.Get("traitwithattributes", Lang.Get("trait-" + trait.Code), attributes));
-            }
-            else
-            {
-                string desc = Lang.GetIfExists("traitdesc-" + trait.Code);
-                if (desc != null)
-                {
-                    fulldesc.AppendLine(Lang.Get("traitwithattributes", Lang.Get("trait-" + trait.Code), desc));
-                }
-                else
-                {
-                    fulldesc.AppendLine(Lang.Get("trait-" + trait.Code));
-                }
-
-
-            }
-        }
+        AppendTraits(fulldesc, chartraits);
 
         if (chclass.Traits.Length == 0)
         {
@@ -653,11 +698,110 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         _characterSystem.setCharacterClass(capi.World.Player.Entity, chclass.Code, true);
 
-        reTesselate();
+        ReTesselate();
     }
-    private void reTesselate()
+    private void ReTesselate()
     {
-        EntityShapeRenderer? essr = capi.World.Player.Entity.Properties.Client.Renderer as EntityShapeRenderer;
-        essr.TesselateShape();
+        EntityShapeRenderer? renderer = capi.World.Player.Entity.Properties.Client.Renderer as EntityShapeRenderer;
+        renderer?.TesselateShape();
+    }
+    private void OnModelSelected()
+    {
+
+    }
+    private void OnModelSizeChanged()
+    {
+        PlayerSkinBehavior skinMod = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
+        CustomModelsSystem system = capi.ModLoader.GetModSystem<CustomModelsSystem>();
+
+        system.SynchronizePlayerModelSize(_currentModelSize);
+        skinMod.SetCurrentModel(skinMod.CurrentModelCode, _currentModelSize);
+    }
+    private string CreateModelDescription(CustomModelsSystem system, string model)
+    {
+        CustomModelData modelConfig = system.CustomModels[model];
+
+        StringBuilder fullDescription = new();
+
+        string[] modelSplit = model.Split(':');
+
+        if (modelSplit.Length != 2)
+        {
+            modelSplit = ["game", model];
+        }
+
+        fullDescription.AppendLine(Lang.Get($"{modelSplit[0]}:modeldesc-{modelSplit[1]}"));
+
+        IOrderedEnumerable<Trait> traits = modelConfig.ExtraTraits.Select(code => _characterSystem.TraitsByCode[code]).OrderBy(trait => (int)trait.Type);
+
+        if (traits.Any())
+        {
+            fullDescription.AppendLine("");
+            fullDescription.AppendLine(Lang.Get("traits-title"));
+        }
+
+        AppendTraits(fullDescription, traits);
+
+        fullDescription.AppendLine("");
+
+        List<CharacterClass> availableClasses = GetAvailableClasses(system, model);
+
+        fullDescription.Append(Lang.Get("playermodellib:available-classes"));
+        bool addedOne = false;
+
+        foreach (CharacterClass characterClass in availableClasses)
+        {
+            if (addedOne) fullDescription.Append(", ");
+            addedOne = true;
+            fullDescription.Append(Lang.Get("characterclass-" + characterClass.Code));
+        }
+
+        return fullDescription.ToString();
+    }
+
+    private void AppendTraits(StringBuilder fullDescription, IEnumerable<Trait> traits)
+    {
+        StringBuilder attributes = new();
+
+        foreach (Trait trait in traits)
+        {
+            attributes.Clear();
+            foreach ((string attribute, double value) in trait.Attributes)
+            {
+                if (attributes.Length > 0) attributes.Append(", ");
+                
+                attributes.Append(Lang.Get(string.Format(GlobalConstants.DefaultCultureInfo, "charattribute-{0}-{1}", attribute, value)));
+            }
+
+            if (attributes.Length > 0)
+            {
+                fullDescription.AppendLine(Lang.Get("traitwithattributes", Lang.Get("trait-" + trait.Code), attributes));
+            }
+            else
+            {
+                string? description = Lang.GetIfExists("traitdesc-" + trait.Code);
+                if (description != null)
+                {
+                    fullDescription.AppendLine(Lang.Get("traitwithattributes", Lang.Get("trait-" + trait.Code), description));
+                }
+                else
+                {
+                    fullDescription.AppendLine(Lang.Get("trait-" + trait.Code));
+                }
+            }
+        }
+    }
+
+    private List<CharacterClass> GetAvailableClasses(CustomModelsSystem system, string model)
+    {
+        List<CharacterClass> availableClasses = _characterSystem.characterClasses.Where(element => system.CustomModels[model].AvailableClasses.Contains(element.Code)).ToList();
+        if (availableClasses.Count == 0)
+        {
+            availableClasses = _characterSystem.characterClasses;
+        }
+
+        availableClasses = availableClasses.Where(element => !system.CustomModels[model].SkipClasses.Contains(element.Code)).Where(element => element.Enabled).ToList();
+
+        return availableClasses;
     }
 }

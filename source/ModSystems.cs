@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 
 namespace PlayerModelLib;
@@ -11,6 +12,11 @@ public sealed class PlayerModelModSystem : ModSystem
 
         new Harmony("PlayerModelLibTranspiler").PatchAll();
         OtherPatches.Patch("PlayerModelLib");
+
+        if (api is ICoreClientAPI clientApi)
+        {
+            ScrollPatches.Init(clientApi);
+        }
     }
 
     public override void Dispose()
