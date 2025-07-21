@@ -16,7 +16,9 @@ namespace PlayerModelLib;
 
 public class SkinnablePartExtended : SkinnablePart
 {
-    public string[] TargetSkinParts = [];
+    public string[] TargetSkinParts { get; set; } = [];
+    public bool OverlayTexture { get; set; } = false;
+    public EnumColorBlendMode OverlayMode { get; set; } = EnumColorBlendMode.Normal;
 }
 
 public class CustomModelConfig
@@ -24,13 +26,13 @@ public class CustomModelConfig
     public string ShapePath { get; set; } = "";
     public string MainTextureCode { get; set; } = "seraph";
     public SkinnablePartExtended[] SkinnableParts { get; set; } = Array.Empty<SkinnablePartExtended>();
-    public Dictionary<string, string> WearableModelReplacers { get; set; } = new();
-    public Dictionary<string, string> WearableModelReplacersByShape { get; set; } = new();
-    public string[] AvailableClasses { get; set; } = Array.Empty<string>();
-    public string[] SkipClasses { get; set; } = Array.Empty<string>();
-    public string[] ExtraTraits { get; set; } = Array.Empty<string>();
+    public Dictionary<string, string> WearableModelReplacers { get; set; } = [];
+    public Dictionary<string, string> WearableModelReplacersByShape { get; set; } = [];
+    public string[] AvailableClasses { get; set; } = [];
+    public string[] SkipClasses { get; set; } = [];
+    public string[] ExtraTraits { get; set; } = [];
     public string Domain { get; set; } = "game";
-    public float[] CollisionBox { get; set; } = Array.Empty<float>();
+    public float[] CollisionBox { get; set; } = [];
     public float EyeHeight { get; set; } = 1.7f;
 }
 
@@ -74,6 +76,7 @@ public sealed class CustomModelsSystem : ModSystem
     public CustomModelData DefaultModelData => CustomModels[_defaultModelCode];
 
     public event Action? OnCustomModelsLoaded;
+    public bool ModelsLoaded { get; private set; } = false;
 
     public override double ExecuteOrder() => 0.21;
 
@@ -98,12 +101,12 @@ public sealed class CustomModelsSystem : ModSystem
     {
         _api = api;
         _clientApi = api as ICoreClientAPI;
-
-        LoadDefault();
-        Load(api);
     }
     public override void AssetsFinalize(ICoreAPI api)
     {
+        LoadDefault();
+        Load(api);
+
         if (api.Side == EnumAppSide.Client)
         {
             ProcessMainTextures();
@@ -112,22 +115,12 @@ public sealed class CustomModelsSystem : ModSystem
             LoadModelReplacements(api);
         }
 
+        ModelsLoaded = true;
         OnCustomModelsLoaded?.Invoke();
     }
     public TextureAtlasPosition? GetAtlasPosition(string modelCode, string textureCode, Entity entity)
     {
-        /*if (modelCode == DefaultModelCode)
-        {
-            int textureIndex = entity.WatchedAttributes.GetInt("textureIndex");
-            return _clientApi?.Tesselator.GetTextureSource(entity, null, textureIndex)[textureCode];
-        }*/
-
         string fullCode = PrefixTextureCode(modelCode, textureCode);
-
-        /*if (textureCode == CustomModels[modelCode].MainTextureCode)
-        {
-            fullCode = textureCode;
-        }*/
 
         if (!_textures.ContainsKey(fullCode))
         {
@@ -165,7 +158,6 @@ public sealed class CustomModelsSystem : ModSystem
 
 
     private const string _defaultModelPath = "game:entity/humanoid/seraph-faceless";
-    //private const string _defaultMainTexturePath = "game:entity/humanoid/seraph-naked-hairless";
     private const string _defaultMainTextureCode = "seraph";
     private const string _playerEntityCode = "game:player";
     private const string _defaultModelCode = "seraph";
@@ -199,7 +191,9 @@ public sealed class CustomModelsSystem : ModSystem
 
         EntityProperties playerProperties = _api.World.GetEntityType(_playerEntityCode) ?? throw new ArgumentException("[Player Model lib] Unable to get player entity properties.");
 
-        SkinnablePart[] parts = playerProperties.Attributes["skinnableParts"].AsObject<SkinnablePartExtended[]>();
+        SkinnablePartExtended[] parts = playerProperties.Attributes["skinnableParts"].AsObject<SkinnablePartExtended[]>();
+
+        FixDefaultSkinParts(parts);
 
         Dictionary<string, SkinnablePart> partsByCode = LoadParts(_api, parts);
 
@@ -207,7 +201,7 @@ public sealed class CustomModelsSystem : ModSystem
         {
             SkinParts = partsByCode,
             SkinPartsArray = parts,
-            MainTextureCode = _defaultMainTextureCode,
+            MainTextureCode = PrefixTextureCode(_defaultModelCode, _defaultMainTextureCode),
             CollisionBox = new(playerProperties.CollisionBoxSize.X, playerProperties.CollisionBoxSize.Y),
             EyeHeight = (float)playerProperties.EyeHeight
         };
@@ -349,6 +343,46 @@ public sealed class CustomModelsSystem : ModSystem
             foreach (ShapeElement element in customShape.Elements)
             {
                 AddAttachmentPoints(element, attachmentPointsByElement);
+            }
+        }
+    }
+    private void FixDefaultSkinParts(SkinnablePartExtended[] parts)
+    {
+        foreach (SkinnablePartExtended part in parts)
+        {
+            switch (part.Code)
+            {
+                case "underwear":
+                case "baseskin":
+                    part.TextureTarget = "seraph";
+                    part.OverlayTexture = true;
+                    part.OverlayMode = EnumColorBlendMode.Normal;
+                    break;
+
+                case "haircolor":
+                    part.TargetSkinParts = ["beard", "mustache", "hairextra", "hairbase"];
+                    break;
+
+                case "facialexpression":
+                    foreach (SkinnablePartVariant variant in part.Variants)
+                    {
+                        string code = variant.Code;
+                        variant.Shape.Base = $"playermodellib:seraphfaces/{code}";
+                    }
+                    break;
+
+                case "eyecolor":
+                    part.TextureTarget = "playermodellib-pupil";
+                    part.TargetSkinParts = ["facialexpression"];
+                    foreach (SkinnablePartVariant variant in part.Variants)
+                    {
+                        string code = variant.Code;
+                        variant.Texture = $"playermodellib:eyes/{code}";
+                    }
+                    break;
+
+                default:
+                    break;
             }
         }
     }

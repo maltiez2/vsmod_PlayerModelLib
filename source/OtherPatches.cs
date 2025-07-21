@@ -295,7 +295,7 @@ public static class OtherPatches
 
             CustomModelsSystem system = entity.Api.ModLoader.GetModSystem<CustomModelsSystem>();
 
-            if (currentModel != null && itemId != 0 && system != null)
+            if (currentModel != null && itemId != 0 && system != null && system.ModelsLoaded)
             {
                 if (system.CustomModels[currentModel].WearableShapeReplacers.TryGetValue(itemId, out string? shape))
                 {
