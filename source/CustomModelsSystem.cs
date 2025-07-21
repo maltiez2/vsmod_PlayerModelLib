@@ -11,6 +11,7 @@ using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
 using Vintagestory.API.Util;
 using Vintagestory.GameContent;
+using static Microsoft.WindowsAPICodePack.Shell.PropertySystem.SystemProperties.System;
 
 namespace PlayerModelLib;
 
@@ -34,6 +35,7 @@ public class CustomModelConfig
     public string Domain { get; set; } = "game";
     public float[] CollisionBox { get; set; } = [];
     public float EyeHeight { get; set; } = 1.7f;
+    public float[] SizeRange { get; set; } = [0.8f, 1.2f];
 }
 
 public class CustomModelData
@@ -53,6 +55,7 @@ public class CustomModelData
     public string[] ExtraTraits { get; set; } = [];
     public Vector2 CollisionBox { get; set; }
     public float EyeHeight { get; set; }
+    public Vector2 SizeRange { get; set; }
 
     public CustomModelData(string code, Shape shape)
     {
@@ -65,6 +68,7 @@ public class CustomModelData
 public class ChangePlayerModelPacket
 {
     public string ModelCode { get; set; } = "";
+    public float EntitySize { get; set; } = 1;
 }
 
 public sealed class CustomModelsSystem : ModSystem
@@ -142,11 +146,12 @@ public sealed class CustomModelsSystem : ModSystem
         return TextureSource?.AtlasSize;
     }
 
-    public void SynchronizePlayerModel(string code)
+    public void SynchronizePlayerModelAndSize(string code, float size)
     {
         _clientChannel?.SendPacket(new ChangePlayerModelPacket()
         {
-            ModelCode = code
+            ModelCode = code,
+            EntitySize = size
         });
     }
 
@@ -436,6 +441,7 @@ public sealed class CustomModelsSystem : ModSystem
     private void HandleChangePlayerModelPacket(IPlayer player, ChangePlayerModelPacket packet)
     {
         player.Entity.WatchedAttributes.SetString("skinModel", packet.ModelCode);
+        player.Entity.WatchedAttributes.SetFloat("entitySize", packet.EntitySize);
         player.Entity.WatchedAttributes.SetStringArray("extraTraits", CustomModels[packet.ModelCode].ExtraTraits);
     }
     private Dictionary<string, CustomModelConfig> FromAsset(IAsset asset)

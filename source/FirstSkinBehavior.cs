@@ -26,6 +26,8 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
     public string CurrentModelCode { get; protected set; } = "seraph";
 
+    public float CurrentSize { get; protected set; } = 1f;
+
     public CustomModelData CurrentModel
     {
         get
@@ -102,10 +104,11 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         AddSkinPartsTextures(ClientApi, entityShape, shapePathForLogging);
     }
 
-    public void SetCurrentModel(string code)
+    public void SetCurrentModel(string code, float size)
     {
         skintree = entity.WatchedAttributes["skinConfig"] as ITreeAttribute;
         CurrentModelCode = code;
+        CurrentSize = size;
         AvailableSkinPartsByCode = CurrentModel.SkinParts;
         AvailableSkinParts = CurrentModel.SkinPartsArray;
         ReplaceEntityShape();
@@ -154,6 +157,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
     protected Dictionary<string, int> OverlaysTextureSpaces = [];
     protected Dictionary<string, TextureAtlasPosition> OverlaysTexturePositions = [];
     protected Dictionary<string, BlendedOverlayTexture[]> OverlaysByTextures = [];
+    
 
     protected void OnSkinConfigChanged()
     {
@@ -182,6 +186,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
         skintree = entity.WatchedAttributes["skinConfig"] as ITreeAttribute;
         CurrentModelCode = entity.WatchedAttributes.GetString("skinModel");
+        CurrentSize = entity.WatchedAttributes.GetFloat("entitySize");
         if (!ModelSystem.CustomModels.ContainsKey(CurrentModelCode))
         {
             CurrentModelCode = ModelSystem.DefaultModelCode;
@@ -205,7 +210,8 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         player.Properties.CollisionBoxSize = new Vec2f(customModel.CollisionBox.X, customModel.CollisionBox.Y);
         player.Properties.SelectionBoxSize = new Vec2f(customModel.CollisionBox.X, customModel.CollisionBox.Y);
         Traverse.Create(player.Player).Method("updateColSelBoxes").GetValue();
-        player.LocalEyePos.Y = player.Properties.EyeHeight;
+        player.Properties.Client.Size = CurrentSize;
+        player.LocalEyePos.Y = player.Properties.EyeHeight * CurrentSize;
     }
 
     protected virtual void AddMainTextures()

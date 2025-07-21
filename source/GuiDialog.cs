@@ -523,8 +523,8 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         PlayerSkinBehavior skinMod = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
         CustomModelsSystem system = capi.ModLoader.GetModSystem<CustomModelsSystem>();
 
-        system.SynchronizePlayerModel(modelCode);
-        skinMod.SetCurrentModel(modelCode);
+        system.SynchronizePlayerModelAndSize(modelCode, skinMod.CurrentSize);
+        skinMod.SetCurrentModel(modelCode, skinMod.CurrentSize);
 
         ComposeGuis();
 
