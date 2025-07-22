@@ -46,6 +46,8 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         }
     }
 
+    public event Action? OnActuallyInitialize;
+
 
     public Size2i? AtlasSize => ModelSystem?.GetAtlasSize(CurrentModelCode, entity);
     public TextureAtlasPosition? this[string textureCode] => GetAtlasPosition(textureCode, entity);
@@ -102,6 +104,8 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         {
             entity.Api.ModLoader.GetModSystem<CharacterSystem>().randomizeSkin(entity, null, false);
         }
+
+        OnActuallyInitialize?.Invoke();
     }
 
     public override void OnTesselation(ref Shape entityShape, string shapePathForLogging, ref bool shapeIsCloned, ref string[] willDeleteElements)
