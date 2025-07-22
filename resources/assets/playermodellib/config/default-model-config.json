@@ -12,6 +12,8 @@
     "ScaleColliderWithSizeHorizontally": true,
     "ScaleColliderWithSizeVertically": true,
     "MaxEyeHeight": 1.95,
-    "MinEyeHeight": 0.1
+    "MinEyeHeight": 0.1,
+    "AddTags": [],
+    "RemoveTags": []
   }
 }

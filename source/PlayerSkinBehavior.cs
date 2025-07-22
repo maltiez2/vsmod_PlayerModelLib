@@ -197,6 +197,8 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         if (entity.Api.Side == EnumAppSide.Server) Traverse.Create((entity as EntityPlayer)?.Player).Method("updateColSelBoxes").GetValue();
         entity.Properties.Client.Size = CurrentSize;
         entity.LocalEyePos.Y = GameMath.Clamp(CurrentModel.EyeHeight * CurrentSize, CurrentModel.MinEyeHeight, CurrentModel.MaxEyeHeight);
+
+        ChangeTags();
     }
 
 
@@ -207,7 +209,9 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
     protected Dictionary<string, TextureAtlasPosition> OverlaysTexturePositions = [];
     protected Dictionary<string, BlendedOverlayTexture[]> OverlaysByTextures = [];
     protected int SkinTreeHash = 0;
-    
+    protected EntityTagArray PreviousAddedTags = EntityTagArray.Empty;
+    protected EntityTagArray PreviousRemovedTags = EntityTagArray.Empty;
+
 
     protected void OnSkinConfigChanged()
     {
@@ -307,6 +311,30 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         UpdateEntityProperties();
     }
 
+    protected void ChangeTags()
+    {
+        if (entity.Api.Side == EnumAppSide.Client) return;
+
+        EntityTagArray currentTags = entity.Tags;
+
+        Debug.WriteLine($"Current tags: {currentTags}");
+        
+        currentTags &= ~PreviousAddedTags;
+        currentTags |= PreviousRemovedTags;
+
+        Debug.WriteLine($"Restored tags: {currentTags}");
+
+        PreviousAddedTags = CurrentModel.AddTags & ~currentTags;
+        PreviousRemovedTags = CurrentModel.RemoveTags & currentTags;
+
+        currentTags &= ~PreviousRemovedTags;
+        currentTags |= PreviousAddedTags;
+
+        entity.Tags = currentTags;
+        entity.MarkTagsDirty();
+
+        Debug.WriteLine($"New tags: {currentTags}");
+    }
     
 
     protected virtual void AddMainTextures()

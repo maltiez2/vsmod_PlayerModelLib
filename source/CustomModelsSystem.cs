@@ -43,6 +43,8 @@ public class CustomModelConfig
     public float[] MinCollisionBox { get; set; } = [0, 0];
     public float MaxEyeHeight { get; set; } = float.MaxValue;
     public float MinEyeHeight { get; set; } = 0;
+    public string[] AddTags { get; set; } = [];
+    public string[] RemoveTags { get; set; } = [];
 }
 
 public class CustomModelData
@@ -70,6 +72,8 @@ public class CustomModelData
     public Vector2 MinCollisionBox { get; set; }
     public float MaxEyeHeight { get; set; } = float.MaxValue;
     public float MinEyeHeight { get; set; } = 0;
+    public EntityTagArray AddTags { get; set; } = EntityTagArray.Empty;
+    public EntityTagArray RemoveTags { get; set; } = EntityTagArray.Empty;
 
 
     public CustomModelData(string code, Shape shape)
@@ -259,7 +263,9 @@ public sealed class CustomModelsSystem : ModSystem
             ScaleColliderWithSizeHorizontally = defaultConfig.ScaleColliderWithSizeHorizontally,
             ScaleColliderWithSizeVertically = defaultConfig.ScaleColliderWithSizeVertically,
             MaxEyeHeight = defaultConfig.MaxEyeHeight,
-            MinEyeHeight = defaultConfig.MinEyeHeight
+            MinEyeHeight = defaultConfig.MinEyeHeight,
+            AddTags = _api.TagRegistry.EntityTagsToTagArray(defaultConfig.AddTags),
+            RemoveTags = _api.TagRegistry.EntityTagsToTagArray(defaultConfig.RemoveTags)
         };
 
         CustomModels.Add(_defaultModelCode, defaultModelData);
@@ -313,7 +319,9 @@ public sealed class CustomModelsSystem : ModSystem
                     ScaleColliderWithSizeHorizontally = modelConfig.ScaleColliderWithSizeHorizontally,
                     ScaleColliderWithSizeVertically = modelConfig.ScaleColliderWithSizeVertically,
                     MaxEyeHeight = modelConfig.MaxEyeHeight,
-                    MinEyeHeight = modelConfig.MinEyeHeight
+                    MinEyeHeight = modelConfig.MinEyeHeight,
+                    AddTags = api.TagRegistry.EntityTagsToTagArray(modelConfig.AddTags),
+                    RemoveTags = api.TagRegistry.EntityTagsToTagArray(modelConfig.RemoveTags)
                 };
 
                 CustomModels.Add(code, modelData);
