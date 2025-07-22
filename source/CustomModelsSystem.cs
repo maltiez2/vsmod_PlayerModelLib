@@ -73,8 +73,8 @@ public class CustomModelData
     public Vector2 MinCollisionBox { get; set; }
     public float MaxEyeHeight { get; set; } = float.MaxValue;
     public float MinEyeHeight { get; set; } = 0;
-    public EntityTagArray AddTags { get; set; } = EntityTagArray.Empty;
-    public EntityTagArray RemoveTags { get; set; } = EntityTagArray.Empty;
+    //public EntityTagArray AddTags { get; set; } = EntityTagArray.Empty;
+    //public EntityTagArray RemoveTags { get; set; } = EntityTagArray.Empty;
     public float ModelSizeFactor { get; set; } = 1;
 
 
@@ -266,8 +266,8 @@ public sealed class CustomModelsSystem : ModSystem
             ScaleColliderWithSizeVertically = defaultConfig.ScaleColliderWithSizeVertically,
             MaxEyeHeight = defaultConfig.MaxEyeHeight,
             MinEyeHeight = defaultConfig.MinEyeHeight,
-            AddTags = _api.TagRegistry.EntityTagsToTagArray(defaultConfig.AddTags),
-            RemoveTags = _api.TagRegistry.EntityTagsToTagArray(defaultConfig.RemoveTags),
+            //AddTags = _api.TagRegistry.EntityTagsToTagArray(defaultConfig.AddTags),
+            //RemoveTags = _api.TagRegistry.EntityTagsToTagArray(defaultConfig.RemoveTags),
             ModelSizeFactor = defaultConfig.ModelSizeFactor
         };
 
@@ -323,8 +323,8 @@ public sealed class CustomModelsSystem : ModSystem
                     ScaleColliderWithSizeVertically = modelConfig.ScaleColliderWithSizeVertically,
                     MaxEyeHeight = modelConfig.MaxEyeHeight,
                     MinEyeHeight = modelConfig.MinEyeHeight,
-                    AddTags = api.TagRegistry.EntityTagsToTagArray(modelConfig.AddTags),
-                    RemoveTags = api.TagRegistry.EntityTagsToTagArray(modelConfig.RemoveTags),
+                    //AddTags = api.TagRegistry.EntityTagsToTagArray(modelConfig.AddTags),
+                    //RemoveTags = api.TagRegistry.EntityTagsToTagArray(modelConfig.RemoveTags),
                     ModelSizeFactor = modelConfig.ModelSizeFactor
                 };
 

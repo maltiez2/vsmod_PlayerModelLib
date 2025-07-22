@@ -211,8 +211,8 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
     protected Dictionary<string, TextureAtlasPosition> OverlaysTexturePositions = [];
     protected Dictionary<string, BlendedOverlayTexture[]> OverlaysByTextures = [];
     protected int SkinTreeHash = 0;
-    protected EntityTagArray PreviousAddedTags = EntityTagArray.Empty;
-    protected EntityTagArray PreviousRemovedTags = EntityTagArray.Empty;
+    //protected EntityTagArray PreviousAddedTags = EntityTagArray.Empty;
+    //protected EntityTagArray PreviousRemovedTags = EntityTagArray.Empty;
     protected float DefaultSize = 1;
 
 
@@ -318,7 +318,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
     {
         if (entity.Api.Side == EnumAppSide.Client) return;
 
-        EntityTagArray currentTags = entity.Tags;
+        /*EntityTagArray currentTags = entity.Tags;
 
         Debug.WriteLine($"Current tags: {currentTags}");
         
@@ -334,9 +334,9 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         currentTags |= PreviousAddedTags;
 
         entity.Tags = currentTags;
-        entity.MarkTagsDirty();
+        entity.MarkTagsDirty();*/
 
-        Debug.WriteLine($"New tags: {currentTags}");
+       // Debug.WriteLine($"New tags: {currentTags}");
     }
     
 
