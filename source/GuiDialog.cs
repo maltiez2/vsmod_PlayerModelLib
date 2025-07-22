@@ -828,7 +828,7 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         availableClasses = availableClasses.Where(element => !system.ExclusiveClasses.Contains(element.Code) || exclusiveClassesForModel.Contains(element.Code));
 
-        availableClasses = availableClasses.Where(element => !skippedClassesForModel.Contains(element.Code)).Where(element => element.Enabled);
+        availableClasses = availableClasses.Where(element => !skippedClassesForModel.Contains(element.Code));
 
         return availableClasses.ToList();
     }
