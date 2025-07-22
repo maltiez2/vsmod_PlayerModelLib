@@ -14,6 +14,7 @@
     "MaxEyeHeight": 1.95,
     "MinEyeHeight": 0.1,
     "AddTags": [],
-    "RemoveTags": []
+    "RemoveTags": [],
+    "ModelSizeFactor": 1.0
   }
 }

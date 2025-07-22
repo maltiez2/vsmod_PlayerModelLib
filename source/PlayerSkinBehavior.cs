@@ -53,6 +53,8 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
     public override void Initialize(EntityProperties properties, JsonObject attributes)
     {
+        DefaultSize = entity.Properties.Client.Size;
+
         ClientApi = entity.Api as ICoreClientAPI;
 
         ModelSystem = entity.Api.ModLoader.GetModSystem<CustomModelsSystem>();
@@ -195,7 +197,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
             entity.Properties.SelectionBoxSize.Y = GameMath.Clamp(entity.Properties.SelectionBoxSize.Y, CurrentModel.MinCollisionBox.Y, CurrentModel.MaxCollisionBox.Y);
         }
         if (entity.Api.Side == EnumAppSide.Server) Traverse.Create((entity as EntityPlayer)?.Player).Method("updateColSelBoxes").GetValue();
-        entity.Properties.Client.Size = CurrentSize;
+        entity.Properties.Client.Size = DefaultSize * CurrentSize * CurrentModel.ModelSizeFactor;
         entity.LocalEyePos.Y = GameMath.Clamp(CurrentModel.EyeHeight * CurrentSize, CurrentModel.MinEyeHeight, CurrentModel.MaxEyeHeight);
 
         ChangeTags();
@@ -211,6 +213,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
     protected int SkinTreeHash = 0;
     protected EntityTagArray PreviousAddedTags = EntityTagArray.Empty;
     protected EntityTagArray PreviousRemovedTags = EntityTagArray.Empty;
+    protected float DefaultSize = 1;
 
 
     protected void OnSkinConfigChanged()
@@ -221,9 +224,9 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
         skintree = entity.WatchedAttributes["skinConfig"] as ITreeAttribute;
 
-        int skinTreeHash = skintree?.GetHashCode() ?? 0;
+        /*int skinTreeHash = skintree?.GetHashCode() ?? 0;
         if (SkinTreeHash == skinTreeHash) return;
-        SkinTreeHash = skinTreeHash;
+        SkinTreeHash = skinTreeHash;*/
 
         Debug.WriteLine($"OnSkinConfigChanged - side: {entity.Api.Side}");
 

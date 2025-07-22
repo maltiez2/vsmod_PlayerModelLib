@@ -27,7 +27,7 @@ public class CustomModelConfig
     public string Domain { get; set; } = "game";
     public string ShapePath { get; set; } = "";
     public string MainTextureCode { get; set; } = "seraph";
-    public SkinnablePartExtended[] SkinnableParts { get; set; } = Array.Empty<SkinnablePartExtended>();
+    public SkinnablePartExtended[] SkinnableParts { get; set; } = [];
     public Dictionary<string, string> WearableModelReplacers { get; set; } = [];
     public Dictionary<string, string> WearableModelReplacersByShape { get; set; } = [];
     public string[] AvailableClasses { get; set; } = [];
@@ -45,6 +45,7 @@ public class CustomModelConfig
     public float MinEyeHeight { get; set; } = 0;
     public string[] AddTags { get; set; } = [];
     public string[] RemoveTags { get; set; } = [];
+    public float ModelSizeFactor { get; set; } = 1;
 }
 
 public class CustomModelData
@@ -74,6 +75,7 @@ public class CustomModelData
     public float MinEyeHeight { get; set; } = 0;
     public EntityTagArray AddTags { get; set; } = EntityTagArray.Empty;
     public EntityTagArray RemoveTags { get; set; } = EntityTagArray.Empty;
+    public float ModelSizeFactor { get; set; } = 1;
 
 
     public CustomModelData(string code, Shape shape)
@@ -265,7 +267,8 @@ public sealed class CustomModelsSystem : ModSystem
             MaxEyeHeight = defaultConfig.MaxEyeHeight,
             MinEyeHeight = defaultConfig.MinEyeHeight,
             AddTags = _api.TagRegistry.EntityTagsToTagArray(defaultConfig.AddTags),
-            RemoveTags = _api.TagRegistry.EntityTagsToTagArray(defaultConfig.RemoveTags)
+            RemoveTags = _api.TagRegistry.EntityTagsToTagArray(defaultConfig.RemoveTags),
+            ModelSizeFactor = defaultConfig.ModelSizeFactor
         };
 
         CustomModels.Add(_defaultModelCode, defaultModelData);
@@ -321,7 +324,8 @@ public sealed class CustomModelsSystem : ModSystem
                     MaxEyeHeight = modelConfig.MaxEyeHeight,
                     MinEyeHeight = modelConfig.MinEyeHeight,
                     AddTags = api.TagRegistry.EntityTagsToTagArray(modelConfig.AddTags),
-                    RemoveTags = api.TagRegistry.EntityTagsToTagArray(modelConfig.RemoveTags)
+                    RemoveTags = api.TagRegistry.EntityTagsToTagArray(modelConfig.RemoveTags),
+                    ModelSizeFactor = modelConfig.ModelSizeFactor
                 };
 
                 CustomModels.Add(code, modelData);
