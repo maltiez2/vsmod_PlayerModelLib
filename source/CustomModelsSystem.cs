@@ -35,6 +35,10 @@ public class CustomModelConfig
     public float[] CollisionBox { get; set; } = [];
     public float EyeHeight { get; set; } = 1.7f;
     public float[] SizeRange { get; set; } = [0.8f, 1.2f];
+    public bool ScaleColliderWithSizeHorizontally { get; set; } = true;
+    public bool ScaleColliderWithSizeVertically { get; set; } = true;
+    public float[] MaxCollisionBox { get; set; } = [float.MaxValue, float.MaxValue];
+    public float[] MinCollisionBox { get; set; } = [0, 0];
 }
 
 public class CustomModelData
@@ -55,6 +59,11 @@ public class CustomModelData
     public Vector2 CollisionBox { get; set; }
     public float EyeHeight { get; set; }
     public Vector2 SizeRange { get; set; }
+    public bool ScaleColliderWithSizeHorizontally { get; set; } = true;
+    public bool ScaleColliderWithSizeVertically { get; set; } = true;
+    public Vector2 MaxCollisionBox { get; set; }
+    public Vector2 MinCollisionBox { get; set; }
+
 
     public CustomModelData(string code, Shape shape)
     {
@@ -82,10 +91,10 @@ public sealed class CustomModelsSystem : ModSystem
     public string DefaultModelCode => _defaultModelCode;
     public Shape DefaultModel => CustomModels[_defaultModelCode].Shape;
     public CustomModelData DefaultModelData => CustomModels[_defaultModelCode];
-
-    public event Action? OnCustomModelsLoaded;
     public bool ModelsLoaded { get; private set; } = false;
-
+    
+    public event Action? OnCustomModelsLoaded;
+    
     public override double ExecuteOrder() => 0.21;
 
 
@@ -222,7 +231,9 @@ public sealed class CustomModelsSystem : ModSystem
             MainTextureCode = PrefixTextureCode(_defaultModelCode, _defaultMainTextureCode),
             CollisionBox = new(playerProperties.CollisionBoxSize.X, playerProperties.CollisionBoxSize.Y),
             EyeHeight = (float)playerProperties.EyeHeight,
-            SizeRange = new(0.8f, 1.2f)
+            SizeRange = new(0.8f, 1.2f),
+            MaxCollisionBox = new(float.MaxValue, 1.99f),
+            MinCollisionBox = new(0.0f, 0.0f),
         };
 
         CustomModels.Add(_defaultModelCode, defaultModelData);
@@ -269,7 +280,9 @@ public sealed class CustomModelsSystem : ModSystem
                     WearableShapeReplacersByShape = modelConfig.WearableModelReplacersByShape,
                     CollisionBox = modelConfig.CollisionBox.Length == 0 ? DefaultModelData.CollisionBox : new Vector2(modelConfig.CollisionBox[0], modelConfig.CollisionBox[1]),
                     EyeHeight = modelConfig.EyeHeight,
-                    SizeRange = new(modelConfig.SizeRange[0], modelConfig.SizeRange[1])
+                    SizeRange = new(modelConfig.SizeRange[0], modelConfig.SizeRange[1]),
+                    MaxCollisionBox = new Vector2(modelConfig.MaxCollisionBox[0], modelConfig.MaxCollisionBox[1]),
+                    MinCollisionBox = new Vector2(modelConfig.MinCollisionBox[0], modelConfig.MinCollisionBox[1])
                 };
 
                 CustomModels.Add(code, modelData);
@@ -457,10 +470,14 @@ public sealed class CustomModelsSystem : ModSystem
     {
         player.Entity.WatchedAttributes.SetString("skinModel", packet.ModelCode);
         player.Entity.WatchedAttributes.SetStringArray("extraTraits", CustomModels[packet.ModelCode].ExtraTraits);
+
+        player.Entity.GetBehavior<PlayerSkinBehavior>()?.UpdateEntityProperties();
     }
     private void HandleChangePlayerModelSizePacket(IPlayer player, ChangePlayerModelSizePacket packet)
     {
         player.Entity.WatchedAttributes.SetFloat("entitySize", packet.EntitySize);
+
+        player.Entity.GetBehavior<PlayerSkinBehavior>()?.UpdateEntityProperties();
     }
     private Dictionary<string, CustomModelConfig> FromAsset(IAsset asset)
     {

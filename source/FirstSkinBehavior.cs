@@ -1,5 +1,6 @@
 ﻿using HarmonyLib;
 using System.Diagnostics;
+using System.Numerics;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
@@ -56,12 +57,21 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
         ModelSystem = entity.Api.ModLoader.GetModSystem<CustomModelsSystem>();
 
-        ModelSystem.OnCustomModelsLoaded += ActuallyInitialize;
+        if (ModelSystem.ModelsLoaded)
+        {
+            ActuallyInitialize();
+        }
+        else
+        {
+            ModelSystem.OnCustomModelsLoaded += ActuallyInitialize;
+        }
     }
 
     public virtual void ActuallyInitialize()
     {
         if (ModelSystem == null) return;
+
+        Debug.WriteLine($"ActuallyInitialize - side: {entity.Api.Side}");
 
         skintree = entity.WatchedAttributes.GetTreeAttribute("skinConfig");
         if (skintree == null)
@@ -76,18 +86,20 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
             CurrentModelCode = ModelSystem.DefaultModelCode;
         }
 
-        entity.WatchedAttributes.RegisterModifiedListener("skinModel", OnSkinModelChanged);
+        entity.WatchedAttributes.RegisterModifiedListener("skinModel", OnSkinModelAttrChanged);
+        entity.WatchedAttributes.RegisterModifiedListener("entitySize", OnModelSizeAttrChanged);
         entity.WatchedAttributes.RegisterModifiedListener("skinConfig", OnSkinConfigChanged);
         entity.WatchedAttributes.RegisterModifiedListener("voicetype", OnVoiceConfigChanged);
         entity.WatchedAttributes.RegisterModifiedListener("voicepitch", OnVoiceConfigChanged);
+
+        OnVoiceConfigChanged();
+
+        OnSkinModelChanged();
 
         if (entity.Api.Side == EnumAppSide.Server && AppliedSkinParts.Count == 0)
         {
             entity.Api.ModLoader.GetModSystem<CharacterSystem>().randomizeSkin(entity, null, false);
         }
-        OnVoiceConfigChanged();
-
-        OnSkinModelChanged();
     }
 
     public override void OnTesselation(ref Shape entityShape, string shapePathForLogging, ref bool shapeIsCloned, ref string[] willDeleteElements)
@@ -106,6 +118,8 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
     public void SetCurrentModel(string code, float size)
     {
+        Debug.WriteLine($"SetCurrentModel - side: {entity.Api.Side}");
+
         skintree = entity.WatchedAttributes["skinConfig"] as ITreeAttribute;
         CurrentModelCode = code;
         CurrentSize = size;
@@ -151,6 +165,34 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
     }
 
     public override string PropertyName() => "skinnableplayercustommodel";
+    
+    public void UpdateEntityProperties()
+    {
+        Debug.WriteLine($"UpdateEntityProperties - side: {entity.Api.Side}");
+
+        entity.Properties.EyeHeight = CurrentModel.EyeHeight * CurrentSize;
+        entity.Properties.CollisionBoxSize = new Vec2f(CurrentModel.CollisionBox.X, CurrentModel.CollisionBox.Y);
+        entity.Properties.SelectionBoxSize = new Vec2f(CurrentModel.CollisionBox.X, CurrentModel.CollisionBox.Y);
+        if (CurrentModel.ScaleColliderWithSizeHorizontally)
+        {
+            entity.Properties.CollisionBoxSize.X *= CurrentSize;
+            entity.Properties.SelectionBoxSize.X *= CurrentSize;
+
+            entity.Properties.CollisionBoxSize.X = GameMath.Clamp(entity.Properties.CollisionBoxSize.X, CurrentModel.MinCollisionBox.X, CurrentModel.MaxCollisionBox.X);
+            entity.Properties.SelectionBoxSize.X = GameMath.Clamp(entity.Properties.SelectionBoxSize.X, CurrentModel.MinCollisionBox.X, CurrentModel.MaxCollisionBox.X);
+        }
+        if (CurrentModel.ScaleColliderWithSizeVertically)
+        {
+            entity.Properties.CollisionBoxSize.Y *= CurrentSize;
+            entity.Properties.SelectionBoxSize.Y *= CurrentSize;
+
+            entity.Properties.CollisionBoxSize.Y = GameMath.Clamp(entity.Properties.CollisionBoxSize.Y, CurrentModel.MinCollisionBox.Y, CurrentModel.MaxCollisionBox.Y);
+            entity.Properties.SelectionBoxSize.Y = GameMath.Clamp(entity.Properties.SelectionBoxSize.Y, CurrentModel.MinCollisionBox.Y, CurrentModel.MaxCollisionBox.Y);
+        }
+        if (entity.Api.Side == EnumAppSide.Server) Traverse.Create((entity as EntityPlayer)?.Player).Method("updateColSelBoxes").GetValue();
+        entity.Properties.Client.Size = CurrentSize;
+        entity.LocalEyePos.Y = CurrentModel.EyeHeight * CurrentSize;
+    }
 
 
 
@@ -159,17 +201,32 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
     protected Dictionary<string, int> OverlaysTextureSpaces = [];
     protected Dictionary<string, TextureAtlasPosition> OverlaysTexturePositions = [];
     protected Dictionary<string, BlendedOverlayTexture[]> OverlaysByTextures = [];
+    protected int SkinTreeHash = 0;
     
 
     protected void OnSkinConfigChanged()
     {
         if (ModelSystem?.ModelsLoaded != true) return;
 
+        Debug.WriteLine($"Try OnSkinConfigChanged - side: {entity.Api.Side}");
+
         skintree = entity.WatchedAttributes["skinConfig"] as ITreeAttribute;
-        CurrentModelCode = entity.WatchedAttributes.GetString("skinModel");
-        AvailableSkinPartsByCode = CurrentModel.SkinParts;
-        AvailableSkinParts = CurrentModel.SkinPartsArray;
-        ReplaceEntityShape();
+
+        int skinTreeHash = skintree?.GetHashCode() ?? 0;
+        if (SkinTreeHash == skinTreeHash) return;
+        SkinTreeHash = skinTreeHash;
+
+        Debug.WriteLine($"OnSkinConfigChanged - side: {entity.Api.Side}");
+
+        string modelCode = entity.WatchedAttributes.GetString("skinModel");
+        if (modelCode != CurrentModelCode)
+        {
+            CurrentModelCode = modelCode;
+            AvailableSkinPartsByCode = CurrentModel.SkinParts;
+            AvailableSkinParts = CurrentModel.SkinPartsArray;
+            ReplaceEntityShape();
+        }
+        
         entity.MarkShapeModified();
     }
 
@@ -177,14 +234,40 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
     {
         if (ModelSystem?.ModelsLoaded != true) return;
 
-        VoiceType = entity.WatchedAttributes.GetString("voicetype");
-        VoicePitch = entity.WatchedAttributes.GetString("voicepitch");
-        ApplyVoice(VoiceType, VoicePitch, false);
+        string voiceType = entity.WatchedAttributes.GetString("voicetype");
+        string voicePitch = entity.WatchedAttributes.GetString("voicepitch");
+
+        if (voiceType != VoiceType || voicePitch != VoicePitch)
+        {
+            VoiceType = voiceType;
+            VoicePitch = voicePitch;
+            ApplyVoice(VoiceType, VoicePitch, false);
+        }
+    }
+
+    protected void OnSkinModelAttrChanged()
+    {
+        string modelCode = entity.WatchedAttributes.GetString("skinModel");
+        if (modelCode != CurrentModelCode)
+        {
+            OnSkinModelChanged();
+        }
+    }
+
+    protected void OnModelSizeAttrChanged()
+    {
+        float size = entity.WatchedAttributes.GetFloat("entitySize");
+        if (size !=  CurrentSize)
+        {
+            OnSkinModelChanged();
+        }
     }
 
     protected void OnSkinModelChanged()
     {
         if (ModelSystem?.ModelsLoaded != true) return;
+
+        Debug.WriteLine($"OnSkinModelChanged - side: {entity.Api.Side}");
 
         skintree = entity.WatchedAttributes["skinConfig"] as ITreeAttribute;
         CurrentModelCode = entity.WatchedAttributes.GetString("skinModel");
@@ -193,6 +276,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         {
             CurrentModelCode = ModelSystem.DefaultModelCode;
             entity.WatchedAttributes.SetString("skinModel", CurrentModelCode);
+            return;
         }
         AvailableSkinPartsByCode = CurrentModel.SkinParts;
         AvailableSkinParts = CurrentModel.SkinPartsArray;
@@ -202,19 +286,22 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
     protected void ReplaceEntityShape()
     {
+        Debug.WriteLine($"Try replaceEntityShape - side: {entity.Api.Side}");
+
         if (ModelSystem?.ModelsLoaded != true) return;
-        if (ModelSystem == null || !ModelSystem.CustomModels.TryGetValue(CurrentModelCode, out CustomModelData? customModel)) return;
-        if (entity.Properties.Client.Renderer is not EntityShapeRenderer renderer || entity is not EntityPlayer player) return;
+        if (!ModelSystem.CustomModels.TryGetValue(CurrentModelCode, out _)) return;
+        
+        if (entity.Properties.Client.Renderer is EntityShapeRenderer renderer)
+        {
+            renderer.TesselateShape();
+        }
 
-        renderer.TesselateShape();
+        Debug.WriteLine($"ReplaceEntityShape - side: {entity.Api.Side}");
 
-        player.Properties.EyeHeight = customModel.EyeHeight * CurrentSize;
-        player.Properties.CollisionBoxSize = new Vec2f(customModel.CollisionBox.X, customModel.CollisionBox.Y);
-        player.Properties.SelectionBoxSize = new Vec2f(customModel.CollisionBox.X, customModel.CollisionBox.Y);
-        Traverse.Create(player.Player).Method("updateColSelBoxes").GetValue();
-        player.Properties.Client.Size = CurrentSize;
-        player.LocalEyePos.Y = customModel.EyeHeight * CurrentSize;
+        UpdateEntityProperties();
     }
+
+    
 
     protected virtual void AddMainTextures()
     {

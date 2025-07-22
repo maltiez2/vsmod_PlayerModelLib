@@ -22,9 +22,6 @@ internal static class OtherPatches
         new Harmony(harmonyId).Unpatch(typeof(EntityBehaviorTexturedClothing).GetMethod("reloadSkin", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
     }
 
-    private static readonly FieldInfo? EntityBehaviorTexturedClothing_skinTextureSubId = typeof(EntityBehaviorTexturedClothing).GetField("skinTextureSubId", BindingFlags.NonPublic | BindingFlags.Instance);
-    private static readonly FieldInfo? EntityBehaviorTexturedClothing_textureSpaceAllocated = typeof(EntityBehaviorTexturedClothing).GetField("textureSpaceAllocated", BindingFlags.NonPublic | BindingFlags.Instance);
-
     public static bool reloadSkin() => false;
 
 

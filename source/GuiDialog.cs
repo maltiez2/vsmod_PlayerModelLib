@@ -395,6 +395,7 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         float minSize = skinBehavior.CurrentModel.SizeRange.X;
         float maxSize = skinBehavior.CurrentModel.SizeRange.Y;
+        _currentModelSize = skinBehavior.CurrentSize;
         _currentModelSize = GameMath.Clamp(_currentModelSize, minSize, maxSize);
 
         composer.AddRichtext(Lang.Get("playermodellib:model-size-slider"), CairoFont.WhiteSmallText(), sizeTextBounds);
