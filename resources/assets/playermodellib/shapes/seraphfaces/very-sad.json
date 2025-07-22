@@ -1,16 +1,16 @@
 {
 	"editor": {
 		"backDropShape": "entity/humanoid/seraph-faceless",
-		"allAngles": true,
-		"entityTextureMode": true
+		"allAngles": true
 	},
 	"textureWidth": 32,
 	"textureHeight": 76,
 	"textureSizes": {
+		"playermodellib-iris":  [8, 8]
 	},
 	"textures": {
 		"playermodellib-eyes": "seraph-for-eyes",
-		"playermodellib-pupil": "eyes-topaz"
+		"playermodellib-iris": "eyes/topaz"
 	},
 	"elements": [
 		{
@@ -32,15 +32,15 @@
 					"rotationOrigin": [ 0.0, 1.75, 2.1 ],
 					"rotationX": 1.0,
 					"faces": {
-						"north": { "texture": "#playermodellib-pupil", "uv": [ 3, 3, 5, 5 ] },
-						"south": { "texture": "#playermodellib-pupil", "uv": [ 3, 3, 5, 5 ] },
-						"west": { "texture": "#playermodellib-pupil", "uv": [ 3, 3, 5, 5 ] },
-						"up": { "texture": "#playermodellib-pupil", "uv": [ 3, 3, 5, 5 ], "rotation": 90 },
-						"down": { "texture": "#playermodellib-pupil", "uv": [ 3, 3, 5, 5 ], "rotation": 90 }
+						"north": { "texture": "#playermodellib-iris", "uv": [ 2, 0, 5, 3 ] },
+						"south": { "texture": "#playermodellib-iris", "uv": [ 2, 0, 5, 3 ]  },
+						"west": { "texture": "#playermodellib-iris", "uv": [ 2, 0, 5, 3 ]  },
+						"up": { "texture": "#playermodellib-iris", "uv": [ 2, 0, 5, 3 ] , "rotation": 90 },
+						"down": { "texture": "#playermodellib-iris", "uv": [ 2, 0, 5, 3 ] , "rotation": 90 }
 					},
 					"children": [
 						{
-							"name": "R pupil",
+							"name": "R iris",
 							"from": [ -0.03, 0.05, 0.3 ],
 							"to": [ 0.07, 0.65, 0.95 ],
 							"unwrapMode": 4,
@@ -87,7 +87,7 @@
 							]
 						},
 						{
-							"name": "R pupil2",
+							"name": "R iris2",
 							"from": [ -0.02, 0.1, 0.2 ],
 							"to": [ 0.08, 0.7, 1.0 ],
 							"unwrapMode": 4,
@@ -112,15 +112,15 @@
 					"rotationOrigin": [ 0.0, 1.75, 2.9 ],
 					"rotationX": -1.0,
 					"faces": {
-						"north": { "texture": "#playermodellib-pupil", "uv": [ 3, 3, 5, 5 ] },
-						"south": { "texture": "#playermodellib-pupil", "uv": [ 3, 3, 5, 5 ] },
-						"west": { "texture": "#playermodellib-pupil", "uv": [ 3, 3, 5, 5 ] },
-						"up": { "texture": "#playermodellib-pupil", "uv": [ 3, 3, 5, 5 ], "rotation": 90 },
-						"down": { "texture": "#playermodellib-pupil", "uv": [ 3, 3, 5, 5 ], "rotation": 90 }
+						"north": { "texture": "#playermodellib-iris", "uv": [ 2, 5, 5, 8 ] },
+						"south": { "texture": "#playermodellib-iris", "uv": [ 2, 5, 5, 8 ] },
+						"west": { "texture": "#playermodellib-iris", "uv": [ 2, 5, 5, 8 ] },
+						"up": { "texture": "#playermodellib-iris", "uv": [ 2, 5, 5, 8 ], "rotation": 90 },
+						"down": { "texture": "#playermodellib-iris", "uv": [ 2, 5, 5, 8 ], "rotation": 90 }
 					},
 					"children": [
 						{
-							"name": "L pupil",
+							"name": "L iris",
 							"from": [ -0.03, 0.05, 0.25 ],
 							"to": [ 0.07, 0.65, 0.9 ],
 							"unwrapMode": 4,
@@ -167,7 +167,7 @@
 							]
 						},
 						{
-							"name": "L pupil2",
+							"name": "L iris2",
 							"from": [ -0.02, 0.1, 0.2 ],
 							"to": [ 0.08, 0.7, 1.0 ],
 							"unwrapMode": 4,

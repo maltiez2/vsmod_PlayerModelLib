@@ -392,13 +392,13 @@ public sealed class CustomModelsSystem : ModSystem
                     break;
 
                 case "eyecolor":
-                    part.TextureTarget = "playermodellib-pupil";
+                    part.TextureTarget = "playermodellib-iris";
                     part.TargetSkinParts = ["facialexpression"];
-                    foreach (SkinnablePartVariant variant in part.Variants)
+                    /*foreach (SkinnablePartVariant variant in part.Variants)
                     {
                         string code = variant.Code;
                         variant.Texture = $"playermodellib:eyes/{code}";
-                    }
+                    }*/
                     break;
 
                 default:

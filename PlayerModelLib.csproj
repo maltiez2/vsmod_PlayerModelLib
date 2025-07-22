@@ -3,7 +3,7 @@
   <PropertyGroup>
     <ModName>Player Model Library</ModName>
     <ModType>code</ModType>
-    <ModVersion>0.1.0</ModVersion>
+    <ModVersion>0.1.1</ModVersion>
     <ModId>playermodellib</ModId>
     <Description></Description>
     <Side>Universal</Side>
@@ -90,7 +90,6 @@
 
   "description": "$(Description)",
   "authors": [ @(ModInfoAuthors->'"%(Identity)"', ', ') ],
-  "translation": [ @(ModInfoTranslators->'"%(Identity)"', ', ') ],
 
   "dependencies": {
     @(Dependencies->'"%(Identity)": "%(Version)"', ', ')
