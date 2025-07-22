@@ -2,6 +2,7 @@
 using OpenTK.Mathematics;
 using ProtoBuf;
 using SkiaSharp;
+using System;
 using System.Diagnostics;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -23,6 +24,7 @@ public class SkinnablePartExtended : SkinnablePart
 
 public class CustomModelConfig
 {
+    public string Domain { get; set; } = "game";
     public string ShapePath { get; set; } = "";
     public string MainTextureCode { get; set; } = "seraph";
     public SkinnablePartExtended[] SkinnableParts { get; set; } = Array.Empty<SkinnablePartExtended>();
@@ -31,7 +33,7 @@ public class CustomModelConfig
     public string[] AvailableClasses { get; set; } = [];
     public string[] SkipClasses { get; set; } = [];
     public string[] ExtraTraits { get; set; } = [];
-    public string Domain { get; set; } = "game";
+    public string[] ExclusiveClasses { get; set; } = [];
     public float[] CollisionBox { get; set; } = [];
     public float EyeHeight { get; set; } = 1.7f;
     public float[] SizeRange { get; set; } = [0.8f, 1.2f];
@@ -39,11 +41,13 @@ public class CustomModelConfig
     public bool ScaleColliderWithSizeVertically { get; set; } = true;
     public float[] MaxCollisionBox { get; set; } = [float.MaxValue, float.MaxValue];
     public float[] MinCollisionBox { get; set; } = [0, 0];
+    public float MaxEyeHeight { get; set; } = float.MaxValue;
+    public float MinEyeHeight { get; set; } = 0;
 }
 
 public class CustomModelData
 {
-    public string Code { get; set; } = "";
+    public string Code { get; set; }
     public Shape Shape { get; set; }
     public Dictionary<string, SkinnablePart> SkinParts { get; set; } = [];
     public SkinnablePart[] SkinPartsArray { get; set; } = [];
@@ -55,6 +59,7 @@ public class CustomModelData
     public Dictionary<string, string> WearableShapeReplacersByShape { get; set; } = [];
     public HashSet<string> AvailableClasses { get; set; } = [];
     public HashSet<string> SkipClasses { get; set; } = [];
+    public HashSet<string> ExclusiveClasses { get; set; } = [];
     public string[] ExtraTraits { get; set; } = [];
     public Vector2 CollisionBox { get; set; }
     public float EyeHeight { get; set; }
@@ -63,6 +68,8 @@ public class CustomModelData
     public bool ScaleColliderWithSizeVertically { get; set; } = true;
     public Vector2 MaxCollisionBox { get; set; }
     public Vector2 MinCollisionBox { get; set; }
+    public float MaxEyeHeight { get; set; } = float.MaxValue;
+    public float MinEyeHeight { get; set; } = 0;
 
 
     public CustomModelData(string code, Shape shape)
@@ -92,9 +99,10 @@ public sealed class CustomModelsSystem : ModSystem
     public Shape DefaultModel => CustomModels[_defaultModelCode].Shape;
     public CustomModelData DefaultModelData => CustomModels[_defaultModelCode];
     public bool ModelsLoaded { get; private set; } = false;
-    
+    public HashSet<string> ExclusiveClasses { get; private set; } = [];
+
     public event Action? OnCustomModelsLoaded;
-    
+
     public override double ExecuteOrder() => 0.21;
 
 
@@ -126,6 +134,7 @@ public sealed class CustomModelsSystem : ModSystem
     {
         LoadDefault();
         Load(api);
+        CollectExclusiveClasses();
 
         if (api.Side == EnumAppSide.Client)
         {
@@ -216,6 +225,13 @@ public sealed class CustomModelsSystem : ModSystem
             defaultShape = new();
         }
 
+        IAsset defaultConfigAsset = _api.Assets.Get("playermodellib:config/default-model-config.json");
+        Dictionary<string, CustomModelConfig> defaultConfigList = FromAsset(defaultConfigAsset);
+        if (!defaultConfigList.TryGetValue($"playermodellib:{_defaultModelCode}", out CustomModelConfig defaultConfig))
+        {
+            defaultConfig = new();
+        }
+
         EntityProperties playerProperties = _api.World.GetEntityType(_playerEntityCode) ?? throw new ArgumentException("[Player Model lib] Unable to get player entity properties.");
 
         SkinnablePartExtended[] parts = playerProperties.Attributes["skinnableParts"].AsObject<SkinnablePartExtended[]>();
@@ -231,9 +247,19 @@ public sealed class CustomModelsSystem : ModSystem
             MainTextureCode = PrefixTextureCode(_defaultModelCode, _defaultMainTextureCode),
             CollisionBox = new(playerProperties.CollisionBoxSize.X, playerProperties.CollisionBoxSize.Y),
             EyeHeight = (float)playerProperties.EyeHeight,
-            SizeRange = new(0.8f, 1.2f),
-            MaxCollisionBox = new(float.MaxValue, 1.99f),
-            MinCollisionBox = new(0.0f, 0.0f),
+
+            AvailableClasses = [.. defaultConfig.AvailableClasses],
+            SkipClasses = [.. defaultConfig.SkipClasses],
+            ExclusiveClasses = [.. defaultConfig.ExclusiveClasses],
+            ExtraTraits = defaultConfig.ExtraTraits,
+            WearableShapeReplacersByShape = defaultConfig.WearableModelReplacersByShape,
+            SizeRange = new(defaultConfig.SizeRange[0], defaultConfig.SizeRange[1]),
+            MaxCollisionBox = new Vector2(defaultConfig.MaxCollisionBox[0], defaultConfig.MaxCollisionBox[1]),
+            MinCollisionBox = new Vector2(defaultConfig.MinCollisionBox[0], defaultConfig.MinCollisionBox[1]),
+            ScaleColliderWithSizeHorizontally = defaultConfig.ScaleColliderWithSizeHorizontally,
+            ScaleColliderWithSizeVertically = defaultConfig.ScaleColliderWithSizeVertically,
+            MaxEyeHeight = defaultConfig.MaxEyeHeight,
+            MinEyeHeight = defaultConfig.MinEyeHeight
         };
 
         CustomModels.Add(_defaultModelCode, defaultModelData);
@@ -276,13 +302,18 @@ public sealed class CustomModelsSystem : ModSystem
                     MainTextureCode = PrefixTextureCode(code, modelConfig.MainTextureCode),
                     AvailableClasses = [.. modelConfig.AvailableClasses],
                     SkipClasses = [.. modelConfig.SkipClasses],
+                    ExclusiveClasses = [.. modelConfig.ExclusiveClasses],
                     ExtraTraits = modelConfig.ExtraTraits,
                     WearableShapeReplacersByShape = modelConfig.WearableModelReplacersByShape,
                     CollisionBox = modelConfig.CollisionBox.Length == 0 ? DefaultModelData.CollisionBox : new Vector2(modelConfig.CollisionBox[0], modelConfig.CollisionBox[1]),
                     EyeHeight = modelConfig.EyeHeight,
                     SizeRange = new(modelConfig.SizeRange[0], modelConfig.SizeRange[1]),
                     MaxCollisionBox = new Vector2(modelConfig.MaxCollisionBox[0], modelConfig.MaxCollisionBox[1]),
-                    MinCollisionBox = new Vector2(modelConfig.MinCollisionBox[0], modelConfig.MinCollisionBox[1])
+                    MinCollisionBox = new Vector2(modelConfig.MinCollisionBox[0], modelConfig.MinCollisionBox[1]),
+                    ScaleColliderWithSizeHorizontally = modelConfig.ScaleColliderWithSizeHorizontally,
+                    ScaleColliderWithSizeVertically = modelConfig.ScaleColliderWithSizeVertically,
+                    MaxEyeHeight = modelConfig.MaxEyeHeight,
+                    MinEyeHeight = modelConfig.MinEyeHeight
                 };
 
                 CustomModels.Add(code, modelData);
@@ -483,19 +514,25 @@ public sealed class CustomModelsSystem : ModSystem
     {
         Dictionary<string, CustomModelConfig> result = [];
         string domain = asset.Location.Domain;
-        JsonObject json;
+        JObject? json;
 
         try
         {
-            json = JsonObject.FromJson(asset.ToText());
+            json = JsonObject.FromJson(asset.ToText()).Token as JObject;
+
+            if (json == null)
+            {
+                LoggerUtil.Error(_api, this, $"Error when trying to load model config '{asset.Location}'.");
+                return result;
+            }
         }
         catch (Exception exception)
         {
-            // @TODO add error logging
+            LoggerUtil.Error(_api, this, $"Exception when trying to load model config '{asset.Location}':\n{exception}");
             return result;
         }
 
-        foreach ((string code, JToken? token) in json.Token as JObject)
+        foreach ((string code, JToken? token) in json)
         {
             try
             {
@@ -506,7 +543,7 @@ public sealed class CustomModelsSystem : ModSystem
             }
             catch (Exception exception)
             {
-                // @TODO add error logging
+                LoggerUtil.Error(_api, this, $"Exception when trying to load model config '{asset.Location}' for model '{code}':\n{exception}");
             }
         }
 
@@ -685,6 +722,13 @@ public sealed class CustomModelsSystem : ModSystem
 
                 _clientApi.EntityTextureAtlas.GetOrInsertTexture(texturePath, out _, out _, () => textureAsset.ToBitmap(_clientApi));
             }
+        }
+    }
+    private void CollectExclusiveClasses()
+    {
+        foreach (HashSet<string> classes in CustomModels.Select(entry => entry.Value.ExclusiveClasses))
+        {
+            ExclusiveClasses.AddRange(classes);
         }
     }
 }

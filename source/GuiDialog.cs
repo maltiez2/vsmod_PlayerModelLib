@@ -1,14 +1,14 @@
 ﻿using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Util;
-using Vintagestory.Client.NoObf;
 using Vintagestory.GameContent;
+using static Microsoft.WindowsAPICodePack.Shell.PropertySystem.SystemProperties;
 
 namespace PlayerModelLib;
 
@@ -79,6 +79,12 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         {
             _clientSelectionDone.Invoke(_characterSystem, new object[] { _characterInventory, characterClass.Code, _didSelect }); // thanks Tyron for making methods internal!
         }
+
+        PlayerSkinBehavior skinMod = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
+        CustomModelsSystem system = capi.ModLoader.GetModSystem<CustomModelsSystem>();
+
+        system.SynchronizePlayerModel(skinMod.CurrentModelCode);
+        system.SynchronizePlayerModelSize(_currentModelSize);
 
         capi.World.Player.Entity.GetBehavior<EntityBehaviorPlayerInventory>().hideClothing = false;
         ReTesselate();
@@ -438,7 +444,7 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             )
             .FixedUnder(_insetSlotBounds, 4).WithAlignment(EnumDialogArea.LeftFixed).WithFixedPadding(12, 6);
 
-        
+
 
         ElementBounds bounds = null;
         ElementBounds prevbounds = null;
@@ -638,7 +644,6 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         PlayerSkinBehavior skinMod = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
         CustomModelsSystem system = capi.ModLoader.GetModSystem<CustomModelsSystem>();
 
-        system.SynchronizePlayerModel(modelCode);
         skinMod.SetCurrentModel(modelCode, _currentModelSize);
 
         ComposeGuis();
@@ -732,7 +737,6 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         PlayerSkinBehavior skinMod = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
         CustomModelsSystem system = capi.ModLoader.GetModSystem<CustomModelsSystem>();
 
-        system.SynchronizePlayerModelSize(_currentModelSize);
         skinMod.SetCurrentModel(skinMod.CurrentModelCode, _currentModelSize);
     }
     private string CreateModelDescription(CustomModelsSystem system, string model)
@@ -787,7 +791,7 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             foreach ((string attribute, double value) in trait.Attributes)
             {
                 if (attributes.Length > 0) attributes.Append(", ");
-                
+
                 attributes.Append(Lang.Get(string.Format(GlobalConstants.DefaultCultureInfo, "charattribute-{0}-{1}", attribute, value)));
             }
 
@@ -812,14 +816,20 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
     private List<CharacterClass> GetAvailableClasses(CustomModelsSystem system, string model)
     {
-        List<CharacterClass> availableClasses = _characterSystem.characterClasses.Where(element => system.CustomModels[model].AvailableClasses.Contains(element.Code)).ToList();
-        if (availableClasses.Count == 0)
+        HashSet<string> availableClassesForModel = system.CustomModels[model].AvailableClasses;
+        HashSet<string> skippedClassesForModel = system.CustomModels[model].SkipClasses;
+        HashSet<string> exclusiveClassesForModel = system.CustomModels[model].ExclusiveClasses;
+
+        IEnumerable<CharacterClass> availableClasses = _characterSystem.characterClasses.Where(element => availableClassesForModel.Contains(element.Code));
+        if (!availableClasses.Any())
         {
             availableClasses = _characterSystem.characterClasses;
         }
 
-        availableClasses = availableClasses.Where(element => !system.CustomModels[model].SkipClasses.Contains(element.Code)).Where(element => element.Enabled).ToList();
+        availableClasses = availableClasses.Where(element => !system.ExclusiveClasses.Contains(element.Code) || exclusiveClassesForModel.Contains(element.Code));
 
-        return availableClasses;
+        availableClasses = availableClasses.Where(element => !skippedClassesForModel.Contains(element.Code)).Where(element => element.Enabled);
+
+        return availableClasses.ToList();
     }
 }

@@ -74,10 +74,12 @@ internal static class OtherPatches
 
         public static void GetModelReplacement(ItemStack? stack, Entity entity, ref Shape defaultShape, IAttachableToEntity yatayata, float damageEffect)
         {
-            string currentModel = entity.WatchedAttributes.GetString("skinModel");
             int itemId = stack?.Item?.Id ?? 0;
 
             CustomModelsSystem system = entity.Api.ModLoader.GetModSystem<CustomModelsSystem>();
+            PlayerSkinBehavior? skinBehavior = entity.GetBehavior<PlayerSkinBehavior>();
+
+            string? currentModel = skinBehavior?.CurrentModelCode;
 
             if (currentModel != null && itemId != 0 && system != null && system.ModelsLoaded)
             {

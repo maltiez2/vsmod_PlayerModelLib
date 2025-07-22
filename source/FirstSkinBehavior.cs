@@ -170,7 +170,12 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
     {
         Debug.WriteLine($"UpdateEntityProperties - side: {entity.Api.Side}");
 
-        entity.Properties.EyeHeight = CurrentModel.EyeHeight * CurrentSize;
+        if (CurrentSize <= 0)
+        {
+            CurrentSize = 1;
+        }
+
+        entity.Properties.EyeHeight = GameMath.Clamp(CurrentModel.EyeHeight * CurrentSize, CurrentModel.MinEyeHeight, CurrentModel.MaxEyeHeight);
         entity.Properties.CollisionBoxSize = new Vec2f(CurrentModel.CollisionBox.X, CurrentModel.CollisionBox.Y);
         entity.Properties.SelectionBoxSize = new Vec2f(CurrentModel.CollisionBox.X, CurrentModel.CollisionBox.Y);
         if (CurrentModel.ScaleColliderWithSizeHorizontally)
@@ -191,7 +196,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         }
         if (entity.Api.Side == EnumAppSide.Server) Traverse.Create((entity as EntityPlayer)?.Player).Method("updateColSelBoxes").GetValue();
         entity.Properties.Client.Size = CurrentSize;
-        entity.LocalEyePos.Y = CurrentModel.EyeHeight * CurrentSize;
+        entity.LocalEyePos.Y = GameMath.Clamp(CurrentModel.EyeHeight * CurrentSize, CurrentModel.MinEyeHeight, CurrentModel.MaxEyeHeight);
     }
 
 
@@ -293,7 +298,8 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         
         if (entity.Properties.Client.Renderer is EntityShapeRenderer renderer)
         {
-            renderer.TesselateShape();
+            entity.MarkShapeModified();
+            //renderer.TesselateShape();
         }
 
         Debug.WriteLine($"ReplaceEntityShape - side: {entity.Api.Side}");

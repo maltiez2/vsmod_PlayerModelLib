@@ -1,0 +1,17 @@
+{
+  "seraph": {
+    "AvailableClasses": [],
+    "SkipClasses": [],
+    "ExclusiveClasses": ["commoner"],
+    "ExtraTraits": [],
+    "WearableModelReplacers": {},
+    "WearableModelReplacersByShape": {},
+    "SizeRange": [0.9, 1.1],
+    "MaxCollisionBox": [0.99, 1.99],
+    "MinCollisionBox": [0.1, 0.1],
+    "ScaleColliderWithSizeHorizontally": true,
+    "ScaleColliderWithSizeVertically": true,
+    "MaxEyeHeight": 1.95,
+    "MinEyeHeight": 0.1
+  }
+}
