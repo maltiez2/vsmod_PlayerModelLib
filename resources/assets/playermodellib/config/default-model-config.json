@@ -2,7 +2,7 @@
   "seraph": {
     "AvailableClasses": [],
     "SkipClasses": [],
-    "ExclusiveClasses": ["commoner"],
+    "ExclusiveClasses": [],
     "ExtraTraits": [],
     "WearableModelReplacers": {},
     "WearableModelReplacersByShape": {},

@@ -1,0 +1,116 @@
+{
+  "version": 0,
+  "patches": {
+    "boolean": {
+      "playermodellib:config/default-model-config.json": {
+        "seraph/ScaleColliderWithSizeHorizontally": "scale_collider_horizontally",
+        "seraph/ScaleColliderWithSizeVertically": "scale_collider_vertically"
+      }
+    },
+    "number": {
+      "playermodellib:config/default-model-config.json": {
+        "seraph/SizeRange/0": "min_size_range",
+        "seraph/SizeRange/1": "max_size_range",
+        "seraph/ModelSizeFactor": "size_factor",
+        "seraph/MaxCollisionBox/0": "max_collision_box_horizontal",
+        "seraph/MaxCollisionBox/1": "max_collision_box_vetrical",
+        "seraph/MaxEyeHeight": "max_eye_height",
+        "seraph/MinEyeHeight": "min_eye_height"
+      }
+    }
+  },
+  "settings": [
+    {
+      "type": "separator",
+      "title": "playermodellib:setting-title-0"
+    },
+    {
+      "code": "min_size_range",
+      "type": "float",
+      "ingui": "playermodellib:setting-min_size_range",
+      "comment": "playermodellib:setting-comment-min_size_range",
+      "default": 0.9,
+      "range": {
+        "min": 0.1,
+        "max": 1.0
+      }
+    },
+    {
+      "code": "max_size_range",
+      "type": "float",
+      "ingui": "playermodellib:setting-max_size_range",
+      "comment": "playermodellib:setting-comment-max_size_range",
+      "default": 1.1,
+      "range": {
+        "min": 1.0,
+        "max": 2.0
+      }
+    },
+    {
+      "code": "size_factor",
+      "type": "float",
+      "ingui": "playermodellib:setting-size_factor",
+      "comment": "playermodellib:setting-comment-size_factor",
+      "default": 1.0,
+      "range": {
+        "min": 0.1,
+        "max": 2.0
+      }
+    },
+    {
+      "code": "max_collision_box_vetrical",
+      "type": "float",
+      "ingui": "playermodellib:setting-max_collision_box_vetrical",
+      "comment": "playermodellib:setting-comment-max_collision_box_vetrical",
+      "default": 1.99,
+      "range": {
+        "min": 0.1,
+        "max": 5.0
+      }
+    },
+    {
+      "code": "max_collision_box_horizontal",
+      "type": "float",
+      "ingui": "playermodellib:setting-max_collision_box_horizontal",
+      "comment": "playermodellib:setting-comment-max_collision_box_horizontal",
+      "default": 0.99,
+      "range": {
+        "min": 0.1,
+        "max": 5.0
+      }
+    },
+    {
+      "code": "max_eye_height",
+      "type": "float",
+      "ingui": "playermodellib:setting-max_eye_height",
+      "comment": "playermodellib:setting-comment-max_eye_height",
+      "default": 1.95,
+      "range": {
+        "min": 0.1,
+        "max": 5.0
+      }
+    },
+    {
+      "code": "min_eye_height",
+      "type": "float",
+      "ingui": "playermodellib:setting-min_eye_height",
+      "default": 0.1,
+      "range": {
+        "min": 0.1,
+        "max": 5.0
+      }
+    },
+    {
+      "code": "scale_collider_horizontally",
+      "type": "boolean",
+      "ingui": "playermodellib:setting-scale_collider_horizontally",
+      "default": true
+    },
+    {
+      "code": "scale_collider_vertically",
+      "type": "boolean",
+      "ingui": "playermodellib:setting-scale_collider_vertically",
+      "default": true
+    }
+  ]
+}

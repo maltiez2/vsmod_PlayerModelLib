@@ -181,28 +181,28 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
             CurrentSize = 1;
         }
 
-        entity.Properties.EyeHeight = GameMath.Clamp(CurrentModel.EyeHeight * CurrentSize, CurrentModel.MinEyeHeight, CurrentModel.MaxEyeHeight);
+        entity.Properties.EyeHeight = GameMath.Clamp(CurrentModel.EyeHeight * CurrentSize * CurrentModel.ModelSizeFactor, CurrentModel.MinEyeHeight, CurrentModel.MaxEyeHeight);
         entity.Properties.CollisionBoxSize = new Vec2f(CurrentModel.CollisionBox.X, CurrentModel.CollisionBox.Y);
         entity.Properties.SelectionBoxSize = new Vec2f(CurrentModel.CollisionBox.X, CurrentModel.CollisionBox.Y);
         if (CurrentModel.ScaleColliderWithSizeHorizontally)
         {
-            entity.Properties.CollisionBoxSize.X *= CurrentSize;
-            entity.Properties.SelectionBoxSize.X *= CurrentSize;
+            entity.Properties.CollisionBoxSize.X *= CurrentSize * CurrentModel.ModelSizeFactor;
+            entity.Properties.SelectionBoxSize.X *= CurrentSize * CurrentModel.ModelSizeFactor;
 
             entity.Properties.CollisionBoxSize.X = GameMath.Clamp(entity.Properties.CollisionBoxSize.X, CurrentModel.MinCollisionBox.X, CurrentModel.MaxCollisionBox.X);
             entity.Properties.SelectionBoxSize.X = GameMath.Clamp(entity.Properties.SelectionBoxSize.X, CurrentModel.MinCollisionBox.X, CurrentModel.MaxCollisionBox.X);
         }
         if (CurrentModel.ScaleColliderWithSizeVertically)
         {
-            entity.Properties.CollisionBoxSize.Y *= CurrentSize;
-            entity.Properties.SelectionBoxSize.Y *= CurrentSize;
+            entity.Properties.CollisionBoxSize.Y *= CurrentSize * CurrentModel.ModelSizeFactor;
+            entity.Properties.SelectionBoxSize.Y *= CurrentSize * CurrentModel.ModelSizeFactor;
 
             entity.Properties.CollisionBoxSize.Y = GameMath.Clamp(entity.Properties.CollisionBoxSize.Y, CurrentModel.MinCollisionBox.Y, CurrentModel.MaxCollisionBox.Y);
             entity.Properties.SelectionBoxSize.Y = GameMath.Clamp(entity.Properties.SelectionBoxSize.Y, CurrentModel.MinCollisionBox.Y, CurrentModel.MaxCollisionBox.Y);
         }
         if (entity.Api.Side == EnumAppSide.Server) Traverse.Create((entity as EntityPlayer)?.Player).Method("updateColSelBoxes").GetValue();
         entity.Properties.Client.Size = DefaultSize * CurrentSize * CurrentModel.ModelSizeFactor;
-        entity.LocalEyePos.Y = GameMath.Clamp(CurrentModel.EyeHeight * CurrentSize, CurrentModel.MinEyeHeight, CurrentModel.MaxEyeHeight);
+        entity.LocalEyePos.Y = GameMath.Clamp(CurrentModel.EyeHeight * CurrentSize * CurrentModel.ModelSizeFactor, CurrentModel.MinEyeHeight, CurrentModel.MaxEyeHeight);
 
         ChangeTags();
     }

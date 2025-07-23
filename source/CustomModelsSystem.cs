@@ -2,7 +2,6 @@
 using OpenTK.Mathematics;
 using ProtoBuf;
 using SkiaSharp;
-using System;
 using System.Diagnostics;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -233,7 +232,7 @@ public sealed class CustomModelsSystem : ModSystem
 
         IAsset defaultConfigAsset = _api.Assets.Get("playermodellib:config/default-model-config.json");
         Dictionary<string, CustomModelConfig> defaultConfigList = FromAsset(defaultConfigAsset);
-        if (!defaultConfigList.TryGetValue($"playermodellib:{_defaultModelCode}", out CustomModelConfig defaultConfig))
+        if (!defaultConfigList.TryGetValue($"playermodellib:{_defaultModelCode}", out CustomModelConfig? defaultConfig))
         {
             defaultConfig = new();
         }
@@ -530,7 +529,8 @@ public sealed class CustomModelsSystem : ModSystem
 
         try
         {
-            json = JsonObject.FromJson(asset.ToText()).Token as JObject;
+            string text = asset.ToText();
+            json = JsonObject.FromJson(text).Token as JObject;
 
             if (json == null)
             {
