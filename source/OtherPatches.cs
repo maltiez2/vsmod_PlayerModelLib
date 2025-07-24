@@ -32,6 +32,7 @@ internal static class OtherPatches
 
     private static readonly FieldInfo? CharacterSystem_didSelect = typeof(CharacterSystem).GetField("didSelect", BindingFlags.NonPublic | BindingFlags.Instance);
     private static readonly FieldInfo? CharacterSystem_createCharDlg = typeof(CharacterSystem).GetField("createCharDlg", BindingFlags.NonPublic | BindingFlags.Instance);
+    private static readonly FieldInfo? CharacterSystem_capi = typeof(CharacterSystem).GetField("capi", BindingFlags.NonPublic | BindingFlags.Instance);
 
     private static bool Event_PlayerJoin(CharacterSystem __instance, IClientPlayer byPlayer)
     {
@@ -39,7 +40,7 @@ internal static class OtherPatches
 
         if (didSelect) return true;
 
-        ICoreClientAPI? api = byPlayer.Entity.Api as ICoreClientAPI;
+        ICoreClientAPI? api = (ICoreClientAPI?)CharacterSystem_capi?.GetValue(__instance);
 
         if (api == null) return true;
 
