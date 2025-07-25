@@ -197,7 +197,7 @@ public sealed class CustomModelsSystem : ModSystem
     public static string PrefixSkinPartTextures(string modelCode, string textureCode, string skinCode) => GetSkinPartTexturePrefix(modelCode, skinCode) + textureCode;
 
     public static string GetTextureCodePrefix(string modelCode) => $"{modelCode.Replace(':', '-')}-base-";
-    public static string GetSkinPartTexturePrefix(string modelCode, string skinCode) => $"skinpart-{modelCode.Replace(':', '-')}-{skinCode}-";
+    public static string GetSkinPartTexturePrefix(string modelCode, string skinCode) => $"{modelCode.Replace(':', '-')}-{skinCode}-";
 
 
     private const string _defaultModelPath = "game:entity/humanoid/seraph-faceless";
@@ -412,17 +412,16 @@ public sealed class CustomModelsSystem : ModSystem
                 {
                     foreach (Item item in api.World.Items)
                     {
-                        if (WildcardUtil.Match(itemCodeWildcard, item.Code?.ToString() ?? ""))
+                        if (!WildcardUtil.Match(itemCodeWildcard, item.Code?.ToString() ?? "")) continue;
+                        
+                        string processedPath = path;
+
+                        foreach ((string variantCode, string variantValue) in item.Variant)
                         {
-                            string processedPath = path;
-
-                            foreach ((string variantCode, string variantValue) in item.Variant)
-                            {
-                                processedPath = processedPath.Replace($"{{{variantCode}}}", variantValue);
-                            }
-
-                            CustomModels[modelCode].WearableShapeReplacers[item.Id] = processedPath;
+                            processedPath = processedPath.Replace($"{{{variantCode}}}", variantValue);
                         }
+
+                        CustomModels[modelCode].WearableShapeReplacers[item.Id] = processedPath;
                     }
                 }
             }
