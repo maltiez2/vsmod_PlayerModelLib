@@ -28,6 +28,7 @@ public class CustomModelConfig
     public string MainTextureCode { get; set; } = "seraph";
     public SkinnablePartExtended[] SkinnableParts { get; set; } = [];
     public Dictionary<string, string> WearableModelReplacers { get; set; } = [];
+    public Dictionary<string, CompositeShape> WearableCompositeModelReplacers { get; set; } = [];
     public Dictionary<string, string> WearableModelReplacersByShape { get; set; } = [];
     public string[] AvailableClasses { get; set; } = [];
     public string[] SkipClasses { get; set; } = [];
@@ -58,6 +59,7 @@ public class CustomModelData
     public Vector2i MainTextureSize { get; set; }
     public TextureAtlasPosition? MainTexturePosition { get; set; }
     public Dictionary<int, string> WearableShapeReplacers { get; set; } = [];
+    public Dictionary<int, CompositeShape> WearableCompositeShapeReplacers { get; set; } = [];
     public Dictionary<string, string> WearableShapeReplacersByShape { get; set; } = [];
     public HashSet<string> AvailableClasses { get; set; } = [];
     public HashSet<string> SkipClasses { get; set; } = [];
@@ -194,7 +196,7 @@ public sealed class CustomModelsSystem : ModSystem
     public static string PrefixTextureCode(string modelCode, string textureCode) => GetTextureCodePrefix(modelCode) + textureCode;
     public static string PrefixSkinPartTextures(string modelCode, string textureCode, string skinCode) => GetSkinPartTexturePrefix(modelCode, skinCode) + textureCode;
 
-    public static string GetTextureCodePrefix(string modelCode) => $"{modelCode.Replace(':', '-')}-";
+    public static string GetTextureCodePrefix(string modelCode) => $"{modelCode.Replace(':', '-')}-base-";
     public static string GetSkinPartTexturePrefix(string modelCode, string skinCode) => $"skinpart-{modelCode.Replace(':', '-')}-{skinCode}-";
 
 
@@ -205,6 +207,7 @@ public sealed class CustomModelsSystem : ModSystem
 
     private const string _modelReplacementsByCodePath = "config/model-replacements-bycode";
     private const string _modelReplacementsByShapePath = "config/model-replacements-byshape";
+    private const string _compositeModelReplacementsByCodePath = "config/composite-model-replacements-bycode";
 
     private bool _defaultLoaded = false;
     private IClientNetworkChannel? _clientChannel;
@@ -213,6 +216,7 @@ public sealed class CustomModelsSystem : ModSystem
     private ICoreAPI _api;
     private readonly Dictionary<string, string> _oldMainTextureCodes = [];
     private readonly Dictionary<string, Dictionary<string, string>> _wearableModelReplacers = [];
+    private readonly Dictionary<string, Dictionary<string, CompositeShape>> _wearableCompositeModelReplacers = [];
 
     private void LoadDefault()
     {
@@ -300,6 +304,7 @@ public sealed class CustomModelsSystem : ModSystem
                 }
 
                 _wearableModelReplacers.Add(code, modelConfig.WearableModelReplacers);
+                _wearableCompositeModelReplacers.Add(code, modelConfig.WearableCompositeModelReplacers);
 
                 Dictionary<string, SkinnablePart> partsByCode = LoadParts(api, modelConfig.SkinnableParts);
 
@@ -345,13 +350,58 @@ public sealed class CustomModelsSystem : ModSystem
                 {
                     if (WildcardUtil.Match(itemCodeWildcard, item.Code?.ToString() ?? ""))
                     {
-                        CustomModels[modelCode].WearableShapeReplacers.TryAdd(item.Id, path);
+                        string processedPath = path;
+
+                        foreach ((string variantCode, string variantValue) in item.Variant)
+                        {
+                            processedPath = processedPath.Replace($"{variantCode}", variantValue);
+                        }
+
+                        CustomModels[modelCode].WearableShapeReplacers.TryAdd(item.Id, processedPath);
                     }
                 }
             }
         }
 
-        List<IAsset> modelsConfigs = api.Assets.GetMany(_modelReplacementsByCodePath);
+        foreach ((string modelCode, Dictionary<string, CompositeShape> paths) in _wearableCompositeModelReplacers)
+        {
+            CustomModels[modelCode].WearableShapeReplacers = [];
+
+            foreach ((string itemCodeWildcard, CompositeShape path) in paths)
+            {
+                foreach (Item item in api.World.Items)
+                {
+                    if (WildcardUtil.Match(itemCodeWildcard, item.Code?.ToString() ?? ""))
+                    {
+                        CustomModels[modelCode].WearableCompositeShapeReplacers[item.Id] = path;
+                    }
+                }
+            }
+        }
+
+        List<IAsset> modelsConfigs = api.Assets.GetMany(_compositeModelReplacementsByCodePath);
+        foreach (IAsset asset in modelsConfigs)
+        {
+            Dictionary<string, Dictionary<string, CompositeShape>> replacements = CompositeReplacementsFromAsset(asset);
+
+            foreach ((string modelCode, Dictionary<string, CompositeShape> paths) in replacements)
+            {
+                foreach ((string itemCodeWildcard, CompositeShape path) in paths)
+                {
+                    foreach (Item item in api.World.Items)
+                    {
+                        if (WildcardUtil.Match(itemCodeWildcard, item.Code?.ToString() ?? ""))
+                        {
+                            ReplaceVariants(path, item);
+
+                            CustomModels[modelCode].WearableCompositeShapeReplacers[item.Id] = path;
+                        }
+                    }
+                }
+            }
+        }
+
+        modelsConfigs = api.Assets.GetMany(_modelReplacementsByCodePath);
         foreach (IAsset asset in modelsConfigs)
         {
             Dictionary<string, Dictionary<string, string>> replacements = ReplacementsFromAsset(asset);
@@ -364,7 +414,14 @@ public sealed class CustomModelsSystem : ModSystem
                     {
                         if (WildcardUtil.Match(itemCodeWildcard, item.Code?.ToString() ?? ""))
                         {
-                            CustomModels[modelCode].WearableShapeReplacers[item.Id] = path;
+                            string processedPath = path;
+
+                            foreach ((string variantCode, string variantValue) in item.Variant)
+                            {
+                                processedPath = processedPath.Replace($"{{{variantCode}}}", variantValue);
+                            }
+
+                            CustomModels[modelCode].WearableShapeReplacers[item.Id] = processedPath;
                         }
                     }
                 }
@@ -571,6 +628,40 @@ public sealed class CustomModelsSystem : ModSystem
         {
             // @TODO add error logging
             return new();
+        }
+    }
+    private Dictionary<string, Dictionary<string, CompositeShape>> CompositeReplacementsFromAsset(IAsset asset)
+    {
+        try
+        {
+            return JsonObject.FromJson(asset.ToText()).AsObject<Dictionary<string, Dictionary<string, CompositeShape>>>();
+        }
+        catch (Exception exception)
+        {
+            // @TODO add error logging
+            return new();
+        }
+    }
+    private void ReplaceVariants(CompositeShape shape, Item item)
+    {
+        string processedPath = shape.Base;
+
+        foreach ((string variantCode, string variantValue) in item.Variant)
+        {
+            processedPath = processedPath.Replace($"{{{variantCode}}}", variantValue);
+        }
+
+        shape.Base = processedPath;
+
+        if (shape.Overlays != null)
+        {
+            foreach (CompositeShape? overlay in shape.Overlays)
+            {
+                if (overlay != null)
+                {
+                    ReplaceVariants(overlay, item);
+                }
+            }
         }
     }
     private Dictionary<string, SkinnablePart> LoadParts(ICoreAPI api, SkinnablePart[] parts)

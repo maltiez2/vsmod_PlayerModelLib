@@ -5,6 +5,7 @@ using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.GameContent;
+using static Microsoft.WindowsAPICodePack.Shell.PropertySystem.SystemProperties;
 
 namespace PlayerModelLib;
 
@@ -87,6 +88,7 @@ internal static class OtherPatches
                 new(OpCodes.Ldarg_0),
                 new(OpCodes.Ldfld, AccessTools.Field(typeof(EntityBehaviorContainer), "entity")),
                 new(OpCodes.Ldloca_S, 3),
+                new(OpCodes.Ldloca_S, 5),
                 new(OpCodes.Ldarg_3),
                 new(OpCodes.Ldloc_1),
                 new(OpCodes.Call, AccessTools.Method(typeof(EntityBehaviorContainerPatchCommand), nameof(GetModelReplacement))),
@@ -107,7 +109,7 @@ internal static class OtherPatches
             return codes;
         }
 
-        public static void GetModelReplacement(ItemStack? stack, Entity entity, ref Shape defaultShape, IAttachableToEntity yatayata, float damageEffect)
+        public static void GetModelReplacement(ItemStack? stack, Entity entity, ref Shape? defaultShape, ref CompositeShape? compositeShape, IAttachableToEntity yatayata, float damageEffect)
         {
             int itemId = stack?.Item?.Id ?? 0;
 
@@ -118,26 +120,58 @@ internal static class OtherPatches
 
             if (currentModel != null && itemId != 0 && system != null && system.ModelsLoaded)
             {
-                if (system.CustomModels[currentModel].WearableShapeReplacers.TryGetValue(itemId, out string? shape))
+                CustomModelData customModel = system.CustomModels[currentModel];
+
+                if (customModel.WearableShapeReplacers.TryGetValue(itemId, out string? shape))
                 {
                     defaultShape = LoadShape(entity.Api, shape);
 
                     defaultShape?.SubclassForStepParenting(yatayata.GetTexturePrefixCode(stack), damageEffect);
                     defaultShape?.ResolveReferences(entity.World.Logger, currentModel);
+
+                    if (compositeShape != null)
+                    {
+                        compositeShape = compositeShape.Clone();
+                        compositeShape.Base = shape;
+                    }
 
                     return;
                 }
 
-                string shapePath = yatayata.GetAttachedShape(stack, "default").Base.ToString();
+                if (customModel.WearableCompositeShapeReplacers.TryGetValue(itemId, out CompositeShape? newCompositeShape))
+                {
+                    compositeShape = newCompositeShape.Clone();
 
-                if (system.CustomModels[currentModel].WearableShapeReplacersByShape.TryGetValue(shapePath, out shape))
+                    compositeShape.Base = compositeShape.Base.WithPathAppendixOnce(".json").WithPathPrefixOnce("shapes/");
+
+                    defaultShape = LoadShape(entity.Api, newCompositeShape.Base);
+
+                    defaultShape?.SubclassForStepParenting(yatayata.GetTexturePrefixCode(stack), damageEffect);
+                    defaultShape?.ResolveReferences(entity.World.Logger, currentModel);
+                }
+
+                CompositeShape oldCompositeShape = yatayata.GetAttachedShape(stack, "default").Clone();
+
+                string shapePath = oldCompositeShape.Base.ToString();
+
+                if (customModel.WearableShapeReplacersByShape.TryGetValue(shapePath, out shape))
                 {
                     defaultShape = LoadShape(entity.Api, shape);
 
                     defaultShape?.SubclassForStepParenting(yatayata.GetTexturePrefixCode(stack), damageEffect);
                     defaultShape?.ResolveReferences(entity.World.Logger, currentModel);
+                }
 
-                    return;
+                if (oldCompositeShape.Overlays != null)
+                {
+                    foreach (CompositeShape? overlay in oldCompositeShape.Overlays)
+                    {
+                        if (overlay == null) continue;
+
+                        ReplaceOverlay(overlay, customModel.WearableShapeReplacersByShape);
+                    }
+
+                    compositeShape = oldCompositeShape;
                 }
             }
         }
@@ -148,6 +182,24 @@ internal static class OtherPatches
             shapeLocation = shapeLocation.WithPathAppendixOnce(".json").WithPathPrefixOnce("shapes/");
             Shape? currentShape = Shape.TryGet(api, shapeLocation);
             return currentShape;
+        }
+
+        private static void ReplaceOverlay(CompositeShape shape, Dictionary<string, string> replacements)
+        {
+            if (replacements.TryGetValue(shape.Base.ToString(), out string? newShape))
+            {
+                shape.Base = newShape;
+            }
+
+            if (shape.Overlays != null)
+            {
+                foreach (CompositeShape? overlay in shape.Overlays)
+                {
+                    if (overlay == null) continue;
+
+                    ReplaceOverlay(overlay, replacements);
+                }
+            }
         }
     }
 }
