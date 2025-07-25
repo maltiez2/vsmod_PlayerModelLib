@@ -195,7 +195,7 @@ public sealed class CustomModelsSystem : ModSystem
     public static string PrefixTextureCode(string modelCode, string textureCode) => GetTextureCodePrefix(modelCode) + textureCode;
     public static string PrefixSkinPartTextures(string modelCode, string textureCode, string skinCode) => GetSkinPartTexturePrefix(modelCode, skinCode) + textureCode;
 
-    public static string GetTextureCodePrefix(string modelCode) => $"{modelCode.Replace(':', '-')}-";
+    public static string GetTextureCodePrefix(string modelCode) => $"{modelCode.Replace(':', '-')}-base-";
     public static string GetSkinPartTexturePrefix(string modelCode, string skinCode) => $"skinpart-{modelCode.Replace(':', '-')}-{skinCode}-";
 
 
