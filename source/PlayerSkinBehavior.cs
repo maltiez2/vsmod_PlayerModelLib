@@ -396,8 +396,6 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
                 {
                     string code = CustomModelsSystem.PrefixSkinPartTextures(CurrentModelCode, part.TextureTarget, targetSkinPart);
 
-                    Debug.WriteLine(code);
-
                     if (entityShape.TextureSizes.TryGetValue(code, out int[]? sizes))
                     {
                         if (extendedPart.OverlayTexture)
