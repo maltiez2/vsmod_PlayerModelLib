@@ -26,6 +26,8 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     public override bool PrefersUngrabbedMouse => true;
     public override string? ToggleKeyCombinationCode => null;
 
+    public static int RenderState { get; protected set; } = 0; // Is used to disable model size compensation when rendering model in model tab
+
     public GuiDialogCreateCustomCharacter(ICoreClientAPI capi, CharacterSystem characterSystem) : base(capi, characterSystem)
     {
         _characterSystem = characterSystem;
@@ -86,6 +88,8 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         capi.World.Player.Entity.GetBehavior<EntityBehaviorPlayerInventory>().hideClothing = false;
         ReTesselate();
+
+        RenderState = 0;
     }
     public override bool CaptureAllInputs()
     {
@@ -212,6 +216,10 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         capi.Render.CurrentActiveShader.Uniform("lightPosition", new Vec3f(lightRot.X, lightRot.Y, lightRot.Z));
 
         capi.Render.PushScissor(_insetSlotBounds);
+
+        float size = capi.World.Player.Entity.Properties.Client.Size;
+
+        RenderState = (int)_currentTab + 1;
 
         switch (_currentTab)
         {

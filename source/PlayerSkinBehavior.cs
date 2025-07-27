@@ -184,6 +184,16 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         {
             CurrentSize = 1;
         }
+        
+        if (entity is EntityPlayer player)
+        {
+            float factor = MathF.Sqrt(CurrentSize) * CurrentModel.HeadBobbingScale;
+            player.HeadBobbingAmplitude *= factor / PreviousHeadBobbingAmplitudeFactor;
+            PreviousHeadBobbingAmplitudeFactor = factor;
+        }
+
+        OtherPatches.CurrentModelGuiScale = CurrentModel.GuiModelScale;
+        OtherPatches.CurrentModelScale = CurrentModel.ModelSizeFactor;
 
         entity.Properties.EyeHeight = GameMath.Clamp(CurrentModel.EyeHeight * CurrentSize * CurrentModel.ModelSizeFactor, CurrentModel.MinEyeHeight, CurrentModel.MaxEyeHeight);
         entity.Properties.CollisionBoxSize = new Vec2f(CurrentModel.CollisionBox.X, CurrentModel.CollisionBox.Y);
@@ -222,6 +232,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
     protected EntityTagArray PreviousAddedTags = EntityTagArray.Empty;
     protected EntityTagArray PreviousRemovedTags = EntityTagArray.Empty;
     protected float DefaultSize = 1;
+    protected float PreviousHeadBobbingAmplitudeFactor = 1;
 
 
     protected void OnSkinConfigChanged()
@@ -410,7 +421,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
                     }
                     else
                     {
-                        LoggerUtil.Error(api, this, $"Skin part has no textureSize: {code} in {shapePathForLogging}");
+                        LoggerUtil.Verbose(api, this, $"Skin part has no textureSize: {code} in {shapePathForLogging}");
                     }
                 }
             }
@@ -430,7 +441,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
                 }
                 else
                 {
-                    LoggerUtil.Error(api, this, $"Skin part has no textureSize: {mainCode} in {shapePathForLogging}");
+                    LoggerUtil.Verbose(api, this, $"Skin part has no textureSize: {mainCode} in {shapePathForLogging}");
                 }
             }
         }

@@ -4,13 +4,16 @@ using System.Reflection.Emit;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
+using Vintagestory.API.MathTools;
 using Vintagestory.GameContent;
-using static Microsoft.WindowsAPICodePack.Shell.PropertySystem.SystemProperties;
 
 namespace PlayerModelLib;
 
 internal static class OtherPatches
 {
+    public static float CurrentModelGuiScale { get; set; } = 1;
+    public static float CurrentModelScale { get; set; } = 1;
+
     public static void Patch(string harmonyId)
     {
         new Harmony(harmonyId).Patch(
@@ -21,12 +24,17 @@ internal static class OtherPatches
                 typeof(CharacterSystem).GetMethod("Event_PlayerJoin", AccessTools.all),
                 prefix: new HarmonyMethod(AccessTools.Method(typeof(OtherPatches), nameof(Event_PlayerJoin)))
             );
+        new Harmony(harmonyId).Patch(
+                typeof(EntityShapeRenderer).GetMethod("loadModelMatrixForGui", AccessTools.all),
+                postfix: new HarmonyMethod(AccessTools.Method(typeof(OtherPatches), nameof(ApplyModelMatrixForGui)))
+            );
     }
 
     public static void Unpatch(string harmonyId)
     {
         new Harmony(harmonyId).Unpatch(typeof(EntityBehaviorTexturedClothing).GetMethod("reloadSkin", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
         new Harmony(harmonyId).Unpatch(typeof(CharacterSystem).GetMethod("Event_PlayerJoin", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
+        new Harmony(harmonyId).Unpatch(typeof(EntityShapeRenderer).GetMethod("loadModelMatrixForGui", AccessTools.all), HarmonyPatchType.Postfix, harmonyId);
     }
 
     private static bool reloadSkin() => false;
@@ -60,6 +68,23 @@ internal static class OtherPatches
         return false;
     }
 
+    private static void ApplyModelMatrixForGui(Entity entity, ref float[] ___ModelMat)
+    {
+        if (___ModelMat != null && ___ModelMat.Length > 0 && entity is EntityPlayer)
+        {
+            //Need to undo the last translation to ensure that the player scales from the correct origin.
+            Mat4f.Translate(___ModelMat, ___ModelMat, 0.5f, 0f, 0.5f);
+
+            bool resize = GuiDialogCreateCustomCharacter.RenderState != (int)EnumCreateCharacterTabs.Model + 1;
+
+            float size = MathF.Sqrt((resize ? entity.Properties.Client.Size : CurrentModelScale) / CurrentModelGuiScale);
+
+            Mat4f.Scale(___ModelMat, ___ModelMat, 1 / size, 1 / size, 1 / size);
+
+            //Redo the last translation.
+            Mat4f.Translate(___ModelMat, ___ModelMat, -0.5f, 0f, -0.5f);
+        }
+    }
 
     [HarmonyPatchCategory("PlayerModelLibTranspiler")]
     public class EntityBehaviorContainerPatchCommand

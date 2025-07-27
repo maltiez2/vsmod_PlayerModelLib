@@ -437,7 +437,7 @@ public static class ScrollPatches
     {
         if (rightHeight > scrollHeight)
         {
-            rightScroll.EndScroll(composer);
+            rightScroll?.EndScroll(composer);
             curScroll = null;
         }
     }

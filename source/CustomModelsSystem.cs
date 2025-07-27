@@ -19,6 +19,7 @@ public class SkinnablePartExtended : SkinnablePart
     public string[] TargetSkinParts { get; set; } = [];
     public bool OverlayTexture { get; set; } = false;
     public EnumColorBlendMode OverlayMode { get; set; } = EnumColorBlendMode.Normal;
+    public bool Enabled { get; set; } = true;
 }
 
 public class CustomModelConfig
@@ -46,6 +47,8 @@ public class CustomModelConfig
     public string[] AddTags { get; set; } = [];
     public string[] RemoveTags { get; set; } = [];
     public float ModelSizeFactor { get; set; } = 1;
+    public float HeadBobbingScale { get; set; } = 1;
+    public float GuiModelScale { get; set; } = 1;
 }
 
 public class CustomModelData
@@ -77,6 +80,8 @@ public class CustomModelData
     public EntityTagArray AddTags { get; set; } = EntityTagArray.Empty;
     public EntityTagArray RemoveTags { get; set; } = EntityTagArray.Empty;
     public float ModelSizeFactor { get; set; } = 1;
+    public float HeadBobbingScale { get; set; } = 1;
+    public float GuiModelScale { get; set; } = 1;
 
 
     public CustomModelData(string code, Shape shape)
@@ -243,11 +248,13 @@ public sealed class CustomModelsSystem : ModSystem
 
         EntityProperties playerProperties = _api.World.GetEntityType(_playerEntityCode) ?? throw new ArgumentException("[Player Model lib] Unable to get player entity properties.");
 
-        SkinnablePartExtended[] parts = playerProperties.Attributes["skinnableParts"].AsObject<SkinnablePartExtended[]>();
+        SkinnablePartExtended[] parts = playerProperties.Attributes["skinnableParts"].AsObject<SkinnablePartExtended[]>().Where(part => part.Enabled).ToArray();
 
         FixDefaultSkinParts(parts);
 
         Dictionary<string, SkinnablePart> partsByCode = LoadParts(_api, parts);
+
+        FixColBreak(parts, _defaultModelCode);
 
         CustomModelData defaultModelData = new(_defaultModelCode, defaultShape)
         {
@@ -271,7 +278,9 @@ public sealed class CustomModelsSystem : ModSystem
             MinEyeHeight = defaultConfig.MinEyeHeight,
             AddTags = _api.TagRegistry.EntityTagsToTagArray(defaultConfig.AddTags),
             RemoveTags = _api.TagRegistry.EntityTagsToTagArray(defaultConfig.RemoveTags),
-            ModelSizeFactor = defaultConfig.ModelSizeFactor
+            ModelSizeFactor = defaultConfig.ModelSizeFactor,
+            HeadBobbingScale = defaultConfig.HeadBobbingScale,
+            GuiModelScale = defaultConfig.GuiModelScale
         };
 
         CustomModels.Add(_defaultModelCode, defaultModelData);
@@ -306,7 +315,11 @@ public sealed class CustomModelsSystem : ModSystem
                 _wearableModelReplacers.Add(code, modelConfig.WearableModelReplacers);
                 _wearableCompositeModelReplacers.Add(code, modelConfig.WearableCompositeModelReplacers);
 
+                modelConfig.SkinnableParts = modelConfig.SkinnableParts.Where(part => part.Enabled).ToArray();
+
                 Dictionary<string, SkinnablePart> partsByCode = LoadParts(api, modelConfig.SkinnableParts);
+
+                FixColBreak(modelConfig.SkinnableParts, code);
 
                 CustomModelData modelData = new(code, shape)
                 {
@@ -329,7 +342,9 @@ public sealed class CustomModelsSystem : ModSystem
                     MinEyeHeight = modelConfig.MinEyeHeight,
                     AddTags = api.TagRegistry.EntityTagsToTagArray(modelConfig.AddTags),
                     RemoveTags = api.TagRegistry.EntityTagsToTagArray(modelConfig.RemoveTags),
-                    ModelSizeFactor = modelConfig.ModelSizeFactor
+                    ModelSizeFactor = modelConfig.ModelSizeFactor,
+                    HeadBobbingScale = modelConfig.HeadBobbingScale,
+                    GuiModelScale = modelConfig.GuiModelScale
                 };
 
                 CustomModels.Add(code, modelData);
@@ -413,7 +428,7 @@ public sealed class CustomModelsSystem : ModSystem
                     foreach (Item item in api.World.Items)
                     {
                         if (!WildcardUtil.Match(itemCodeWildcard, item.Code?.ToString() ?? "")) continue;
-                        
+
                         string processedPath = path;
 
                         foreach ((string variantCode, string variantValue) in item.Variant)
@@ -515,6 +530,18 @@ public sealed class CustomModelsSystem : ModSystem
                 default:
                     break;
             }
+        }
+    }
+    private void FixColBreak(SkinnablePartExtended[] parts, string modelCodeForLogging)
+    {
+        if (parts.Count(skinPart => skinPart.Colbreak) == 1) return;
+
+        LoggerUtil.Warn(_api, this, $"Model '{modelCodeForLogging}' has no 'calBreak: true' specified, or has specified it more than once. Will automatically reassign 'calBreak' values.");
+
+        int middleIndex = (parts.Length - 1) / 2;
+        for (int index = 0; index < parts.Length; index++)
+        {
+            parts[index].Colbreak = (index == middleIndex);
         }
     }
     private static void CollectAttachmentPoints(ShapeElement element, Dictionary<string, AttachmentPoint[]> attachmentPointsByElement)

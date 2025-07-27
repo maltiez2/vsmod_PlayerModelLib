@@ -73,7 +73,7 @@
       "type": "float",
       "ingui": "playermodellib:setting-max_collision_box_horizontal",
       "comment": "playermodellib:setting-comment-max_collision_box_horizontal",
-      "default": 0.99,
+      "default": 0.80,
       "range": {
         "min": 0.1,
         "max": 10.0
