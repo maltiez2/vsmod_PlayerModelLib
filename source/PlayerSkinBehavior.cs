@@ -566,6 +566,8 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
     {
         IDictionary<string, CompositeTexture> textures = entity.Properties.Client.Textures;
 
+        if (!textures.ContainsKey(code)) return;
+
         CompositeTexture baseTexture = textures[code].Clone();
 
         baseTexture.BlendedOverlays = OverlaysByTextures[code];
