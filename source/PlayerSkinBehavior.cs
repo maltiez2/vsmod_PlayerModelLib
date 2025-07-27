@@ -108,7 +108,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         OnActuallyInitialize?.Invoke();
     }
 
-    public override void OnTesselation(ref Shape entityShape, string shapePathForLogging, ref bool shapeIsCloned, ref string[] willDeleteElements)
+    public override void OnTesselation(ref Shape entityShape, string shapePathForLogging, ref bool shapeIsCloned, ref string[]? willDeleteElements)
     {
         if (ModelSystem == null || ClientApi == null || !ModelSystem.ModelsLoaded) return;
 
@@ -120,6 +120,8 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         AddSkinParts(ref entityShape, shapePathForLogging);
 
         AddSkinPartsTextures(ClientApi, entityShape, shapePathForLogging);
+
+        RemoveHiddenElements(entityShape, ref willDeleteElements);
     }
 
     public void SetCurrentModel(string code, float size)
@@ -440,22 +442,28 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         OverlaysByTextures.Clear();
     }
 
-    protected virtual void RemoveHiddenElements(Shape entityShape, string[] willDeleteElements)
+    protected virtual void RemoveHiddenElements(Shape entityShape, ref string[]? willDeleteElements)
     {
         EntityBehaviorTexturedClothing? texturedClothingBehavior = entity.GetBehavior<EntityBehaviorTexturedClothing>();
         if (texturedClothingBehavior == null || texturedClothingBehavior.hideClothing) return;
         InventoryBase? inventory = texturedClothingBehavior.Inventory;
         if (inventory == null) return;
 
+        IEnumerable<string> skinPartsPrefixes = CurrentModel.SkinPartsArray.Select(skinPart => CustomModelsSystem.GetSkinPartTexturePrefix(CurrentModelCode, skinPart.Code));
+
         foreach (ItemSlot? slot in inventory)
         {
             if (slot.Empty) continue;
 
             ItemStack stack = slot.Itemstack;
-            JsonObject collectibleAttributes = stack.Collectible.Attributes;
 
-            entityShape.RemoveElements(collectibleAttributes?["disableElements"]?.AsArray<string>(null));
-            string[]? keepElements = collectibleAttributes?["keepElements"]?.AsArray<string>(null);
+            GetWearableElements(stack, out string[]? disableElements, out string[]? keepElements);
+
+            if (disableElements != null)
+            {
+                RemoveDisabledElements(entityShape, disableElements, skinPartsPrefixes);
+            }
+
             if (keepElements != null && willDeleteElements != null)
             {
                 foreach (string element in keepElements)
@@ -463,6 +471,44 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
                     willDeleteElements = willDeleteElements.Remove(element);
                 }
             }
+        }
+    }
+
+    protected virtual void RemoveDisabledElements(Shape entityShape, string[] disableElements, IEnumerable<string> skinPartsPrefixes)
+    {
+        string basePrefix = CustomModelsSystem.GetTextureCodePrefix(CurrentModelCode);
+
+        foreach (string element in disableElements)
+        {
+            entityShape.RemoveElementByName(element);
+            entityShape.RemoveElementByName(basePrefix + element);
+            foreach (string skinPart in skinPartsPrefixes)
+            {
+                entityShape.RemoveElementByName(skinPart + element);
+            }
+        }
+    }
+
+    protected virtual void GetWearableElements(ItemStack stack, out string[]? disableElements, out string[]? keepElements)
+    {
+        disableElements = (stack.Collectible as IAttachableToEntity)?.GetDisableElements(stack);
+        keepElements = (stack.Collectible as IAttachableToEntity)?.GetKeepElements(stack);
+
+        if (disableElements == null)
+        {
+            disableElements = stack.Collectible?.Attributes?["disableElements"]?.AsArray<string>(null);
+        }
+        if (disableElements == null)
+        {
+            disableElements = stack.Collectible?.Attributes?["attachableToEntity"]?["disableElements"]?.AsArray<string>(null);
+        }
+        if (keepElements == null)
+        {
+            keepElements = stack.Collectible?.Attributes?["keepElements"]?.AsArray<string>(null);
+        }
+        if (keepElements == null)
+        {
+            keepElements = stack.Collectible?.Attributes?["attachableToEntity"]?["keepElements"]?.AsArray<string>(null);
         }
     }
 
