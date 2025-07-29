@@ -409,42 +409,43 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
                 {
                     string code = CustomModelsSystem.PrefixSkinPartTextures(CurrentModelCode, part.TextureTarget, targetSkinPart);
 
-                    if (entityShape.TextureSizes.TryGetValue(code, out int[]? sizes))
+                    if (extendedPart.OverlayTexture)
                     {
-                        if (extendedPart.OverlayTexture)
-                        {
-                            AddOverlayTexture(code, textureLoc, extendedPart.OverlayMode);
-                        }
-                        else
-                        {
-                            ReplaceTexture(api, entityShape, code, textureLoc, sizes[0], sizes[1], shapePathForLogging);
-                        }
-
+                        AddOverlayTexture(code, textureLoc, extendedPart.OverlayMode);
                     }
                     else
                     {
-                        LoggerUtil.Verbose(api, this, $"Skin part has no textureSize: {code} in {shapePathForLogging}");
+                        if (entityShape.TextureSizes.TryGetValue(code, out int[]? sizes))
+                        {
+                            ReplaceTexture(api, entityShape, code, textureLoc, sizes[0], sizes[1], shapePathForLogging);
+                        }
+                        else
+                        {
+                            LoggerUtil.Verbose(api, this, $"Skin part has no textureSize: {code} in {shapePathForLogging}");
+                        }
                     }
                 }
             }
             else
             {
                 string mainCode = CustomModelsSystem.PrefixTextureCode(CurrentModelCode, part.TextureTarget);
-                if (entityShape.TextureSizes.TryGetValue(mainCode, out int[]? sizes))
+
+                if (extendedPart.OverlayTexture)
                 {
-                    if (extendedPart.OverlayTexture)
-                    {
-                        AddOverlayTexture(mainCode, textureLoc, extendedPart.OverlayMode);
-                    }
-                    else
-                    {
-                        ReplaceTexture(api, entityShape, mainCode, textureLoc, sizes[0], sizes[1], shapePathForLogging);
-                    }
+                    AddOverlayTexture(mainCode, textureLoc, extendedPart.OverlayMode);
                 }
                 else
                 {
-                    LoggerUtil.Verbose(api, this, $"Skin part has no textureSize: {mainCode} in {shapePathForLogging}");
+                    if (entityShape.TextureSizes.TryGetValue(mainCode, out int[]? sizes))
+                    {
+                        ReplaceTexture(api, entityShape, mainCode, textureLoc, sizes[0], sizes[1], shapePathForLogging);
+                    }
+                    else
+                    {
+                        LoggerUtil.Verbose(api, this, $"Skin part has no textureSize: {mainCode} in {shapePathForLogging}");
+                    }
                 }
+                
             }
         }
 

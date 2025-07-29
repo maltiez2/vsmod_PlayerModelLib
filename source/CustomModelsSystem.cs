@@ -250,7 +250,7 @@ public sealed class CustomModelsSystem : ModSystem
 
         SkinnablePartExtended[] parts = playerProperties.Attributes["skinnableParts"].AsObject<SkinnablePartExtended[]>().Where(part => part.Enabled).ToArray();
 
-        FixDefaultSkinParts(parts);
+        FixDefaultSkinParts(parts, GetSkinPartsWithSkinTexture(parts));
 
         Dictionary<string, SkinnablePart> partsByCode = LoadParts(_api, parts);
 
@@ -492,7 +492,14 @@ public sealed class CustomModelsSystem : ModSystem
             }
         }
     }
-    private void FixDefaultSkinParts(SkinnablePartExtended[] parts)
+    private IEnumerable<string> GetSkinPartsWithSkinTexture(SkinnablePartExtended[] parts)
+    {
+        return parts
+            .Where(part => part.Type == EnumSkinnableType.Shape)
+            .Where(part => part.TargetSkinParts.Contains("baseskin"))
+            .Select(part => part.Code);
+    }
+    private void FixDefaultSkinParts(SkinnablePartExtended[] parts, IEnumerable<string> baseSkinTargets)
     {
         foreach (SkinnablePartExtended part in parts)
         {
@@ -520,11 +527,6 @@ public sealed class CustomModelsSystem : ModSystem
                 case "eyecolor":
                     part.TextureTarget = "playermodellib-iris";
                     part.TargetSkinParts = ["facialexpression"];
-                    /*foreach (SkinnablePartVariant variant in part.Variants)
-                    {
-                        string code = variant.Code;
-                        variant.Texture = $"playermodellib:eyes/{code}";
-                    }*/
                     break;
 
                 default:
@@ -690,11 +692,11 @@ public sealed class CustomModelsSystem : ModSystem
             }
         }
     }
-    private Dictionary<string, SkinnablePart> LoadParts(ICoreAPI api, SkinnablePart[] parts)
+    private Dictionary<string, SkinnablePart> LoadParts(ICoreAPI api, SkinnablePartExtended[] parts)
     {
         Dictionary<string, SkinnablePart> patsByCode = [];
 
-        foreach (SkinnablePart part in parts)
+        foreach (SkinnablePartExtended part in parts)
         {
             part.VariantsByCode = [];
 
@@ -702,6 +704,21 @@ public sealed class CustomModelsSystem : ModSystem
 
             if (part.Type == EnumSkinnableType.Texture && api is ICoreClientAPI clientApi)
             {
+                IEnumerable<string> additionalTargets = parts
+                    .Where(element => element.Type == EnumSkinnableType.Shape)
+                    .Where(element => element.TargetSkinParts.Contains(part.Code))
+                    .Select(element => element.Code);
+
+                if (additionalTargets.Any() && part.TargetSkinParts.Length == 0)
+                {
+                    additionalTargets = additionalTargets.Append("base");
+                }
+
+                part.TargetSkinParts = part.TargetSkinParts
+                    .Concat(additionalTargets)
+                    .Distinct()
+                    .ToArray();
+
                 ProcessTexturePart(clientApi, part);
             }
             else
