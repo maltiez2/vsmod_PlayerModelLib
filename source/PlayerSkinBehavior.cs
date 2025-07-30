@@ -415,13 +415,13 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
                     }
                     else
                     {
-                        if (entityShape.TextureSizes.TryGetValue(code, out int[]? sizes))
+                        if (entityShape.TextureSizes?.TryGetValue(code, out int[]? sizes) == true)
                         {
                             ReplaceTexture(api, entityShape, code, textureLoc, sizes[0], sizes[1], shapePathForLogging);
                         }
                         else
                         {
-                            LoggerUtil.Verbose(api, this, $"Skin part has no textureSize: {code} in {shapePathForLogging}");
+                            ReplaceTexture(api, entityShape, code, textureLoc, entityShape.TextureWidth, entityShape.TextureHeight, shapePathForLogging);
                         }
                     }
                 }
@@ -436,13 +436,13 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
                 }
                 else
                 {
-                    if (entityShape.TextureSizes.TryGetValue(mainCode, out int[]? sizes))
+                    if (entityShape.TextureSizes?.TryGetValue(mainCode, out int[]? sizes) == true)
                     {
                         ReplaceTexture(api, entityShape, mainCode, textureLoc, sizes[0], sizes[1], shapePathForLogging);
                     }
                     else
                     {
-                        LoggerUtil.Verbose(api, this, $"Skin part has no textureSize: {mainCode} in {shapePathForLogging}");
+                        ReplaceTexture(api, entityShape, mainCode, textureLoc, entityShape.TextureWidth, entityShape.TextureHeight, shapePathForLogging);
                     }
                 }
                 
