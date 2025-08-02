@@ -4,7 +4,8 @@
     "boolean": {
       "playermodellib:config/default-model-config.json": {
         "seraph/ScaleColliderWithSizeHorizontally": "scale_collider_horizontally",
-        "seraph/ScaleColliderWithSizeVertically": "scale_collider_vertically"
+        "seraph/ScaleColliderWithSizeVertically": "scale_collider_vertically",
+        "seraph/Enabled": "enable_default_model"
       }
     },
     "number": {
@@ -23,6 +24,12 @@
     {
       "type": "separator",
       "title": "playermodellib:setting-title-0"
+    },
+    {
+      "code": "enable_default_model",
+      "type": "boolean",
+      "ingui": "playermodellib:setting-enable_default_model",
+      "default": true
     },
     {
       "code": "min_size_range",

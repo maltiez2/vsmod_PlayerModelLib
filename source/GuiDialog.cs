@@ -333,13 +333,13 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         switch (_currentTab)
         {
             case EnumCreateCharacterTabs.Model:
-                ComposeModelTab(composer, system, inventoryBehavior, yPosition, padding, slotSize);
+                ComposeModelTab(composer, system, yPosition, padding, slotSize);
                 break;
             case EnumCreateCharacterTabs.Skin:
-                ComposeSkinTab(composer, system, inventoryBehavior, yPosition, padding, dialogBounds, backgroundBounds);
+                ComposeSkinTab(composer, inventoryBehavior, yPosition, padding, dialogBounds, backgroundBounds);
                 break;
             case EnumCreateCharacterTabs.Class:
-                ComposeClassTab(composer, system, inventoryBehavior, yPosition, padding, slotSize);
+                ComposeClassTab(composer, yPosition, padding, slotSize);
                 break;
         }
 
@@ -353,12 +353,13 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         ScrollPatches.Composed();
     }
 
-    private void ComposeModelTab(GuiComposer composer, CustomModelsSystem system, EntityBehaviorPlayerInventory inventoryBehavior, double yPosition, double padding, double slotSize)
+    private void ComposeModelTab(GuiComposer composer, CustomModelsSystem system, double yPosition, double padding, double slotSize)
     {
-        PlayerSkinBehavior skinBehavior = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
+        PlayerSkinBehavior? skinBehavior = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
+        if (skinBehavior == null) return;
 
-        string[] modelValues = system.CustomModels.Keys.ToArray();
-        string[] modelNames = system.CustomModels.Keys.Select(key => new AssetLocation(key)).Select(key => Lang.Get($"{key.Domain}:playermodel-{key.Path}")).ToArray();
+        GetCustomModels(system, out string[] modelValues, out string[] modelNames);
+
         int modelIndex = 0;
 
         for (int index = 0; index < modelValues.Length; index++)
@@ -424,7 +425,7 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         ReTesselate();
     }
-    private void ComposeSkinTab(GuiComposer composer, CustomModelsSystem system, EntityBehaviorPlayerInventory inventoryBehavior, double yPosition, double padding, ElementBounds dialogBounds, ElementBounds backgroundBounds)
+    private void ComposeSkinTab(GuiComposer composer, EntityBehaviorPlayerInventory inventoryBehavior, double yPosition, double padding, ElementBounds dialogBounds, ElementBounds backgroundBounds)
     {
         PlayerSkinBehavior skinMod = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
 
@@ -548,10 +549,10 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         composer.GetToggleButton("showdressedtoggle").SetValue(!_charNaked);
     }
-    private void ComposeClassTab(GuiComposer composer, CustomModelsSystem system, EntityBehaviorPlayerInventory inventoryBehavior, double yPosition, double padding, double slotSize)
+    private void ComposeClassTab(GuiComposer composer, double yPosition, double padding, double slotSize)
     {
-        EntityShapeRenderer? essr = capi.World.Player.Entity.Properties.Client.Renderer as EntityShapeRenderer;
-        essr.TesselateShape();
+        EntityShapeRenderer? renderer = capi.World.Player.Entity.Properties.Client.Renderer as EntityShapeRenderer;
+        renderer?.TesselateShape();
 
         yPosition -= 10;
 
@@ -786,7 +787,6 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         return fullDescription.ToString();
     }
-
     private void AppendTraits(StringBuilder fullDescription, IEnumerable<Trait> traits)
     {
         StringBuilder attributes = new();
@@ -819,7 +819,6 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             }
         }
     }
-
     private List<CharacterClass> GetAvailableClasses(CustomModelsSystem system, string model)
     {
         HashSet<string> availableClassesForModel = system.CustomModels[model].AvailableClasses;
@@ -838,4 +837,16 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         return availableClasses.ToList();
     }
+    private void GetCustomModels(CustomModelsSystem system, out string[] modelValues, out string[] modelNames)
+    {
+        modelValues = system.CustomModels.Where(entry => entry.Value.Enabled).Select(entry => entry.Key).ToArray();
+        modelNames = modelValues.Select(key => new AssetLocation(key)).Select(GetCustomModelLangEntry).ToArray();
+
+        if (modelValues.Length == 0)
+        {
+            modelValues = [system.DefaultModelCode];
+            modelNames = [GetCustomModelLangEntry(system.DefaultModelCode)];
+        }
+    }
+    private string GetCustomModelLangEntry(AssetLocation code) => Lang.Get($"{code.Domain}:playermodel-{code.Path}");
 }
