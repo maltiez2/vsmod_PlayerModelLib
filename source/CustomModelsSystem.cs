@@ -24,6 +24,7 @@ public class SkinnablePartExtended : SkinnablePart
 
 public class CustomModelConfig
 {
+    public bool Enabled { get; set; } = true;
     public string Domain { get; set; } = "game";
     public string ShapePath { get; set; } = "";
     public string MainTextureCode { get; set; } = "seraph";
@@ -50,6 +51,7 @@ public class CustomModelConfig
 
 public class CustomModelData
 {
+    public bool Enabled { get; set; } = true;
     public string Code { get; set; }
     public Shape Shape { get; set; }
     public Dictionary<string, SkinnablePart> SkinParts { get; set; } = [];
@@ -268,7 +270,8 @@ public sealed class CustomModelsSystem : ModSystem
             MinEyeHeight = defaultConfig.MinEyeHeight,
             //AddTags = _api.TagRegistry.EntityTagsToTagArray(defaultConfig.AddTags),
             //RemoveTags = _api.TagRegistry.EntityTagsToTagArray(defaultConfig.RemoveTags),
-            ModelSizeFactor = defaultConfig.ModelSizeFactor
+            ModelSizeFactor = defaultConfig.ModelSizeFactor,
+            Enabled = defaultConfig.Enabled,
         };
 
         CustomModels.Add(_defaultModelCode, defaultModelData);
@@ -325,7 +328,8 @@ public sealed class CustomModelsSystem : ModSystem
                     MinEyeHeight = modelConfig.MinEyeHeight,
                     //AddTags = api.TagRegistry.EntityTagsToTagArray(modelConfig.AddTags),
                     //RemoveTags = api.TagRegistry.EntityTagsToTagArray(modelConfig.RemoveTags),
-                    ModelSizeFactor = modelConfig.ModelSizeFactor
+                    ModelSizeFactor = modelConfig.ModelSizeFactor,
+                    Enabled = modelConfig.Enabled,
                 };
 
                 CustomModels.Add(code, modelData);

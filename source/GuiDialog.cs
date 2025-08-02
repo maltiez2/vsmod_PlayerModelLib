@@ -8,7 +8,6 @@ using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Util;
 using Vintagestory.GameContent;
-using static Microsoft.WindowsAPICodePack.Shell.PropertySystem.SystemProperties;
 
 namespace PlayerModelLib;
 
@@ -351,8 +350,8 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     {
         PlayerSkinBehavior skinBehavior = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
 
-        string[] modelValues = system.CustomModels.Keys.ToArray();
-        string[] modelNames = system.CustomModels.Keys.Select(key => new AssetLocation(key)).Select(key => Lang.Get($"{key.Domain}:playermodel-{key.Path}")).ToArray();
+        GetCustomModels(system, out string[] modelValues, out string[] modelNames);
+
         int modelIndex = 0;
 
         for (int index = 0; index < modelValues.Length; index++)
@@ -780,7 +779,6 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         return fullDescription.ToString();
     }
-
     private void AppendTraits(StringBuilder fullDescription, IEnumerable<Trait> traits)
     {
         StringBuilder attributes = new();
@@ -813,7 +811,6 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             }
         }
     }
-
     private List<CharacterClass> GetAvailableClasses(CustomModelsSystem system, string model)
     {
         HashSet<string> availableClassesForModel = system.CustomModels[model].AvailableClasses;
@@ -832,4 +829,16 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         return availableClasses.ToList();
     }
+    private void GetCustomModels(CustomModelsSystem system, out string[] modelValues, out string[] modelNames)
+    {
+        modelValues = system.CustomModels.Where(entry => entry.Value.Enabled).Select(entry => entry.Key).ToArray();
+        modelNames = modelValues.Select(key => new AssetLocation(key)).Select(GetCustomModelLangEntry).ToArray();
+
+        if (modelValues.Length == 0)
+        {
+            modelValues = [system.DefaultModelCode];
+            modelNames = [GetCustomModelLangEntry(system.DefaultModelCode)];
+        }
+    }
+    private string GetCustomModelLangEntry(AssetLocation code) => Lang.Get($"{code.Domain}:playermodel-{code.Path}");
 }

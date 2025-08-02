@@ -1,5 +1,6 @@
 {
   "seraph": {
+    "Enabled": true,
     "AvailableClasses": [],
     "SkipClasses": [],
     "ExclusiveClasses": [],
