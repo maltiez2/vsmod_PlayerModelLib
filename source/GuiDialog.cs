@@ -72,15 +72,24 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             Composers["createcharacter"].GetSlotGrid("rightSlots")?.OnGuiClosed(capi);
         }
 
-        CharacterClass characterClass = _characterSystem.characterClasses[_currentClassIndex];
+        PlayerSkinBehavior skinMod = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
+        CustomModelsSystem system = capi.ModLoader.GetModSystem<CustomModelsSystem>();
+
+        List<CharacterClass> availableClasses = _characterSystem.characterClasses.Where(element => system.CustomModels[skinMod.CurrentModelCode].AvailableClasses.Contains(element.Code)).ToList();
+        if (availableClasses.Count == 0)
+        {
+            availableClasses = _characterSystem.characterClasses;
+        }
+
+        availableClasses = availableClasses.Where(element => !system.CustomModels[skinMod.CurrentModelCode].SkipClasses.Contains(element.Code)).ToList();
+
+        CharacterClass characterClass = availableClasses[_currentClassIndex];
 
         if (_clientSelectionDone != null)
         {
             _clientSelectionDone.Invoke(_characterSystem, new object[] { _characterInventory, characterClass.Code, _didSelect }); // thanks Tyron for making methods internal!
         }
-
-        PlayerSkinBehavior skinMod = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
-        CustomModelsSystem system = capi.ModLoader.GetModSystem<CustomModelsSystem>();
+  
 
         system.SynchronizePlayerModel(skinMod.CurrentModelCode);
         system.SynchronizePlayerModelSize(_currentModelSize);
