@@ -363,14 +363,21 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         GetCustomModels(system, out string[] modelValues, out string[] modelNames);
 
         int modelIndex = 0;
+        bool modelFound = false;
 
         for (int index = 0; index < modelValues.Length; index++)
         {
             if (modelValues[index] == skinBehavior.CurrentModelCode)
             {
                 modelIndex = index;
+                modelFound = true;
                 break;
             }
+        }
+
+        if (!modelFound)
+        {
+            onToggleModel(modelValues[modelIndex]);
         }
 
         //modelValues = modelValues.Concat(modelValues).ToArray();
@@ -654,6 +661,9 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         CustomModelsSystem system = capi.ModLoader.GetModSystem<CustomModelsSystem>();
 
         skinMod.SetCurrentModel(modelCode, _currentModelSize);
+
+        List<CharacterClass> availableClasses = GetAvailableClasses(system, skinMod.CurrentModelCode);
+        _characterSystem.setCharacterClass(capi.World.Player.Entity, availableClasses[0].Code, true);
 
         ComposeGuis();
 
