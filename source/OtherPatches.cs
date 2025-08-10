@@ -18,7 +18,7 @@ internal static class OtherPatches
     {
         new Harmony(harmonyId).Patch(
                 typeof(EntityBehaviorTexturedClothing).GetMethod("reloadSkin", AccessTools.all),
-                prefix: new HarmonyMethod(AccessTools.Method(typeof(OtherPatches), nameof(reloadSkin)))
+                prefix: new HarmonyMethod(AccessTools.Method(typeof(OtherPatches), nameof(ReloadSkin)))
             );
         new Harmony(harmonyId).Patch(
                 typeof(CharacterSystem).GetMethod("Event_PlayerJoin", AccessTools.all),
@@ -37,7 +37,7 @@ internal static class OtherPatches
         new Harmony(harmonyId).Unpatch(typeof(EntityShapeRenderer).GetMethod("loadModelMatrixForGui", AccessTools.all), HarmonyPatchType.Postfix, harmonyId);
     }
 
-    private static bool reloadSkin() => false;
+    private static bool ReloadSkin() => false;
 
     private static readonly FieldInfo? CharacterSystem_didSelect = typeof(CharacterSystem).GetField("didSelect", BindingFlags.NonPublic | BindingFlags.Instance);
     private static readonly FieldInfo? CharacterSystem_createCharDlg = typeof(CharacterSystem).GetField("createCharDlg", BindingFlags.NonPublic | BindingFlags.Instance);
