@@ -1,6 +1,5 @@
 ﻿using HarmonyLib;
 using System.Diagnostics;
-using System.Numerics;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
@@ -42,7 +41,18 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
             LoggerUtil.Warn(ClientApi, this, $"Custom model '{CurrentModelCode}' does not exists.");
 
-            return ModelSystem.CustomModels[ModelSystem.DefaultModelCode];
+            string modelCode;
+            IEnumerable<string> models = ModelSystem.CustomModels.Where(entry => entry.Value.Enabled).Select(entry => entry.Key);
+            if (models.Any())
+            {
+                modelCode = models.First();
+            }
+            else
+            {
+                modelCode = ModelSystem.DefaultModelCode;
+            }
+
+            return ModelSystem.CustomModels[modelCode];
         }
     }
 
@@ -84,10 +94,21 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         }
 
         string? skinModel = entity.WatchedAttributes.GetString("skinModel");
-        if (skinModel == null || !ModelSystem.CustomModels.ContainsKey(skinModel))
+        if (skinModel == null || !ModelSystem.CustomModels.Where(entry => entry.Value.Enabled).Any(entry => entry.Key == skinModel))
         {
-            entity.WatchedAttributes.SetString("skinModel", ModelSystem.DefaultModelCode);
-            CurrentModelCode = ModelSystem.DefaultModelCode;
+            IEnumerable<string> models = ModelSystem.CustomModels.Where(entry => entry.Value.Enabled).Select(entry => entry.Key);
+            if (models.Any())
+            {
+                CurrentModelCode = models.First();
+            }
+            else
+            {
+                CurrentModelCode = ModelSystem.DefaultModelCode;
+            }
+            AvailableSkinPartsByCode = CurrentModel.SkinParts;
+            AvailableSkinParts = CurrentModel.SkinPartsArray;
+            entity.WatchedAttributes.SetString("skinModel", CurrentModelCode);
+            entity.Api.ModLoader.GetModSystem<CharacterSystem>().randomizeSkin(entity, null, false);
         }
 
         entity.WatchedAttributes.RegisterModifiedListener("skinModel", OnSkinModelAttrChanged);
@@ -100,9 +121,15 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
         OnSkinModelChanged();
 
-        if (entity.Api.Side == EnumAppSide.Server && AppliedSkinParts.Count == 0)
+        if (entity.Api.Side == EnumAppSide.Server)
         {
-            entity.Api.ModLoader.GetModSystem<CharacterSystem>().randomizeSkin(entity, null, false);
+            AvailableSkinPartsByCode = CurrentModel.SkinParts;
+            AvailableSkinParts = CurrentModel.SkinPartsArray;
+
+            if (AppliedSkinParts.Count == 0)
+            {
+                entity.Api.ModLoader.GetModSystem<CharacterSystem>().randomizeSkin(entity, null, false);
+            }
         }
 
         OnActuallyInitialize?.Invoke();
@@ -126,7 +153,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
     public void SetCurrentModel(string code, float size)
     {
-        Debug.WriteLine($"SetCurrentModel - side: {entity.Api.Side}");
+        Debug.WriteLine($"SetCurrentModel - side: {entity.Api.Side}, code: {code}");
 
         skintree = entity.WatchedAttributes["skinConfig"] as ITreeAttribute;
         CurrentModelCode = code;
@@ -173,7 +200,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
     }
 
     public override string PropertyName() => "skinnableplayercustommodel";
-    
+
     public void UpdateEntityProperties()
     {
         Debug.WriteLine($"UpdateEntityProperties - side: {entity.Api.Side}");
@@ -244,7 +271,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
             AvailableSkinParts = CurrentModel.SkinPartsArray;
             ReplaceEntityShape();
         }
-        
+
         entity.MarkShapeModified();
     }
 
@@ -275,7 +302,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
     protected void OnModelSizeAttrChanged()
     {
         float size = entity.WatchedAttributes.GetFloat("entitySize");
-        if (size !=  CurrentSize)
+        if (size != CurrentSize)
         {
             OnSkinModelChanged();
         }
@@ -290,10 +317,21 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         skintree = entity.WatchedAttributes["skinConfig"] as ITreeAttribute;
         CurrentModelCode = entity.WatchedAttributes.GetString("skinModel");
         CurrentSize = entity.WatchedAttributes.GetFloat("entitySize");
-        if (!ModelSystem.CustomModels.ContainsKey(CurrentModelCode))
+        if (!ModelSystem.CustomModels.Where(entry => entry.Value.Enabled).Any(entry => entry.Key == CurrentModelCode))
         {
-            CurrentModelCode = ModelSystem.DefaultModelCode;
+            IEnumerable<string> models = ModelSystem.CustomModels.Where(entry => entry.Value.Enabled).Select(entry => entry.Key);
+            if (models.Any())
+            {
+                CurrentModelCode = models.First();
+            }
+            else
+            {
+                CurrentModelCode = ModelSystem.DefaultModelCode;
+            }
+            AvailableSkinPartsByCode = CurrentModel.SkinParts;
+            AvailableSkinParts = CurrentModel.SkinPartsArray;
             entity.WatchedAttributes.SetString("skinModel", CurrentModelCode);
+            entity.Api.ModLoader.GetModSystem<CharacterSystem>().randomizeSkin(entity, null, false);
             return;
         }
         AvailableSkinPartsByCode = CurrentModel.SkinParts;
@@ -304,11 +342,11 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
     protected void ReplaceEntityShape()
     {
-        Debug.WriteLine($"Try replaceEntityShape - side: {entity.Api.Side}");
+        Debug.WriteLine($"Try replaceEntityShape - side: {entity.Api.Side}, model: {CurrentModelCode}");
 
         if (ModelSystem?.ModelsLoaded != true) return;
         if (!ModelSystem.CustomModels.TryGetValue(CurrentModelCode, out _)) return;
-        
+
         if (entity.Properties.Client.Renderer is EntityShapeRenderer renderer)
         {
             entity.MarkShapeModified();
@@ -342,9 +380,9 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         entity.Tags = currentTags;
         entity.MarkTagsDirty();*/
 
-       // Debug.WriteLine($"New tags: {currentTags}");
+        // Debug.WriteLine($"New tags: {currentTags}");
     }
-    
+
 
     protected virtual void AddMainTextures()
     {

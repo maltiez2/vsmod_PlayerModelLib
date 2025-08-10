@@ -4,10 +4,12 @@ using System.Reflection;
 using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Util;
 using Vintagestory.GameContent;
+using static Microsoft.WindowsAPICodePack.Shell.PropertySystem.SystemProperties;
 
 namespace PlayerModelLib;
 
@@ -44,6 +46,26 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         else
         {
             _characterSystem.setCharacterClass(capi.World.Player.Entity, _characterSystem.characterClasses[0].Code, true);
+        }
+
+        PlayerSkinBehavior skinMod = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
+        CustomModelsSystem system = capi.ModLoader.GetModSystem<CustomModelsSystem>();
+        string customModel = skinMod.CurrentModelCode;
+        GetCustomModels(system, out string[] models, out _);
+        if (!models.Contains(customModel))
+        {
+            system.SynchronizePlayerModel(models[0]);
+            skinMod.SetCurrentModel(models[0], _currentModelSize);
+
+            _characterSystem.randomizeSkin(capi.World.Player.Entity, new());
+
+            List<CharacterClass> availableClasses = GetAvailableClasses(system, skinMod.CurrentModelCode);
+
+            CharacterClass chclass = availableClasses[0];
+
+            _currentClassIndex = 0;
+
+            _characterSystem.setCharacterClass(capi.World.Player.Entity, chclass.Code, true);
         }
 
         try
@@ -654,6 +676,10 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         skinMod.SetCurrentModel(modelCode, _currentModelSize);
 
+        List<CharacterClass> availableClasses = GetAvailableClasses(system, skinMod.CurrentModelCode);
+        _currentClassIndex = 0;
+        _characterSystem.setCharacterClass(capi.World.Player.Entity, availableClasses[0].Code, true);
+
         ComposeGuis();
 
         OnRandomizeSkin(new Dictionary<string, string>());
@@ -686,14 +712,8 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     private void ChangeClass(int dir)
     {
         PlayerSkinBehavior skinMod = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
-
-        List<CharacterClass> availableClasses = _characterSystem.characterClasses.Where(element => _customModelsSystem.CustomModels[skinMod.CurrentModelCode].AvailableClasses.Contains(element.Code)).ToList();
-        if (availableClasses.Count == 0)
-        {
-            availableClasses = _characterSystem.characterClasses;
-        }
-
-        availableClasses = availableClasses.Where(element => !_customModelsSystem.CustomModels[skinMod.CurrentModelCode].SkipClasses.Contains(element.Code)).ToList();
+        CustomModelsSystem system = capi.ModLoader.GetModSystem<CustomModelsSystem>();
+        List<CharacterClass> availableClasses = GetAvailableClasses(system, skinMod.CurrentModelCode);
 
         _currentClassIndex = GameMath.Mod(_currentClassIndex + dir, availableClasses.Count);
 

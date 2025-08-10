@@ -103,9 +103,9 @@ public sealed class CustomModelsSystem : ModSystem
 {
     public Dictionary<string, CustomModelData> CustomModels { get; } = [];
     public ContainedTextureSource? TextureSource { get; private set; }
-    public string DefaultModelCode => _defaultModelCode;
-    public Shape DefaultModel => CustomModels[_defaultModelCode].Shape;
-    public CustomModelData DefaultModelData => CustomModels[_defaultModelCode];
+    public string DefaultModelCode => CustomModels.Where(entry => entry.Value.Enabled).Select(entry => entry.Key).FirstOrDefault(_defaultModelCode);
+    public Shape DefaultModel => CustomModels[DefaultModelCode].Shape;
+    public CustomModelData DefaultModelData => CustomModels[DefaultModelCode];
     public bool ModelsLoaded { get; private set; } = false;
     public HashSet<string> ExclusiveClasses { get; private set; } = [];
 
