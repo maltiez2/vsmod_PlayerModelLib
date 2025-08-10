@@ -111,7 +111,6 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         {
             _clientSelectionDone.Invoke(_characterSystem, new object[] { _characterInventory, characterClass.Code, _didSelect }); // thanks Tyron for making methods internal!
         }
-  
 
         system.SynchronizePlayerModel(skinMod.CurrentModelCode);
         system.SynchronizePlayerModelSize(_currentModelSize);

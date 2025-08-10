@@ -282,12 +282,11 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         string voiceType = entity.WatchedAttributes.GetString("voicetype");
         string voicePitch = entity.WatchedAttributes.GetString("voicepitch");
 
-        if (voiceType != VoiceType || voicePitch != VoicePitch)
-        {
-            VoiceType = voiceType;
-            VoicePitch = voicePitch;
-            ApplyVoice(VoiceType, VoicePitch, false);
-        }
+        Debug.WriteLine($"OnVoiceConfigChanged - {voicePitch} {voiceType}");
+
+        VoiceType = voiceType;
+        VoicePitch = voicePitch;
+        ApplyVoice(VoiceType, VoicePitch, false);
     }
 
     protected void OnSkinModelAttrChanged()
