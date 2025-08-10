@@ -91,6 +91,8 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         {
             entity.WatchedAttributes.SetString("skinModel", ModelSystem.DefaultModelCode);
             CurrentModelCode = ModelSystem.DefaultModelCode;
+            AvailableSkinPartsByCode = CurrentModel.SkinParts;
+            AvailableSkinParts = CurrentModel.SkinPartsArray;
         }
 
         entity.WatchedAttributes.RegisterModifiedListener("skinModel", OnSkinModelAttrChanged);
@@ -268,12 +270,9 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         string voiceType = entity.WatchedAttributes.GetString("voicetype");
         string voicePitch = entity.WatchedAttributes.GetString("voicepitch");
 
-        if (voiceType != VoiceType || voicePitch != VoicePitch)
-        {
-            VoiceType = voiceType;
-            VoicePitch = voicePitch;
-            ApplyVoice(VoiceType, VoicePitch, false);
-        }
+        VoiceType = voiceType;
+        VoicePitch = voicePitch;
+        ApplyVoice(VoiceType, VoicePitch, false);
     }
 
     protected void OnSkinModelAttrChanged()

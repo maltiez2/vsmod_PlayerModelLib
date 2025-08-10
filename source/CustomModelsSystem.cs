@@ -109,7 +109,7 @@ public sealed class CustomModelsSystem : ModSystem
 {
     public Dictionary<string, CustomModelData> CustomModels { get; } = [];
     public ContainedTextureSource? TextureSource { get; private set; }
-    public string DefaultModelCode => _defaultModelCode;
+    public string DefaultModelCode => CustomModels.Where(entry => entry.Value.Enabled).Select(entry => entry.Key).FirstOrDefault(_defaultModelCode);
     public Shape DefaultModel => CustomModels[_defaultModelCode].Shape;
     public CustomModelData DefaultModelData => CustomModels[_defaultModelCode];
     public bool ModelsLoaded { get; private set; } = false;
@@ -288,7 +288,7 @@ public sealed class CustomModelsSystem : ModSystem
 
         CustomModels.Add(_defaultModelCode, defaultModelData);
 
-        _oldMainTextureCodes.Add(DefaultModelCode, _defaultMainTextureCode);
+        _oldMainTextureCodes.Add(_defaultModelCode, _defaultMainTextureCode);
 
         if (_clientApi != null) ProcessAttachmentPoints();
     }
@@ -334,7 +334,7 @@ public sealed class CustomModelsSystem : ModSystem
                     ExclusiveClasses = [.. modelConfig.ExclusiveClasses],
                     ExtraTraits = modelConfig.ExtraTraits,
                     WearableShapeReplacersByShape = modelConfig.WearableModelReplacersByShape,
-                    CollisionBox = modelConfig.CollisionBox.Length == 0 ? DefaultModelData.CollisionBox : new Vector2(modelConfig.CollisionBox[0], modelConfig.CollisionBox[1]),
+                    CollisionBox = modelConfig.CollisionBox.Length == 0 ? CustomModels[_defaultModelCode].CollisionBox : new Vector2(modelConfig.CollisionBox[0], modelConfig.CollisionBox[1]),
                     EyeHeight = modelConfig.EyeHeight,
                     SizeRange = new(modelConfig.SizeRange[0], modelConfig.SizeRange[1]),
                     MaxCollisionBox = new Vector2(modelConfig.MaxCollisionBox[0], modelConfig.MaxCollisionBox[1]),
@@ -466,7 +466,7 @@ public sealed class CustomModelsSystem : ModSystem
         {
             HashSet<string> existingAnimations = [.. customShape.Animations.Select(GetAnimationCode)];
 
-            foreach ((uint crc32, Animation animation) in DefaultModel.AnimationsByCrc32)
+            foreach ((uint crc32, Animation animation) in CustomModels[_defaultModelCode].Shape.AnimationsByCrc32)
             {
                 string code = GetAnimationCode(animation);
 
@@ -483,7 +483,7 @@ public sealed class CustomModelsSystem : ModSystem
     {
         Dictionary<string, AttachmentPoint[]> attachmentPointsByElement = [];
 
-        foreach (ShapeElement element in DefaultModel.Elements)
+        foreach (ShapeElement element in CustomModels[_defaultModelCode].Shape.Elements)
         {
             CollectAttachmentPoints(element, attachmentPointsByElement);
         }
