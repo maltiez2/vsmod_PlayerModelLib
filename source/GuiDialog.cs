@@ -37,7 +37,7 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         Debug.WriteLine("GuiDialogCreateCustomCharacter opened");
 
         string characterClass = capi.World.Player.Entity.WatchedAttributes.GetString("characterClass");
-        if (characterClass != null)
+        if (characterClass != null && _characterSystem.characterClassesByCode.ContainsKey(characterClass))
         {
             _characterSystem.setCharacterClass(capi.World.Player.Entity, characterClass, true);
         }
