@@ -148,6 +148,7 @@ public sealed class CustomModelsSystem : ModSystem
     {
         LoadDefault();
         Load(api);
+        if (api.Side == EnumAppSide.Client) ProcessAttachmentPoints();
         CollectExclusiveClasses();
 
         if (api.Side == EnumAppSide.Client)
@@ -289,8 +290,6 @@ public sealed class CustomModelsSystem : ModSystem
         CustomModels.Add(_defaultModelCode, defaultModelData);
 
         _oldMainTextureCodes.Add(_defaultModelCode, _defaultMainTextureCode);
-
-        if (_clientApi != null) ProcessAttachmentPoints();
     }
     private static Shape? LoadShape(ICoreAPI api, string path)
     {
