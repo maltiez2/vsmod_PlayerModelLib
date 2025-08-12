@@ -148,6 +148,7 @@ public sealed class CustomModelsSystem : ModSystem
         {
             ProcessMainTextures();
             ProcessAnimations(api);
+            ProcessAttachmentPoints();
             CollectTextures();
             LoadModelReplacements(api);
         }
@@ -277,8 +278,6 @@ public sealed class CustomModelsSystem : ModSystem
         CustomModels.Add(_defaultModelCode, defaultModelData);
 
         _oldMainTextureCodes.Add(DefaultModelCode, _defaultMainTextureCode);
-
-        if (_clientApi != null) ProcessAttachmentPoints();
     }
     private static Shape? LoadShape(ICoreAPI api, string path)
     {
