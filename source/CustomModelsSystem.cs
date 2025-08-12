@@ -148,13 +148,13 @@ public sealed class CustomModelsSystem : ModSystem
     {
         LoadDefault();
         Load(api);
-        if (api.Side == EnumAppSide.Client) ProcessAttachmentPoints();
         CollectExclusiveClasses();
 
         if (api.Side == EnumAppSide.Client)
         {
             ProcessMainTextures();
             ProcessAnimations(api);
+            ProcessAttachmentPoints();
             CollectTextures();
             LoadModelReplacements(api);
         }
