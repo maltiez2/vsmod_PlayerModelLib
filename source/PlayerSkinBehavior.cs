@@ -12,14 +12,6 @@ namespace PlayerModelLib;
 
 public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSource
 {
-    /*public Dictionary<string, SkinnablePart> AvailableSkinPartsByCode { get; set; } = new Dictionary<string, SkinnablePart>();
-    public SkinnablePart[] AvailableSkinParts { get; set; }
-    public string VoiceType = "altoflute";
-    public string VoicePitch = "medium";
-    public string mainTextureCode;
-    public List<AppliedSkinnablePartVariant> appliedTemp = new List<AppliedSkinnablePartVariant>();
-    protected ITreeAttribute skintree;*/
-
     public PlayerSkinBehavior(Entity entity) : base(entity)
     {
     }
@@ -41,18 +33,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
             LoggerUtil.Warn(ClientApi, this, $"Custom model '{CurrentModelCode}' does not exists.");
 
-            string modelCode;
-            IEnumerable<string> models = ModelSystem.CustomModels.Where(entry => entry.Value.Enabled).Select(entry => entry.Key);
-            if (models.Any())
-            {
-                modelCode = models.First();
-            }
-            else
-            {
-                modelCode = ModelSystem.DefaultModelCode;
-            }
-
-            return ModelSystem.CustomModels[modelCode];
+            return ModelSystem.CustomModels[ModelSystem.DefaultModelCode];
         }
     }
 

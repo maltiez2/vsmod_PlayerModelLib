@@ -277,7 +277,7 @@ public sealed class CustomModelsSystem : ModSystem
 
         CustomModels.Add(_defaultModelCode, defaultModelData);
 
-        _oldMainTextureCodes.Add(DefaultModelCode, _defaultMainTextureCode);
+        _oldMainTextureCodes.Add(_defaultModelCode, _defaultMainTextureCode);
     }
     private static Shape? LoadShape(ICoreAPI api, string path)
     {
