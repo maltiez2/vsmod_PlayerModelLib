@@ -480,11 +480,11 @@ public sealed class CustomModelsSystem : ModSystem
     }
     private void ProcessAttachmentPoints()
     {
-        Dictionary<string, AttachmentPoint[]> attachmentPointsByElement = [];
+        Dictionary<string, (AttachmentPoint[] points, ShapeElement element, string parent)> attachmentPointsByElement = [];
 
         foreach (ShapeElement element in CustomModels[_defaultModelCode].Shape.Elements)
         {
-            CollectAttachmentPoints(element, attachmentPointsByElement);
+            CollectAttachmentPoints(element, element, attachmentPointsByElement);
         }
 
         foreach (Shape customShape in CustomModels.Where(entry => entry.Key != _defaultModelCode).Select(entry => entry.Value.Shape))
@@ -549,34 +549,47 @@ public sealed class CustomModelsSystem : ModSystem
             parts[index].Colbreak = (index == middleIndex);
         }
     }
-    private static void CollectAttachmentPoints(ShapeElement element, Dictionary<string, AttachmentPoint[]> attachmentPointsByElement)
+    private static void CollectAttachmentPoints(ShapeElement element, ShapeElement parent, Dictionary<string, (AttachmentPoint[] points, ShapeElement element, string parent)> attachmentPointsByElement)
     {
         if (element.AttachmentPoints != null && element.AttachmentPoints.Length > 0)
         {
-            attachmentPointsByElement[element.Name] = element.AttachmentPoints;
+            attachmentPointsByElement[element.Name] = (element.AttachmentPoints, element, parent.Name);
         }
 
         if (element.Children != null)
         {
             foreach (ShapeElement child in element.Children)
             {
-                CollectAttachmentPoints(child, attachmentPointsByElement);
+                CollectAttachmentPoints(child, element, attachmentPointsByElement);
             }
         }
     }
-    private static void AddAttachmentPoints(ShapeElement element, Dictionary<string, AttachmentPoint[]> attachmentPointsByElement)
+    private static void AddAttachmentPoints(ShapeElement element, Dictionary<string, (AttachmentPoint[] points, ShapeElement element, string parent)> attachmentPointsByElement)
     {
-        if (attachmentPointsByElement.TryGetValue(element.Name, out AttachmentPoint[] points))
+        foreach ((string elementName, (AttachmentPoint[] pointsData, ShapeElement elementData, string parentName)) in attachmentPointsByElement)
         {
-            if (element.AttachmentPoints != null && element.AttachmentPoints.Length > 0)
+            if (element.Name == elementName)
             {
-                IEnumerable<string> existing = element.AttachmentPoints.Select(point => point.Code);
+                if (element.AttachmentPoints != null && element.AttachmentPoints.Length > 0)
+                {
+                    IEnumerable<string> existing = element.AttachmentPoints.Select(point => point.Code);
 
-                element.AttachmentPoints = element.AttachmentPoints.Concat(points.Where(point => !existing.Contains(point.Code))).ToArray();
+                    element.AttachmentPoints = element.AttachmentPoints.Concat(pointsData.Where(point => !existing.Contains(point.Code))).ToArray();
+                }
+                else
+                {
+                    element.AttachmentPoints = pointsData;
+                }
             }
-            else
+
+            if (element.Name == parentName && (element.Children == null || !element.Children.Select(child => child?.Name ?? "").Contains(elementName)))
             {
-                element.AttachmentPoints = points;
+                if (element.Children == null)
+                {
+                    element.Children = [];
+                }
+
+                element.Children = element.Children.Append(elementData.Clone());
             }
         }
 
