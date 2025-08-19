@@ -3,7 +3,7 @@
   <PropertyGroup>
     <ModName>Player Model Library</ModName>
     <ModType>code</ModType>
-    <ModVersion>0.1.24</ModVersion>
+    <ModVersion>0.1.26</ModVersion>
     <ModId>playermodellib</ModId>
     <Description></Description>
     <Side>Universal</Side>

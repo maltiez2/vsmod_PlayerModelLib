@@ -179,7 +179,14 @@ public sealed class CustomModelsSystem : ModSystem
             }
         }
 
-        return TextureSource?[fullCode];
+        try
+        {
+            return TextureSource?[fullCode];
+        }
+        catch (Exception exception)
+        {
+            return null;
+        }
     }
     public Size2i? GetAtlasSize(string modelCode, Entity entity)
     {
@@ -255,7 +262,7 @@ public sealed class CustomModelsSystem : ModSystem
 
         FixDefaultSkinParts(parts, GetSkinPartsWithSkinTexture(parts));
 
-        Dictionary<string, SkinnablePart> partsByCode = LoadParts(_api, parts);
+        Dictionary<string, SkinnablePart> partsByCode = LoadParts(_api, parts, _defaultModelCode);
 
         FixColBreak(parts, _defaultModelCode);
 
@@ -306,53 +313,59 @@ public sealed class CustomModelsSystem : ModSystem
         {
             foreach ((string code, CustomModelConfig modelConfig) in customModelConfigs)
             {
-                Shape? shape = LoadShape(api, modelConfig.ShapePath);
-
-                if (shape == null)
+                try
                 {
-                    _api?.Logger.Error($"[Player Model lib] Unable to load shape '{modelConfig.ShapePath}' for model '{code}'");
-                    continue;
+                    Shape? shape = LoadShape(api, modelConfig.ShapePath);
+
+                    if (shape == null)
+                    {
+                        _api?.Logger.Error($"[Player Model lib] Unable to load shape '{modelConfig.ShapePath}' for model '{code}'");
+                        continue;
+                    }
+
+                    modelConfig.SkinnableParts = modelConfig.SkinnableParts.Where(part => part.Enabled).ToArray();
+
+                    Dictionary<string, SkinnablePart> partsByCode = LoadParts(api, modelConfig.SkinnableParts, code);
+
+                    FixColBreak(modelConfig.SkinnableParts, code);
+
+                    CustomModelData modelData = new(code, shape)
+                    {
+                        SkinParts = partsByCode,
+                        SkinPartsArray = modelConfig.SkinnableParts,
+                        MainTextureCode = PrefixTextureCode(code, modelConfig.MainTextureCode),
+                        AvailableClasses = [.. modelConfig.AvailableClasses],
+                        SkipClasses = [.. modelConfig.SkipClasses],
+                        ExclusiveClasses = [.. modelConfig.ExclusiveClasses],
+                        ExtraTraits = modelConfig.ExtraTraits,
+                        WearableShapeReplacersByShape = modelConfig.WearableModelReplacersByShape,
+                        CollisionBox = modelConfig.CollisionBox.Length == 0 ? CustomModels[_defaultModelCode].CollisionBox : new Vector2(modelConfig.CollisionBox[0], modelConfig.CollisionBox[1]),
+                        EyeHeight = modelConfig.EyeHeight,
+                        SizeRange = new(modelConfig.SizeRange[0], modelConfig.SizeRange[1]),
+                        MaxCollisionBox = new Vector2(modelConfig.MaxCollisionBox[0], modelConfig.MaxCollisionBox[1]),
+                        MinCollisionBox = new Vector2(modelConfig.MinCollisionBox[0], modelConfig.MinCollisionBox[1]),
+                        ScaleColliderWithSizeHorizontally = modelConfig.ScaleColliderWithSizeHorizontally,
+                        ScaleColliderWithSizeVertically = modelConfig.ScaleColliderWithSizeVertically,
+                        MaxEyeHeight = modelConfig.MaxEyeHeight,
+                        MinEyeHeight = modelConfig.MinEyeHeight,
+                        AddTags = api.TagRegistry.EntityTagsToTagArray(modelConfig.AddTags),
+                        RemoveTags = api.TagRegistry.EntityTagsToTagArray(modelConfig.RemoveTags),
+                        ModelSizeFactor = modelConfig.ModelSizeFactor,
+                        HeadBobbingScale = modelConfig.HeadBobbingScale,
+                        GuiModelScale = modelConfig.GuiModelScale,
+                        Enabled = modelConfig.Enabled,
+                    };
+
+                    _wearableModelReplacers.Add(code, modelConfig.WearableModelReplacers);
+                    _wearableCompositeModelReplacers.Add(code, modelConfig.WearableCompositeModelReplacers);
+                    
+                    CustomModels.Add(code, modelData);
+                    _oldMainTextureCodes.Add(code, modelConfig.MainTextureCode);
                 }
-
-                _wearableModelReplacers.Add(code, modelConfig.WearableModelReplacers);
-                _wearableCompositeModelReplacers.Add(code, modelConfig.WearableCompositeModelReplacers);
-
-                modelConfig.SkinnableParts = modelConfig.SkinnableParts.Where(part => part.Enabled).ToArray();
-
-                Dictionary<string, SkinnablePart> partsByCode = LoadParts(api, modelConfig.SkinnableParts);
-
-                FixColBreak(modelConfig.SkinnableParts, code);
-
-                CustomModelData modelData = new(code, shape)
+                catch (Exception exception)
                 {
-                    SkinParts = partsByCode,
-                    SkinPartsArray = modelConfig.SkinnableParts,
-                    MainTextureCode = PrefixTextureCode(code, modelConfig.MainTextureCode),
-                    AvailableClasses = [.. modelConfig.AvailableClasses],
-                    SkipClasses = [.. modelConfig.SkipClasses],
-                    ExclusiveClasses = [.. modelConfig.ExclusiveClasses],
-                    ExtraTraits = modelConfig.ExtraTraits,
-                    WearableShapeReplacersByShape = modelConfig.WearableModelReplacersByShape,
-                    CollisionBox = modelConfig.CollisionBox.Length == 0 ? CustomModels[_defaultModelCode].CollisionBox : new Vector2(modelConfig.CollisionBox[0], modelConfig.CollisionBox[1]),
-                    EyeHeight = modelConfig.EyeHeight,
-                    SizeRange = new(modelConfig.SizeRange[0], modelConfig.SizeRange[1]),
-                    MaxCollisionBox = new Vector2(modelConfig.MaxCollisionBox[0], modelConfig.MaxCollisionBox[1]),
-                    MinCollisionBox = new Vector2(modelConfig.MinCollisionBox[0], modelConfig.MinCollisionBox[1]),
-                    ScaleColliderWithSizeHorizontally = modelConfig.ScaleColliderWithSizeHorizontally,
-                    ScaleColliderWithSizeVertically = modelConfig.ScaleColliderWithSizeVertically,
-                    MaxEyeHeight = modelConfig.MaxEyeHeight,
-                    MinEyeHeight = modelConfig.MinEyeHeight,
-                    AddTags = api.TagRegistry.EntityTagsToTagArray(modelConfig.AddTags),
-                    RemoveTags = api.TagRegistry.EntityTagsToTagArray(modelConfig.RemoveTags),
-                    ModelSizeFactor = modelConfig.ModelSizeFactor,
-                    HeadBobbingScale = modelConfig.HeadBobbingScale,
-                    GuiModelScale = modelConfig.GuiModelScale,
-                    Enabled = modelConfig.Enabled,
-                };
-
-                CustomModels.Add(code, modelData);
-
-                _oldMainTextureCodes.Add(code, modelConfig.MainTextureCode);
+                    LoggerUtil.Error(api, this, $"Error on loading model '{code}': {exception}");
+                }
             }
         }
     }
@@ -708,7 +721,7 @@ public sealed class CustomModelsSystem : ModSystem
             }
         }
     }
-    private Dictionary<string, SkinnablePart> LoadParts(ICoreAPI api, SkinnablePartExtended[] parts)
+    private Dictionary<string, SkinnablePart> LoadParts(ICoreAPI api, SkinnablePartExtended[] parts, string model)
     {
         Dictionary<string, SkinnablePart> patsByCode = [];
 
@@ -735,7 +748,7 @@ public sealed class CustomModelsSystem : ModSystem
                     .Distinct()
                     .ToArray();
 
-                ProcessTexturePart(clientApi, part);
+                ProcessTexturePart(clientApi, part, model);
             }
             else
             {
@@ -748,7 +761,7 @@ public sealed class CustomModelsSystem : ModSystem
 
         return patsByCode;
     }
-    private void ProcessTexturePart(ICoreClientAPI clientApi, SkinnablePart part)
+    private void ProcessTexturePart(ICoreClientAPI clientApi, SkinnablePart part, string model)
     {
         foreach (SkinnablePartVariant? variant in part.Variants)
         {
@@ -764,7 +777,14 @@ public sealed class CustomModelsSystem : ModSystem
                 textureLoc = variant.Texture;
             }
 
-            IAsset asset = clientApi.Assets.TryGet(textureLoc.Clone().WithPathAppendixOnce(".png").WithPathPrefixOnce("textures/"), true);
+            IAsset? asset = clientApi.Assets.TryGet(textureLoc.Clone().WithPathAppendixOnce(".png").WithPathPrefixOnce("textures/"), true);
+
+            if (asset == null)
+            {
+                LoggerUtil.Error(clientApi, this, $"(model: {model}) Texture '{textureLoc}' not found for skin part '{part.Code}' and variant '{variant.Code}'.");
+
+                throw new ArgumentException($"[Player Model lib] (model: {model}) Texture '{textureLoc}' not found for skin part '{part.Code}' and variant '{variant.Code}'.");
+            }
 
             int r = 0, g = 0, b = 0;
             float c = 0;
