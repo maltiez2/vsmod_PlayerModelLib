@@ -107,8 +107,8 @@ internal static class OtherPatches
         [HarmonyTranspiler]
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
-            CodeInstruction[] newInstructions = new CodeInstruction[]
-            {
+            CodeInstruction[] newInstructions =
+            [
                 new(OpCodes.Ldarg_2),
                 new(OpCodes.Ldarg_0),
                 new(OpCodes.Ldfld, AccessTools.Field(typeof(EntityBehaviorContainer), "entity")),
@@ -117,9 +117,8 @@ internal static class OtherPatches
                 new(OpCodes.Ldarg_3),
                 new(OpCodes.Ldloc_1),
                 new(OpCodes.Call, AccessTools.Method(typeof(EntityBehaviorContainerPatchCommand), nameof(GetModelReplacement))),
-            };
-            List<CodeInstruction> codes = new(instructions);
-            MethodInfo targetMethod = AccessTools.Method(typeof(IWearableShapeSupplier), "GetShape");
+            ];
+            List<CodeInstruction> codes = [.. instructions];
 
             for (int i = 0; i < codes.Count; i++)
             {
@@ -143,61 +142,60 @@ internal static class OtherPatches
 
             string? currentModel = skinBehavior?.CurrentModelCode;
 
-            if (currentModel != null && itemId != 0 && system != null && system.ModelsLoaded)
+            if (currentModel == null || itemId == 0 || system == null || !system.ModelsLoaded) return;
+            
+            CustomModelData customModel = system.CustomModels[currentModel];
+
+            if (customModel.WearableShapeReplacers.TryGetValue(itemId, out string? shape))
             {
-                CustomModelData customModel = system.CustomModels[currentModel];
+                defaultShape = LoadShape(entity.Api, shape);
 
-                if (customModel.WearableShapeReplacers.TryGetValue(itemId, out string? shape))
+                defaultShape?.SubclassForStepParenting(yatayata.GetTexturePrefixCode(stack), damageEffect);
+                defaultShape?.ResolveReferences(entity.World.Logger, currentModel);
+
+                if (compositeShape != null)
                 {
-                    defaultShape = LoadShape(entity.Api, shape);
-
-                    defaultShape?.SubclassForStepParenting(yatayata.GetTexturePrefixCode(stack), damageEffect);
-                    defaultShape?.ResolveReferences(entity.World.Logger, currentModel);
-
-                    if (compositeShape != null)
-                    {
-                        compositeShape = compositeShape.Clone();
-                        compositeShape.Base = shape;
-                    }
-
-                    return;
+                    compositeShape = compositeShape.Clone();
+                    compositeShape.Base = shape;
                 }
 
-                if (customModel.WearableCompositeShapeReplacers.TryGetValue(itemId, out CompositeShape? newCompositeShape))
+                return;
+            }
+
+            if (customModel.WearableCompositeShapeReplacers.TryGetValue(itemId, out CompositeShape? newCompositeShape))
+            {
+                compositeShape = newCompositeShape.Clone();
+
+                compositeShape.Base = compositeShape.Base.WithPathAppendixOnce(".json").WithPathPrefixOnce("shapes/");
+
+                defaultShape = LoadShape(entity.Api, newCompositeShape.Base);
+
+                defaultShape?.SubclassForStepParenting(yatayata.GetTexturePrefixCode(stack), damageEffect);
+                defaultShape?.ResolveReferences(entity.World.Logger, currentModel);
+            }
+
+            CompositeShape oldCompositeShape = yatayata.GetAttachedShape(stack, "default").Clone();
+
+            string shapePath = oldCompositeShape.Base.ToString();
+
+            if (customModel.WearableShapeReplacersByShape.TryGetValue(shapePath, out shape))
+            {
+                defaultShape = LoadShape(entity.Api, shape);
+
+                defaultShape?.SubclassForStepParenting(yatayata.GetTexturePrefixCode(stack), damageEffect);
+                defaultShape?.ResolveReferences(entity.World.Logger, currentModel);
+            }
+
+            if (oldCompositeShape.Overlays != null)
+            {
+                foreach (CompositeShape? overlay in oldCompositeShape.Overlays)
                 {
-                    compositeShape = newCompositeShape.Clone();
+                    if (overlay == null) continue;
 
-                    compositeShape.Base = compositeShape.Base.WithPathAppendixOnce(".json").WithPathPrefixOnce("shapes/");
-
-                    defaultShape = LoadShape(entity.Api, newCompositeShape.Base);
-
-                    defaultShape?.SubclassForStepParenting(yatayata.GetTexturePrefixCode(stack), damageEffect);
-                    defaultShape?.ResolveReferences(entity.World.Logger, currentModel);
+                    ReplaceOverlay(overlay, customModel.WearableShapeReplacersByShape);
                 }
 
-                CompositeShape oldCompositeShape = yatayata.GetAttachedShape(stack, "default").Clone();
-
-                string shapePath = oldCompositeShape.Base.ToString();
-
-                if (customModel.WearableShapeReplacersByShape.TryGetValue(shapePath, out shape))
-                {
-                    defaultShape = LoadShape(entity.Api, shape);
-
-                    defaultShape?.SubclassForStepParenting(yatayata.GetTexturePrefixCode(stack), damageEffect);
-                    defaultShape?.ResolveReferences(entity.World.Logger, currentModel);
-                }
-
-                if (oldCompositeShape.Overlays != null)
-                {
-                    foreach (CompositeShape? overlay in oldCompositeShape.Overlays)
-                    {
-                        if (overlay == null) continue;
-
-                        ReplaceOverlay(overlay, customModel.WearableShapeReplacersByShape);
-                    }
-
-                    compositeShape = oldCompositeShape;
-                }
+                compositeShape = oldCompositeShape;
             }
         }
 
