@@ -6,11 +6,11 @@
 	"textureWidth": 32,
 	"textureHeight": 76,
 	"textureSizes": {
-		"playermodellib-iris":  [8, 8]
+		"playermodellib-iris": [8,8]
 	},
 	"textures": {
-		"playermodellib-eyes": "seraph-for-eyes",
-		"playermodellib-iris": "eyes/topaz"
+		"playermodellib-iris": "eyes/topaz",
+		"playermodellib-eyes": "seraph-for-eyes"
 	},
 	"elements": [
 		{
@@ -18,8 +18,6 @@
 			"stepParentName": "Head",
 			"from": [ 0.0, 0.0, 0.0 ],
 			"to": [ 5.5, 5.0, 5.0 ],
-			"unwrapMode": 4,
-			"uv": [ 0.0, 0.0 ],
 			"faces": {
 			},
 			"children": [
@@ -27,24 +25,20 @@
 					"name": "R eye",
 					"from": [ -0.01, 1.75, 0.9 ],
 					"to": [ 0.09, 2.55, 2.1 ],
-					"unwrapMode": 4,
-					"uv": [ 28.0, 0.0 ],
 					"rotationOrigin": [ 0.0, 1.75, 2.1 ],
 					"rotationX": 4.0,
 					"faces": {
-						"north": { "texture": "#playermodellib-iris", "uv": [ 2, 0, 5, 3 ] },
-						"south": { "texture": "#playermodellib-iris", "uv": [ 2, 0, 5, 3 ]  },
-						"west": { "texture": "#playermodellib-iris", "uv": [ 2, 0, 5, 3 ]  },
-						"up": { "texture": "#playermodellib-iris", "uv": [ 2, 0, 5, 3 ] , "rotation": 90 },
-						"down": { "texture": "#playermodellib-iris", "uv": [ 2, 0, 5, 3 ] , "rotation": 90 }
+						"north": { "texture": "#playermodellib-iris", "uv": [ 2.0, 0.0, 5.0, 3.0 ] },
+						"south": { "texture": "#playermodellib-iris", "uv": [ 2.0, 0.0, 5.0, 3.0 ] },
+						"west": { "texture": "#playermodellib-iris", "uv": [ 2.0, 0.0, 5.0, 3.0 ] },
+						"up": { "texture": "#playermodellib-iris", "uv": [ 2.0, 0.0, 3.0, 0.5 ], "rotation": 90 },
+						"down": { "texture": "#playermodellib-iris", "uv": [ 2.0, 0.0, 3.0, 0.5 ], "rotation": 90 }
 					},
 					"children": [
 						{
 							"name": "R iris",
 							"from": [ -0.03, 0.12, 0.3 ],
 							"to": [ 0.07, 0.72, 0.95 ],
-							"unwrapMode": 4,
-							"uv": [ 0.0, 0.0 ],
 							"rotationOrigin": [ 0.0, 0.15, 1.05 ],
 							"faces": {
 								"north": { "texture": "#playermodellib-eyes", "uv": [ 0.0, 0.5, 0.5, 1.0 ] },
@@ -58,8 +52,6 @@
 									"name": "shine large 1",
 									"from": [ -0.01, 0.37, 0.1 ],
 									"to": [ 0.09, 0.54, 0.27 ],
-									"unwrapMode": 4,
-									"uv": [ 28.0, 4.0 ],
 									"rotationOrigin": [ 0.03, 0.5, 0.1 ],
 									"faces": {
 										"north": { "texture": "#playermodellib-eyes", "uv": [ 28.0, 4.5, 28.5, 5.0 ] },
@@ -73,8 +65,6 @@
 									"name": "shine small 1",
 									"from": [ -0.01, 0.33, 0.05 ],
 									"to": [ 0.09, 0.43, 0.15 ],
-									"unwrapMode": 4,
-									"uv": [ 28.5, 4.5 ],
 									"rotationOrigin": [ 0.03, 0.4, 0.1 ],
 									"faces": {
 										"north": { "texture": "#playermodellib-eyes", "uv": [ 28.5, 5.0, 29.0, 5.5 ] },
@@ -90,15 +80,13 @@
 							"name": "R iris2",
 							"from": [ -0.02, 0.18, 0.2 ],
 							"to": [ 0.08, 0.78, 1.0 ],
-							"unwrapMode": 4,
-							"uv": [ 28.5, 14.5 ],
 							"rotationOrigin": [ 0.0, 0.15, 0.95 ],
 							"faces": {
-								"north": { "texture": "#playermodellib-eyes", "uv": [ 28.5, 15.0, 29.0, 15.5 ] },
-								"south": { "texture": "#playermodellib-eyes", "uv": [ 29.5, 15.0, 30.0, 15.5 ] },
-								"west": { "texture": "#playermodellib-eyes", "uv": [ 29.0, 15.0, 29.5, 15.5 ] },
-								"up": { "texture": "#playermodellib-eyes", "uv": [ 29.0, 14.5, 29.5, 15.0 ], "rotation": 90 },
-								"down": { "texture": "#playermodellib-eyes", "uv": [ 29.0, 15.5, 29.5, 16.0 ], "rotation": 90 }
+								"north": { "texture": "#playermodellib-eyes", "uv": [ 1.5, 0.5, 2.0, 1.0 ] },
+								"south": { "texture": "#playermodellib-eyes", "uv": [ 2.0, 1.5, 2.5, 2.0 ] },
+								"west": { "texture": "#playermodellib-eyes", "uv": [ 0.0, 0.0, 1.0, 1.0 ] },
+								"up": { "texture": "#playermodellib-eyes", "uv": [ 0.0, 0.0, 0.5, 0.5 ] },
+								"down": { "texture": "#playermodellib-eyes", "uv": [ 0.0, 0.0, 0.5, 0.5 ] }
 							}
 						}
 					]
@@ -107,24 +95,20 @@
 					"name": "L eye2",
 					"from": [ -0.01, 1.75, 2.9 ],
 					"to": [ 0.09, 2.55, 4.1 ],
-					"unwrapMode": 4,
-					"uv": [ 30.0, 0.0 ],
 					"rotationOrigin": [ 0.0, 1.75, 2.9 ],
 					"rotationX": -4.0,
 					"faces": {
-						"north": { "texture": "#playermodellib-iris", "uv": [ 2, 5, 5, 8 ] },
-						"south": { "texture": "#playermodellib-iris", "uv": [ 2, 5, 5, 8 ] },
-						"west": { "texture": "#playermodellib-iris", "uv": [ 2, 5, 5, 8 ] },
-						"up": { "texture": "#playermodellib-iris", "uv": [ 2, 5, 5, 8 ], "rotation": 90 },
-						"down": { "texture": "#playermodellib-iris", "uv": [ 2, 5, 5, 8 ], "rotation": 90 }
+						"north": { "texture": "#playermodellib-iris", "uv": [ 2.0, 5.0, 5.0, 8.0 ] },
+						"south": { "texture": "#playermodellib-iris", "uv": [ 2.0, 5.0, 5.0, 8.0 ] },
+						"west": { "texture": "#playermodellib-iris", "uv": [ 2.0, 5.0, 5.0, 8.0 ] },
+						"up": { "texture": "#playermodellib-iris", "uv": [ 2.0, 5.0, 3.0, 5.5 ], "rotation": 90 },
+						"down": { "texture": "#playermodellib-iris", "uv": [ 2.0, 5.0, 3.0, 5.5 ], "rotation": 90 }
 					},
 					"children": [
 						{
 							"name": "L iris",
 							"from": [ -0.03, 0.12, 0.25 ],
 							"to": [ 0.07, 0.72, 0.9 ],
-							"unwrapMode": 4,
-							"uv": [ 2.0, 0.0 ],
 							"rotationOrigin": [ 0.0, 0.15, 0.35 ],
 							"faces": {
 								"north": { "texture": "#playermodellib-eyes", "uv": [ 2.0, 0.5, 2.5, 1.0 ] },
@@ -138,8 +122,6 @@
 									"name": "shine small 2",
 									"from": [ -0.01, 0.33, 0.07 ],
 									"to": [ 0.09, 0.43, 0.17 ],
-									"unwrapMode": 4,
-									"uv": [ 30.0, 4.5 ],
 									"rotationOrigin": [ 0.03, 0.4, 0.3 ],
 									"faces": {
 										"north": { "texture": "#playermodellib-eyes", "uv": [ 30.0, 5.0, 30.5, 5.5 ] },
@@ -153,8 +135,6 @@
 									"name": "shine large 2",
 									"from": [ -0.01, 0.37, 0.12 ],
 									"to": [ 0.09, 0.54, 0.29 ],
-									"unwrapMode": 4,
-									"uv": [ 30.5, 4.0 ],
 									"rotationOrigin": [ -0.07, 0.5, 0.1 ],
 									"faces": {
 										"north": { "texture": "#playermodellib-eyes", "uv": [ 30.5, 4.5, 31.0, 5.0 ] },
@@ -170,15 +150,13 @@
 							"name": "L iris2",
 							"from": [ -0.02, 0.18, 0.2 ],
 							"to": [ 0.08, 0.78, 1.0 ],
-							"unwrapMode": 4,
-							"uv": [ 30.5, 14.5 ],
 							"rotationOrigin": [ 0.0, 0.15, 0.15 ],
 							"faces": {
-								"north": { "texture": "#playermodellib-eyes", "uv": [ 30.5, 15.0, 31.0, 15.5 ] },
-								"south": { "texture": "#playermodellib-eyes", "uv": [ 31.5, 15.0, 32.0, 15.5 ] },
-								"west": { "texture": "#playermodellib-eyes", "uv": [ 31.0, 15.0, 31.5, 15.5 ] },
-								"up": { "texture": "#playermodellib-eyes", "uv": [ 31.0, 14.5, 31.5, 15.0 ], "rotation": 90 },
-								"down": { "texture": "#playermodellib-eyes", "uv": [ 31.0, 15.5, 31.5, 16.0 ], "rotation": 90 }
+								"north": { "texture": "#playermodellib-eyes", "uv": [ 1.5, 1.5, 2.0, 2.0 ] },
+								"south": { "texture": "#playermodellib-eyes", "uv": [ 1.5, 1.5, 2.0, 2.0 ] },
+								"west": { "texture": "#playermodellib-eyes", "uv": [ 0.0, 0.0, 1.0, 1.0 ] },
+								"up": { "texture": "#playermodellib-eyes", "uv": [ 0.0, 0.0, 0.5, 0.5 ] },
+								"down": { "texture": "#playermodellib-eyes", "uv": [ 0.0, 0.0, 0.5, 0.5 ] }
 							}
 						}
 					]
@@ -187,8 +165,6 @@
 					"name": "R eyebrow 1",
 					"from": [ -0.1, 2.7, 1.2 ],
 					"to": [ 0.0, 3.05, 2.1 ],
-					"unwrapMode": 4,
-					"uv": [ 28.0, 11.0 ],
 					"rotationOrigin": [ -0.1, 2.7, 2.1 ],
 					"rotationX": 14.0,
 					"faces": {
@@ -203,8 +179,6 @@
 							"name": "R eyebrow 2",
 							"from": [ 0.0, 0.05, -0.4 ],
 							"to": [ 0.1, 0.3, 0.3 ],
-							"unwrapMode": 4,
-							"uv": [ 28.0, 12.5 ],
 							"rotationOrigin": [ 0.0, 0.05, 0.3 ],
 							"rotationX": -7.0,
 							"rotationZ": 1.0,
@@ -220,8 +194,6 @@
 									"name": "Cube2",
 									"from": [ 0.03, 0.02, -0.4 ],
 									"to": [ 0.13, 0.2, 0.1 ],
-									"unwrapMode": 4,
-									"uv": [ 28.0, 12.0 ],
 									"rotationOrigin": [ 0.1, 0.1, 0.1 ],
 									"rotationX": -20.0,
 									"faces": {
@@ -240,8 +212,6 @@
 					"name": "L eyebrow 1",
 					"from": [ -0.1, 2.7, 2.9 ],
 					"to": [ 0.0, 3.05, 3.8 ],
-					"unwrapMode": 4,
-					"uv": [ 30.0, 11.0 ],
 					"rotationOrigin": [ -0.1, 2.7, 2.9 ],
 					"rotationX": -14.0,
 					"faces": {
@@ -256,8 +226,6 @@
 							"name": "L eyebrow 2",
 							"from": [ 0.0, 0.05, 0.6 ],
 							"to": [ 0.1, 0.3, 1.3 ],
-							"unwrapMode": 4,
-							"uv": [ 30.5, 12.5 ],
 							"rotationOrigin": [ 0.0, 0.05, 0.6 ],
 							"rotationX": 6.0,
 							"rotationZ": -1.0,
@@ -273,8 +241,6 @@
 									"name": "Cube3",
 									"from": [ 0.03, 0.02, 0.6 ],
 									"to": [ 0.13, 0.2, 1.1 ],
-									"unwrapMode": 4,
-									"uv": [ 30.5, 12.0 ],
 									"rotationOrigin": [ 0.0, 0.0, 0.6 ],
 									"rotationX": 20.0,
 									"faces": {
@@ -293,8 +259,6 @@
 					"name": "mouth",
 					"from": [ -0.1, 0.7, 2.0 ],
 					"to": [ 0.0, 1.0, 3.0 ],
-					"unwrapMode": 4,
-					"uv": [ 29.0, 8.5 ],
 					"rotationOrigin": [ -0.1, 0.7, 2.5 ],
 					"faces": {
 						"north": { "texture": "#playermodellib-eyes", "uv": [ 29.0, 9.0, 29.5, 9.5 ] },
@@ -308,8 +272,6 @@
 							"name": "mouth L",
 							"from": [ 0.05, -0.02, -0.5 ],
 							"to": [ 0.15, 0.28, 0.3 ],
-							"unwrapMode": 4,
-							"uv": [ 30.0, 7.5 ],
 							"rotationOrigin": [ 0.05, -0.1, 0.3 ],
 							"rotationX": 1.0,
 							"faces": {
@@ -324,8 +286,6 @@
 							"name": "mouth R",
 							"from": [ 0.05, -0.02, 0.7 ],
 							"to": [ 0.15, 0.28, 1.5 ],
-							"unwrapMode": 4,
-							"uv": [ 28.0, 7.5 ],
 							"rotationOrigin": [ 0.05, 0.0, 0.7 ],
 							"rotationX": -1.0,
 							"faces": {
@@ -342,8 +302,6 @@
 					"name": "eyelid r",
 					"from": [ -0.1, 2.46, 0.8 ],
 					"to": [ 0.0, 2.6, 2.2 ],
-					"unwrapMode": 4,
-					"uv": [ 28.0, 6.0 ],
 					"rotationOrigin": [ -0.1, 2.4, 2.15 ],
 					"rotationX": 1.0,
 					"faces": {
@@ -358,8 +316,6 @@
 					"name": "eyelid l",
 					"from": [ -0.1, 2.46, 2.75 ],
 					"to": [ 0.0, 2.6, 4.15 ],
-					"unwrapMode": 4,
-					"uv": [ 30.0, 6.0 ],
 					"rotationOrigin": [ -0.1, 2.4, 2.8 ],
 					"rotationX": -1.0,
 					"faces": {

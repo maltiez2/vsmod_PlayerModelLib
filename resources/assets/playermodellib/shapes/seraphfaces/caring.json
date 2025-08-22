@@ -96,11 +96,11 @@
 							"rotationOrigin": [ 0.0, 0.15, 0.95 ],
 							"rotationX": 2.0,
 							"faces": {
-								"north": { "texture": "#playermodellib-eyes", "uv": [ 28.5, 15.0, 29.0, 15.5 ] },
-								"south": { "texture": "#playermodellib-eyes", "uv": [ 29.5, 15.0, 30.0, 15.5 ] },
-								"west": { "texture": "#playermodellib-eyes", "uv": [ 29.0, 15.0, 29.5, 15.5 ] },
-								"up": { "texture": "#playermodellib-eyes", "uv": [ 29.0, 14.5, 29.5, 15.0 ], "rotation": 90 },
-								"down": { "texture": "#playermodellib-eyes", "uv": [ 29.0, 15.5, 29.5, 16.0 ], "rotation": 90 }
+								"north": { "texture": "#playermodellib-eyes", "uv": [ 1.5, 0.5, 2.0, 1.0 ] },
+								"south": { "texture": "#playermodellib-eyes", "uv": [ 2.0, 1.5, 2.5, 2.0 ] },
+								"west": { "texture": "#playermodellib-eyes", "uv": [ 0.0, 0.0, 1.0, 1.0 ] },
+								"up": { "texture": "#playermodellib-eyes", "uv": [ 0.0, 0.0, 0.5, 0.5 ] },
+								"down": { "texture": "#playermodellib-eyes", "uv": [ 0.0, 0.0, 0.5, 0.5 ] }
 							}
 						}
 					]
@@ -178,11 +178,11 @@
 							"rotationOrigin": [ 0.0, 0.15, 0.15 ],
 							"rotationX": -2.0,
 							"faces": {
-								"north": { "texture": "#playermodellib-eyes", "uv": [ 30.5, 15.0, 31.0, 15.5 ] },
-								"south": { "texture": "#playermodellib-eyes", "uv": [ 31.5, 15.0, 32.0, 15.5 ] },
-								"west": { "texture": "#playermodellib-eyes", "uv": [ 31.0, 15.0, 31.5, 15.5 ] },
-								"up": { "texture": "#playermodellib-eyes", "uv": [ 31.0, 14.5, 31.5, 15.0 ], "rotation": 90 },
-								"down": { "texture": "#playermodellib-eyes", "uv": [ 31.0, 15.5, 31.5, 16.0 ], "rotation": 90 }
+								"north": { "texture": "#playermodellib-eyes", "uv": [ 1.5, 1.5, 2.0, 2.0 ] },
+								"south": { "texture": "#playermodellib-eyes", "uv": [ 1.5, 1.5, 2.0, 2.0 ] },
+								"west": { "texture": "#playermodellib-eyes", "uv": [ 0.0, 0.0, 1.0, 1.0 ] },
+								"up": { "texture": "#playermodellib-eyes", "uv": [ 0.0, 0.0, 0.5, 0.5 ] },
+								"down": { "texture": "#playermodellib-eyes", "uv": [ 0.0, 0.0, 0.5, 0.5 ] }
 							}
 						}
 					]
