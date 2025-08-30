@@ -55,14 +55,18 @@ internal static class OtherPatches
 
         if (byPlayer.PlayerUID != api.World.Player.PlayerUID) return true;
 
-        byPlayer.Entity.GetBehavior<PlayerSkinBehavior>().OnActuallyInitialize += () =>
+        var skinBehavior = byPlayer.Entity.GetBehavior<PlayerSkinBehavior>();
+
+        if (skinBehavior == null) return true;
+
+        skinBehavior.OnActuallyInitialize += () =>
         {
             GuiDialogCreateCharacter createCharDlg = new GuiDialogCreateCustomCharacter(api, __instance);
             createCharDlg.PrepAndOpen();
             createCharDlg.OnClosed += () => api.PauseGame(false);
             api.Event.EnqueueMainThreadTask(() => api.PauseGame(true), "pausegame");
             api.Event.PushEvent("begincharacterselection");
-            CharacterSystem_createCharDlg.SetValue(__instance, createCharDlg);
+            CharacterSystem_createCharDlg?.SetValue(__instance, createCharDlg);
         };
 
         return false;

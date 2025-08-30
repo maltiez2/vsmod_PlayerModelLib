@@ -17,7 +17,7 @@ public enum EnumCreateCharacterTabs
     Class
 }
 
-public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
+public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 {
     public override float ZSize
     {
@@ -26,17 +26,15 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     public override bool PrefersUngrabbedMouse => true;
     public override string? ToggleKeyCombinationCode => null;
 
-    public static int RenderState { get; protected set; } = 0; // Is used to disable model size compensation when rendering model in model tab
+    public static int RenderState { get; private set; } = 0; // Is used to disable model size compensation when rendering model in model tab
 
-    public GuiDialogCreateCustomCharacter(ICoreClientAPI capi, CharacterSystem characterSystem) : base(capi, characterSystem)
+    public GuiDialogCreateCustomCharacter(ICoreClientAPI api, CharacterSystem characterSystem) : base(api, characterSystem)
     {
         _characterSystem = characterSystem;
-        _customModelsSystem = capi.ModLoader.GetModSystem<CustomModelsSystem>();
+        _customModelsSystem = api.ModLoader.GetModSystem<CustomModelsSystem>();
     }
     public override void OnGuiOpened()
     {
-        Debug.WriteLine("GuiDialogCreateCustomCharacter opened");
-
         string characterClass = capi.World.Player.Entity.WatchedAttributes.GetString("characterClass");
         if (characterClass != null && _characterSystem.characterClassesByCode.ContainsKey(characterClass))
         {
@@ -61,7 +59,7 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         if (capi.World.Player.WorldData.CurrentGameMode == EnumGameMode.Guest || capi.World.Player.WorldData.CurrentGameMode == EnumGameMode.Survival)
         {
-            if (_characterInventory != null) _characterInventory.Open(capi.World.Player);
+            _characterInventory?.Open(capi.World.Player);
         }
     }
     public override void OnGuiClosed()
@@ -73,8 +71,10 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             Composers["createcharacter"].GetSlotGrid("rightSlots")?.OnGuiClosed(capi);
         }
 
-        PlayerSkinBehavior skinMod = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
+        PlayerSkinBehavior? skinMod = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
         CustomModelsSystem system = capi.ModLoader.GetModSystem<CustomModelsSystem>();
+
+        if (skinMod == null) return;
 
         List<CharacterClass> availableClasses = GetAvailableClasses(system, skinMod.CurrentModelCode);
 
@@ -88,7 +88,12 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         system.SynchronizePlayerModel(skinMod.CurrentModelCode);
         system.SynchronizePlayerModelSize(_currentModelSize);
 
-        capi.World.Player.Entity.GetBehavior<EntityBehaviorPlayerInventory>().hideClothing = false;
+        EntityBehaviorPlayerInventory? invBhv = capi.World.Player.Entity.GetBehavior<EntityBehaviorPlayerInventory>();
+        if (invBhv != null)
+        {
+            invBhv.hideClothing = false;
+        }
+
         ReTesselate();
 
         RenderState = 0;
@@ -193,10 +198,10 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     {
         if (_insetSlotBounds == null) return;
 
-        foreach (KeyValuePair<string, GuiComposer> item in (IEnumerable<KeyValuePair<string, GuiComposer>>)Composers)
+        foreach ((_, GuiComposer composer) in Composers)
         {
-            item.Value.Render(deltaTime);
-            MouseOverCursor = item.Value.MouseOverCursor;
+            composer.Render(deltaTime);
+            MouseOverCursor = composer.MouseOverCursor;
         }
 
         if (capi.IsGamePaused)
@@ -218,8 +223,6 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         capi.Render.CurrentActiveShader.Uniform("lightPosition", new Vec3f(lightRot.X, lightRot.Y, lightRot.Z));
 
         capi.Render.PushScissor(_insetSlotBounds);
-
-        float size = capi.World.Player.Entity.Properties.Client.Size;
 
         RenderState = (int)_currentTab + 1;
 
@@ -275,7 +278,6 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     private readonly CustomModelsSystem _customModelsSystem;
     private int _currentClassIndex = 0;
     private EnumCreateCharacterTabs _currentTab = 0;
-    private readonly int _rows = 7;
     private float _charZoom = 1f;
     private bool _charNaked = true;
     private readonly int _dlgHeight = 433 + 80;
@@ -288,7 +290,7 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     private readonly MethodInfo? _clientSelectionDone = typeof(CharacterSystem).GetMethod("ClientSelectionDone", BindingFlags.NonPublic | BindingFlags.Instance);
     private float _currentModelSize = 1f;
 
-    private void ComposeGuis()
+    private new void ComposeGuis()
     {
         double padding = GuiElementItemSlotGridBase.unscaledSlotPadding;
         double slotSize = GuiElementPassiveItemSlot.unscaledSlotSize;
@@ -338,7 +340,7 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
                 ComposeModelTab(composer, system, yPosition, padding, slotSize);
                 break;
             case EnumCreateCharacterTabs.Skin:
-                ComposeSkinTab(composer, inventoryBehavior, yPosition, padding, dialogBounds, backgroundBounds);
+                ComposeSkinTab(composer, inventoryBehavior, yPosition, padding, backgroundBounds);
                 break;
             case EnumCreateCharacterTabs.Class:
                 ComposeClassTab(composer, yPosition, padding, slotSize);
@@ -379,9 +381,6 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         {
             onToggleModel(modelValues[modelIndex]);
         }
-
-        //modelValues = modelValues.Concat(modelValues).ToArray();
-        //modelNames = modelNames.Concat(modelNames).ToArray();
 
         yPosition -= 10;
 
@@ -426,7 +425,7 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         composer.AddRichtext("", CairoFont.WhiteDetailText(), descriptionTextBounds, "modelDescription");
 
-        composer.AddSmallButton(Lang.Get("Confirm model"), OnNext, ElementBounds.Fixed(0, _dlgHeight - 30).WithAlignment(EnumDialogArea.RightFixed).WithFixedPadding(12, 6), EnumButtonStyle.Normal);
+        composer.AddSmallButton(Lang.Get("Confirm model"), OnNextImpl, ElementBounds.Fixed(0, _dlgHeight - 30).WithAlignment(EnumDialogArea.RightFixed).WithFixedPadding(12, 6), EnumButtonStyle.Normal);
 
         string modelDescription = CreateModelDescription(system, skinBehavior.CurrentModelCode);
 
@@ -434,15 +433,16 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         ReTesselate();
     }
-    private void ComposeSkinTab(GuiComposer composer, EntityBehaviorPlayerInventory inventoryBehavior, double yPosition, double padding, ElementBounds dialogBounds, ElementBounds backgroundBounds)
+    private void ComposeSkinTab(GuiComposer composer, EntityBehaviorPlayerInventory inventoryBehavior, double yPosition, double padding, ElementBounds backgroundBounds)
     {
-        PlayerSkinBehavior skinMod = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
+        PlayerSkinBehavior? skinMod = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
 
-        //capi.World.Player.Entity.hideClothing = charNaked;
+        if (skinMod == null) return;
+
         inventoryBehavior.hideClothing = _charNaked;
 
         EntityShapeRenderer? essr = capi.World.Player.Entity.Properties.Client.Renderer as EntityShapeRenderer;
-        essr.TesselateShape();
+        essr?.TesselateShape();
 
         CairoFont smallfont = CairoFont.WhiteSmallText();
         Cairo.TextExtents textExt = smallfont.GetTextExtents(Lang.Get("Show dressed"));
@@ -451,7 +451,6 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         ElementBounds leftColBounds = ElementBounds.Fixed(0, yPosition, 204, _dlgHeight - 59).FixedGrow(2 * padding, 2 * padding);
 
         _insetSlotBounds = ElementBounds.Fixed(0, yPosition + 2, 265, leftColBounds.fixedHeight - 2 * padding - 10).FixedRightOf(leftColBounds, 10);
-        ElementBounds rightColBounds = ElementBounds.Fixed(0, yPosition, 54, _dlgHeight - 59).FixedGrow(2 * padding, 2 * padding).FixedRightOf(_insetSlotBounds, 10);
         ElementBounds toggleButtonBounds = ElementBounds.Fixed(
                 (int)_insetSlotBounds.fixedX + _insetSlotBounds.fixedWidth / 2 - textExt.Width / RuntimeEnv.GUIScale / 2 - 12,
                 0,
@@ -462,8 +461,8 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
 
 
-        ElementBounds bounds = null;
-        ElementBounds prevbounds = null;
+        ElementBounds? bounds = null;
+        ElementBounds? prevbounds = null;
 
         double leftX = 0;
 
@@ -477,7 +476,7 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
             string code = skinpart.Code;
 
-            AppliedSkinnablePartVariant appliedVar = skinMod.AppliedSkinParts.FirstOrDefault(sp => sp.PartCode == code);
+            AppliedSkinnablePartVariant? appliedVar = skinMod.AppliedSkinParts.FirstOrDefault(sp => sp.PartCode == code);
 
             if (skinpart.Type == EnumSkinnableType.Texture && !skinpart.UseDropDown)
             {
@@ -491,16 +490,18 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
                     if (appliedVar?.Code == skinpart.Variants[i].Code) selectedIndex = i;
                 }
 
-                composer.AddRichtext(Lang.Get("skinpart-" + code), CairoFont.WhiteSmallText(), bounds = bounds.BelowCopy(0, 10).WithFixedSize(210, 22));
-                composer.AddColorListPicker(colors, (index) => onToggleSkinPartColor(code, index), bounds = bounds.BelowCopy(0, 0).WithFixedSize(colorIconSize, colorIconSize), 180, "picker-" + code);
+
+                bounds = bounds.BelowCopy(0, 10).WithFixedSize(210, 22);
+                composer.AddRichtext(Lang.Get("skinpart-" + code), CairoFont.WhiteSmallText(), bounds);
+
+                bounds = bounds.BelowCopy(0, 0).WithFixedSize(colorIconSize, colorIconSize);
+                composer.AddColorListPicker(colors, (index) => onToggleSkinPartColor(code, index), bounds, 180, "picker-" + code);
 
                 for (int i = 0; i < colors.Length; i++)
                 {
                     GuiElementColorListPicker picker = composer.GetColorListPicker("picker-" + code + "-" + i);
                     picker.ShowToolTip = true;
                     picker.TooltipText = Lang.Get("color-" + skinpart.Variants[i].Code);
-
-                    //Console.WriteLine("\"" + Lang.Get("color-" + skinpart.Variants[i].Code) + "\": \""+ skinpart.Variants[i].Code + "\"");
                 }
 
                 composer.ColorListPickerSetValue("picker-" + code, selectedIndex);
@@ -517,21 +518,21 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
                     names[i] = Lang.Get("skinpart-" + code + "-" + skinpart.Variants[i].Code);
                     values[i] = skinpart.Variants[i].Code;
 
-                    //Console.WriteLine("\"" + names[i] + "\": \"" + skinpart.Variants[i].Code + "\",");
-
                     if (appliedVar?.Code == values[i]) selectedIndex = i;
                 }
 
-
-                composer.AddRichtext(Lang.Get("skinpart-" + code), CairoFont.WhiteSmallText(), bounds = bounds.BelowCopy(0, 10).WithFixedSize(210, 22));
+                bounds = bounds.BelowCopy(0, 10).WithFixedSize(210, 22);
+                composer.AddRichtext(Lang.Get("skinpart-" + code), CairoFont.WhiteSmallText(), bounds);
 
                 string tooltip = Lang.GetIfExists("skinpartdesc-" + code);
                 if (tooltip != null)
                 {
-                    composer.AddHoverText(tooltip, CairoFont.WhiteSmallText(), 300, bounds = bounds.FlatCopy());
+                    bounds = bounds.FlatCopy();
+                    composer.AddHoverText(tooltip, CairoFont.WhiteSmallText(), 300, bounds);
                 }
 
-                composer.AddDropDown(values, names, selectedIndex, (variantcode, selected) => onToggleSkinPartColor(code, variantcode), bounds = bounds.BelowCopy(0, 0).WithFixedSize(200, 25), "dropdown-" + code);
+                bounds = bounds.BelowCopy(0, 0).WithFixedSize(200, 25);
+                composer.AddDropDown(values, names, selectedIndex, (variantcode, selected) => onToggleSkinPartColor(code, variantcode), bounds, "dropdown-" + code);
             }
 
             prevbounds = bounds.FlatCopy();
@@ -554,7 +555,7 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             .AddButton(Lang.Get("Last selection"), () => { return OnRandomizeSkin(_characterSystem.getPreviousSelection()); }, ElementBounds.Fixed(130, _dlgHeight - 25).WithAlignment(EnumDialogArea.LeftFixed).WithFixedPadding(8, 6), CairoFont.WhiteSmallText(), EnumButtonStyle.Small)
             .EndIf();
 
-        composer.AddSmallButton(Lang.Get("Confirm Skin"), OnNext, ElementBounds.Fixed(0, _dlgHeight - 25).WithAlignment(EnumDialogArea.RightFixed).WithFixedPadding(12, 6), EnumButtonStyle.Normal);
+        composer.AddSmallButton(Lang.Get("Confirm Skin"), OnNextImpl, ElementBounds.Fixed(0, _dlgHeight - 25).WithAlignment(EnumDialogArea.RightFixed).WithFixedPadding(12, 6), EnumButtonStyle.Normal);
 
         composer.GetToggleButton("showdressedtoggle").SetValue(!_charNaked);
     }
@@ -568,7 +569,6 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         ElementBounds leftColBounds = ElementBounds.Fixed(0, yPosition, 0, _dlgHeight - 47).FixedGrow(2 * padding, 2 * padding);
         _insetSlotBounds = ElementBounds.Fixed(0, yPosition + 25, 190, leftColBounds.fixedHeight - 2 * padding + 10).FixedRightOf(leftColBounds, 10);
 
-        ElementBounds rightSlotBounds = ElementStdBounds.SlotGrid(EnumDialogArea.None, 0, yPosition, 1, _rows).FixedGrow(2 * padding, 2 * padding).FixedRightOf(_insetSlotBounds, 10);
         ElementBounds prevButtonBounds = ElementBounds.Fixed(0, yPosition + 25, 35, slotSize - 4).WithFixedPadding(2).FixedRightOf(_insetSlotBounds, 20);
         ElementBounds centerTextBounds = ElementBounds.Fixed(0, yPosition + 25, 200, slotSize - 4 - 8).FixedRightOf(prevButtonBounds, 20);
 
@@ -595,24 +595,25 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         ChangeClass(0);
     }
 
-
-
     private bool OnRandomizeSkin(Dictionary<string, string> preselection)
     {
         EntityPlayer entity = capi.World.Player.Entity;
 
-        //essr.doReloadShapeAndSkin = false;
-        EntityBehaviorPlayerInventory bh = capi.World.Player.Entity.GetBehavior<EntityBehaviorPlayerInventory>();
+        EntityBehaviorPlayerInventory? bh = capi.World.Player.Entity.GetBehavior<EntityBehaviorPlayerInventory>();
+        if (bh == null) return false;
         bh.doReloadShapeAndSkin = false;
 
         _characterSystem.randomizeSkin(entity, preselection);
-        EntityBehaviorExtraSkinnable skinMod = entity.GetBehavior<EntityBehaviorExtraSkinnable>();
+        EntityBehaviorExtraSkinnable? skinMod = entity.GetBehavior<EntityBehaviorExtraSkinnable>();
+
+        if (skinMod == null) return false;
 
         foreach (AppliedSkinnablePartVariant? appliedPart in skinMod.AppliedSkinParts)
         {
             string partcode = appliedPart.PartCode;
 
             SkinnablePart? skinPart = skinMod.AvailableSkinParts.FirstOrDefault(part => part.Code == partcode);
+            if (skinPart == null) continue;
             int index = skinPart.Variants.IndexOf(part => part.Code == appliedPart.Code);
 
             if (skinPart.Type == EnumSkinnableType.Texture && !skinPart.UseDropDown)
@@ -625,7 +626,6 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             }
         }
 
-        //essr.doReloadShapeAndSkin = true;
         bh.doReloadShapeAndSkin = true;
         ReTesselate();
 
@@ -634,19 +634,20 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     private void OnToggleDressOnOff(bool on)
     {
         _charNaked = !on;
-        EntityBehaviorPlayerInventory bh = capi.World.Player.Entity.GetBehavior<EntityBehaviorPlayerInventory>();
-        bh.hideClothing = _charNaked;
-        //capi.World.Player.Entity.hideClothing = charNaked;
+        EntityBehaviorPlayerInventory? bh = capi.World.Player.Entity.GetBehavior<EntityBehaviorPlayerInventory>();
+        if (bh != null) bh.hideClothing = _charNaked;
         ReTesselate();
     }
     private void onToggleSkinPartColor(string partCode, string variantCode)
     {
-        EntityBehaviorExtraSkinnable skinMod = capi.World.Player.Entity.GetBehavior<EntityBehaviorExtraSkinnable>();
-        skinMod.selectSkinPart(partCode, variantCode);
+        EntityBehaviorExtraSkinnable? skinMod = capi.World.Player.Entity.GetBehavior<EntityBehaviorExtraSkinnable>();
+        skinMod?.selectSkinPart(partCode, variantCode);
     }
     private void onToggleSkinPartColor(string partCode, int index)
     {
-        EntityBehaviorExtraSkinnable skinMod = capi.World.Player.Entity.GetBehavior<EntityBehaviorExtraSkinnable>();
+        EntityBehaviorExtraSkinnable? skinMod = capi.World.Player.Entity.GetBehavior<EntityBehaviorExtraSkinnable>();
+
+        if (skinMod == null) return;
 
         string variantCode = skinMod.AvailableSkinPartsByCode[partCode].Variants[index].Code;
 
@@ -654,13 +655,14 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     }
     private void onToggleModel(string modelCode)
     {
-        EntityBehaviorPlayerInventory bh = capi.World.Player.Entity.GetBehavior<EntityBehaviorPlayerInventory>();
-        bh.doReloadShapeAndSkin = true;
-
-        PlayerSkinBehavior skinMod = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
+        EntityBehaviorPlayerInventory? bh = capi.World.Player.Entity.GetBehavior<EntityBehaviorPlayerInventory>();
+        PlayerSkinBehavior? skinMod = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
         CustomModelsSystem system = capi.ModLoader.GetModSystem<CustomModelsSystem>();
 
+        if (bh == null || skinMod == null) return;
+
         skinMod.SetCurrentModel(modelCode, _currentModelSize);
+        bh.doReloadShapeAndSkin = true;
 
         List<CharacterClass> availableClasses = GetAvailableClasses(system, skinMod.CurrentModelCode);
         _characterSystem.setCharacterClass(capi.World.Player.Entity, availableClasses[0].Code, true);
@@ -669,7 +671,7 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         OnRandomizeSkin(new Dictionary<string, string>());
     }
-    private bool OnNext()
+    private bool OnNextImpl()
     {
         _currentTab = (EnumCreateCharacterTabs)GameMath.Clamp((int)_currentTab + 1, 0, (int)EnumCreateCharacterTabs.Class);
         ComposeGuis();
@@ -686,18 +688,16 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         TryClose();
         return true;
     }
-    private void OnTitleBarClose()
+    private new void OnTitleBarClose()
     {
         TryClose();
     }
-    private void SendInvPacket(object packet)
-    {
-        capi.Network.SendPacketClient(packet);
-    }
     private void ChangeClass(int dir)
     {
-        PlayerSkinBehavior skinMod = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
+        PlayerSkinBehavior? skinMod = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
         CustomModelsSystem system = capi.ModLoader.GetModSystem<CustomModelsSystem>();
+
+        if (skinMod == null) return;
 
         List<CharacterClass> availableClasses = GetAvailableClasses(system, skinMod.CurrentModelCode);
 
@@ -707,7 +707,6 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         Composers["createcharacter"]?.GetDynamicText("className").SetNewText(Lang.Get("characterclass-" + chclass.Code));
 
         StringBuilder fulldesc = new();
-        StringBuilder attributes = new();
 
         fulldesc.AppendLine(Lang.Get("characterdesc-" + chclass.Code));
         fulldesc.AppendLine();
@@ -719,7 +718,7 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         AppendTraits(fulldesc, chartraitsExtra);
 
-        if (chartraitsExtra.Count() != 0)
+        if (chartraitsExtra.Any())
         {
             fulldesc.AppendLine("");
         }
@@ -742,16 +741,11 @@ public class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         EntityShapeRenderer? renderer = capi.World.Player.Entity.Properties.Client.Renderer as EntityShapeRenderer;
         renderer?.TesselateShape();
     }
-    private void OnModelSelected()
-    {
-
-    }
     private void OnModelSizeChanged()
     {
-        PlayerSkinBehavior skinMod = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
-        CustomModelsSystem system = capi.ModLoader.GetModSystem<CustomModelsSystem>();
+        PlayerSkinBehavior? skinMod = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
 
-        skinMod.SetCurrentModel(skinMod.CurrentModelCode, _currentModelSize);
+        skinMod?.SetCurrentModel(skinMod.CurrentModelCode, _currentModelSize);
     }
     private string CreateModelDescription(CustomModelsSystem system, string model)
     {

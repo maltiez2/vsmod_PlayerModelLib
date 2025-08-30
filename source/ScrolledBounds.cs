@@ -1,9 +1,9 @@
 ﻿using Cairo;
 using HarmonyLib;
-using System.Reflection;
-using System.Reflection.Emit;
 using Vintagestory.API.Client;
 using Vintagestory.GameContent;
+
+#pragma warning disable
 
 // From https://github.com/kathanon/VintageStory-ScrollCharacterCreation
 
@@ -345,7 +345,7 @@ public static class ScrollPatches
         }
     }
 */
-    
+
     public static void PreLoop(GuiComposer composer,
                                SkinnablePart[] parts,
                                ElementBounds dialog,

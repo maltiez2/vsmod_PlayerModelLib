@@ -12,14 +12,6 @@ namespace PlayerModelLib;
 
 public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSource
 {
-    /*public Dictionary<string, SkinnablePart> AvailableSkinPartsByCode { get; set; } = new Dictionary<string, SkinnablePart>();
-    public SkinnablePart[] AvailableSkinParts { get; set; }
-    public string VoiceType = "altoflute";
-    public string VoicePitch = "medium";
-    public string mainTextureCode;
-    public List<AppliedSkinnablePartVariant> appliedTemp = new List<AppliedSkinnablePartVariant>();
-    protected ITreeAttribute skintree;*/
-
     public PlayerSkinBehavior(Entity entity) : base(entity)
     {
     }
@@ -78,7 +70,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
     {
         if (ModelSystem == null) return;
 
-        Debug.WriteLine($"ActuallyInitialize - side: {entity.Api.Side}");
+        
 
         skintree = entity.WatchedAttributes.GetTreeAttribute("skinConfig");
         if (skintree == null)
@@ -133,7 +125,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
     public void SetCurrentModel(string code, float size)
     {
-        Debug.WriteLine($"SetCurrentModel - side: {entity.Api.Side}");
+        
 
         skintree = entity.WatchedAttributes["skinConfig"] as ITreeAttribute;
         CurrentModelCode = code;
@@ -164,25 +156,23 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
     public override void OnEntityLoaded()
     {
         OnSkinModelChanged();
-        Debug.WriteLine($"OnEntityLoaded - {(entity as EntityPlayer).Player?.PlayerName ?? entity.EntityId.ToString()}");
     }
 
     public override void OnEntitySpawn()
     {
         OnSkinModelChanged();
-        Debug.WriteLine($"OnEntitySpawn - {(entity as EntityPlayer).Player?.PlayerName ?? entity.EntityId.ToString()}");
     }
 
     public override void OnEntityDespawn(EntityDespawnData despawn)
     {
-        Debug.WriteLine($"OnEntityDespawn - {(entity as EntityPlayer).Player?.PlayerName ?? entity.EntityId.ToString()}");
+        // nothing to do here
     }
 
     public override string PropertyName() => "skinnableplayercustommodel";
 
     public void UpdateEntityProperties()
     {
-        Debug.WriteLine($"UpdateEntityProperties - side: {entity.Api.Side}");
+        
 
         if (CurrentSize <= 0)
         {
@@ -243,15 +233,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
     {
         if (ModelSystem?.ModelsLoaded != true) return;
 
-        Debug.WriteLine($"Try OnSkinConfigChanged - side: {entity.Api.Side}");
-
         skintree = entity.WatchedAttributes["skinConfig"] as ITreeAttribute;
-
-        /*int skinTreeHash = skintree?.GetHashCode() ?? 0;
-        if (SkinTreeHash == skinTreeHash) return;
-        SkinTreeHash = skinTreeHash;*/
-
-        Debug.WriteLine($"OnSkinConfigChanged - side: {entity.Api.Side}");
 
         string modelCode = entity.WatchedAttributes.GetString("skinModel");
         if (modelCode != CurrentModelCode)
@@ -297,7 +279,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
     {
         if (ModelSystem?.ModelsLoaded != true) return;
 
-        Debug.WriteLine($"OnSkinModelChanged - side: {entity.Api.Side}");
+        
 
         skintree = entity.WatchedAttributes["skinConfig"] as ITreeAttribute;
         CurrentModelCode = entity.WatchedAttributes.GetString("skinModel");
@@ -315,17 +297,13 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
     protected void ReplaceEntityShape()
     {
-        Debug.WriteLine($"Try replaceEntityShape - side: {entity.Api.Side}");
-
         if (ModelSystem?.ModelsLoaded != true) return;
         if (!ModelSystem.CustomModels.TryGetValue(CurrentModelCode, out _)) return;
 
-        if (entity.Properties.Client.Renderer is EntityShapeRenderer renderer)
+        if (entity.Properties.Client.Renderer is EntityShapeRenderer)
         {
             entity.MarkShapeModified();
         }
-
-        Debug.WriteLine($"ReplaceEntityShape - side: {entity.Api.Side}");
 
         UpdateEntityProperties();
 
@@ -338,12 +316,12 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
         EntityTagArray currentTags = entity.Tags;
 
-        Debug.WriteLine($"Current tags: {currentTags}");
+        
 
         currentTags &= ~PreviousAddedTags;
         currentTags |= PreviousRemovedTags;
 
-        Debug.WriteLine($"Restored tags: {currentTags}");
+        
 
         PreviousAddedTags = CurrentModel.AddTags & ~currentTags;
         PreviousRemovedTags = CurrentModel.RemoveTags & currentTags;
@@ -354,7 +332,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         entity.Tags = currentTags;
         entity.MarkTagsDirty();
 
-        Debug.WriteLine($"New tags: {currentTags}");
+        
     }
 
 
@@ -527,6 +505,8 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
     protected Shape AddSkinPart(AppliedSkinnablePartVariant part, Shape entityShape, string[] disableElements, string shapePathForLogging)
     {
+        if (ClientApi == null) return entityShape;
+        
         SkinnablePart skinPart = CurrentModel.SkinParts[part.PartCode];
 
         entityShape.RemoveElements(disableElements);
@@ -539,16 +519,20 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
             shapePath = tmpl.Base.CopyWithPath("shapes/" + tmpl.Base.Path + ".json");
             shapePath.Path = shapePath.Path.Replace("{code}", part.Code);
         }
-        else
+        else if (part.Shape != null)
         {
             shapePath = part.Shape.Base.CopyWithPath("shapes/" + part.Shape.Base.Path + ".json");
+        }
+        else
+        {
+            return entityShape;
         }
 
         Shape partShape = Shape.TryGet(ClientApi, shapePath);
         if (partShape == null)
         {
             ClientApi.World.Logger.Warning("Entity skin shape {0} defined in entity config {1} not found or errored, was supposed to be at {2}. Skin part will be invisible.", shapePath, entity.Properties.Code, shapePath);
-            return null;
+            return entityShape;
         }
 
         string prefixCode = CustomModelsSystem.GetSkinPartTexturePrefix(CurrentModelCode, skinPart.Code);
@@ -569,7 +553,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
                 compositeTexture.Bake(ClientApi.Assets);
                 ClientApi.EntityTextureAtlas.GetOrInsertTexture(compositeTexture.Baked.TextureFilenames[0], out int textureSubId, out _);
                 compositeTexture.Baked.TextureSubId = textureSubId;
-                Debug.WriteLine($"*** Added texture: {prefixCode + code}");
+                
             }
         });
 
@@ -621,10 +605,6 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         api.EntityTextureAtlas.GetOrInsertTexture(baseTexture, out int textureSubId, out TextureAtlasPosition texturePosition, -1);
 
         OverlaysTexturePositions[code] = texturePosition;
-
-        //AllocateTextureSpace(api, entityShape, code);
-
-        //RenderOverlayTexture(api, entityShape, code, textureSubId, texturePosition);
     }
 
     protected virtual void RenderOverlayTexture(ICoreClientAPI api, Shape entityShape, string code, int overlayTextureId, TextureAtlasPosition overlayTexturePosition)
@@ -654,11 +634,6 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
     protected virtual void AllocateTextureSpace(ICoreClientAPI api, Shape entityShape, string code)
     {
-        if (OverlaysTextureSpaces.TryGetValue(code, out int space))
-        {
-            //api.EntityTextureAtlas.FreeTextureSpace(space);
-        }
-
         int width = entityShape.TextureSizes[code][0] * 2;
         int height = entityShape.TextureSizes[code][1] * 2;
 

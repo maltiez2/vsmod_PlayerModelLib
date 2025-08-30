@@ -1,0 +1,9 @@
+<Project>
+  <PropertyGroup>
+    <RunFormatter>true</RunFormatter>
+    <DataFolderName>VintagestoryDataDev</DataFolderName>
+    <GameDirectory></GameDirectory>
+    <PackageDevBuild>false</PackageDevBuild>
+    <EnterWorldOnStartup>true</EnterWorldOnStartup>
+  </PropertyGroup>
+</Project>

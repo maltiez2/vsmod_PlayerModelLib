@@ -1,4 +1,4 @@
-﻿[
+[
   {"side": "Server", "file": "game:entities/humanoid/player", "op": "replace", "path": "/client/behaviors/7/code", "value": "PlayerModelLib:ExtraSkinnable"},
   {"side": "Server", "file": "game:entities/humanoid/player", "op": "replace", "path": "/server/behaviors/11/code", "value": "PlayerModelLib:ExtraSkinnable"}
 ]

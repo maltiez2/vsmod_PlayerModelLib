@@ -174,9 +174,9 @@ public sealed class CustomModelsSystem : ModSystem
             {
                 return _clientApi?.Tesselator.GetTextureSource(entity, null, textureIndex)?[textureCode];
             }
-            catch (Exception exception)
+            catch (Exception)
             {
-                
+                // if failed will just try again elsewhere
             }
         }
 
@@ -184,7 +184,7 @@ public sealed class CustomModelsSystem : ModSystem
         {
             return TextureSource?[fullCode];
         }
-        catch (Exception exception)
+        catch (Exception)
         {
             return null;
         }
@@ -229,13 +229,14 @@ public sealed class CustomModelsSystem : ModSystem
     private IClientNetworkChannel? _clientChannel;
     private readonly Dictionary<string, AssetLocation> _textures = [];
     private ICoreClientAPI? _clientApi;
-    private ICoreAPI _api;
+    private ICoreAPI? _api;
     private readonly Dictionary<string, string> _oldMainTextureCodes = [];
     private readonly Dictionary<string, Dictionary<string, string>> _wearableModelReplacers = [];
     private readonly Dictionary<string, Dictionary<string, CompositeShape>> _wearableCompositeModelReplacers = [];
 
     private void LoadDefault()
     {
+        if (_api == null) return;
         if (_defaultLoaded) return;
         _defaultLoaded = true;
 
@@ -261,7 +262,7 @@ public sealed class CustomModelsSystem : ModSystem
 
         SkinnablePartExtended[] parts = playerProperties.Attributes["skinnableParts"].AsObject<SkinnablePartExtended[]>().Where(part => part.Enabled).ToArray();
 
-        FixDefaultSkinParts(parts, GetSkinPartsWithSkinTexture(parts));
+        FixDefaultSkinParts(parts);
 
         Dictionary<string, SkinnablePart> partsByCode = LoadParts(_api, parts, _defaultModelCode);
 
@@ -391,17 +392,16 @@ public sealed class CustomModelsSystem : ModSystem
             {
                 foreach (Item item in api.World.Items)
                 {
-                    if (WildcardUtil.Match(itemCodeWildcard, item.Code?.ToString() ?? ""))
+                    if (!WildcardUtil.Match(itemCodeWildcard, item.Code?.ToString() ?? "")) continue;
+                    
+                    string processedPath = path;
+
+                    foreach ((string variantCode, string variantValue) in item.Variant)
                     {
-                        string processedPath = path;
-
-                        foreach ((string variantCode, string variantValue) in item.Variant)
-                        {
-                            processedPath = processedPath.Replace($"{variantCode}", variantValue);
-                        }
-
-                        CustomModels[modelCode].WearableShapeReplacers.TryAdd(item.Id, processedPath);
+                        processedPath = processedPath.Replace($"{variantCode}", variantValue);
                     }
+
+                    CustomModels[modelCode].WearableShapeReplacers.TryAdd(item.Id, processedPath);
                 }
             }
         }
@@ -414,10 +414,9 @@ public sealed class CustomModelsSystem : ModSystem
             {
                 foreach (Item item in api.World.Items)
                 {
-                    if (WildcardUtil.Match(itemCodeWildcard, item.Code?.ToString() ?? ""))
-                    {
-                        CustomModels[modelCode].WearableCompositeShapeReplacers[item.Id] = path;
-                    }
+                    if (!WildcardUtil.Match(itemCodeWildcard, item.Code?.ToString() ?? "")) continue;
+                    
+                    CustomModels[modelCode].WearableCompositeShapeReplacers[item.Id] = path;
                 }
             }
         }
@@ -433,12 +432,11 @@ public sealed class CustomModelsSystem : ModSystem
                 {
                     foreach (Item item in api.World.Items)
                     {
-                        if (WildcardUtil.Match(itemCodeWildcard, item.Code?.ToString() ?? ""))
-                        {
-                            ReplaceVariants(path, item);
+                        if (!WildcardUtil.Match(itemCodeWildcard, item.Code?.ToString() ?? "")) continue;
+                        
+                        ReplaceVariants(path, item);
 
-                            CustomModels[modelCode].WearableCompositeShapeReplacers[item.Id] = path;
-                        }
+                        CustomModels[modelCode].WearableCompositeShapeReplacers[item.Id] = path;
                     }
                 }
             }
@@ -520,14 +518,7 @@ public sealed class CustomModelsSystem : ModSystem
             }
         }
     }
-    private IEnumerable<string> GetSkinPartsWithSkinTexture(SkinnablePartExtended[] parts)
-    {
-        return parts
-            .Where(part => part.Type == EnumSkinnableType.Shape)
-            .Where(part => part.TargetSkinParts.Contains("baseskin"))
-            .Select(part => part.Code);
-    }
-    private void FixDefaultSkinParts(SkinnablePartExtended[] parts, IEnumerable<string> baseSkinTargets)
+    private void FixDefaultSkinParts(SkinnablePartExtended[] parts)
     {
         foreach (SkinnablePartExtended part in parts)
         {
@@ -695,8 +686,8 @@ public sealed class CustomModelsSystem : ModSystem
         }
         catch (Exception exception)
         {
-            // @TODO add error logging
-            return new();
+            LoggerUtil.Error(_api, this, $"Failed to get model replacements from '{asset.Location}'. Exception: {exception}");
+            return [];
         }
     }
     private Dictionary<string, Dictionary<string, CompositeShape>> CompositeReplacementsFromAsset(IAsset asset)
@@ -707,8 +698,8 @@ public sealed class CustomModelsSystem : ModSystem
         }
         catch (Exception exception)
         {
-            // @TODO add error logging
-            return new();
+            LoggerUtil.Error(_api, this, $"Failed to get composite model replacements from '{asset.Location}'. Exception: {exception}");
+            return [];
         }
     }
     private void ReplaceVariants(CompositeShape shape, Item item)
@@ -889,8 +880,6 @@ public sealed class CustomModelsSystem : ModSystem
                     if (textureAsset2 == null) continue;
 
                     _clientApi.EntityTextureAtlas.GetOrInsertTexture(texturePath, out _, out TextureAtlasPosition texPos, () => textureAsset2.ToBitmap(_clientApi));
-
-                    Debug.WriteLine($"CollectTextures - {modelCode} - {textureCode} - {(texPos.x2 - texPos.x1) * 4096}- {(texPos.y2 - texPos.y1) * 4096}");
 
                     data.MainTexturePosition = texPos;
 
