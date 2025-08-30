@@ -116,6 +116,7 @@ internal static class OtherPatches
                 new(OpCodes.Ldloca_S, 5),
                 new(OpCodes.Ldarg_3),
                 new(OpCodes.Ldloc_1),
+                new(OpCodes.Ldarg_S, 4),
                 new(OpCodes.Call, AccessTools.Method(typeof(EntityBehaviorContainerPatchCommand), nameof(GetModelReplacement))),
             ];
             List<CodeInstruction> codes = [.. instructions];
@@ -133,7 +134,7 @@ internal static class OtherPatches
             return codes;
         }
 
-        public static void GetModelReplacement(ItemStack? stack, Entity entity, ref Shape? defaultShape, ref CompositeShape? compositeShape, IAttachableToEntity yatayata, float damageEffect)
+        public static void GetModelReplacement(ItemStack? stack, Entity entity, ref Shape? defaultShape, ref CompositeShape? compositeShape, IAttachableToEntity yatayata, float damageEffect, string slotCode)
         {
             int itemId = stack?.Item?.Id ?? 0;
 
@@ -146,11 +147,14 @@ internal static class OtherPatches
             
             CustomModelData customModel = system.CustomModels[currentModel];
 
+            string? yataPrefixCode = yatayata.GetTexturePrefixCode(stack);
+            string prefixCode = yataPrefixCode == null ? slotCode : yataPrefixCode + "-" + slotCode;
+
             if (customModel.WearableShapeReplacers.TryGetValue(itemId, out string? shape))
             {
                 defaultShape = LoadShape(entity.Api, shape);
 
-                defaultShape?.SubclassForStepParenting(yatayata.GetTexturePrefixCode(stack), damageEffect);
+                defaultShape?.SubclassForStepParenting(prefixCode, damageEffect);
                 defaultShape?.ResolveReferences(entity.World.Logger, currentModel);
 
                 if (compositeShape != null)
@@ -170,7 +174,7 @@ internal static class OtherPatches
 
                 defaultShape = LoadShape(entity.Api, newCompositeShape.Base);
 
-                defaultShape?.SubclassForStepParenting(yatayata.GetTexturePrefixCode(stack), damageEffect);
+                defaultShape?.SubclassForStepParenting(prefixCode, damageEffect);
                 defaultShape?.ResolveReferences(entity.World.Logger, currentModel);
             }
 
@@ -182,7 +186,7 @@ internal static class OtherPatches
             {
                 defaultShape = LoadShape(entity.Api, shape);
 
-                defaultShape?.SubclassForStepParenting(yatayata.GetTexturePrefixCode(stack), damageEffect);
+                defaultShape?.SubclassForStepParenting(prefixCode, damageEffect);
                 defaultShape?.ResolveReferences(entity.World.Logger, currentModel);
             }
 

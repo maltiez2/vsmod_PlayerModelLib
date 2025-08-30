@@ -3,7 +3,7 @@
   <PropertyGroup>
     <ModName>Player Model Library</ModName>
     <ModType>code</ModType>
-    <ModVersion>0.1.27</ModVersion>
+    <ModVersion>1.0.0</ModVersion>
     <ModId>playermodellib</ModId>
     <Description></Description>
     <Side>Universal</Side>
@@ -42,7 +42,7 @@
 
   <!-- Startup settings -->
   <PropertyGroup>
-    <DataFolderName>VintagestoryDataDev</DataFolderName>               
+    <DataFolderName>VintagestoryDataDev</DataFolderName>
     <DataFolder>$(AppData)\$(DataFolderName)</DataFolder>
     <AditionalModsFolder>$(AppData)\$(DataFolderName)\Mods</AditionalModsFolder>
     <WorldName>test_$(ModId)</WorldName>

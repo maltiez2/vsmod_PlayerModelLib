@@ -3,6 +3,7 @@ using OpenTK.Mathematics;
 using ProtoBuf;
 using SkiaSharp;
 using System.Diagnostics;
+using System.Linq;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
@@ -175,7 +176,7 @@ public sealed class CustomModelsSystem : ModSystem
             }
             catch (Exception exception)
             {
-                return null;
+                
             }
         }
 
@@ -315,52 +316,7 @@ public sealed class CustomModelsSystem : ModSystem
             {
                 try
                 {
-                    Shape? shape = LoadShape(api, modelConfig.ShapePath);
-
-                    if (shape == null)
-                    {
-                        _api?.Logger.Error($"[Player Model lib] Unable to load shape '{modelConfig.ShapePath}' for model '{code}'");
-                        continue;
-                    }
-
-                    modelConfig.SkinnableParts = modelConfig.SkinnableParts.Where(part => part.Enabled).ToArray();
-
-                    Dictionary<string, SkinnablePart> partsByCode = LoadParts(api, modelConfig.SkinnableParts, code);
-
-                    FixColBreak(modelConfig.SkinnableParts, code);
-
-                    CustomModelData modelData = new(code, shape)
-                    {
-                        SkinParts = partsByCode,
-                        SkinPartsArray = modelConfig.SkinnableParts,
-                        MainTextureCode = PrefixTextureCode(code, modelConfig.MainTextureCode),
-                        AvailableClasses = [.. modelConfig.AvailableClasses],
-                        SkipClasses = [.. modelConfig.SkipClasses],
-                        ExclusiveClasses = [.. modelConfig.ExclusiveClasses],
-                        ExtraTraits = modelConfig.ExtraTraits,
-                        WearableShapeReplacersByShape = modelConfig.WearableModelReplacersByShape,
-                        CollisionBox = modelConfig.CollisionBox.Length == 0 ? CustomModels[_defaultModelCode].CollisionBox : new Vector2(modelConfig.CollisionBox[0], modelConfig.CollisionBox[1]),
-                        EyeHeight = modelConfig.EyeHeight,
-                        SizeRange = new(modelConfig.SizeRange[0], modelConfig.SizeRange[1]),
-                        MaxCollisionBox = new Vector2(modelConfig.MaxCollisionBox[0], modelConfig.MaxCollisionBox[1]),
-                        MinCollisionBox = new Vector2(modelConfig.MinCollisionBox[0], modelConfig.MinCollisionBox[1]),
-                        ScaleColliderWithSizeHorizontally = modelConfig.ScaleColliderWithSizeHorizontally,
-                        ScaleColliderWithSizeVertically = modelConfig.ScaleColliderWithSizeVertically,
-                        MaxEyeHeight = modelConfig.MaxEyeHeight,
-                        MinEyeHeight = modelConfig.MinEyeHeight,
-                        AddTags = api.TagRegistry.EntityTagsToTagArray(modelConfig.AddTags),
-                        RemoveTags = api.TagRegistry.EntityTagsToTagArray(modelConfig.RemoveTags),
-                        ModelSizeFactor = modelConfig.ModelSizeFactor,
-                        HeadBobbingScale = modelConfig.HeadBobbingScale,
-                        GuiModelScale = modelConfig.GuiModelScale,
-                        Enabled = modelConfig.Enabled,
-                    };
-
-                    _wearableModelReplacers.Add(code, modelConfig.WearableModelReplacers);
-                    _wearableCompositeModelReplacers.Add(code, modelConfig.WearableCompositeModelReplacers);
-                    
-                    CustomModels.Add(code, modelData);
-                    _oldMainTextureCodes.Add(code, modelConfig.MainTextureCode);
+                    LoadCustomModel(api, code, modelConfig);
                 }
                 catch (Exception exception)
                 {
@@ -368,6 +324,62 @@ public sealed class CustomModelsSystem : ModSystem
                 }
             }
         }
+    }
+    private void LoadCustomModel(ICoreAPI api, string code, CustomModelConfig modelConfig)
+    {
+        Shape? shape = LoadShape(api, modelConfig.ShapePath);
+
+        if (shape == null)
+        {
+            LoggerUtil.Error(_api, this, $"({code}) Unable to load shape '{modelConfig.ShapePath}'");
+            return;
+        }
+
+        if (!shape.Textures.ContainsKey(modelConfig.MainTextureCode))
+        {
+            string textures = shape.Textures.Keys.Aggregate((a, b) => $"{a}, {b}");
+            LoggerUtil.Error(_api, this, $"({code}) Shape '{modelConfig.ShapePath}' does not have main texture with code '{modelConfig.MainTextureCode}'. Textures that this shape has: {textures}");
+            return;
+        }
+
+        modelConfig.SkinnableParts = modelConfig.SkinnableParts.Where(part => part.Enabled).ToArray();
+
+        Dictionary<string, SkinnablePart> partsByCode = LoadParts(api, modelConfig.SkinnableParts, code);
+
+        FixColBreak(modelConfig.SkinnableParts, code);
+
+        CustomModelData modelData = new(code, shape)
+        {
+            SkinParts = partsByCode,
+            SkinPartsArray = modelConfig.SkinnableParts,
+            MainTextureCode = PrefixTextureCode(code, modelConfig.MainTextureCode),
+            AvailableClasses = [.. modelConfig.AvailableClasses],
+            SkipClasses = [.. modelConfig.SkipClasses],
+            ExclusiveClasses = [.. modelConfig.ExclusiveClasses],
+            ExtraTraits = modelConfig.ExtraTraits,
+            WearableShapeReplacersByShape = modelConfig.WearableModelReplacersByShape,
+            CollisionBox = modelConfig.CollisionBox.Length == 0 ? CustomModels[_defaultModelCode].CollisionBox : new Vector2(modelConfig.CollisionBox[0], modelConfig.CollisionBox[1]),
+            EyeHeight = modelConfig.EyeHeight,
+            SizeRange = new(modelConfig.SizeRange[0], modelConfig.SizeRange[1]),
+            MaxCollisionBox = new Vector2(modelConfig.MaxCollisionBox[0], modelConfig.MaxCollisionBox[1]),
+            MinCollisionBox = new Vector2(modelConfig.MinCollisionBox[0], modelConfig.MinCollisionBox[1]),
+            ScaleColliderWithSizeHorizontally = modelConfig.ScaleColliderWithSizeHorizontally,
+            ScaleColliderWithSizeVertically = modelConfig.ScaleColliderWithSizeVertically,
+            MaxEyeHeight = modelConfig.MaxEyeHeight,
+            MinEyeHeight = modelConfig.MinEyeHeight,
+            AddTags = api.TagRegistry.EntityTagsToTagArray(modelConfig.AddTags),
+            RemoveTags = api.TagRegistry.EntityTagsToTagArray(modelConfig.RemoveTags),
+            ModelSizeFactor = modelConfig.ModelSizeFactor,
+            HeadBobbingScale = modelConfig.HeadBobbingScale,
+            GuiModelScale = modelConfig.GuiModelScale,
+            Enabled = modelConfig.Enabled,
+        };
+
+        _wearableModelReplacers.Add(code, modelConfig.WearableModelReplacers);
+        _wearableCompositeModelReplacers.Add(code, modelConfig.WearableCompositeModelReplacers);
+
+        CustomModels.Add(code, modelData);
+        _oldMainTextureCodes.Add(code, modelConfig.MainTextureCode);
     }
     private void LoadModelReplacements(ICoreAPI api)
     {
