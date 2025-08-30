@@ -1,5 +1,4 @@
 ﻿using HarmonyLib;
-using System.Diagnostics;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
@@ -70,7 +69,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
     {
         if (ModelSystem == null) return;
 
-        
+
 
         skintree = entity.WatchedAttributes.GetTreeAttribute("skinConfig");
         if (skintree == null)
@@ -125,7 +124,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
     public void SetCurrentModel(string code, float size)
     {
-        
+
 
         skintree = entity.WatchedAttributes["skinConfig"] as ITreeAttribute;
         CurrentModelCode = code;
@@ -172,13 +171,13 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
     public void UpdateEntityProperties()
     {
-        
+
 
         if (CurrentSize <= 0)
         {
             CurrentSize = 1;
         }
-        
+
         if (entity is EntityPlayer player)
         {
             float factor = MathF.Sqrt(CurrentSize) * CurrentModel.HeadBobbingScale;
@@ -279,7 +278,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
     {
         if (ModelSystem?.ModelsLoaded != true) return;
 
-        
+
 
         skintree = entity.WatchedAttributes["skinConfig"] as ITreeAttribute;
         CurrentModelCode = entity.WatchedAttributes.GetString("skinModel");
@@ -316,12 +315,12 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
         EntityTagArray currentTags = entity.Tags;
 
-        
+
 
         currentTags &= ~PreviousAddedTags;
         currentTags |= PreviousRemovedTags;
 
-        
+
 
         PreviousAddedTags = CurrentModel.AddTags & ~currentTags;
         PreviousRemovedTags = CurrentModel.RemoveTags & currentTags;
@@ -332,7 +331,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         entity.Tags = currentTags;
         entity.MarkTagsDirty();
 
-        
+
     }
 
 
@@ -422,7 +421,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
                         ReplaceTexture(api, entityShape, mainCode, textureLoc, entityShape.TextureWidth, entityShape.TextureHeight, shapePathForLogging);
                     }
                 }
-                
+
             }
         }
 
@@ -454,7 +453,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
             {
                 RemoveDisabledElements(entityShape, disableElements, skinPartsPrefixes);
             }
-            
+
             if (keepElements != null && willDeleteElements != null)
             {
                 foreach (string element in keepElements)
@@ -506,7 +505,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
     protected Shape AddSkinPart(AppliedSkinnablePartVariant part, Shape entityShape, string[] disableElements, string shapePathForLogging)
     {
         if (ClientApi == null) return entityShape;
-        
+
         SkinnablePart skinPart = CurrentModel.SkinParts[part.PartCode];
 
         entityShape.RemoveElements(disableElements);
@@ -553,7 +552,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
                 compositeTexture.Bake(ClientApi.Assets);
                 ClientApi.EntityTextureAtlas.GetOrInsertTexture(compositeTexture.Baked.TextureFilenames[0], out int textureSubId, out _);
                 compositeTexture.Baked.TextureSubId = textureSubId;
-                
+
             }
         });
 
