@@ -157,7 +157,7 @@
     <Delete Files="$(ReleasePath)" />
     <ZipDirectory SourceDirectory="$(OutputPath)" DestinationFile="$(ReleasePath)" />
   </Target>
-  <Target Name="ZipFilesDev" AfterTargets="Build" Condition=" '$(Configuration)' == 'Debug' ">
+  <Target Name="ZipFilesDev" AfterTargets="Build" Condition=" '$(Configuration)' == 'Debug' and '$(PackageDevBuild)' == 'true'">
     <Message Text="Pachaging into '$(ReleaseFile)'" Importance="high" />
     <MakeDir Directories="$(ReleasesDir)" />
     <Delete Files="$(ReleasePathDev)" />
