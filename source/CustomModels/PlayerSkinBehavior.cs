@@ -69,8 +69,6 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
     {
         if (ModelSystem == null) return;
 
-
-
         skintree = entity.WatchedAttributes.GetTreeAttribute("skinConfig");
         if (skintree == null)
         {
@@ -108,18 +106,28 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
     {
         if (ModelSystem == null || ClientApi == null || !ModelSystem.ModelsLoaded) return;
 
-        entityShape = ModelSystem.CustomModels[CurrentModelCode].Shape.Clone();
-        shapeIsCloned = true;
+        Shape backup = entityShape;
 
-        AddMainTextures();
+        try
+        {
+            entityShape = ModelSystem.CustomModels[CurrentModelCode].Shape.Clone();
+            shapeIsCloned = true;
 
-        AddSkinParts(ref entityShape, shapePathForLogging);
+            AddMainTextures();
 
-        AddSkinPartsTextures(ClientApi, entityShape, shapePathForLogging);
+            AddSkinParts(ref entityShape, shapePathForLogging);
 
-        RemoveHiddenElements(entityShape, ref willDeleteElements);
+            AddSkinPartsTextures(ClientApi, entityShape, shapePathForLogging);
 
-        OnShapeTesselated?.Invoke(entityShape);
+            RemoveHiddenElements(entityShape, ref willDeleteElements);
+
+            OnShapeTesselated?.Invoke(entityShape);
+        }
+        catch (Exception exception)
+        {
+            entityShape = backup;
+            LoggerUtil.Error(ClientApi, this, $"({CurrentModelCode}) Error when tesselating custom player model:\n{exception}");
+        }
     }
 
     public void SetCurrentModel(string code, float size)
@@ -593,11 +601,17 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
     protected virtual void ApplyOverlayTexture(ICoreClientAPI api, Shape entityShape, string code)
     {
-        IDictionary<string, CompositeTexture> textures = entity.Properties.Client.Textures;
+        IDictionary<string, CompositeTexture?> textures = entity.Properties.Client.Textures;
 
         if (!textures.ContainsKey(code)) return;
 
-        CompositeTexture baseTexture = textures[code].Clone();
+        CompositeTexture? baseTexture = textures[code]?.Clone();
+
+        if (baseTexture == null)
+        {
+            LoggerUtil.Error(api, this, $"({CurrentModelCode}) Texture '{code}' in null, cant apply overlays to it, will skip.");
+            return;
+        }
 
         baseTexture.BlendedOverlays = OverlaysByTextures[code];
 
