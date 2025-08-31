@@ -222,14 +222,10 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         ChangeTags();
     }
 
-
-
     protected CustomModelsSystem? ModelSystem;
     protected ICoreClientAPI? ClientApi;
-    protected Dictionary<string, int> OverlaysTextureSpaces = [];
     protected Dictionary<string, TextureAtlasPosition> OverlaysTexturePositions = [];
     protected Dictionary<string, BlendedOverlayTexture[]> OverlaysByTextures = [];
-    protected int SkinTreeHash = 0;
     protected EntityTagArray PreviousAddedTags = EntityTagArray.Empty;
     protected EntityTagArray PreviousRemovedTags = EntityTagArray.Empty;
     protected float DefaultSize = 1;
@@ -453,9 +449,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         {
             if (slot.Empty) continue;
 
-            ItemStack stack = slot.Itemstack;
-
-            GetWearableElements(stack, out string[]? disableElements, out string[]? keepElements);
+            GetWearableElements(slot, out string[]? disableElements, out string[]? keepElements);
 
             if (disableElements != null)
             {
@@ -487,8 +481,16 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         }
     }
 
-    protected virtual void GetWearableElements(ItemStack stack, out string[]? disableElements, out string[]? keepElements)
+    protected virtual void GetWearableElements(ItemSlot slot, out string[]? disableElements, out string[]? keepElements)
     {
+        ItemStack? stack = slot.Itemstack;
+        if (stack == null)
+        {
+            disableElements = [];
+            keepElements = [];
+            return;
+        }
+
         disableElements = (stack.Collectible as IAttachableToEntity)?.GetDisableElements(stack);
         keepElements = (stack.Collectible as IAttachableToEntity)?.GetKeepElements(stack);
 
@@ -618,41 +620,5 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         api.EntityTextureAtlas.GetOrInsertTexture(baseTexture, out int textureSubId, out TextureAtlasPosition texturePosition, -1);
 
         OverlaysTexturePositions[code] = texturePosition;
-    }
-
-    protected virtual void RenderOverlayTexture(ICoreClientAPI api, Shape entityShape, string code, int overlayTextureId, TextureAtlasPosition overlayTexturePosition)
-    {
-        float width = (overlayTexturePosition.x2 - overlayTexturePosition.x1) * api.EntityTextureAtlas.Size.Width;
-        float height = (overlayTexturePosition.y2 - overlayTexturePosition.y1) * api.EntityTextureAtlas.Size.Height;
-
-        LoadedTexture texture = new(null)
-        {
-            TextureId = overlayTextureId,
-            Width = (int)width,
-            Height = (int)height
-        };
-
-        api.EntityTextureAtlas.RenderTextureIntoAtlas(
-            OverlaysTexturePositions[code].atlasTextureId,
-            texture,
-            overlayTexturePosition.x1 * api.EntityTextureAtlas.Size.Width,
-            overlayTexturePosition.y1 * api.EntityTextureAtlas.Size.Height,
-            width,
-            height,
-            OverlaysTexturePositions[code].x1 * api.EntityTextureAtlas.Size.Width,
-            OverlaysTexturePositions[code].y1 * api.EntityTextureAtlas.Size.Height,
-            -1
-        );
-    }
-
-    protected virtual void AllocateTextureSpace(ICoreClientAPI api, Shape entityShape, string code)
-    {
-        int width = entityShape.TextureSizes[code][0] * 2;
-        int height = entityShape.TextureSizes[code][1] * 2;
-
-        api.EntityTextureAtlas.AllocateTextureSpace(width, height, out int skinTextureSubId, out TextureAtlasPosition spaceTexturePosition);
-
-        OverlaysTextureSpaces[code] = skinTextureSubId;
-        OverlaysTexturePositions[code] = spaceTexturePosition;
     }
 }
