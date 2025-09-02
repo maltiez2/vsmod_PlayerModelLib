@@ -23,7 +23,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
     {
         get
         {
-            if (ModelSystem == null) throw new InvalidOperationException("Calling PlayerSkinBehavior.CurrentModel before it is initialized. Thanks Tyron for initialisation outside of constructor.");
+            if (ModelSystem == null) throw new InvalidOperationException("Calling PlayerSkinBehavior.CurrentModel before it is initialized. Thanks Tyron for initialization outside of constructor.");
 
             if (ModelSystem.CustomModels.TryGetValue(CurrentModelCode, out CustomModelData? value))
             {
@@ -238,7 +238,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
         skintree = entity.WatchedAttributes["skinConfig"] as ITreeAttribute;
 
-        string modelCode = entity.WatchedAttributes.GetString("skinModel");
+        string modelCode = entity.WatchedAttributes.GetString("skinModel") ?? "seraph";
         if (modelCode != CurrentModelCode)
         {
             CurrentModelCode = modelCode;
@@ -262,7 +262,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
     protected void OnSkinModelAttrChanged()
     {
-        string modelCode = entity.WatchedAttributes.GetString("skinModel");
+        string modelCode = entity.WatchedAttributes.GetString("skinModel") ?? "seraph";
         if (modelCode != CurrentModelCode)
         {
             OnSkinModelChanged();
@@ -282,10 +282,8 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
     {
         if (ModelSystem?.ModelsLoaded != true) return;
 
-
-
         skintree = entity.WatchedAttributes["skinConfig"] as ITreeAttribute;
-        CurrentModelCode = entity.WatchedAttributes.GetString("skinModel");
+        CurrentModelCode = entity.WatchedAttributes.GetString("skinModel") ?? "seraph";
         CurrentSize = entity.WatchedAttributes.GetFloat("entitySize");
         if (!ModelSystem.CustomModels.ContainsKey(CurrentModelCode))
         {
@@ -494,22 +492,10 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         disableElements = (stack.Collectible as IAttachableToEntity)?.GetDisableElements(stack);
         keepElements = (stack.Collectible as IAttachableToEntity)?.GetKeepElements(stack);
 
-        if (disableElements == null)
-        {
-            disableElements = stack.Collectible?.Attributes?["disableElements"]?.AsArray<string>(null);
-        }
-        if (disableElements == null)
-        {
-            disableElements = stack.Collectible?.Attributes?["attachableToEntity"]?["disableElements"]?.AsArray<string>(null);
-        }
-        if (keepElements == null)
-        {
-            keepElements = stack.Collectible?.Attributes?["keepElements"]?.AsArray<string>(null);
-        }
-        if (keepElements == null)
-        {
-            keepElements = stack.Collectible?.Attributes?["attachableToEntity"]?["keepElements"]?.AsArray<string>(null);
-        }
+        disableElements ??= stack.Collectible?.Attributes?["disableElements"]?.AsArray<string>(null);
+        disableElements ??= stack.Collectible?.Attributes?["attachableToEntity"]?["disableElements"]?.AsArray<string>(null);
+        keepElements ??= stack.Collectible?.Attributes?["keepElements"]?.AsArray<string>(null);
+        keepElements ??= stack.Collectible?.Attributes?["attachableToEntity"]?["keepElements"]?.AsArray<string>(null);
     }
 
     protected Shape AddSkinPart(AppliedSkinnablePartVariant part, Shape entityShape, string[] disableElements, string shapePathForLogging)
@@ -521,11 +507,11 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         entityShape.RemoveElements(disableElements);
 
         AssetLocation shapePath;
-        CompositeShape tmpl = skinPart.ShapeTemplate;
+        CompositeShape skinPartShape = skinPart.ShapeTemplate;
 
-        if (part.Shape == null && tmpl != null)
+        if (part.Shape == null && skinPartShape != null)
         {
-            shapePath = tmpl.Base.CopyWithPath("shapes/" + tmpl.Base.Path + ".json");
+            shapePath = skinPartShape.Base.CopyWithPath("shapes/" + skinPartShape.Base.Path + ".json");
             shapePath.Path = shapePath.Path.Replace("{code}", part.Code);
         }
         else if (part.Shape != null)
@@ -605,19 +591,19 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
     {
         IDictionary<string, CompositeTexture?> textures = entity.Properties.Client.Textures;
 
-        if (!textures.ContainsKey(code)) return;
+        if (!textures.TryGetValue(code, out CompositeTexture? baseTexture)) return;
 
-        CompositeTexture? baseTexture = textures[code]?.Clone();
+        CompositeTexture? clonedBaseTexture = baseTexture?.Clone();
 
-        if (baseTexture == null)
+        if (clonedBaseTexture == null)
         {
             LoggerUtil.Error(api, this, $"({CurrentModelCode}) Texture '{code}' in null, cant apply overlays to it, will skip.");
             return;
         }
 
-        baseTexture.BlendedOverlays = OverlaysByTextures[code];
+        clonedBaseTexture.BlendedOverlays = OverlaysByTextures[code];
 
-        api.EntityTextureAtlas.GetOrInsertTexture(baseTexture, out int textureSubId, out TextureAtlasPosition texturePosition, -1);
+        api.EntityTextureAtlas.GetOrInsertTexture(clonedBaseTexture, out _, out TextureAtlasPosition texturePosition, -1);
 
         OverlaysTexturePositions[code] = texturePosition;
     }

@@ -260,7 +260,7 @@ public sealed class CustomModelsSystem : ModSystem
 
         EntityProperties playerProperties = _api.World.GetEntityType(_playerEntityCode) ?? throw new ArgumentException("[Player Model lib] Unable to get player entity properties.");
 
-        SkinnablePartExtended[] parts = playerProperties.Attributes["skinnableParts"].AsObject<SkinnablePartExtended[]>().Where(part => part.Enabled).ToArray();
+        SkinnablePartExtended[] parts = [.. playerProperties.Attributes["skinnableParts"].AsObject<SkinnablePartExtended[]>().Where(part => part.Enabled)];
 
         FixDefaultSkinParts(parts);
 
@@ -343,7 +343,7 @@ public sealed class CustomModelsSystem : ModSystem
             return;
         }
 
-        modelConfig.SkinnableParts = modelConfig.SkinnableParts.Where(part => part.Enabled).ToArray();
+        modelConfig.SkinnableParts = [.. modelConfig.SkinnableParts.Where(part => part.Enabled)];
 
         Dictionary<string, SkinnablePart> partsByCode = LoadParts(api, modelConfig.SkinnableParts, code);
 
@@ -620,7 +620,7 @@ public sealed class CustomModelsSystem : ModSystem
                 {
                     IEnumerable<string> existing = element.AttachmentPoints.Select(point => point.Code);
 
-                    element.AttachmentPoints = element.AttachmentPoints.Concat(pointsData.Where(point => !existing.Contains(point.Code))).ToArray();
+                    element.AttachmentPoints = [.. element.AttachmentPoints, .. pointsData.Where(point => !existing.Contains(point.Code))];
                 }
                 else
                 {
