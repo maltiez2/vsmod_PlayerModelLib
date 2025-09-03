@@ -230,6 +230,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
     protected EntityTagArray PreviousRemovedTags = EntityTagArray.Empty;
     protected float DefaultSize = 1;
     protected float PreviousHeadBobbingAmplitudeFactor = 1;
+    protected string DefaultModelCode => ModelSystem?.DefaultModelCode ?? "seraph";
 
 
     protected void OnSkinConfigChanged()
@@ -238,7 +239,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
         skintree = entity.WatchedAttributes["skinConfig"] as ITreeAttribute;
 
-        string modelCode = entity.WatchedAttributes.GetString("skinModel") ?? "seraph";
+        string modelCode = entity.WatchedAttributes.GetString("skinModel") ?? DefaultModelCode;
         if (modelCode != CurrentModelCode)
         {
             CurrentModelCode = modelCode;
@@ -262,7 +263,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
     protected void OnSkinModelAttrChanged()
     {
-        string modelCode = entity.WatchedAttributes.GetString("skinModel") ?? "seraph";
+        string modelCode = entity.WatchedAttributes.GetString("skinModel") ?? DefaultModelCode;
         if (modelCode != CurrentModelCode)
         {
             OnSkinModelChanged();
@@ -283,7 +284,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         if (ModelSystem?.ModelsLoaded != true) return;
 
         skintree = entity.WatchedAttributes["skinConfig"] as ITreeAttribute;
-        CurrentModelCode = entity.WatchedAttributes.GetString("skinModel") ?? "seraph";
+        CurrentModelCode = entity.WatchedAttributes.GetString("skinModel") ?? DefaultModelCode;
         CurrentSize = entity.WatchedAttributes.GetFloat("entitySize");
         if (!ModelSystem.CustomModels.ContainsKey(CurrentModelCode))
         {
