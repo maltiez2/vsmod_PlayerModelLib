@@ -39,17 +39,17 @@ internal static class OtherPatches
 
     private static bool ReloadSkin() => false;
 
-    private static readonly FieldInfo? CharacterSystem_didSelect = typeof(CharacterSystem).GetField("didSelect", BindingFlags.NonPublic | BindingFlags.Instance);
-    private static readonly FieldInfo? CharacterSystem_createCharDlg = typeof(CharacterSystem).GetField("createCharDlg", BindingFlags.NonPublic | BindingFlags.Instance);
-    private static readonly FieldInfo? CharacterSystem_capi = typeof(CharacterSystem).GetField("capi", BindingFlags.NonPublic | BindingFlags.Instance);
+    private static readonly FieldInfo? _characterSystem_didSelect = typeof(CharacterSystem).GetField("didSelect", BindingFlags.NonPublic | BindingFlags.Instance);
+    private static readonly FieldInfo? _characterSystem_createCharDlg = typeof(CharacterSystem).GetField("createCharDlg", BindingFlags.NonPublic | BindingFlags.Instance);
+    private static readonly FieldInfo? _characterSystem_capi = typeof(CharacterSystem).GetField("capi", BindingFlags.NonPublic | BindingFlags.Instance);
 
     private static bool Event_PlayerJoin(CharacterSystem __instance, IClientPlayer byPlayer)
     {
-        bool didSelect = (bool?)CharacterSystem_didSelect?.GetValue(__instance) ?? false;
+        bool didSelect = (bool?)_characterSystem_didSelect?.GetValue(__instance) ?? false;
 
         if (didSelect) return true;
 
-        ICoreClientAPI? api = (ICoreClientAPI?)CharacterSystem_capi?.GetValue(__instance);
+        ICoreClientAPI? api = (ICoreClientAPI?)_characterSystem_capi?.GetValue(__instance);
 
         if (api == null) return true;
 
@@ -66,7 +66,7 @@ internal static class OtherPatches
             createCharDlg.OnClosed += () => api.PauseGame(false);
             api.Event.EnqueueMainThreadTask(() => api.PauseGame(true), "pausegame");
             api.Event.PushEvent("begincharacterselection");
-            CharacterSystem_createCharDlg?.SetValue(__instance, createCharDlg);
+            _characterSystem_createCharDlg?.SetValue(__instance, createCharDlg);
         };
 
         return false;
@@ -96,16 +96,16 @@ internal static class OtherPatches
         [HarmonyTargetMethod]
         static MethodBase TargetMethod()
         {
-            return AccessTools.Method(typeof(EntityBehaviorContainer), "addGearToShape", new[]
-            {
-            typeof(Shape),
-            typeof(ItemStack),
-            typeof(IAttachableToEntity),
-            typeof(string),
-            typeof(string),
-            typeof(string[]).MakeByRefType(),
-            typeof(Dictionary<string, StepParentElementTo>)
-        });
+            return AccessTools.Method(typeof(EntityBehaviorContainer), "addGearToShape",
+            [
+                typeof(Shape),
+                typeof(ItemStack),
+                typeof(IAttachableToEntity),
+                typeof(string),
+                typeof(string),
+                typeof(string[]).MakeByRefType(),
+                typeof(Dictionary<string, StepParentElementTo>)
+            ]);
         }
 
         [HarmonyTranspiler]
@@ -138,7 +138,7 @@ internal static class OtherPatches
             return codes;
         }
 
-        public static void GetModelReplacement(ItemStack? stack, Entity entity, ref Shape? defaultShape, ref CompositeShape? compositeShape, IAttachableToEntity yatayata, float damageEffect, string slotCode)
+        public static void GetModelReplacement(ItemStack? stack, Entity entity, ref Shape? defaultShape, ref CompositeShape? compositeShape, IAttachableToEntity yadayada, float damageEffect, string slotCode)
         {
             int itemId = stack?.Item?.Id ?? 0;
 
@@ -151,8 +151,9 @@ internal static class OtherPatches
             
             CustomModelData customModel = system.CustomModels[currentModel];
 
-            string? yataPrefixCode = yatayata.GetTexturePrefixCode(stack);
-            string prefixCode = yataPrefixCode == null ? slotCode : yataPrefixCode + "-" + slotCode;
+            string? yadaPrefixCode = yadayada.GetTexturePrefixCode(stack);
+            //string prefixCode = yadaPrefixCode == null ? slotCode : yadaPrefixCode + "-" + slotCode;
+            string prefixCode = yadaPrefixCode == null ? "" : yadaPrefixCode;
 
             if (customModel.WearableShapeReplacers.TryGetValue(itemId, out string? shape))
             {
@@ -182,7 +183,7 @@ internal static class OtherPatches
                 defaultShape?.ResolveReferences(entity.World.Logger, currentModel);
             }
 
-            CompositeShape oldCompositeShape = yatayata.GetAttachedShape(stack, "default").Clone();
+            CompositeShape oldCompositeShape = yadayada.GetAttachedShape(stack, "default").Clone();
 
             string shapePath = oldCompositeShape.Base.ToString();
 

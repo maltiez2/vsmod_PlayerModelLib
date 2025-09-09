@@ -1,9 +1,6 @@
 ﻿using Newtonsoft.Json.Linq;
 using OpenTK.Mathematics;
-using ProtoBuf;
 using SkiaSharp;
-using System.Diagnostics;
-using System.Linq;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
@@ -14,97 +11,6 @@ using Vintagestory.API.Util;
 using Vintagestory.GameContent;
 
 namespace PlayerModelLib;
-
-public class SkinnablePartExtended : SkinnablePart
-{
-    public string[] TargetSkinParts { get; set; } = [];
-    public bool OverlayTexture { get; set; } = false;
-    public EnumColorBlendMode OverlayMode { get; set; } = EnumColorBlendMode.Normal;
-    public bool Enabled { get; set; } = true;
-}
-
-public class CustomModelConfig
-{
-    public bool Enabled { set; get; } = true;
-    public string Domain { get; set; } = "game";
-    public string ShapePath { get; set; } = "";
-    public string MainTextureCode { get; set; } = "seraph";
-    public SkinnablePartExtended[] SkinnableParts { get; set; } = [];
-    public Dictionary<string, string> WearableModelReplacers { get; set; } = [];
-    public Dictionary<string, CompositeShape> WearableCompositeModelReplacers { get; set; } = [];
-    public Dictionary<string, string> WearableModelReplacersByShape { get; set; } = [];
-    public string[] AvailableClasses { get; set; } = [];
-    public string[] SkipClasses { get; set; } = [];
-    public string[] ExtraTraits { get; set; } = [];
-    public string[] ExclusiveClasses { get; set; } = [];
-    public float[] CollisionBox { get; set; } = [];
-    public float EyeHeight { get; set; } = 1.7f;
-    public float[] SizeRange { get; set; } = [0.8f, 1.2f];
-    public bool ScaleColliderWithSizeHorizontally { get; set; } = true;
-    public bool ScaleColliderWithSizeVertically { get; set; } = true;
-    public float[] MaxCollisionBox { get; set; } = [float.MaxValue, float.MaxValue];
-    public float[] MinCollisionBox { get; set; } = [0, 0];
-    public float MaxEyeHeight { get; set; } = float.MaxValue;
-    public float MinEyeHeight { get; set; } = 0;
-    public string[] AddTags { get; set; } = [];
-    public string[] RemoveTags { get; set; } = [];
-    public float ModelSizeFactor { get; set; } = 1;
-    public float HeadBobbingScale { get; set; } = 1;
-    public float GuiModelScale { get; set; } = 1;
-}
-
-public class CustomModelData
-{
-    public bool Enabled { set; get; } = true;
-    public string Code { get; set; }
-    public Shape Shape { get; set; }
-    public Dictionary<string, SkinnablePart> SkinParts { get; set; } = [];
-    public SkinnablePart[] SkinPartsArray { get; set; } = [];
-    public string MainTextureCode { get; set; } = "";
-    public CompositeTexture? MainTexture { get; set; }
-    public Vector2i MainTextureSize { get; set; }
-    public TextureAtlasPosition? MainTexturePosition { get; set; }
-    public Dictionary<int, string> WearableShapeReplacers { get; set; } = [];
-    public Dictionary<int, CompositeShape> WearableCompositeShapeReplacers { get; set; } = [];
-    public Dictionary<string, string> WearableShapeReplacersByShape { get; set; } = [];
-    public HashSet<string> AvailableClasses { get; set; } = [];
-    public HashSet<string> SkipClasses { get; set; } = [];
-    public HashSet<string> ExclusiveClasses { get; set; } = [];
-    public string[] ExtraTraits { get; set; } = [];
-    public Vector2 CollisionBox { get; set; }
-    public float EyeHeight { get; set; }
-    public Vector2 SizeRange { get; set; }
-    public bool ScaleColliderWithSizeHorizontally { get; set; } = true;
-    public bool ScaleColliderWithSizeVertically { get; set; } = true;
-    public Vector2 MaxCollisionBox { get; set; }
-    public Vector2 MinCollisionBox { get; set; }
-    public float MaxEyeHeight { get; set; } = float.MaxValue;
-    public float MinEyeHeight { get; set; } = 0;
-    public EntityTagArray AddTags { get; set; } = EntityTagArray.Empty;
-    public EntityTagArray RemoveTags { get; set; } = EntityTagArray.Empty;
-    public float ModelSizeFactor { get; set; } = 1;
-    public float HeadBobbingScale { get; set; } = 1;
-    public float GuiModelScale { get; set; } = 1;
-
-
-    public CustomModelData(string code, Shape shape)
-    {
-        Code = code;
-        Shape = shape;
-    }
-}
-
-[ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
-public class ChangePlayerModelPacket
-{
-    public string ModelCode { get; set; } = "";
-}
-
-[ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
-public class ChangePlayerModelSizePacket
-{
-    public float EntitySize { get; set; } = 1;
-}
 
 public sealed class CustomModelsSystem : ModSystem
 {
@@ -391,7 +297,7 @@ public sealed class CustomModelsSystem : ModSystem
                 LoggerUtil.Error(_api, this, $"Error while loading wearable model replacements by shape: custom model with code '{modelCode}' does not exists.");
                 continue;
             }
-            
+
             CustomModels[modelCode].WearableShapeReplacers = [];
 
             foreach ((string itemCodeWildcard, string path) in paths)
@@ -399,7 +305,7 @@ public sealed class CustomModelsSystem : ModSystem
                 foreach (Item item in api.World.Items)
                 {
                     if (!WildcardUtil.Match(itemCodeWildcard, item.Code?.ToString() ?? "")) continue;
-                    
+
                     string processedPath = path;
 
                     foreach ((string variantCode, string variantValue) in item.Variant)
@@ -427,7 +333,7 @@ public sealed class CustomModelsSystem : ModSystem
                 foreach (Item item in api.World.Items)
                 {
                     if (!WildcardUtil.Match(itemCodeWildcard, item.Code?.ToString() ?? "")) continue;
-                    
+
                     CustomModels[modelCode].WearableCompositeShapeReplacers[item.Id] = path;
                 }
             }
@@ -451,7 +357,7 @@ public sealed class CustomModelsSystem : ModSystem
                     foreach (Item item in api.World.Items)
                     {
                         if (!WildcardUtil.Match(itemCodeWildcard, item.Code?.ToString() ?? "")) continue;
-                        
+
                         ReplaceVariants(path, item);
 
                         CustomModels[modelCode].WearableCompositeShapeReplacers[item.Id] = path;
