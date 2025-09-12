@@ -35,7 +35,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     }
     public override void OnGuiOpened()
     {
-        string characterClass = capi.World.Player.Entity.WatchedAttributes.GetString("characterClass");
+        string? characterClass = capi.World.Player.Entity.WatchedAttributes.GetString("characterClass");
         if (characterClass != null && _characterSystem.characterClassesByCode.ContainsKey(characterClass))
         {
             _characterSystem.setCharacterClass(capi.World.Player.Entity, characterClass, true);

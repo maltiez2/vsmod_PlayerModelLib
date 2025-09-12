@@ -1,10 +1,12 @@
 ﻿using HarmonyLib;
+using System.Diagnostics;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Util;
+using Vintagestory.Client.NoObf;
 using Vintagestory.GameContent;
 
 namespace PlayerModelLib;
@@ -75,7 +77,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
             entity.WatchedAttributes["skinConfig"] = skintree = new TreeAttribute();
         }
 
-        string? skinModel = entity.WatchedAttributes.GetString("skinModel");
+        string skinModel = GetPlayerModelAttributeValue();
         if (skinModel == null || !ModelSystem.CustomModels.ContainsKey(skinModel))
         {
             entity.WatchedAttributes.SetString("skinModel", ModelSystem.DefaultModelCode);
@@ -132,8 +134,6 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
     public void SetCurrentModel(string code, float size)
     {
-
-
         skintree = entity.WatchedAttributes["skinConfig"] as ITreeAttribute;
         CurrentModelCode = code;
         CurrentSize = size;
@@ -179,8 +179,6 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
     public void UpdateEntityProperties()
     {
-
-
         if (CurrentSize <= 0)
         {
             CurrentSize = 1;
@@ -220,6 +218,8 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         entity.LocalEyePos.Y = GameMath.Clamp(CurrentModel.EyeHeight * CurrentSize * CurrentModel.ModelSizeFactor, CurrentModel.MinEyeHeight, CurrentModel.MaxEyeHeight);
 
         ChangeTags();
+
+        SetZNear();
     }
 
     protected CustomModelsSystem? ModelSystem;
@@ -230,6 +230,8 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
     protected EntityTagArray PreviousRemovedTags = EntityTagArray.Empty;
     protected float DefaultSize = 1;
     protected float PreviousHeadBobbingAmplitudeFactor = 1;
+    protected float PreviousZNearFactor = 1;
+    protected float DefaultEyeHeight = 1.7f;
     protected string DefaultModelCode => ModelSystem?.DefaultModelCode ?? "seraph";
 
 
@@ -239,7 +241,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
         skintree = entity.WatchedAttributes["skinConfig"] as ITreeAttribute;
 
-        string modelCode = entity.WatchedAttributes.GetString("skinModel") ?? DefaultModelCode;
+        string modelCode = GetPlayerModelAttributeValue();
         if (modelCode != CurrentModelCode)
         {
             CurrentModelCode = modelCode;
@@ -253,8 +255,8 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
     {
         if (ModelSystem?.ModelsLoaded != true) return;
 
-        string voiceType = entity.WatchedAttributes.GetString("voicetype");
-        string voicePitch = entity.WatchedAttributes.GetString("voicepitch");
+        string? voiceType = entity.WatchedAttributes.GetString("voicetype");
+        string? voicePitch = entity.WatchedAttributes.GetString("voicepitch");
 
         VoiceType = voiceType;
         VoicePitch = voicePitch;
@@ -263,7 +265,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
     protected void OnSkinModelAttrChanged()
     {
-        string modelCode = entity.WatchedAttributes.GetString("skinModel") ?? DefaultModelCode;
+        string modelCode = GetPlayerModelAttributeValue();
         if (modelCode != CurrentModelCode)
         {
             OnSkinModelChanged();
@@ -284,7 +286,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         if (ModelSystem?.ModelsLoaded != true) return;
 
         skintree = entity.WatchedAttributes["skinConfig"] as ITreeAttribute;
-        CurrentModelCode = entity.WatchedAttributes.GetString("skinModel") ?? DefaultModelCode;
+        CurrentModelCode = GetPlayerModelAttributeValue();
         CurrentSize = entity.WatchedAttributes.GetFloat("entitySize");
         if (!ModelSystem.CustomModels.ContainsKey(CurrentModelCode))
         {
@@ -587,7 +589,6 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         OverlaysByTextures[code] = [new BlendedOverlayTexture() { Base = overlayTexture.Base, BlendMode = overlayMode }];
     }
 
-
     protected virtual void ApplyOverlayTexture(ICoreClientAPI api, Shape entityShape, string code)
     {
         IDictionary<string, CompositeTexture?> textures = entity.Properties.Client.Textures;
@@ -608,4 +609,30 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
         OverlaysTexturePositions[code] = texturePosition;
     }
+
+    protected virtual void SetZNear()
+    {
+        if (entity.Api is not ICoreClientAPI clientApi) return;
+        
+        float factor = (float)entity.LocalEyePos.Y / DefaultEyeHeight;
+
+        Debug.WriteLine(factor);
+
+        SetZNear(clientApi, factor);
+    }
+    
+    protected virtual void SetZNear(ICoreClientAPI api, float multiplier)
+    {
+        ClientMain? client = api.World as ClientMain;
+        if (client == null) return;
+
+        PlayerCamera? camera = client.MainCamera;
+        if (camera == null) return;
+
+        camera.ZNear /= PreviousZNearFactor;
+        PreviousZNearFactor = multiplier;
+        camera.ZNear *= PreviousZNearFactor;
+    }
+
+    protected virtual string GetPlayerModelAttributeValue() => entity.WatchedAttributes.GetString("skinModel", "seraph") ?? "seraph";
 }
