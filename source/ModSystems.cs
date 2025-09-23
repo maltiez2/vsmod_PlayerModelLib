@@ -11,7 +11,7 @@ public sealed class PlayerModelModSystem : ModSystem
         api.RegisterEntityBehaviorClass("PlayerModelLib:ExtraSkinnable", typeof(PlayerSkinBehavior));
 
         new Harmony("PlayerModelLibTranspiler").PatchAll();
-        OtherPatches.Patch("PlayerModelLib");
+        OtherPatches.Patch("PlayerModelLib", api);
 
         if (api is ICoreClientAPI clientApi)
         {

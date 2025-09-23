@@ -1,5 +1,6 @@
 ﻿using HarmonyLib;
 using System.Diagnostics;
+using System.Linq;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
@@ -117,7 +118,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
             AddMainTextures();
 
-            AddSkinParts(ref entityShape, shapePathForLogging);
+            AddSkinParts(ref entityShape, shapePathForLogging, ref willDeleteElements);
 
             AddSkinPartsTextures(ClientApi, entityShape, shapePathForLogging);
 
@@ -221,6 +222,12 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
         SetZNear();
     }
+
+    /*public HeadControllerConfig GetHeadControllerConfig()
+    {
+
+    }*/
+
 
     protected CustomModelsSystem? ModelSystem;
     protected ICoreClientAPI? ClientApi;
@@ -350,7 +357,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         }
     }
 
-    protected virtual void AddSkinParts(ref Shape entityShape, string shapePathForLogging)
+    protected virtual void AddSkinParts(ref Shape entityShape, string shapePathForLogging, ref string[]? willDeleteElements)
     {
         foreach (AppliedSkinnablePartVariant? skinPart in AppliedSkinParts)
         {
@@ -358,7 +365,17 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
             if (part?.Type == EnumSkinnableType.Shape)
             {
-                entityShape = AddSkinPart(skinPart, entityShape, part.DisableElements, shapePathForLogging);
+                string[]? disabledElements = null;
+                (part as SkinnablePartExtended)?.DisableElementsByVariantCode.TryGetValue(skinPart.Code, out disabledElements);
+                disabledElements = disabledElements?.Concat(part.DisableElements ?? []).ToArray() ?? [];
+
+                if (disabledElements.Length > 0)
+                {
+                    willDeleteElements ??= [];
+                    willDeleteElements = willDeleteElements.Concat(disabledElements).ToArray();
+                }
+                
+                entityShape = AddSkinPart(skinPart, entityShape, disabledElements, shapePathForLogging);
             }
         }
     }
@@ -615,8 +632,6 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         if (entity.Api is not ICoreClientAPI clientApi) return;
         
         float factor = (float)entity.LocalEyePos.Y / DefaultEyeHeight;
-
-        Debug.WriteLine(factor);
 
         SetZNear(clientApi, factor);
     }

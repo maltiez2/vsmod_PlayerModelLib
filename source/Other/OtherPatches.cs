@@ -1,10 +1,13 @@
 ﻿using HarmonyLib;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 using System.Reflection;
-using System.Reflection.Emit;
+using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
+using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
+using Vintagestory.API.Server;
 using Vintagestory.GameContent;
 
 namespace PlayerModelLib;
@@ -14,8 +17,11 @@ internal static class OtherPatches
     public static float CurrentModelGuiScale { get; set; } = 1;
     public static float CurrentModelScale { get; set; } = 1;
 
-    public static void Patch(string harmonyId)
+    public static void Patch(string harmonyId, ICoreAPI api)
     {
+        _clientApi = api as ICoreClientAPI;
+        _serverApi = api as ICoreServerAPI;
+
         new Harmony(harmonyId).Patch(
                 typeof(EntityBehaviorTexturedClothing).GetMethod("reloadSkin", AccessTools.all),
                 prefix: new HarmonyMethod(AccessTools.Method(typeof(OtherPatches), nameof(ReloadSkin)))
@@ -23,6 +29,14 @@ internal static class OtherPatches
         new Harmony(harmonyId).Patch(
                 typeof(CharacterSystem).GetMethod("Event_PlayerJoin", AccessTools.all),
                 prefix: new HarmonyMethod(AccessTools.Method(typeof(OtherPatches), nameof(Event_PlayerJoin)))
+            );
+        new Harmony(harmonyId).Patch(
+                typeof(CharacterSystem).GetMethod("applyTraitAttributes", AccessTools.all),
+                prefix: new HarmonyMethod(AccessTools.Method(typeof(OtherPatches), nameof(applyTraitAttributes)))
+            );
+        new Harmony(harmonyId).Patch(
+                typeof(CharacterSystem).GetMethod("getClassTraitText", AccessTools.all),
+                prefix: new HarmonyMethod(AccessTools.Method(typeof(OtherPatches), nameof(getClassTraitText)))
             );
         new Harmony(harmonyId).Patch(
                 typeof(EntityShapeRenderer).GetMethod("loadModelMatrixForGui", AccessTools.all),
@@ -34,10 +48,18 @@ internal static class OtherPatches
     {
         new Harmony(harmonyId).Unpatch(typeof(EntityBehaviorTexturedClothing).GetMethod("reloadSkin", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
         new Harmony(harmonyId).Unpatch(typeof(CharacterSystem).GetMethod("Event_PlayerJoin", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
+        new Harmony(harmonyId).Unpatch(typeof(CharacterSystem).GetMethod("applyTraitAttributes", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
+        new Harmony(harmonyId).Unpatch(typeof(CharacterSystem).GetMethod("getClassTraitText", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
         new Harmony(harmonyId).Unpatch(typeof(EntityShapeRenderer).GetMethod("loadModelMatrixForGui", AccessTools.all), HarmonyPatchType.Postfix, harmonyId);
+
+        _clientApi = null;
+        _serverApi = null;
     }
 
     private static bool ReloadSkin() => false;
+
+    private static ICoreClientAPI? _clientApi;
+    private static ICoreServerAPI? _serverApi;
 
     private static readonly FieldInfo? _characterSystem_didSelect = typeof(CharacterSystem).GetField("didSelect", BindingFlags.NonPublic | BindingFlags.Instance);
     private static readonly FieldInfo? _characterSystem_createCharDlg = typeof(CharacterSystem).GetField("createCharDlg", BindingFlags.NonPublic | BindingFlags.Instance);
@@ -55,7 +77,7 @@ internal static class OtherPatches
 
         if (byPlayer.PlayerUID != api.World.Player.PlayerUID) return true;
 
-        var skinBehavior = byPlayer.Entity.GetBehavior<PlayerSkinBehavior>();
+        PlayerSkinBehavior? skinBehavior = byPlayer.Entity.GetBehavior<PlayerSkinBehavior>();
 
         if (skinBehavior == null) return true;
 
@@ -90,148 +112,105 @@ internal static class OtherPatches
         }
     }
 
-    [HarmonyPatchCategory("PlayerModelLibTranspiler")]
-    public class EntityBehaviorContainerPatchCommand
+    private static bool applyTraitAttributes(CharacterSystem __instance, EntityPlayer eplr)
     {
-        [HarmonyTargetMethod]
-        static MethodBase TargetMethod()
-        {
-            return AccessTools.Method(typeof(EntityBehaviorContainer), "addGearToShape",
-            [
-                typeof(Shape),
-                typeof(ItemStack),
-                typeof(IAttachableToEntity),
-                typeof(string),
-                typeof(string),
-                typeof(string[]).MakeByRefType(),
-                typeof(Dictionary<string, StepParentElementTo>)
-            ]);
-        }
+        string classCode = eplr.WatchedAttributes.GetString("characterClass");
+        CharacterClass characterClass = __instance.characterClasses.First(c => c.Code == classCode)
+            ?? throw new ArgumentException($"Character class with code '{classCode}' not found when trying to apply class traits for player '{eplr.Player?.PlayerName ?? eplr.GetName()}'.");
 
-        [HarmonyTranspiler]
-        public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        // Reset 
+        foreach ((_, EntityFloatStats stats) in eplr.Stats)
         {
-            CodeInstruction[] newInstructions =
-            [
-                new(OpCodes.Ldarg_2),
-                new(OpCodes.Ldarg_0),
-                new(OpCodes.Ldfld, AccessTools.Field(typeof(EntityBehaviorContainer), "entity")),
-                new(OpCodes.Ldloca_S, 3),
-                new(OpCodes.Ldloca_S, 5),
-                new(OpCodes.Ldarg_3),
-                new(OpCodes.Ldloc_1),
-                new(OpCodes.Ldarg_S, 4),
-                new(OpCodes.Call, AccessTools.Method(typeof(EntityBehaviorContainerPatchCommand), nameof(GetModelReplacement))),
-            ];
-            List<CodeInstruction> codes = [.. instructions];
-
-            for (int i = 0; i < codes.Count; i++)
+            foreach ((string stat, _) in stats.ValuesByKey)
             {
-                if (codes[i].opcode == OpCodes.Isinst && (Type)codes[i].operand == typeof(Vintagestory.API.Client.ICoreClientAPI))
+                if (stat == "trait")
                 {
-                    codes.InsertRange(i + 2, newInstructions);
-
-                    return codes;
-                }
-            }
-
-            return codes;
-        }
-
-        public static void GetModelReplacement(ItemStack? stack, Entity entity, ref Shape? defaultShape, ref CompositeShape? compositeShape, IAttachableToEntity yadayada, float damageEffect, string slotCode)
-        {
-            int itemId = stack?.Item?.Id ?? 0;
-
-            CustomModelsSystem system = entity.Api.ModLoader.GetModSystem<CustomModelsSystem>();
-            PlayerSkinBehavior? skinBehavior = entity.GetBehavior<PlayerSkinBehavior>();
-
-            string? currentModel = skinBehavior?.CurrentModelCode;
-
-            if (currentModel == null || itemId == 0 || system == null || !system.ModelsLoaded) return;
-            
-            CustomModelData customModel = system.CustomModels[currentModel];
-
-            string? yadaPrefixCode = yadayada.GetTexturePrefixCode(stack);
-            //string prefixCode = yadaPrefixCode == null ? slotCode : yadaPrefixCode + "-" + slotCode;
-            string prefixCode = yadaPrefixCode == null ? "" : yadaPrefixCode;
-
-            if (customModel.WearableShapeReplacers.TryGetValue(itemId, out string? shape))
-            {
-                defaultShape = LoadShape(entity.Api, shape);
-
-                defaultShape?.SubclassForStepParenting(prefixCode, damageEffect);
-                defaultShape?.ResolveReferences(entity.World.Logger, currentModel);
-
-                if (compositeShape != null)
-                {
-                    compositeShape = compositeShape.Clone();
-                    compositeShape.Base = shape;
-                }
-
-                return;
-            }
-
-            if (customModel.WearableCompositeShapeReplacers.TryGetValue(itemId, out CompositeShape? newCompositeShape))
-            {
-                compositeShape = newCompositeShape.Clone();
-
-                compositeShape.Base = compositeShape.Base.WithPathAppendixOnce(".json").WithPathPrefixOnce("shapes/");
-
-                defaultShape = LoadShape(entity.Api, newCompositeShape.Base);
-
-                defaultShape?.SubclassForStepParenting(prefixCode, damageEffect);
-                defaultShape?.ResolveReferences(entity.World.Logger, currentModel);
-            }
-
-            CompositeShape oldCompositeShape = yadayada.GetAttachedShape(stack, "default").Clone();
-
-            string shapePath = oldCompositeShape.Base.ToString();
-
-            if (customModel.WearableShapeReplacersByShape.TryGetValue(shapePath, out shape))
-            {
-                defaultShape = LoadShape(entity.Api, shape);
-
-                defaultShape?.SubclassForStepParenting(prefixCode, damageEffect);
-                defaultShape?.ResolveReferences(entity.World.Logger, currentModel);
-            }
-
-            if (oldCompositeShape.Overlays != null)
-            {
-                foreach (CompositeShape? overlay in oldCompositeShape.Overlays)
-                {
-                    if (overlay == null) continue;
-
-                    ReplaceOverlay(overlay, customModel.WearableShapeReplacersByShape);
-                }
-
-                compositeShape = oldCompositeShape;
-            }
-        }
-
-        private static Shape? LoadShape(ICoreAPI api, string path)
-        {
-            AssetLocation shapeLocation = new(path);
-            shapeLocation = shapeLocation.WithPathAppendixOnce(".json").WithPathPrefixOnce("shapes/");
-            Shape? currentShape = Shape.TryGet(api, shapeLocation);
-            return currentShape;
-        }
-
-        private static void ReplaceOverlay(CompositeShape shape, Dictionary<string, string> replacements)
-        {
-            if (replacements.TryGetValue(shape.Base.ToString(), out string? newShape))
-            {
-                shape.Base = newShape;
-            }
-
-            if (shape.Overlays != null)
-            {
-                foreach (CompositeShape? overlay in shape.Overlays)
-                {
-                    if (overlay == null) continue;
-
-                    ReplaceOverlay(overlay, replacements);
+                    stats.Remove(stat);
+                    break;
                 }
             }
         }
+
+        string[]? extraTraits = eplr.WatchedAttributes.GetStringArray("extraTraits");
+        IEnumerable<string> allTraits = extraTraits == null ? characterClass.Traits : characterClass.Traits.Concat(extraTraits);
+
+        // Aggregate stats values
+        Dictionary<string, double> statValues = [];
+        foreach (string traitCode in allTraits)
+        {
+            if (!__instance.TraitsByCode.TryGetValue(traitCode, out Trait? trait)) continue;
+
+            foreach ((string attributeCode, double attributeValue) in trait.Attributes)
+            {
+                if (statValues.ContainsKey(attributeCode))
+                {
+                    statValues[attributeCode] += attributeValue;
+                }
+                else
+                {
+                    statValues[attributeCode] = attributeValue;
+                }
+            }
+        }
+
+        // Apply aggregated values
+        foreach ((string stat, double value) in statValues)
+        {
+            eplr.Stats.Set(stat, "trait", (float)value, true);
+        }
+
+        eplr.GetBehavior<EntityBehaviorHealth>()?.MarkDirty();
+
+        return false;
+    }
+
+    private static bool getClassTraitText(CharacterSystem __instance, ref string __result)
+    {
+        string? classCode = _clientApi?.World?.Player?.Entity?.WatchedAttributes?.GetString("characterClass");
+        CharacterClass characterClass = __instance.characterClasses.First(c => c.Code == classCode)
+                ?? throw new ArgumentException($"Character class with code '{classCode}' not found when trying to set character class for player '{_clientApi?.World?.Player?.PlayerName}'.");
+
+        StringBuilder fullDescription = new();
+        StringBuilder attributes = new();
+
+        string[] extraTraits = _clientApi?.World?.Player?.Entity.WatchedAttributes.GetStringArray("extraTraits") ?? [];
+        IEnumerable<string> allTraits = characterClass.Traits.Concat(extraTraits);
+        IOrderedEnumerable<Trait> characterTraits = allTraits.Select(code => __instance.TraitsByCode[code]).OrderBy(trait => (int)trait.Type);
+
+        foreach (Trait? trait in characterTraits)
+        {
+            attributes.Clear();
+            foreach ((string attribute, double attributeValue) in trait.Attributes)
+            {
+                if (attributes.Length > 0) attributes.Append(", ");
+                attributes.Append(Lang.Get(string.Format(GlobalConstants.DefaultCultureInfo, "charattribute-{0}-{1}", attribute, attributeValue)));
+            }
+
+            if (attributes.Length > 0)
+            {
+                fullDescription.AppendLine(Lang.Get("traitwithattributes", Lang.Get("trait-" + trait.Code), attributes));
+            }
+            else
+            {
+                string? traitDescription = Lang.GetIfExists("traitdesc-" + trait.Code);
+                if (traitDescription != null)
+                {
+                    fullDescription.AppendLine(Lang.Get("traitwithattributes", Lang.Get("trait-" + trait.Code), traitDescription));
+                }
+                else
+                {
+                    fullDescription.AppendLine(Lang.Get("trait-" + trait.Code));
+                }
+            }
+        }
+
+        if (!allTraits.Any())
+        {
+            fullDescription.AppendLine(Lang.Get("No positive or negative traits"));
+        }
+
+        __result = fullDescription.ToString();
+
+        return false;
     }
 }

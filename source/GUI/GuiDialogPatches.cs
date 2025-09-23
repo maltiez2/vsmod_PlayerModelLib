@@ -7,10 +7,11 @@ namespace PlayerModelLib;
 
 public static class GuiDialogPatches
 {
-    public static object NewGuiClassConstructor { get; set; } = AccessTools.Constructor(typeof(GuiDialogCreateCustomCharacter), new Type[] { typeof(ICoreClientAPI), typeof(CharacterSystem) });
+    public static object NewGuiClassConstructor { get; set; } = AccessTools.Constructor(typeof(GuiDialogCreateCustomCharacter), [typeof(ICoreClientAPI), typeof(CharacterSystem)]);
 
     [HarmonyPatch(typeof(CharacterSystem), "Event_PlayerJoin")]
     [HarmonyPatchCategory("PlayerModelLibTranspiler")]
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Major Code Smell", "S1118:Utility classes should not have public constructors", Justification = "harmony specific")]
     public class GuiDialogPatchPlayerJoin
     {
         [HarmonyTranspiler]
@@ -33,6 +34,7 @@ public static class GuiDialogPatches
 
     [HarmonyPatch(typeof(CharacterSystem), "onCharSelCmd")]
     [HarmonyPatchCategory("PlayerModelLibTranspiler")]
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Major Code Smell", "S1118:Utility classes should not have public constructors", Justification = "harmony specific>")]
     public class GuiDialogPatchCommand
     {
         [HarmonyTranspiler]

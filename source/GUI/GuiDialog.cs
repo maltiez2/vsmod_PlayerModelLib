@@ -501,7 +501,14 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
                 {
                     GuiElementColorListPicker picker = composer.GetColorListPicker("picker-" + code + "-" + i);
                     picker.ShowToolTip = true;
-                    picker.TooltipText = Lang.Get("color-" + skinpart.Variants[i].Code);
+                    if (Lang.HasTranslation("skinpart-" + code + "-" + skinpart.Variants[i].Code))
+                    {
+                        picker.TooltipText = Lang.Get("skinpart-" + code + "-" + skinpart.Variants[i].Code);
+                    }
+                    else
+                    {
+                        picker.TooltipText = Lang.Get("color-" + skinpart.Variants[i].Code);
+                    }
                 }
 
                 composer.ColorListPickerSetValue("picker-" + code, selectedIndex);

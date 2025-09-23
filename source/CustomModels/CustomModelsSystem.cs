@@ -203,7 +203,6 @@ public sealed class CustomModelsSystem : ModSystem
         };
 
         CustomModels.Add(_defaultModelCode, defaultModelData);
-
         _oldMainTextureCodes.Add(_defaultModelCode, _defaultMainTextureCode);
     }
     private static Shape? LoadShape(ICoreAPI api, string path)
@@ -666,6 +665,12 @@ public sealed class CustomModelsSystem : ModSystem
 
         foreach (SkinnablePartExtended part in parts)
         {
+            if (part.Code == null)
+            {
+                LoggerUtil.Error(_api, this, $"Skin part for model '{model}' does not have code specified, skipping.");
+                continue;
+            }
+            
             part.VariantsByCode = [];
 
             patsByCode[part.Code] = part;
@@ -700,6 +705,7 @@ public sealed class CustomModelsSystem : ModSystem
 
         return patsByCode;
     }
+    
     private void ProcessTexturePart(ICoreClientAPI clientApi, SkinnablePart part, string model)
     {
         foreach (SkinnablePartVariant? variant in part.Variants)
@@ -725,27 +731,43 @@ public sealed class CustomModelsSystem : ModSystem
                 throw new ArgumentException($"[Player Model lib] (model: {model}) Texture '{textureLoc}' not found for skin part '{part.Code}' and variant '{variant.Code}'.");
             }
 
-            int r = 0, g = 0, b = 0;
-            float c = 0;
-
-            BitmapRef bmp = asset.ToBitmap(clientApi);
-            for (int i = 0; i < 8; i++)
+            if (variant.Color != 0)
             {
-                Vec2d vec = GameMath.R2Sequence2D(i);
-                SKColor col2 = bmp.GetPixelRel((float)vec.X, (float)vec.Y);
-                if (col2.Alpha > 0.5)
+                int b = variant.Color % 1000;
+                int g = variant.Color / 1000 % 1000;
+                int r = variant.Color / 1000000 % 1000;
+
+#pragma warning disable S2234 // Thanks Tyron for consistency and ease of use of vanilla API!
+                variant.Color = ColorUtil.ColorFromRgba(b, g, r, 255);
+#pragma warning restore S2234
+            }
+            else
+            {
+                int r = 0;
+                int g = 0;
+                int b = 0;
+                float c = 0;
+
+                BitmapRef bmp = asset.ToBitmap(clientApi);
+                for (int i = 0; i < 8; i++)
                 {
-                    r += col2.Red;
-                    g += col2.Green;
-                    b += col2.Blue;
-                    c++;
+                    Vec2d vec = GameMath.R2Sequence2D(i);
+                    SKColor col2 = bmp.GetPixelRel((float)vec.X, (float)vec.Y);
+                    if (col2.Alpha > 0.5)
+                    {
+                        r += col2.Red;
+                        g += col2.Green;
+                        b += col2.Blue;
+                        c++;
+                    }
                 }
+
+                bmp.Dispose();
+
+                c = Math.Max(1, c);
+                variant.Color = ColorUtil.ColorFromRgba((int)(b / c), (int)(g / c), (int)(r / c), 255);
             }
 
-            bmp.Dispose();
-
-            c = Math.Max(1, c);
-            variant.Color = ColorUtil.ColorFromRgba((int)(b / c), (int)(g / c), (int)(r / c), 255);
             part.VariantsByCode[variant.Code] = variant;
         }
     }

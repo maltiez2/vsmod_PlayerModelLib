@@ -1,5 +1,6 @@
 ﻿using OpenTK.Mathematics;
 using ProtoBuf;
+using System.Runtime.InteropServices;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
@@ -14,6 +15,7 @@ public class SkinnablePartExtended : SkinnablePart
     public bool OverlayTexture { get; set; } = false;
     public EnumColorBlendMode OverlayMode { get; set; } = EnumColorBlendMode.Normal;
     public bool Enabled { get; set; } = true;
+    public Dictionary<string, string[]> DisableElementsByVariantCode { get; set; } = [];
 }
 
 public class CustomModelConfig
