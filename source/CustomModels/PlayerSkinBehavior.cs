@@ -1,6 +1,7 @@
 ﻿using HarmonyLib;
-using System.Diagnostics;
 using System.Linq;
+using System.Net.Sockets;
+using System.Numerics;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
@@ -65,6 +66,11 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         else
         {
             ModelSystem.OnCustomModelsLoaded += ActuallyInitialize;
+        }
+
+        if (entity.Api.Side == EnumAppSide.Server)
+        {
+            RemoveNotExistingTraits();
         }
     }
 
@@ -346,6 +352,24 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
     }
 
+    protected virtual void RemoveNotExistingTraits()
+    {
+        CharacterSystem? characterSystem = entity.Api.ModLoader.GetModSystem<CharacterSystem>();
+        EntityPlayer? player = entity as EntityPlayer;
+
+        if (characterSystem == null || player == null) return;
+        
+        IEnumerable<string> extraTraits = player.WatchedAttributes.GetStringArray("extraTraits", []);
+        IEnumerable<string> removedTraits = extraTraits.Where(trait => !characterSystem.TraitsByCode.ContainsKey(trait));
+        IEnumerable<string> newTraits = extraTraits.Where(characterSystem.TraitsByCode.ContainsKey);
+
+        if (!removedTraits.Any()) return;
+
+        string removedTraitsMessage = removedTraits.Aggregate((a, b) => $"{a}, {b}");
+        LoggerUtil.Warn(player.Api, this, $"Removed traits that no longer exist from player '{player.Player?.PlayerName ?? player.GetName()}': {removedTraitsMessage}");
+
+        player.WatchedAttributes.SetStringArray("extraTraits", newTraits.ToArray());
+    }
 
     protected virtual void AddMainTextures()
     {
@@ -374,7 +398,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
                     willDeleteElements ??= [];
                     willDeleteElements = willDeleteElements.Concat(disabledElements).ToArray();
                 }
-                
+
                 entityShape = AddSkinPart(skinPart, entityShape, disabledElements, shapePathForLogging);
             }
         }
@@ -630,12 +654,12 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
     protected virtual void SetZNear()
     {
         if (entity.Api is not ICoreClientAPI clientApi) return;
-        
+
         float factor = (float)entity.LocalEyePos.Y / DefaultEyeHeight;
 
         SetZNear(clientApi, factor);
     }
-    
+
     protected virtual void SetZNear(ICoreClientAPI api, float multiplier)
     {
         ClientMain? client = api.World as ClientMain;

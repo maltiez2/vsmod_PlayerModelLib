@@ -1,5 +1,4 @@
 ﻿using HarmonyLib;
-using OpenTK.Windowing.GraphicsLibraryFramework;
 using System.Reflection;
 using System.Text;
 using Vintagestory.API.Client;

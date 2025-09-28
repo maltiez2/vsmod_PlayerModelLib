@@ -92,7 +92,14 @@ public sealed class CustomModelsSystem : ModSystem
         }
         catch (Exception)
         {
-            return null;
+            try
+            {
+                return TextureSource?[textureCode];
+            }
+            catch (Exception)
+            {
+                return null;
+            }
         }
     }
     public Size2i? GetAtlasSize(string modelCode, Entity entity)
