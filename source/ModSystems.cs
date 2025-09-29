@@ -21,7 +21,7 @@ public sealed class PlayerModelModSystem : ModSystem
 
     public override void Dispose()
     {
-        new Harmony("PlayerModelLib").UnpatchAll();
+        new Harmony("PlayerModelLib").UnpatchAll("PlayerModelLibTranspiler");
         OtherPatches.Unpatch("PlayerModelLib");
     }
 }
