@@ -250,6 +250,8 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
     protected void OnSkinConfigChanged()
     {
+        if (GuiDialogCreateCustomCharacter.DialogOpened) return;
+        
         if (ModelSystem?.ModelsLoaded != true) return;
 
         skintree = entity.WatchedAttributes["skinConfig"] as ITreeAttribute;
@@ -266,6 +268,8 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
     protected void OnVoiceConfigChanged()
     {
+        if (GuiDialogCreateCustomCharacter.DialogOpened) return;
+
         if (ModelSystem?.ModelsLoaded != true) return;
 
         string? voiceType = entity.WatchedAttributes.GetString("voicetype");
@@ -278,6 +282,8 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
     protected void OnSkinModelAttrChanged()
     {
+        if (GuiDialogCreateCustomCharacter.DialogOpened) return;
+
         string modelCode = GetPlayerModelAttributeValue();
         if (modelCode != CurrentModelCode)
         {
@@ -287,6 +293,8 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
     protected void OnModelSizeAttrChanged()
     {
+        if (GuiDialogCreateCustomCharacter.DialogOpened) return;
+
         float size = entity.WatchedAttributes.GetFloat("entitySize");
         if (size != CurrentSize)
         {

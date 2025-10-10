@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Reflection;
 using System.Text;
-using System.Text.RegularExpressions;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
@@ -26,6 +25,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     }
     public override bool PrefersUngrabbedMouse => true;
     public override string? ToggleKeyCombinationCode => null;
+    public static bool DialogOpened { get; private set; } = false;
 
     public static int RenderState { get; private set; } = 0; // Is used to disable model size compensation when rendering model in model tab
 
@@ -36,6 +36,8 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     }
     public override void OnGuiOpened()
     {
+        DialogOpened = true;
+
         string? characterClass = capi.World.Player.Entity.WatchedAttributes.GetString("characterClass");
         if (characterClass != null && _characterSystem.characterClassesByCode.ContainsKey(characterClass))
         {
@@ -65,6 +67,8 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     }
     public override void OnGuiClosed()
     {
+        DialogOpened = false;
+
         if (_characterInventory != null)
         {
             _characterInventory.Close(capi.World.Player);
@@ -291,6 +295,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     private readonly MethodInfo? _clientSelectionDone = typeof(CharacterSystem).GetMethod("ClientSelectionDone", BindingFlags.NonPublic | BindingFlags.Instance);
     private float _currentModelSize = 1f;
     private GuiComposer? _composer;
+    private float _clipHeight = 377;
 
     private new void ComposeGuis()
     {
@@ -437,7 +442,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         composer.AddRichtext("", CairoFont.WhiteDetailText(), descriptionTextBounds, "modelDescription");
 
-        composer.AddSmallButton(Lang.Get("Confirm model"), OnNextImpl, ElementBounds.Fixed(0, _dlgHeight - 30).WithAlignment(EnumDialogArea.RightFixed).WithFixedPadding(12, 6), EnumButtonStyle.Normal);
+        composer.AddSmallButton(Lang.Get("Confirm model"), OnNextImpl, ElementBounds.Fixed(4, _dlgHeight - 26).WithAlignment(EnumDialogArea.RightFixed).WithFixedPadding(12, 6), EnumButtonStyle.Normal);
 
         string modelDescription = CreateModelDescription(system, skinBehavior.CurrentModelCode);
 
@@ -574,7 +579,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             .AddButton(Lang.Get("Last selection"), () => { return OnRandomizeSkin(_characterSystem.getPreviousSelection()); }, ElementBounds.Fixed(130, _dlgHeight - 25).WithAlignment(EnumDialogArea.LeftFixed).WithFixedPadding(8, 6), CairoFont.WhiteSmallText(), EnumButtonStyle.Small)
             .EndIf();
 
-        composer.AddSmallButton(Lang.Get("Confirm Skin"), OnNextImpl, ElementBounds.Fixed(0, _dlgHeight - 25).WithAlignment(EnumDialogArea.RightFixed).WithFixedPadding(12, 6), EnumButtonStyle.Normal);
+        composer.AddSmallButton(Lang.Get("Confirm Skin"), OnNextImpl, ElementBounds.Fixed(4, _dlgHeight - 26).WithAlignment(EnumDialogArea.RightFixed).WithFixedPadding(12, 6), EnumButtonStyle.Normal);
 
         composer.GetToggleButton("showdressedtoggle").SetValue(!_charNaked);
     }
@@ -625,9 +630,10 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
                 EnumButtonStyle.Normal)
         ;
 
+        _clipHeight = (float)clipBounds.fixedHeight;
         composer.GetScrollbar("scrollbar").SetHeights(
-            (float)(clipBounds.fixedHeight),
-            (float)(clipBounds.fixedHeight)
+            _clipHeight,
+            _clipHeight
         );
         composer.GetScrollbar("scrollbar").SetScrollbarPosition(0);
 
@@ -786,8 +792,8 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         Composers["createcharacter"].GetRichtext("characterDesc").SetNewText(fulldesc.ToString(), CairoFont.WhiteDetailText());
 
         _composer?.GetScrollbar("scrollbar")?.SetHeights(
-            (float)(377),
-            (float)(Math.Max(377, _composer.GetRichtext("characterDesc")?.TotalHeight ?? 377))
+            _clipHeight,
+            (float)(Math.Max(_clipHeight, _composer.GetRichtext("characterDesc")?.TotalHeight ?? _clipHeight))
         );
         _composer?.GetScrollbar("scrollbar")?.SetScrollbarPosition(0);
 
