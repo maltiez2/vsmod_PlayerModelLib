@@ -4,6 +4,6 @@
     <DataFolderName>VintagestoryDataDev</DataFolderName>
     <GameDirectory></GameDirectory>
     <PackageDevBuild>false</PackageDevBuild>
-    <EnterWorldOnStartup>true</EnterWorldOnStartup>
+    <EnterWorldOnStartup>false</EnterWorldOnStartup>
   </PropertyGroup>
 </Project>

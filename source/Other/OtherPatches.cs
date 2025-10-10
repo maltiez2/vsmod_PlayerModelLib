@@ -114,7 +114,7 @@ internal static class OtherPatches
     private static bool applyTraitAttributes(CharacterSystem __instance, EntityPlayer eplr)
     {
         string classCode = eplr.WatchedAttributes.GetString("characterClass");
-        CharacterClass characterClass = __instance.characterClasses.First(c => c.Code == classCode)
+        CharacterClass? characterClass = __instance.characterClasses?.Find(c => c.Code == classCode)
             ?? throw new ArgumentException($"Character class with code '{classCode}' not found when trying to apply class traits for player '{eplr.Player?.PlayerName ?? eplr.GetName()}'.");
 
         // Reset 

@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
@@ -289,6 +290,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     private readonly Matrixf _mat = new();
     private readonly MethodInfo? _clientSelectionDone = typeof(CharacterSystem).GetMethod("ClientSelectionDone", BindingFlags.NonPublic | BindingFlags.Instance);
     private float _currentModelSize = 1f;
+    private GuiComposer? _composer;
 
     private new void ComposeGuis()
     {
@@ -328,6 +330,8 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             .AddHorizontalTabs(tabs, tabBounds, onTabClicked, CairoFont.WhiteSmallText().WithWeight(Cairo.FontWeight.Bold), CairoFont.WhiteSmallText().WithWeight(Cairo.FontWeight.Bold), "tabs")
             .BeginChildElements(backgroundBounds);
 
+        _composer = composer;
+
         Composers["createcharacter"] = composer;
 
         CustomModelsSystem system = capi.ModLoader.GetModSystem<CustomModelsSystem>();
@@ -352,7 +356,15 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         tabElem.unscaledTabPadding = 10;
         tabElem.activeElement = (int)_currentTab;
 
-        composer.Compose();
+        try
+        {
+            composer.Compose();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine(ex);
+            return;
+        }
 
         ScrollPatches.Composed();
     }
@@ -576,30 +588,64 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         ElementBounds leftColBounds = ElementBounds.Fixed(0, yPosition, 0, _dlgHeight - 47).FixedGrow(2 * padding, 2 * padding);
         _insetSlotBounds = ElementBounds.Fixed(0, yPosition + 25, 190, leftColBounds.fixedHeight - 2 * padding + 10).FixedRightOf(leftColBounds, 10);
 
-        ElementBounds prevButtonBounds = ElementBounds.Fixed(0, yPosition + 25, 35, slotSize - 4).WithFixedPadding(2).FixedRightOf(_insetSlotBounds, 20);
-        ElementBounds centerTextBounds = ElementBounds.Fixed(0, yPosition + 25, 200, slotSize - 4 - 8).FixedRightOf(prevButtonBounds, 20);
-
+        ElementBounds prevButtonBounds = ElementBounds.Fixed(0, yPosition + 23, 35, slotSize - 4).WithFixedPadding(2).FixedRightOf(_insetSlotBounds, 20);
+        ElementBounds centerTextBounds = ElementBounds.Fixed(0, yPosition + 25, 374, slotSize - 4 - 8).FixedRightOf(prevButtonBounds, 20);
         ElementBounds charclasssInset = centerTextBounds.ForkBoundingParent(4, 4, 4, 4);
-
-        ElementBounds nextButtonBounds = ElementBounds.Fixed(0, yPosition + 25, 35, slotSize - 4).WithFixedPadding(2).FixedRightOf(charclasssInset, 20);
+        ElementBounds nextButtonBounds = ElementBounds.Fixed(0, yPosition + 23, 35, slotSize - 4).WithFixedPadding(2).FixedRightOf(charclasssInset, 20);
 
         CairoFont font = CairoFont.WhiteMediumText();
         centerTextBounds.fixedY += (centerTextBounds.fixedHeight - font.GetFontExtents().Height / RuntimeEnv.GUIScale) / 2;
 
-        ElementBounds charTextBounds = ElementBounds.Fixed(0, 0, 480, 100).FixedUnder(prevButtonBounds, 20).FixedRightOf(_insetSlotBounds, 20);
+        int visibleHeight = (int)Math.Max(120, _dlgHeight - (yPosition + 25) - 110);
+        ElementBounds charTextBounds = ElementBounds.Fixed(0, 0, 460, visibleHeight)
+            .FixedUnder(prevButtonBounds, 20)
+            .FixedRightOf(_insetSlotBounds, 20);
+
+        ElementBounds bgBounds = charTextBounds.ForkBoundingParent(6, 6, 6, 6);
+        ElementBounds clipBounds = charTextBounds.FlatCopy().FixedGrow(6, 11).WithFixedOffset(0, -6);
+        ElementBounds scrollbarBounds = charTextBounds.CopyOffsetedSibling(charTextBounds.fixedWidth + 7, -6, 0, 12).WithFixedWidth(20);
 
         composer
             .AddInset(_insetSlotBounds, 2)
-
             .AddIconButton("left", (on) => ChangeClass(-1), prevButtonBounds.FlatCopy())
             .AddInset(charclasssInset, 2)
             .AddDynamicText("Commoner", font.Clone().WithOrientation(EnumTextOrientation.Center), centerTextBounds, "className")
             .AddIconButton("right", (on) => ChangeClass(1), nextButtonBounds.FlatCopy())
-            .AddRichtext("", CairoFont.WhiteDetailText(), charTextBounds, "characterDesc")
-            .AddSmallButton(Lang.Get("Confirm Class"), OnConfirm, ElementBounds.Fixed(0, _dlgHeight - 30).WithAlignment(EnumDialogArea.RightFixed).WithFixedPadding(12, 6), EnumButtonStyle.Normal)
+
+            .BeginChildElements(bgBounds)
+                .AddInset(bgBounds, 3)
+                .BeginClip(clipBounds)
+                    .AddRichtext("", CairoFont.WhiteDetailText(), charTextBounds, "characterDesc")
+                .EndClip()
+                .AddVerticalScrollbar(OnNewScrollbarValue, scrollbarBounds, "scrollbar")
+            .EndChildElements()
+
+            .AddSmallButton(Lang.Get("Confirm Class"), OnConfirm,
+                ElementBounds.Fixed(4, _dlgHeight - 26).WithAlignment(EnumDialogArea.RightFixed).WithFixedPadding(12, 6),
+                EnumButtonStyle.Normal)
         ;
 
+        composer.GetScrollbar("scrollbar").SetHeights(
+            (float)(clipBounds.fixedHeight),
+            (float)(clipBounds.fixedHeight)
+        );
+        composer.GetScrollbar("scrollbar").SetScrollbarPosition(0);
+
         ChangeClass(0);
+    }
+
+
+    private void OnNewScrollbarValue(float value)
+    {
+        GuiElementRichtext? richtextElem = _composer?.GetRichtext("characterDesc");
+
+        Debug.WriteLine(value);
+
+        if (richtextElem != null)
+        {
+            richtextElem.Bounds.fixedY = 0 - value;// Math.Min(value / 100f * richtextElem.TotalHeight, Math.Max(richtextElem.TotalHeight - 377, 0));
+            richtextElem.Bounds.CalcWorldBounds();
+        }
     }
 
     private bool OnRandomizeSkin(Dictionary<string, string> preselection)
@@ -738,6 +784,12 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         }
 
         Composers["createcharacter"].GetRichtext("characterDesc").SetNewText(fulldesc.ToString(), CairoFont.WhiteDetailText());
+
+        _composer?.GetScrollbar("scrollbar")?.SetHeights(
+            (float)(377),
+            (float)(Math.Max(377, _composer.GetRichtext("characterDesc")?.TotalHeight ?? 377))
+        );
+        _composer?.GetScrollbar("scrollbar")?.SetScrollbarPosition(0);
 
         _characterSystem.setCharacterClass(capi.World.Player.Entity, chclass.Code, true);
 
