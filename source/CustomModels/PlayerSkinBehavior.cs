@@ -147,7 +147,10 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         AvailableSkinPartsByCode = CurrentModel.SkinParts;
         AvailableSkinParts = CurrentModel.SkinPartsArray;
         ReplaceEntityShape();
+        ApplyTraitAttributes(CurrentModelCode);
     }
+
+    public void ApplyTraitAttributesWithModelTraits(string modelCode) => ApplyTraitAttributes(modelCode);
 
     public override ITexPositionSource? GetTextureSource(ref EnumHandling handling)
     {
@@ -318,6 +321,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         AvailableSkinPartsByCode = CurrentModel.SkinParts;
         AvailableSkinParts = CurrentModel.SkinPartsArray;
         ReplaceEntityShape();
+        ApplyTraitAttributes(CurrentModelCode);
     }
 
     protected void ReplaceEntityShape()
@@ -682,4 +686,60 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
     }
 
     protected virtual string GetPlayerModelAttributeValue() => entity.WatchedAttributes.GetString("skinModel", "seraph") ?? "seraph";
+
+    private void ApplyTraitAttributes(string modelCode)
+    {
+        EntityPlayer eplr = entity as EntityPlayer;
+        CharacterSystem __instance = eplr.Api.ModLoader.GetModSystem<CharacterSystem>();
+        CustomModelsSystem modelSystem = eplr.Api.ModLoader.GetModSystem<CustomModelsSystem>();
+
+        string? classCode = eplr.WatchedAttributes.GetString("characterClass");
+        if (classCode == null || classCode == "") return;
+        CharacterClass? characterClass = __instance.characterClasses?.Find(c => c.Code == classCode)
+            ?? throw new ArgumentException($"Character class with code '{classCode}' not found when trying to apply class traits for player '{eplr.Player?.PlayerName ?? eplr.GetName()}'.");
+
+        // Reset 
+        foreach ((_, EntityFloatStats stats) in eplr.Stats)
+        {
+            foreach ((string stat, _) in stats.ValuesByKey)
+            {
+                if (stat == "trait")
+                {
+                    stats.Remove(stat);
+                    break;
+                }
+            }
+        }
+        
+        string[] extraModelTraits = modelSystem.CustomModels[modelCode].ExtraTraits;
+        string[] extraTraits = eplr.WatchedAttributes.GetStringArray("extraTraits") ?? [];
+        IEnumerable<string> allTraits = extraTraits == null ? characterClass.Traits : characterClass.Traits.Concat(extraModelTraits).Concat(extraTraits);
+
+        // Aggregate stats values
+        Dictionary<string, double> statValues = [];
+        foreach (string traitCode in allTraits)
+        {
+            if (!__instance.TraitsByCode.TryGetValue(traitCode, out Trait? trait)) continue;
+
+            foreach ((string attributeCode, double attributeValue) in trait.Attributes)
+            {
+                if (statValues.ContainsKey(attributeCode))
+                {
+                    statValues[attributeCode] += attributeValue;
+                }
+                else
+                {
+                    statValues[attributeCode] = attributeValue;
+                }
+            }
+        }
+
+        // Apply aggregated values
+        foreach ((string stat, double value) in statValues)
+        {
+            eplr.Stats.Set(stat, "trait", (float)value, true);
+        }
+
+        eplr.GetBehavior<EntityBehaviorHealth>()?.MarkDirty();
+    }
 }
