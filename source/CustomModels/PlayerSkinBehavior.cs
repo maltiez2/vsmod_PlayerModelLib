@@ -130,6 +130,8 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
             RemoveHiddenElements(entityShape, ref willDeleteElements);
 
+            entityShape.CollectAndResolveReferences(entity.Api.Logger, shapePathForLogging);
+
             OnShapeTesselated?.Invoke(entityShape);
         }
         catch (Exception exception)
