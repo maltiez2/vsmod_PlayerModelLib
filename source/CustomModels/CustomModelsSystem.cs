@@ -319,7 +319,14 @@ public sealed class CustomModelsSystem : ModSystem
                         processedPath = processedPath.Replace($"{variantCode}", variantValue);
                     }
 
-                    CustomModels[modelCode].WearableShapeReplacers.TryAdd(item.Id, processedPath);
+                    if (api.Assets.Exists(GetShapeLocation(processedPath)))
+                    {
+                        CustomModels[modelCode].WearableShapeReplacers.TryAdd(item.Id, processedPath);
+                    }
+                    else
+                    {
+                        LoggerUtil.Error(_api, this, $"Shape '{processedPath}' that replaces shape for item '{item.Code}' for model '{modelCode}' was not found, skipping.");
+                    }
                 }
             }
         }
@@ -398,7 +405,14 @@ public sealed class CustomModelsSystem : ModSystem
                             processedPath = processedPath.Replace($"{{{variantCode}}}", variantValue);
                         }
 
-                        CustomModels[modelCode].WearableShapeReplacers[item.Id] = processedPath;
+                        if (api.Assets.Exists(GetShapeLocation(processedPath)))
+                        {
+                            CustomModels[modelCode].WearableShapeReplacers.TryAdd(item.Id, processedPath);
+                        }
+                        else
+                        {
+                            LoggerUtil.Error(_api, this, $"Shape '{processedPath}' that replaces shape for item '{item.Code}' for model '{modelCode}' was not found, skipping.");
+                        }
                     }
                 }
             }
@@ -419,11 +433,19 @@ public sealed class CustomModelsSystem : ModSystem
 
                 foreach ((string fromPath, string toPath) in paths)
                 {
-                    CustomModels[modelCode].WearableShapeReplacersByShape[fromPath] = toPath;
+                    if (api.Assets.Exists(GetShapeLocation(toPath)))
+                    {
+                        CustomModels[modelCode].WearableShapeReplacersByShape[fromPath] = toPath;
+                    }
+                    else
+                    {
+                        LoggerUtil.Error(_api, this, $"Shape '{toPath}' that replaces shape '{fromPath}' for model '{modelCode}' was not found, skipping.");
+                    }
                 }
             }
         }
     }
+    private AssetLocation GetShapeLocation(string path) => new AssetLocation(path).WithPathPrefixOnce("shapes/").WithPathAppendixOnce(".json");
     private void ProcessAnimations(ICoreAPI api)
     {
         foreach (Shape customShape in CustomModels.Where(entry => entry.Key != _defaultModelCode).Select(entry => entry.Value.Shape))

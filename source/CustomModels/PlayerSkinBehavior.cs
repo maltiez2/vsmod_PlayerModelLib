@@ -695,8 +695,13 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
         string? classCode = eplr.WatchedAttributes.GetString("characterClass");
         if (classCode == null || classCode == "") return;
-        CharacterClass? characterClass = __instance.characterClasses?.Find(c => c.Code == classCode)
-            ?? throw new ArgumentException($"Character class with code '{classCode}' not found when trying to apply class traits for player '{eplr.Player?.PlayerName ?? eplr.GetName()}'.");
+        CharacterClass? characterClass = __instance.characterClasses?.Find(c => c.Code == classCode);
+
+        if (characterClass == null)
+        {
+            LoggerUtil.Error(entity.Api, this, $"Character class with code '{classCode}' not found when trying to apply class traits for player '{eplr.Player?.PlayerName ?? eplr.GetName()}'.");
+            return;
+        }
 
         // Reset 
         foreach ((_, EntityFloatStats stats) in eplr.Stats)
@@ -713,7 +718,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         
         string[] extraModelTraits = modelSystem.CustomModels[modelCode].ExtraTraits;
         string[] extraTraits = eplr.WatchedAttributes.GetStringArray("extraTraits") ?? [];
-        IEnumerable<string> allTraits = extraTraits == null ? characterClass.Traits : characterClass.Traits.Concat(extraModelTraits).Concat(extraTraits);
+        IEnumerable<string> allTraits = extraTraits == null ? characterClass.Traits : characterClass.Traits.Concat(extraModelTraits).Concat(extraTraits).Distinct();
 
         // Aggregate stats values
         Dictionary<string, double> statValues = [];

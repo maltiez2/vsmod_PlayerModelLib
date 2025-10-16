@@ -135,7 +135,7 @@ internal static class OtherPatches
         string modelCode = skinBehavior.CurrentModelCode;
         string[] extraModelTraits = modelCode == null ? [] : modelSystem.CustomModels[modelCode].ExtraTraits;
         string[] extraTraits = eplr.WatchedAttributes.GetStringArray("extraTraits") ?? [];
-        IEnumerable<string> allTraits = extraTraits == null ? characterClass.Traits : characterClass.Traits.Concat(extraModelTraits).Concat(extraTraits);
+        IEnumerable<string> allTraits = extraTraits == null ? characterClass.Traits : characterClass.Traits.Concat(extraModelTraits).Concat(extraTraits).Distinct();
 
         // Aggregate stats values
         Dictionary<string, double> statValues = [];
@@ -170,8 +170,14 @@ internal static class OtherPatches
     private static bool getClassTraitText(CharacterSystem __instance, ref string __result)
     {
         string? classCode = _clientApi?.World?.Player?.Entity?.WatchedAttributes?.GetString("characterClass");
-        CharacterClass characterClass = __instance.characterClasses.First(c => c.Code == classCode)
-                ?? throw new ArgumentException($"Character class with code '{classCode}' not found when trying to set character class for player '{_clientApi?.World?.Player?.PlayerName}'.");
+        CharacterClass? characterClass = __instance.characterClasses.FirstOrDefault(c => c.Code == classCode);
+
+        if (characterClass == null)
+        {
+            LoggerUtil.Error(_clientApi, typeof(OtherPatches), $"Character class with code '{classCode}' not found when trying to set character class for player '{_clientApi?.World?.Player?.PlayerName}'.");
+            __result = "";
+            return false;
+        }
 
         StringBuilder fullDescription = new();
         StringBuilder attributes = new();

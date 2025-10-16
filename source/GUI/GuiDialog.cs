@@ -296,6 +296,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     private float _currentModelSize = 1f;
     private GuiComposer? _composer;
     private float _clipHeight = 377;
+    internal static bool _applyScrollPatch = false;
 
     private new void ComposeGuis()
     {
@@ -363,7 +364,9 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         try
         {
+            _applyScrollPatch = _currentTab == EnumCreateCharacterTabs.Skin;
             composer.Compose();
+            _applyScrollPatch = false;
         }
         catch (Exception ex)
         {
@@ -618,7 +621,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             .AddIconButton("right", (on) => ChangeClass(1), nextButtonBounds.FlatCopy())
 
             .BeginChildElements(bgBounds)
-                .AddInset(bgBounds, 3)
+                .AddInset(bgBounds.FlatCopy(), 3)
                 .BeginClip(clipBounds)
                     .AddRichtext("", CairoFont.WhiteDetailText(), charTextBounds, "characterDesc")
                 .EndClip()
@@ -644,8 +647,6 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     private void OnNewScrollbarValue(float value)
     {
         GuiElementRichtext? richtextElem = _composer?.GetRichtext("characterDesc");
-
-        Debug.WriteLine(value);
 
         if (richtextElem != null)
         {
@@ -775,18 +776,21 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         IOrderedEnumerable<Trait> chartraitsExtra = _customModelsSystem.CustomModels[skinMod.CurrentModelCode].ExtraTraits.Select(code => _characterSystem.TraitsByCode[code]).OrderBy(trait => (int)trait.Type);
         IOrderedEnumerable<Trait> chartraits = chclass.Traits.Where(code => !_customModelsSystem.CustomModels[skinMod.CurrentModelCode].ExtraTraits.Contains(code)).Select(code => _characterSystem.TraitsByCode[code]).OrderBy(trait => (int)trait.Type);
 
-        AppendTraits(fulldesc, chartraitsExtra);
-
-        if (chartraitsExtra.Any())
-        {
-            fulldesc.AppendLine("");
-        }
-
         AppendTraits(fulldesc, chartraits);
 
         if (chclass.Traits.Length == 0)
         {
             fulldesc.AppendLine(Lang.Get("No positive or negative traits"));
+        }
+
+        fulldesc.AppendLine();
+        fulldesc.AppendLine(Lang.Get("model-traits-title"));
+
+        AppendTraits(fulldesc, chartraitsExtra);
+
+        if (chartraitsExtra.Any())
+        {
+            fulldesc.AppendLine("");
         }
 
         Composers["createcharacter"].GetRichtext("characterDesc").SetNewText(fulldesc.ToString(), CairoFont.WhiteDetailText());

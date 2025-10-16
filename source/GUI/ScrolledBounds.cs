@@ -167,9 +167,11 @@ public static class ScrollPatches
     [HarmonyPostfix]
     [HarmonyPatch(typeof(GuiComposer), nameof(GuiComposer.Compose))]
     public static void Composer_Compose(
-            Dictionary<string, GuiElement> ___interactiveElements,
-            List<GuiElement> ___interactiveElementsInDrawOrder)
+        Dictionary<string, GuiElement> ___interactiveElements,
+        List<GuiElement> ___interactiveElementsInDrawOrder)
     {
+        if (!GuiDialogCreateCustomCharacter._applyScrollPatch) return;
+        
         surround.Clear();
         currentSurround.Clear();
         surroundStack.Clear();

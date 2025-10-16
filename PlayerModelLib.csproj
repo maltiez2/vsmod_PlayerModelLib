@@ -3,7 +3,7 @@
   <PropertyGroup>
     <ModName>Player Model Library</ModName>
     <ModType>code</ModType>
-    <ModVersion>1.0.17</ModVersion>
+    <ModVersion>1.0.23</ModVersion>
     <ModId>playermodellib</ModId>
     <Description></Description>
     <Side>Universal</Side>
@@ -18,7 +18,7 @@
 
   <!-- Dependencies -->
   <ItemGroup>
-    <Dependencies Include="game" Version="*" />
+    <!-- <Dependencies Include="game" Version="*" /> -->
   </ItemGroup>
 
   <!-- Project settings -->
@@ -92,6 +92,11 @@
     <Reference Include="Tavis.JsonPatch" HintPath="$(GameDirectory)/Lib/Tavis.JsonPatch.dll" Private="false" />
     <Reference Include="SkiaSharp" HintPath="$(GameDirectory)/Lib/SkiaSharp.dll" Private="false" />
     <Reference Include="$(GameDirectory)/Lib/OpenTK*.dll" Private="false" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="resources\assets\game\**" />
+    <EmbeddedResource Remove="resources\assets\game\**" />
+    <None Remove="resources\assets\game\**" />
   </ItemGroup>
 
   <!-- Creating local settings file -->
