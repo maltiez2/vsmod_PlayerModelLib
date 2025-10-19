@@ -131,8 +131,8 @@ internal static class OtherPatches
         }
 
         CustomModelsSystem modelSystem = eplr.Api.ModLoader.GetModSystem<CustomModelsSystem>();
-        PlayerSkinBehavior skinBehavior = eplr.GetBehavior<PlayerSkinBehavior>();
-        string modelCode = skinBehavior.CurrentModelCode;
+        PlayerSkinBehavior? skinBehavior = eplr.GetBehavior<PlayerSkinBehavior>();
+        string? modelCode = skinBehavior?.CurrentModelCode;
         string[] extraModelTraits = modelCode == null ? [] : modelSystem.CustomModels[modelCode].ExtraTraits;
         string[] extraTraits = eplr.WatchedAttributes.GetStringArray("extraTraits") ?? [];
         IEnumerable<string> allTraits = extraTraits == null ? characterClass.Traits : characterClass.Traits.Concat(extraModelTraits).Concat(extraTraits).Distinct();

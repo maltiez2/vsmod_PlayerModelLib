@@ -691,15 +691,15 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
     private void ApplyTraitAttributes(string modelCode)
     {
-        EntityPlayer eplr = entity as EntityPlayer;
-        CharacterSystem __instance = eplr.Api.ModLoader.GetModSystem<CharacterSystem>();
-        CustomModelsSystem modelSystem = eplr.Api.ModLoader.GetModSystem<CustomModelsSystem>();
+        EntityPlayer? eplr = entity as EntityPlayer;
+        CharacterSystem? __instance = eplr?.Api.ModLoader.GetModSystem<CharacterSystem>();
+        CustomModelsSystem? modelSystem = eplr?.Api.ModLoader.GetModSystem<CustomModelsSystem>();
 
-        string? classCode = eplr.WatchedAttributes.GetString("characterClass");
-        if (classCode == null || classCode == "") return;
+        string? classCode = eplr?.WatchedAttributes.GetString("characterClass");
+        if (eplr == null || __instance == null || classCode == null || classCode == "") return;
         CharacterClass? characterClass = __instance.characterClasses?.Find(c => c.Code == classCode);
 
-        if (characterClass == null)
+        if (characterClass == null )
         {
             LoggerUtil.Error(entity.Api, this, $"Character class with code '{classCode}' not found when trying to apply class traits for player '{eplr.Player?.PlayerName ?? eplr.GetName()}'.");
             return;
@@ -718,7 +718,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
             }
         }
         
-        string[] extraModelTraits = modelSystem.CustomModels[modelCode].ExtraTraits;
+        string[] extraModelTraits = modelSystem?.CustomModels[modelCode].ExtraTraits ?? [];
         string[] extraTraits = eplr.WatchedAttributes.GetStringArray("extraTraits") ?? [];
         IEnumerable<string> allTraits = extraTraits == null ? characterClass.Traits : characterClass.Traits.Concat(extraModelTraits).Concat(extraTraits).Distinct();
 
