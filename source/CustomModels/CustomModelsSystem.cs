@@ -3,12 +3,15 @@ using OpenTK.Mathematics;
 using SkiaSharp;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.Common.CommandAbbr;
 using Vintagestory.API.Common.Entities;
+using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
 using Vintagestory.API.Util;
 using Vintagestory.GameContent;
+using Vintagestory.Server;
 
 namespace PlayerModelLib;
 
@@ -25,7 +28,6 @@ public sealed class CustomModelsSystem : ModSystem
     public event Action? OnCustomModelsLoaded;
 
     public override double ExecuteOrder() => 0.21;
-
 
     public override void StartClientSide(ICoreClientAPI api)
     {
@@ -45,6 +47,8 @@ public sealed class CustomModelsSystem : ModSystem
             .RegisterMessageType<ChangePlayerModelSizePacket>()
             .SetMessageHandler<ChangePlayerModelPacket>(HandleChangePlayerModelPacket)
             .SetMessageHandler<ChangePlayerModelSizePacket>(HandleChangePlayerModelSizePacket);
+
+        RegisterServerChatCommands(api);
     }
     public override void AssetsLoaded(ICoreAPI api)
     {
@@ -133,7 +137,7 @@ public sealed class CustomModelsSystem : ModSystem
     private const string _defaultMainTextureCode = "seraph";
     private const string _playerEntityCode = "game:player";
     private const string _defaultModelCode = "seraph";
-
+    private const string _extraCustomModelsAttribute = "extraCustomModels";
     private const string _modelReplacementsByCodePath = "config/model-replacements-bycode";
     private const string _modelReplacementsByShapePath = "config/model-replacements-byshape";
     private const string _compositeModelReplacementsByCodePath = "config/composite-model-replacements-bycode";
@@ -699,7 +703,7 @@ public sealed class CustomModelsSystem : ModSystem
                 LoggerUtil.Error(_api, this, $"Skin part for model '{model}' does not have code specified, skipping.");
                 continue;
             }
-            
+
             part.VariantsByCode = [];
 
             patsByCode[part.Code] = part;
@@ -734,7 +738,90 @@ public sealed class CustomModelsSystem : ModSystem
 
         return patsByCode;
     }
-    
+
+    private void RegisterServerChatCommands(ICoreServerAPI api)
+    {
+        IChatCommandApi? chatCommandApi = _api?.ChatCommands;
+        CommandArgumentParsers? chatCommandParser = _api?.ChatCommands.Parsers;
+
+        chatCommandApi?
+            .GetOrCreate("player")
+            .BeginSub("enablePlayerModel")
+                .WithAlias("epm")
+                .RequiresPrivilege(Privilege.grantrevoke)
+                .WithDesc("Allow selection of specified player model even if it is disabled")
+                .WithArgs(chatCommandParser?.Word("code"))
+                .HandleWith((args) => CmdPlayer.Each(args, HandleEnablePlayerModel))
+            .EndSub()
+            .BeginSub("disablePlayerModel")
+                .WithAlias("dpm")
+                .RequiresPrivilege(Privilege.grantrevoke)
+                .WithDesc("Removes player model from list of allowed models.")
+                .WithArgs(chatCommandParser?.Word("code"))
+                .HandleWith((args) => CmdPlayer.Each(args, HandleDisablePlayerModel))
+            .EndSub();
+    }
+    private TextCommandResult HandleEnablePlayerModel(PlayerUidName targetPlayer, TextCommandCallingArgs args)
+    {
+        ICoreServerAPI api = _api as ICoreServerAPI ?? throw new ArgumentException("'enablePlayerModel' should be run on server side");
+        ServerMain server = api.World as ServerMain ?? throw new ArgumentException("Hm... It seems 'api.World' is not 'ServerMain'");
+
+        IWorldPlayerData? playerData = server.GetWorldPlayerData(targetPlayer.Uid);
+
+        if (playerData == null)
+        {
+            return TextCommandResult.Error(Lang.Get("Only works for players that have connected to your server at least once"));
+        }
+
+        string[] extraCustomModels = playerData.EntityPlayer?.WatchedAttributes?.GetStringArray(_extraCustomModelsAttribute, []) ?? [];
+        string playerModelCode = (string?)args[1] ?? "";
+
+        if (!CustomModels.ContainsKey(playerModelCode))
+        {
+            string existingModels = CustomModels.Keys.Aggregate((a, b) => $"{a}, {b}");
+            return TextCommandResult.Error($"Model '{playerModelCode}' does not exists. Existing models: {existingModels}");
+        }
+
+        if (extraCustomModels.Contains(playerModelCode))
+        {
+            return TextCommandResult.Error($"Player '{targetPlayer.Name}' can already select '{playerModelCode}'");
+        }
+
+        extraCustomModels = extraCustomModels.Append(playerModelCode).Distinct().ToArray();
+
+        playerData.EntityPlayer?.WatchedAttributes?.SetStringArray(_extraCustomModelsAttribute, extraCustomModels);
+        playerData.EntityPlayer?.WatchedAttributes?.MarkPathDirty(_extraCustomModelsAttribute);
+
+        return TextCommandResult.Success($"Player '{targetPlayer.Name}' now has access to '{playerModelCode}' player model");
+    }
+    private TextCommandResult HandleDisablePlayerModel(PlayerUidName targetPlayer, TextCommandCallingArgs args)
+    {
+        ICoreServerAPI api = _api as ICoreServerAPI ?? throw new ArgumentException("'enablePlayerModel' should be run on server side");
+        ServerMain server = api.World as ServerMain ?? throw new ArgumentException("Hm... It seems 'api.World' is not 'ServerMain'");
+
+        IWorldPlayerData? playerData = server.GetWorldPlayerData(targetPlayer.Uid);
+
+        if (playerData == null)
+        {
+            return TextCommandResult.Error("Only works for players that have connected to your server at least once");
+        }
+
+        string[] extraCustomModels = playerData.EntityPlayer?.WatchedAttributes?.GetStringArray(_extraCustomModelsAttribute, []) ?? [];
+        string playerModelCode = (string?)args[1] ?? "";
+
+        if (!extraCustomModels.Contains(playerModelCode))
+        {
+            return TextCommandResult.Error($"Player '{targetPlayer.Name}' already cannot select '{playerModelCode}'");
+        }
+
+        extraCustomModels = extraCustomModels.Remove(playerModelCode).Distinct().ToArray();
+
+        playerData.EntityPlayer?.WatchedAttributes?.SetStringArray(_extraCustomModelsAttribute, extraCustomModels);
+        playerData.EntityPlayer?.WatchedAttributes?.MarkPathDirty(_extraCustomModelsAttribute);
+
+        return TextCommandResult.Success($"Player '{targetPlayer.Name}' now does not have access to '{playerModelCode}' player model");
+    }
+
     private void ProcessTexturePart(ICoreClientAPI clientApi, SkinnablePart part, string model)
     {
         foreach (SkinnablePartVariant? variant in part.Variants)

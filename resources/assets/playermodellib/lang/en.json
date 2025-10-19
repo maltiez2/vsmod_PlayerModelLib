@@ -6,7 +6,7 @@
   "model-size-slider": "Model size: ",
   "game:model-traits-title": "<strong>Model traits<strong>",
 
-  "playermodellib:setting-title-0": "Seraph model settings",
+  "setting-title-0": "Seraph model settings",
 
   "setting-min_size_range": "Min model size",
   "setting-max_size_range": "Max model size",

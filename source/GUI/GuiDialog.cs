@@ -909,7 +909,9 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     }
     private void GetCustomModels(CustomModelsSystem system, out string[] modelValues, out string[] modelNames)
     {
-        modelValues = system.CustomModels.Where(entry => entry.Value.Enabled).Select(entry => entry.Key).ToArray();
+        string[] extraCustomModels = capi?.World?.Player?.Entity?.WatchedAttributes?.GetStringArray("extraCustomModels", []) ?? [];
+
+        modelValues = system.CustomModels.Where(entry => entry.Value.Enabled || extraCustomModels.Contains(entry.Value.Code)).Select(entry => entry.Key).ToArray();
         modelNames = modelValues.Select(key => new AssetLocation(key)).Select(GetCustomModelLangEntry).ToArray();
 
         if (modelValues.Length == 0)
