@@ -1,5 +1,6 @@
 ﻿using Cairo;
 using HarmonyLib;
+using System.Diagnostics;
 using Vintagestory.API.Client;
 using Vintagestory.GameContent;
 
@@ -170,89 +171,97 @@ public static class ScrollPatches
         Dictionary<string, GuiElement> ___interactiveElements,
         List<GuiElement> ___interactiveElementsInDrawOrder)
     {
-        if (!GuiDialogCreateCustomCharacter._applyScrollPatch) return;
-        
-        surround.Clear();
-        currentSurround.Clear();
-        surroundStack.Clear();
-        GuiElement[] elems = ___interactiveElements.Values.ToArray();
-        List<GuiElement> drawOrder = ___interactiveElementsInDrawOrder;
-
-        GuiElement[] array = null;
-        for (int i = 0; i < elems.Length; i++)
+        try
         {
-            GuiElement elem = elems[i];
-            if (elem.GetType().FullName == "Vintagestory.API.Client.GuiElementClip")
+            surround.Clear();
+            currentSurround.Clear();
+            surroundStack.Clear();
+            GuiElement[] elems = ___interactiveElements.Values.ToArray();
+            List<GuiElement> drawOrder = ___interactiveElementsInDrawOrder;
+
+            GuiElement[] array = null;
+            for (int i = 0; i < elems.Length; i++)
             {
-                if (Traverse.Create(elem).Field<bool>("clip").Value)
+                GuiElement elem = elems[i];
+                if (elem.GetType().FullName == "Vintagestory.API.Client.GuiElementClip")
                 {
-                    currentSurround.Add(i);
-                    surroundStack.Push(array);
-                    int n = currentSurround.Count;
-                    array = new GuiElement[2 * n];
+                    if (Traverse.Create(elem).Field<bool>("clip").Value)
+                    {
+                        currentSurround.Add(i);
+                        surroundStack.Push(array);
+                        int n = currentSurround.Count;
+                        array = new GuiElement[2 * n];
+                        for (int j = 0; j < n; j++)
+                        {
+                            array[j] = elems[currentSurround[j]];
+                        }
+                    }
+                    else if (surroundStack.Count > 0)
+                    {
+                        array[^currentSurround.Count] = elem;
+                        currentSurround.RemoveAt(currentSurround.Count - 1);
+                        array = surroundStack.Pop();
+                    }
+                }
+                else if (elem.DrawOrder > 0.0)
+                {
+                    surround[elem] = array;
+                }
+            }
+
+            int mid = 0;
+            for (int low = 0, high = drawOrder.Count - 1; low < high;)
+            {
+                mid = (low + high) / 2;
+                if (drawOrder[mid].DrawOrder > 0.0)
+                {
+                    high = mid;
+                }
+                else
+                {
+                    low = mid + 1;
+                }
+            }
+            for (int i = mid; i < drawOrder.Count; i++)
+            {
+                if (surround.TryGetValue(drawOrder[i], out GuiElement[]? arr) && arr != null)
+                {
+                    int last = i;
+                    for (int j = 0; j < drawOrder.Count; j++)
+                    {
+                        if (surround.TryGetValue(drawOrder[j], out GuiElement[]? arr2) && arr2 == arr)
+                        {
+                            last = j;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+                    int n = arr.Length / 2;
                     for (int j = 0; j < n; j++)
                     {
-                        array[j] = elems[currentSurround[j]];
+                        drawOrder.Insert(i++, arr[j]);
                     }
-                }
-                else if (surroundStack.Count > 0)
-                {
-                    array[^currentSurround.Count] = elem;
-                    currentSurround.RemoveAt(currentSurround.Count - 1);
-                    array = surroundStack.Pop();
-                }
-            }
-            else if (elem.DrawOrder > 0.0)
-            {
-                surround[elem] = array;
-            }
-        }
-
-        int mid = 0;
-        for (int low = 0, high = drawOrder.Count - 1; low < high;)
-        {
-            mid = (low + high) / 2;
-            if (drawOrder[mid].DrawOrder > 0.0)
-            {
-                high = mid;
-            }
-            else
-            {
-                low = mid + 1;
-            }
-        }
-        for (int i = mid; i < drawOrder.Count; i++)
-        {
-            if (surround.TryGetValue(drawOrder[i], out GuiElement[]? arr) && arr != null)
-            {
-                int last = i;
-                for (int j = 0; j < drawOrder.Count; j++)
-                {
-                    if (surround.TryGetValue(drawOrder[j], out GuiElement[]? arr2) && arr2 == arr)
+                    i = last + n;
+                    for (int j = 0; j < n; j++)
                     {
-                        last = j;
+                        drawOrder.Insert(++i, arr[n + j]);
                     }
-                    else
-                    {
-                        break;
-                    }
-                }
-                int n = arr.Length / 2;
-                for (int j = 0; j < n; j++)
-                {
-                    drawOrder.Insert(i++, arr[j]);
-                }
-                i = last + n;
-                for (int j = 0; j < n; j++)
-                {
-                    drawOrder.Insert(++i, arr[n + j]);
                 }
             }
-        }
 
-        surround.Clear();
-        currentSurround.Clear();
-        surroundStack.Clear();
+            surround.Clear();
+            currentSurround.Clear();
+            surroundStack.Clear();
+        }
+        catch (Exception exception)
+        {
+            Debug.WriteLine(exception);
+            surround.Clear();
+            currentSurround.Clear();
+            surroundStack.Clear();
+        }
     }
 
     [HarmonyPostfix]

@@ -300,6 +300,8 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
     private new void ComposeGuis()
     {
+        _applyScrollPatch = true;
+
         double padding = GuiElementItemSlotGridBase.unscaledSlotPadding;
         double slotSize = GuiElementPassiveItemSlot.unscaledSlotSize;
         double yPosition = 20 + padding;
@@ -364,13 +366,12 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         try
         {
-            _applyScrollPatch = _currentTab == EnumCreateCharacterTabs.Skin;
             composer.Compose();
-            _applyScrollPatch = false;
         }
         catch (Exception ex)
         {
             Debug.WriteLine(ex);
+            _applyScrollPatch = false;
             return;
         }
 
