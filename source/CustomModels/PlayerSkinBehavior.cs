@@ -1,7 +1,4 @@
 ﻿using HarmonyLib;
-using System.Linq;
-using System.Net.Sockets;
-using System.Numerics;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
@@ -256,7 +253,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
     protected void OnSkinConfigChanged()
     {
         if (GuiDialogCreateCustomCharacter.DialogOpened) return;
-        
+
         if (ModelSystem?.ModelsLoaded != true) return;
 
         skintree = entity.WatchedAttributes["skinConfig"] as ITreeAttribute;
@@ -372,7 +369,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         EntityPlayer? player = entity as EntityPlayer;
 
         if (characterSystem == null || player == null) return;
-        
+
         IEnumerable<string> extraTraits = player.WatchedAttributes.GetStringArray("extraTraits", []);
         IEnumerable<string> removedTraits = extraTraits.Where(trait => !characterSystem.TraitsByCode.ContainsKey(trait));
         IEnumerable<string> newTraits = extraTraits.Where(characterSystem.TraitsByCode.ContainsKey);
@@ -699,7 +696,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         if (eplr == null || __instance == null || classCode == null || classCode == "") return;
         CharacterClass? characterClass = __instance.characterClasses?.Find(c => c.Code == classCode);
 
-        if (characterClass == null )
+        if (characterClass == null)
         {
             LoggerUtil.Error(entity.Api, this, $"Character class with code '{classCode}' not found when trying to apply class traits for player '{eplr.Player?.PlayerName ?? eplr.GetName()}'.");
             return;
@@ -717,7 +714,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
                 }
             }
         }
-        
+
         string[] extraModelTraits = modelSystem?.CustomModels[modelCode].ExtraTraits ?? [];
         string[] extraTraits = eplr.WatchedAttributes.GetStringArray("extraTraits") ?? [];
         IEnumerable<string> allTraits = extraTraits == null ? characterClass.Traits : characterClass.Traits.Concat(extraModelTraits).Concat(extraTraits).Distinct();
