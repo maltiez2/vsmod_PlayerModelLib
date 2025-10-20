@@ -3,7 +3,7 @@
   <PropertyGroup>
     <ModName>Player Model Library</ModName>
     <ModType>code</ModType>
-    <ModVersion>1.1.3</ModVersion>
+    <ModVersion>1.1.4</ModVersion>
     <ModId>playermodellib</ModId>
     <Description></Description>
     <Side>Universal</Side>
@@ -17,9 +17,8 @@
   </ItemGroup>
 
   <!-- Dependencies -->
-  <ItemGroup><!-- <Dependencies Include="game" Version="*" /> -->
-  
-    <Folder Include="resources\assets\game\" />
+  <ItemGroup>
+    <!-- <Dependencies Include="game" Version="*" /> -->
   </ItemGroup>
 
   <!-- Project settings -->

@@ -2,6 +2,7 @@
 using HarmonyLib;
 using System.Diagnostics;
 using Vintagestory.API.Client;
+using Vintagestory.API.Common;
 using Vintagestory.GameContent;
 
 #pragma warning disable
@@ -257,10 +258,8 @@ public static class ScrollPatches
         }
         catch (Exception exception)
         {
+            LoggerUtil.Verbose(api, typeof(ScrollPatches), $"Exception in Composer_Compose:\n{exception}\n");
             Debug.WriteLine(exception);
-            surround.Clear();
-            currentSurround.Clear();
-            surroundStack.Clear();
         }
     }
 
