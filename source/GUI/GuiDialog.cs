@@ -383,25 +383,9 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         PlayerSkinBehavior? skinBehavior = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
         if (skinBehavior == null) return;
 
-        GetCustomModels(system, out string[] modelValues, out string[] modelNames);
-
-        int modelIndex = 0;
-        bool modelFound = false;
-
-        for (int index = 0; index < modelValues.Length; index++)
-        {
-            if (modelValues[index] == skinBehavior.CurrentModelCode)
-            {
-                modelIndex = index;
-                modelFound = true;
-                break;
-            }
-        }
-
-        if (!modelFound)
-        {
-            onToggleModel(modelValues[modelIndex]);
-        }
+        _ = GetCurrentModelAndGroup(system, skinBehavior, out int modelIndex, out int groupIndex);
+        GetCustomGroups(system, out string[] groupValues, out string[] groupNames);
+        GetCustomModels(system, groupValues[groupIndex], out string[] modelValues, out string[] modelNames, out AssetLocation[] modelIcons);
 
         yPosition -= 10;
 
@@ -908,12 +892,23 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         return availableClasses.ToList();
     }
-    private void GetCustomModels(CustomModelsSystem system, out string[] modelValues, out string[] modelNames)
+    private void GetCustomGroups(CustomModelsSystem system, out string[] groupValues, out string[] groupNames)
     {
-        string[] extraCustomModels = capi?.World?.Player?.Entity?.WatchedAttributes?.GetStringArray("extraCustomModels", []) ?? [];
+        string[] modelValues = GetAvailableModels(system);
 
-        modelValues = system.CustomModels.Where(entry => entry.Value.Enabled || extraCustomModels.Contains(entry.Value.Code)).Select(entry => entry.Key).ToArray();
+        HashSet<string> groups = [];
+        foreach (string modelValue in modelValues)
+        {
+            groups.Add(system.CustomModels[modelValue].Group);
+        }
+        groupValues = groups.ToArray();
+        groupNames = groups.Select(key => new AssetLocation(key)).Select(GetCustomGroupLangEntry).ToArray();
+    }
+    private void GetCustomModels(CustomModelsSystem system, string group, out string[] modelValues, out string[] modelNames, out AssetLocation[] modelIcons)
+    {
+        modelValues = GetAvailableModels(system).Where(code => system.CustomModels[code].Group == group).ToArray();
         modelNames = modelValues.Select(key => new AssetLocation(key)).Select(GetCustomModelLangEntry).ToArray();
+        modelIcons = modelValues.Select(code => system.CustomModels[code].Icon).ToArray();
 
         if (modelValues.Length == 0)
         {
@@ -921,5 +916,32 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             modelNames = [GetCustomModelLangEntry(system.DefaultModelCode)];
         }
     }
+    private string[] GetAvailableModels(CustomModelsSystem system)
+    {
+        string[] extraCustomModels = capi?.World?.Player?.Entity?.WatchedAttributes?.GetStringArray("extraCustomModels", []) ?? [];
+        return system.CustomModels.Where(entry => entry.Value.Enabled || extraCustomModels.Contains(entry.Value.Code)).Select(entry => entry.Key).ToArray();
+    }
     private string GetCustomModelLangEntry(AssetLocation code) => Lang.Get($"{code.Domain}:playermodel-{code.Path}");
+    private string GetCustomGroupLangEntry(AssetLocation code) => Lang.GetIfExists($"game:playermodelgroup-{code.Path}") ?? Lang.Get($"{code.Domain}:playermodel-{code.Path}");
+    private bool GetCurrentModelAndGroup(CustomModelsSystem system, PlayerSkinBehavior skinBehavior, out int modelIndex, out int groupIndex)
+    {
+        GetCustomGroups(system, out string[] groupValues, out string[] groupNames);
+
+        for (groupIndex = 0; groupIndex < groupValues.Length; groupIndex++)
+        {
+            GetCustomModels(system, groupValues[groupIndex], out string[] modelValues, out _, out _);
+
+            for (modelIndex = 0; modelIndex < modelValues.Length; modelIndex++)
+            {
+                if (modelValues[modelIndex] == skinBehavior.CurrentModelCode)
+                {
+                    return true;
+                }
+            }
+        }
+
+        groupIndex = 0;
+        modelIndex = 0;
+        return false;
+    }
 }

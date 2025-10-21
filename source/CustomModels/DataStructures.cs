@@ -1,6 +1,5 @@
 ﻿using OpenTK.Mathematics;
 using ProtoBuf;
-using System.Runtime.InteropServices;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
@@ -22,6 +21,8 @@ public class CustomModelConfig
 {
     public bool Enabled { set; get; } = true;
     public string Domain { get; set; } = "game";
+    public string Group { get; set; } = "";
+    public string Icon { get; set; } = "";
     public string ShapePath { get; set; } = "";
     public string MainTextureCode { get; set; } = "seraph";
     public SkinnablePartExtended[] SkinnableParts { get; set; } = [];
@@ -52,6 +53,8 @@ public class CustomModelData
 {
     public bool Enabled { set; get; } = true;
     public string Code { get; set; }
+    public string Group { get; set; } = "";
+    public AssetLocation Icon { get; set; } = "";
     public Shape Shape { get; set; }
     public Dictionary<string, SkinnablePart> SkinParts { get; set; } = [];
     public SkinnablePart[] SkinPartsArray { get; set; } = [];

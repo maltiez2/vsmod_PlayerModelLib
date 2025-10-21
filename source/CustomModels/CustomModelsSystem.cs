@@ -211,6 +211,8 @@ public sealed class CustomModelsSystem : ModSystem
             HeadBobbingScale = defaultConfig.HeadBobbingScale,
             GuiModelScale = defaultConfig.GuiModelScale,
             Enabled = defaultConfig.Enabled,
+            Group = _defaultModelCode,
+            Icon = new("playermodellib:textures/icons/seraph.png")
         };
 
         CustomModels.Add(_defaultModelCode, defaultModelData);
@@ -290,7 +292,17 @@ public sealed class CustomModelsSystem : ModSystem
             HeadBobbingScale = modelConfig.HeadBobbingScale,
             GuiModelScale = modelConfig.GuiModelScale,
             Enabled = modelConfig.Enabled,
+            Icon = new AssetLocation(modelConfig.Icon).WithPathPrefixOnce("textures/").WithPathAppendixOnce(".png")
         };
+
+        if (modelConfig.Group != "")
+        {
+            modelData.Group = modelConfig.Group;
+        }
+        else
+        {
+            modelData.Group = code;
+        }
 
         _wearableModelReplacers.Add(code, modelConfig.WearableModelReplacers);
         _wearableCompositeModelReplacers.Add(code, modelConfig.WearableCompositeModelReplacers);
