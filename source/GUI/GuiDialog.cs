@@ -237,8 +237,8 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
                 capi.Render.RenderEntityToGui(
                     deltaTime,
                     capi.World.Player.Entity,
-                    _insetSlotBounds.renderX + pad - GuiElement.scaled(110),
-                    _insetSlotBounds.renderY + pad - GuiElement.scaled(15),
+                    _insetSlotBounds.renderX + pad - GuiElement.scaled(115),
+                    _insetSlotBounds.renderY + pad - GuiElement.scaled(-40),
                     (float)GuiElement.scaled(230),
                     _yaw,
                     (float)GuiElement.scaled(205),
@@ -285,7 +285,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     private EnumCreateCharacterTabs _currentTab = 0;
     private float _charZoom = 1f;
     private bool _charNaked = true;
-    private readonly int _dlgHeight = 433 + 80;
+    private readonly int _dlgHeight = 433 + 80 + 33;
     private float _yaw = -GameMath.PIHALF + 0.3f;
     private float _height = 0;
     private const float _heightLimit = 150;
@@ -296,6 +296,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     private float _currentModelSize = 1f;
     private GuiComposer? _composer;
     private float _clipHeight = 377;
+    private float _clipHeightModel = 200;
     internal static bool _applyScrollPatch = false;
 
     private new void ComposeGuis()
@@ -385,40 +386,219 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         _ = GetCurrentModelAndGroup(system, skinBehavior, out int modelIndex, out int groupIndex);
         GetCustomGroups(system, out string[] groupValues, out string[] groupNames);
-        GetCustomModels(system, groupValues[groupIndex], out string[] modelValues, out string[] modelNames, out AssetLocation[] modelIcons);
+        GetCustomModels(system, groupValues[groupIndex], out string[] modelValues, out string[] modelNames, out AssetLocation?[] modelIcons, out AssetLocation? groupIcon);
 
-        yPosition -= 10;
+        yPosition -= 30;
 
-        ElementBounds leftColBounds = ElementBounds.Fixed(0, yPosition, 0, _dlgHeight - 47).FixedGrow(2 * padding, 2 * padding);
-        _insetSlotBounds = ElementBounds.Fixed(0, yPosition + 25, 190, leftColBounds.fixedHeight - 2 * padding + 10).FixedRightOf(leftColBounds, 10);
+        double insetTopY = yPosition + 30;
+        double insetHeight = _dlgHeight - 26 - insetTopY + 33;
 
-        ElementBounds centerTextBounds = ElementBounds.Fixed(0, yPosition + 25, 480, slotSize - 4 - 8).FixedRightOf(_insetSlotBounds, 20);
-        ElementBounds dropBoxInset = centerTextBounds.ForkBoundingParent(4, 4, 4, 4);
+        ElementBounds leftColBounds = ElementBounds.Fixed(0, yPosition, 0, _dlgHeight - 47).FixedGrow(padding, padding);
+        _insetSlotBounds = ElementBounds.Fixed(0, insetTopY, 190, insetHeight).FixedRightOf(leftColBounds, -10);
+
+        ElementBounds groupTextBounds = ElementBounds.Fixed(0, insetTopY, 525, slotSize - 4 - 8).FixedRightOf(_insetSlotBounds, 10);
+        ElementBounds groupDropBoxInset = groupTextBounds.ForkBoundingParent(4, 4, 4, 4);
 
         CairoFont font = CairoFont.WhiteMediumText();
-        centerTextBounds.fixedY += (centerTextBounds.fixedHeight - font.GetFontExtents().Height / RuntimeEnv.GUIScale) / 2;
+        groupTextBounds.fixedY += (groupTextBounds.fixedHeight - font.GetFontExtents().Height / RuntimeEnv.GUIScale) / 2;
 
         CairoFont dropDownFont = CairoFont.WhiteSmallishText();
 
-        ElementBounds sizeTextBounds = ElementBounds.Fixed(0, 0, 120, 20).FixedUnder(centerTextBounds, 60).FixedRightOf(_insetSlotBounds, 20);
-        ElementBounds sizeSliderBounds = ElementBounds.Fixed(0, 0, 369, 20).FixedUnder(centerTextBounds, 60).FixedRightOf(sizeTextBounds, 0);
-        ElementBounds descriptionTextBounds = ElementBounds.Fixed(0, 0, 480, 100).FixedUnder(sizeSliderBounds, 20).FixedRightOf(_insetSlotBounds, 20);
+        // Model selector with arrows and icons - positioned below group dropdown with reduced spacing
+        double modelSelectorY = yPosition + 30 + slotSize + 5;
+
+        double iconSize = 128;
+        double iconInsetPadding = 1; // Padding inside inset for the icon
+        double iconInsetSize = iconSize + (iconInsetPadding * 2) - 25; // Inset size includes padding
+        double groupIconInsetSize = 176 + (iconInsetPadding * 2) - 38 + 3;
+        double nameHeight = 30;
+        double iconSpacing = 10;
+        double totalIconHeight = iconInsetSize + 5 + nameHeight; // icon inset + spacing + name
+
+        double iconContainerWidth = (iconInsetSize * 3) + (iconSpacing * 2);
+
+        // Arrow buttons - same height as icons + name
+        double buttonHeight = iconInsetSize - 4;
+
+        // Size slider
+        
+
+        // Scrollable description area
+        int visibleHeight = (int)Math.Max(120, _dlgHeight - (modelSelectorY + totalIconHeight + 20 + 20 + 20) + 7);
+        ElementBounds descriptionTextBounds = ElementBounds.Fixed(0, 0, 500, visibleHeight)
+            .FixedUnder(groupDropBoxInset, 160)
+            .FixedRightOf(_insetSlotBounds, 10); // Changed from 10 to 5
+
+        ElementBounds bgBounds = descriptionTextBounds.ForkBoundingParent(6, 6, 6, 6);
+        ElementBounds clipBounds = descriptionTextBounds.FlatCopy().FixedGrow(6, 11).WithFixedOffset(0, -6);
+        ElementBounds scrollbarBounds = descriptionTextBounds.CopyOffsetedSibling(descriptionTextBounds.fixedWidth + 7, -6, 0, 12).WithFixedWidth(20);
+
+        ElementBounds sizeTextBounds = ElementBounds.Fixed(0, modelSelectorY + totalIconHeight + 20, 100, 20).FixedUnder(scrollbarBounds, 5).FixedRightOf(_insetSlotBounds, 10);
+        ElementBounds sizeSliderBounds = ElementBounds.Fixed(0, modelSelectorY + totalIconHeight + 20, 290, 20).FixedUnder(scrollbarBounds, 5).FixedRightOf(sizeTextBounds, 0);
 
         composer.AddInset(_insetSlotBounds, 2);
-        composer.AddInset(dropBoxInset, 2);
+        composer.AddInset(groupDropBoxInset, 2);
 
-        GuiElementDropDown dropDown = new(
+        // Group dropdown
+        GuiElementDropDown groupDropDown = new(
             composer.Api,
-            modelValues,
-            modelNames,
-            modelIndex,
-            (variantCode, selected) => onToggleModel(variantCode),
-            centerTextBounds,
+            groupValues,
+            groupNames,
+            groupIndex,
+            (variantCode, selected) => onToggleModelGroup(variantCode),
+            groupTextBounds,
             dropDownFont.Clone().WithOrientation(EnumTextOrientation.Left),
             multiSelect: false);
 
-        composer.AddInteractiveElement(dropDown, null);
+        composer.AddInteractiveElement(groupDropDown, "groupDropdown");
 
+        // Three model icons in insets (always display 3 slots)
+        AssetLocation emptyTexture = new AssetLocation("playermodellib", "textures/icons/empty.png");
+
+        double baseXOffset = 5 + 35 + 10; // Changed from 10 to 5 (after inset + left button + spacing)
+
+        int displayIndex = modelValues.Length == 1 ?
+                (0 == 1 ? 0 : -1) : // Single model: only show in center
+                GameMath.Mod(modelIndex - 1 + 0, modelValues.Length);
+
+        ElementBounds groupIconInsetBounds = ElementBounds.Fixed(
+            0,
+            modelSelectorY,
+            iconInsetSize - 1,
+            groupIconInsetSize
+        ).FixedRightOf(_insetSlotBounds, 10);
+        composer.AddInset(groupIconInsetBounds, 2);
+        ElementBounds groupIconBounds = ElementBounds.Fixed(
+                0,
+                modelSelectorY + iconInsetPadding,
+                iconSize - 25,
+                176 - 40 + 6
+            ).FixedRightOf(_insetSlotBounds, 10 + iconInsetPadding + 0);
+
+        // Add icon (empty texture if no model to display)
+        AssetLocation iconToDisplay = groupIcon ?? emptyTexture;
+        float iconAlpha = (groupIcon != null) ? 1 : 0;
+        float iconBrightness = 1;
+        composer.AddExtendedImage(groupIconBounds, iconToDisplay, iconBrightness, iconAlpha, (int)GuiElement.scaled(groupIconBounds.fixedWidth), (int)GuiElement.scaled(groupIconBounds.fixedHeight));
+
+
+        // *********** LEFT ICON **************
+
+        ElementBounds leftIconInsetBounds = ElementBounds.Fixed(
+            0,
+            modelSelectorY,
+            iconInsetSize,
+            iconInsetSize
+        ).FixedRightOf(groupIconBounds, 18);
+        composer.AddInset(leftIconInsetBounds, 2);
+        ElementBounds leftIconBounds = ElementBounds.Fixed(
+                0,
+                modelSelectorY + iconInsetPadding,
+                iconSize - 25,
+                iconSize - 25
+            ).FixedRightOf(groupIconBounds, 18 + iconInsetPadding + 0);
+
+        // Add icon (empty texture if no model to display)
+        iconToDisplay = (displayIndex >= 0 && displayIndex < modelIcons.Length && modelIcons[displayIndex] != null)
+            ? modelIcons[displayIndex] ?? emptyTexture
+            : emptyTexture;
+        iconAlpha = (displayIndex >= 0 && displayIndex < modelIcons.Length && modelIcons[displayIndex] != null) ? 1 : 0;
+        iconBrightness = (displayIndex >= 0 && displayIndex < modelIcons.Length && modelIcons[displayIndex] != null) ? 0.5f : 1;
+        composer.AddExtendedImage(leftIconBounds, iconToDisplay, iconBrightness, iconAlpha, (int)GuiElement.scaled(leftIconBounds.fixedWidth), (int)GuiElement.scaled(leftIconBounds.fixedHeight));
+
+
+        // *********** LEFT BUTTON **************
+
+        ElementBounds prevButtonBounds = ElementBounds.Fixed(0, modelSelectorY, 35, buttonHeight).WithFixedPadding(2).FixedRightOf(leftIconInsetBounds, 5);
+
+        // *********** MIDDLE ICON **************
+
+        displayIndex = modelValues.Length == 1 ?
+                (1 == 1 ? 0 : -1) : // Single model: only show in center
+                GameMath.Mod(modelIndex - 1 + 1, modelValues.Length);
+
+        ElementBounds middleIconInsetBounds = ElementBounds.Fixed(
+            0,
+            modelSelectorY,
+            iconInsetSize,
+            iconInsetSize
+        ).FixedRightOf(prevButtonBounds, 8);
+        composer.AddInset(middleIconInsetBounds, 2);
+        ElementBounds middleIconBounds = ElementBounds.Fixed(
+                0,
+                modelSelectorY + iconInsetPadding,
+                iconSize - 25,
+                iconSize - 25
+            ).FixedRightOf(prevButtonBounds, 8 + iconInsetPadding);
+
+        // Add icon (empty texture if no model to display)
+        iconToDisplay = (displayIndex >= 0 && displayIndex < modelIcons.Length && modelIcons[displayIndex] != null)
+            ? modelIcons[displayIndex] ?? emptyTexture
+            : emptyTexture;
+        iconAlpha = (displayIndex >= 0 && displayIndex < modelIcons.Length && modelIcons[displayIndex] != null) ? 1 : 0;
+        composer.AddExtendedImage(middleIconBounds, iconToDisplay, 1, iconAlpha, (int)GuiElement.scaled(middleIconBounds.fixedWidth), (int)GuiElement.scaled(middleIconBounds.fixedHeight));
+
+
+        // *********** RIGHT BUTTON **************
+
+        ElementBounds nextButtonBounds = ElementBounds.Fixed(0, modelSelectorY, 35, buttonHeight).WithFixedPadding(2).FixedRightOf(middleIconInsetBounds, 5); // Adjusted
+
+        // *********** RIGHT ICON **************
+
+        displayIndex = modelValues.Length == 1 ?
+                (2 == 1 ? 0 : -1) : // Single model: only show in center
+                GameMath.Mod(modelIndex - 1 + 2, modelValues.Length);
+
+        ElementBounds rightIconInsetBounds = ElementBounds.Fixed(
+            0,
+            modelSelectorY,
+            iconInsetSize,
+            iconInsetSize
+        ).FixedRightOf(nextButtonBounds, 8);
+        composer.AddInset(rightIconInsetBounds, 2);
+        ElementBounds rightIconBounds = ElementBounds.Fixed(
+                0,
+                modelSelectorY + iconInsetPadding,
+                iconSize - 25,
+                iconSize - 25
+            ).FixedRightOf(nextButtonBounds, 8 + iconInsetPadding + 1);
+
+        // Add icon (empty texture if no model to display)
+        iconToDisplay = (displayIndex >= 0 && displayIndex < modelIcons.Length && modelIcons[displayIndex] != null)
+            ? modelIcons[displayIndex] ?? emptyTexture
+            : emptyTexture;
+        iconAlpha = (displayIndex >= 0 && displayIndex < modelIcons.Length && modelIcons[displayIndex] != null) ? 1 : 0;
+        iconBrightness = (displayIndex >= 0 && displayIndex < modelIcons.Length && modelIcons[displayIndex] != null) ? 0.5f : 1;
+        composer.AddExtendedImage(rightIconBounds, iconToDisplay, iconBrightness, iconAlpha, (int)GuiElement.scaled(rightIconBounds.fixedWidth), (int)GuiElement.scaled(rightIconBounds.fixedHeight));
+
+        // Current model name - spanning all three icons
+        ElementBounds nameInsetBounds = ElementBounds.Fixed(
+            0,
+            modelSelectorY + iconInsetSize + 5,
+            411,
+            nameHeight
+        ).FixedRightOf(groupIconBounds, 18);
+        nameInsetBounds.fixedOffsetY += 3;
+
+        ElementBounds nameTextBounds = nameInsetBounds.FlatCopy().FixedGrow(-4, -4);
+        nameTextBounds.fixedY += 2;
+
+        composer.AddInset(nameInsetBounds, 2);
+
+        string currentModelName = (modelIndex >= 0 && modelIndex < modelNames.Length)
+            ? modelNames[modelIndex]
+            : "";
+
+        composer.AddDynamicText(currentModelName,
+            CairoFont.WhiteSmallishText().WithOrientation(EnumTextOrientation.Center),
+            nameTextBounds,
+            "currentModelName");
+
+        // Model selector with arrows
+        composer.AddIconButton("left", (on) => ChangeModel(-1), prevButtonBounds.FlatCopy());
+        composer.AddIconButton("right", (on) => ChangeModel(1), nextButtonBounds.FlatCopy());
+
+        // Size slider
         float minSize = skinBehavior.CurrentModel.SizeRange.X;
         float maxSize = skinBehavior.CurrentModel.SizeRange.Y;
         _currentModelSize = skinBehavior.CurrentSize;
@@ -428,12 +608,26 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         composer.AddSlider(value => { _currentModelSize = value / 100f; OnModelSizeChanged(); return true; }, sizeSliderBounds, "modelSizeSlider");
         composer.GetSlider("modelSizeSlider").SetValues((int)(_currentModelSize * 100), (int)(minSize * 100), (int)(maxSize * 100), 1, unit: "%");
 
-        composer.AddRichtext("", CairoFont.WhiteDetailText(), descriptionTextBounds, "modelDescription");
+        // Scrollable description
+        composer
+            .BeginChildElements(bgBounds)
+                .AddInset(bgBounds.FlatCopy(), 3)
+                .BeginClip(clipBounds)
+                    .AddRichtext("", CairoFont.WhiteDetailText(), descriptionTextBounds, "modelDescription")
+                .EndClip()
+                .AddVerticalScrollbar(OnNewScrollbarValueModel, scrollbarBounds, "scrollbarModel")
+            .EndChildElements();
+        
+        _clipHeightModel = 500;
+        _composer?.GetScrollbar("scrollbarModel")?.SetHeights(
+            _clipHeightModel,
+            _clipHeightModel * 2
+        );
+        _composer?.GetScrollbar("scrollbarModel")?.SetScrollbarPosition(0);
 
-        composer.AddSmallButton(Lang.Get("Confirm model"), OnNextImpl, ElementBounds.Fixed(4, _dlgHeight - 26).WithAlignment(EnumDialogArea.RightFixed).WithFixedPadding(12, 6), EnumButtonStyle.Normal);
+        composer.AddSmallButton(Lang.Get("Confirm model"), OnNextImpl, ElementBounds.Fixed(10, _dlgHeight - 22).WithAlignment(EnumDialogArea.RightFixed).WithFixedPadding(12, 6), EnumButtonStyle.Normal);
 
         string modelDescription = CreateModelDescription(system, skinBehavior.CurrentModelCode);
-
         composer.GetRichtext("modelDescription").SetNewText(modelDescription, CairoFont.WhiteDetailText());
 
         ReTesselate();
@@ -629,6 +823,44 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     }
 
 
+    private void onToggleModelGroup(string groupCode)
+    {
+        CustomModelsSystem system = capi.ModLoader.GetModSystem<CustomModelsSystem>();
+        GetCustomModels(system, groupCode, out string[] modelValues, out _, out _, out _);
+
+        if (modelValues.Length > 0)
+        {
+            onToggleModel(modelValues[0]);
+        }
+    }
+
+    private bool ChangeModel(int dir)
+    {
+        PlayerSkinBehavior? skinBehavior = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
+        CustomModelsSystem system = capi.ModLoader.GetModSystem<CustomModelsSystem>();
+
+        if (skinBehavior == null) return false;
+
+        _ = GetCurrentModelAndGroup(system, skinBehavior, out int modelIndex, out int groupIndex);
+        GetCustomGroups(system, out string[] groupValues, out _);
+        GetCustomModels(system, groupValues[groupIndex], out string[] modelValues, out _, out _, out _);
+
+        modelIndex = GameMath.Mod(modelIndex + dir, modelValues.Length);
+
+        onToggleModel(modelValues[modelIndex]);
+
+        return true;
+    }
+    private void OnNewScrollbarValueModel(float value)
+    {
+        GuiElementRichtext? richtextElem = _composer?.GetRichtext("modelDescription");
+
+        if (richtextElem != null)
+        {
+            richtextElem.Bounds.fixedY = 0 - value;
+            richtextElem.Bounds.CalcWorldBounds();
+        }
+    }
     private void OnNewScrollbarValue(float value)
     {
         GuiElementRichtext? richtextElem = _composer?.GetRichtext("characterDesc");
@@ -768,15 +1000,15 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             fulldesc.AppendLine(Lang.Get("No positive or negative traits"));
         }
 
-        fulldesc.AppendLine();
-        fulldesc.AppendLine(Lang.Get("model-traits-title"));
-
-        AppendTraits(fulldesc, chartraitsExtra);
-
         if (chartraitsExtra.Any())
         {
-            fulldesc.AppendLine("");
+            fulldesc.AppendLine();
+            fulldesc.AppendLine(Lang.Get("model-traits-title"));
+
+            AppendTraits(fulldesc, chartraitsExtra);
         }
+
+        fulldesc.AppendLine();
 
         Composers["createcharacter"].GetRichtext("characterDesc").SetNewText(fulldesc.ToString(), CairoFont.WhiteDetailText());
 
@@ -904,11 +1136,12 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         groupValues = groups.ToArray();
         groupNames = groups.Select(key => new AssetLocation(key)).Select(GetCustomGroupLangEntry).ToArray();
     }
-    private void GetCustomModels(CustomModelsSystem system, string group, out string[] modelValues, out string[] modelNames, out AssetLocation[] modelIcons)
+    private void GetCustomModels(CustomModelsSystem system, string group, out string[] modelValues, out string[] modelNames, out AssetLocation?[] modelIcons, out AssetLocation? groupIcon)
     {
         modelValues = GetAvailableModels(system).Where(code => system.CustomModels[code].Group == group).ToArray();
         modelNames = modelValues.Select(key => new AssetLocation(key)).Select(GetCustomModelLangEntry).ToArray();
         modelIcons = modelValues.Select(code => system.CustomModels[code].Icon).ToArray();
+        groupIcon = modelValues.Select(code => system.CustomModels[code].GroupIcon).Where(icon => icon != null).FirstOrDefault();
 
         if (modelValues.Length == 0)
         {
@@ -929,7 +1162,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         for (groupIndex = 0; groupIndex < groupValues.Length; groupIndex++)
         {
-            GetCustomModels(system, groupValues[groupIndex], out string[] modelValues, out _, out _);
+            GetCustomModels(system, groupValues[groupIndex], out string[] modelValues, out _, out _, out _);
 
             for (modelIndex = 0; modelIndex < modelValues.Length; modelIndex++)
             {

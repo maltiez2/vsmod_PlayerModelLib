@@ -141,6 +141,7 @@ public sealed class CustomModelsSystem : ModSystem
     private const string _modelReplacementsByCodePath = "config/model-replacements-bycode";
     private const string _modelReplacementsByShapePath = "config/model-replacements-byshape";
     private const string _compositeModelReplacementsByCodePath = "config/composite-model-replacements-bycode";
+    private const string _emptyIconTexture = "playermodellib:icons/empty";
 
     private bool _defaultLoaded = false;
     private IClientNetworkChannel? _clientChannel;
@@ -211,8 +212,9 @@ public sealed class CustomModelsSystem : ModSystem
             HeadBobbingScale = defaultConfig.HeadBobbingScale,
             GuiModelScale = defaultConfig.GuiModelScale,
             Enabled = defaultConfig.Enabled,
-            Group = _defaultModelCode,
-            Icon = new("playermodellib:textures/icons/seraph.png")
+            Group = "temporal",
+            Icon = new("playermodellib:textures/icons/seraph.png"),
+            GroupIcon = new("playermodellib:textures/icons/temporal.png")
         };
 
         CustomModels.Add(_defaultModelCode, defaultModelData);
@@ -291,9 +293,30 @@ public sealed class CustomModelsSystem : ModSystem
             ModelSizeFactor = modelConfig.ModelSizeFactor,
             HeadBobbingScale = modelConfig.HeadBobbingScale,
             GuiModelScale = modelConfig.GuiModelScale,
-            Enabled = modelConfig.Enabled,
-            Icon = new AssetLocation(modelConfig.Icon).WithPathPrefixOnce("textures/").WithPathAppendixOnce(".png")
+            Enabled = modelConfig.Enabled
         };
+
+        AssetLocation icon = new AssetLocation(modelConfig.Icon).WithPathPrefixOnce("textures/").WithPathAppendixOnce(".png");
+        if (api.Assets.Exists(icon))
+        {
+            modelData.Icon = icon;
+        }
+        else
+        {
+            LoggerUtil.Warn(_api, this, $"({code}) Model icon by path '{icon}' does not exists");
+            modelData.Icon = null;
+        }
+
+        AssetLocation groupIcon = new AssetLocation(modelConfig.GroupIcon).WithPathPrefixOnce("textures/").WithPathAppendixOnce(".png");
+        if (api.Assets.Exists(groupIcon))
+        {
+            modelData.GroupIcon = groupIcon;
+        }
+        else
+        {
+            LoggerUtil.Verbose(_api, this, $"({code}) Group icon by path '{icon}' does not exists");
+            modelData.GroupIcon = null;
+        }
 
         if (modelConfig.Group != "")
         {

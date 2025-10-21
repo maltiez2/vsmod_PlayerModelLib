@@ -76,7 +76,6 @@ internal static class TranspilerPatches
             string? yadaPrefixCode = yadayada.GetTexturePrefixCode(stack);
             //string prefixCode = yadaPrefixCode == null ? slotCode : yadaPrefixCode + "-" + slotCode;
             string prefixCode = yadaPrefixCode == null ? "" : yadaPrefixCode;
-            Debug.WriteLine($"Code: {stack?.Item?.Code}, Prefix: {prefixCode}");
 
             if (customModel.WearableShapeReplacers.TryGetValue(itemId, out string? shape))
             {

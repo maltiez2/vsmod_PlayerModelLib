@@ -23,6 +23,7 @@ public class CustomModelConfig
     public string Domain { get; set; } = "game";
     public string Group { get; set; } = "";
     public string Icon { get; set; } = "";
+    public string GroupIcon { get; set; } = "";
     public string ShapePath { get; set; } = "";
     public string MainTextureCode { get; set; } = "seraph";
     public SkinnablePartExtended[] SkinnableParts { get; set; } = [];
@@ -54,7 +55,8 @@ public class CustomModelData
     public bool Enabled { set; get; } = true;
     public string Code { get; set; }
     public string Group { get; set; } = "";
-    public AssetLocation Icon { get; set; } = "";
+    public AssetLocation? Icon { get; set; } = null;
+    public AssetLocation? GroupIcon { get; set; } = null;
     public Shape Shape { get; set; }
     public Dictionary<string, SkinnablePart> SkinParts { get; set; } = [];
     public SkinnablePart[] SkinPartsArray { get; set; } = [];
