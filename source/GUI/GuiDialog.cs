@@ -259,8 +259,8 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
                 capi.Render.RenderEntityToGui(
                     deltaTime,
                     capi.World.Player.Entity,
-                    _insetSlotBounds.renderX + pad - GuiElement.scaled(110),
-                    _insetSlotBounds.renderY + pad - GuiElement.scaled(15),
+                    _insetSlotBounds.renderX + pad - GuiElement.scaled(111),
+                    _insetSlotBounds.renderY + pad - GuiElement.scaled(-7),
                     (float)GuiElement.scaled(230),
                     _yaw,
                     (float)GuiElement.scaled(205),
@@ -455,7 +455,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         // Three model icons in insets (always display 3 slots)
         AssetLocation emptyTexture = new AssetLocation("playermodellib", "textures/icons/empty.png");
 
-        double baseXOffset = 5 + 35 + 10; // Changed from 10 to 5 (after inset + left button + spacing)
+        //double baseXOffset = 5 + 35 + 10; // Changed from 10 to 5 (after inset + left button + spacing)
 
         int displayIndex = modelValues.Length == 1 ?
                 (0 == 1 ? 0 : -1) : // Single model: only show in center
@@ -625,7 +625,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         );
         _composer?.GetScrollbar("scrollbarModel")?.SetScrollbarPosition(0);
 
-        composer.AddSmallButton(Lang.Get("Confirm model"), OnNextImpl, ElementBounds.Fixed(10, _dlgHeight - 22).WithAlignment(EnumDialogArea.RightFixed).WithFixedPadding(12, 6), EnumButtonStyle.Normal);
+        composer.AddSmallButton(Lang.Get("Confirm model"), OnNextImpl, ElementBounds.Fixed(11, _dlgHeight - 24).WithAlignment(EnumDialogArea.RightFixed).WithFixedPadding(12, 6), EnumButtonStyle.Normal);
 
         string modelDescription = CreateModelDescription(system, skinBehavior.CurrentModelCode);
         composer.GetRichtext("modelDescription").SetNewText(modelDescription, CairoFont.WhiteDetailText());
@@ -761,7 +761,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             .AddButton(Lang.Get("Last selection"), () => { return OnRandomizeSkin(_characterSystem.getPreviousSelection()); }, ElementBounds.Fixed(130, _dlgHeight - 25).WithAlignment(EnumDialogArea.LeftFixed).WithFixedPadding(8, 6), CairoFont.WhiteSmallText(), EnumButtonStyle.Small)
             .EndIf();
 
-        composer.AddSmallButton(Lang.Get("Confirm Skin"), OnNextImpl, ElementBounds.Fixed(4, _dlgHeight - 26).WithAlignment(EnumDialogArea.RightFixed).WithFixedPadding(12, 6), EnumButtonStyle.Normal);
+        composer.AddSmallButton(Lang.Get("Confirm Skin"), OnNextImpl, ElementBounds.Fixed(11, _dlgHeight - 24).WithAlignment(EnumDialogArea.RightFixed).WithFixedPadding(12, 6), EnumButtonStyle.Normal);
 
         composer.GetToggleButton("showdressedtoggle").SetValue(!_charNaked);
     }
@@ -770,27 +770,28 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         EntityShapeRenderer? renderer = capi.World.Player.Entity.Properties.Client.Renderer as EntityShapeRenderer;
         renderer?.TesselateShape();
 
-        yPosition -= 10;
+        yPosition -= 25;
 
-        ElementBounds leftColBounds = ElementBounds.Fixed(0, yPosition, 0, _dlgHeight - 47).FixedGrow(2 * padding, 2 * padding);
-        _insetSlotBounds = ElementBounds.Fixed(0, yPosition + 25, 190, leftColBounds.fixedHeight - 2 * padding + 10).FixedRightOf(leftColBounds, 10);
-
-        ElementBounds prevButtonBounds = ElementBounds.Fixed(0, yPosition + 23, 35, slotSize - 4).WithFixedPadding(2).FixedRightOf(_insetSlotBounds, 20);
-        ElementBounds centerTextBounds = ElementBounds.Fixed(0, yPosition + 25, 374, slotSize - 4 - 8).FixedRightOf(prevButtonBounds, 20);
+        ElementBounds leftColBounds = ElementBounds.Fixed(0, yPosition, 0, _dlgHeight - 23).FixedGrow(padding, padding);
+        ElementBounds prevButtonBounds = ElementBounds.Fixed(0, yPosition + 23, 35, slotSize - 4).WithFixedPadding(2).FixedRightOf(leftColBounds, -10);
+        ElementBounds centerTextBounds = ElementBounds.Fixed(0, yPosition + 25, 432, slotSize - 4 - 8).FixedRightOf(prevButtonBounds, 10);
         ElementBounds charclasssInset = centerTextBounds.ForkBoundingParent(4, 4, 4, 4);
-        ElementBounds nextButtonBounds = ElementBounds.Fixed(0, yPosition + 23, 35, slotSize - 4).WithFixedPadding(2).FixedRightOf(charclasssInset, 20);
+        ElementBounds nextButtonBounds = ElementBounds.Fixed(0, yPosition + 23, 35, slotSize - 4).WithFixedPadding(2).FixedRightOf(charclasssInset, 9);
 
         CairoFont font = CairoFont.WhiteMediumText();
         centerTextBounds.fixedY += (centerTextBounds.fixedHeight - font.GetFontExtents().Height / RuntimeEnv.GUIScale) / 2;
 
-        int visibleHeight = (int)Math.Max(120, _dlgHeight - (yPosition + 25) - 110);
-        ElementBounds charTextBounds = ElementBounds.Fixed(0, 0, 460, visibleHeight)
-            .FixedUnder(prevButtonBounds, 20)
-            .FixedRightOf(_insetSlotBounds, 20);
+        int visibleHeight = (int)Math.Max(120, _dlgHeight - (yPosition + 25) - 62);
+        ElementBounds charTextBounds = ElementBounds.Fixed(0, 0, 498, visibleHeight)
+            .FixedUnder(prevButtonBounds, 15)
+            .FixedRightOf(leftColBounds, -10);
 
         ElementBounds bgBounds = charTextBounds.ForkBoundingParent(6, 6, 6, 6);
         ElementBounds clipBounds = charTextBounds.FlatCopy().FixedGrow(6, 11).WithFixedOffset(0, -6);
         ElementBounds scrollbarBounds = charTextBounds.CopyOffsetedSibling(charTextBounds.fixedWidth + 7, -6, 0, 12).WithFixedWidth(20);
+
+        
+        _insetSlotBounds = ElementBounds.Fixed(0, yPosition + 25, 193, leftColBounds.fixedHeight - 2 * padding - 30).FixedRightOf(nextButtonBounds, 11);
 
         composer
             .AddInset(_insetSlotBounds, 2)
@@ -808,7 +809,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             .EndChildElements()
 
             .AddSmallButton(Lang.Get("Confirm Class"), OnConfirm,
-                ElementBounds.Fixed(4, _dlgHeight - 26).WithAlignment(EnumDialogArea.RightFixed).WithFixedPadding(12, 6),
+                ElementBounds.Fixed(11, _dlgHeight - 24).WithAlignment(EnumDialogArea.RightFixed).WithFixedPadding(12, 6),
                 EnumButtonStyle.Normal)
         ;
 
@@ -985,6 +986,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         StringBuilder fulldesc = new();
 
+        fulldesc.AppendLine();
         fulldesc.AppendLine(Lang.Get("characterdesc-" + chclass.Code));
         fulldesc.AppendLine();
         fulldesc.AppendLine(Lang.Get("traits-title"));
