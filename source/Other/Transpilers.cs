@@ -1,11 +1,8 @@
 ﻿using HarmonyLib;
-using System.Diagnostics;
 using System.Reflection;
 using System.Reflection.Emit;
-using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
-using Vintagestory.API.MathTools;
 using Vintagestory.GameContent;
 
 namespace PlayerModelLib;
@@ -109,12 +106,21 @@ internal static class TranspilerPatches
 
             string shapePath = oldCompositeShape.Base.ToString();
 
-            if (customModel.WearableShapeReplacersByShape.TryGetValue(shapePath, out shape))
+            if (false)//customModel.WearableShapeReplacersByShape.TryGetValue(shapePath, out shape))
             {
                 defaultShape = LoadShape(entity.Api, shape);
 
                 defaultShape?.SubclassForStepParenting(prefixCode, damageEffect);
                 defaultShape?.ResolveReferences(entity.World.Logger, currentModel);
+            }
+            else
+            {
+                if (system.BaseShapesData.TryGetValue(customModel.BaseShapeCode, out var baseShapeData))
+                {
+                    defaultShape = ShapeAdjustmentUtil.AdjustClothesShape(entity.Api, shapePath, baseShapeData, customModel);
+                    defaultShape?.SubclassForStepParenting(prefixCode, damageEffect);
+                    defaultShape?.ResolveReferences(entity.World.Logger, currentModel);
+                }
             }
 
             if (oldCompositeShape.Overlays != null)

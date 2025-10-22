@@ -1,0 +1,6 @@
+{
+  "seraph": {
+    "ShapePath": "game:shapes/entity/humanoid/seraph-faceless.json",
+    "KeyElements": ["LowerTorso", "UpperTorso", "UpperArmR", "LowerArmR", "UpperArmL", "LowerArmL", "Neck", "Head", "UpperFootL", "LowerFootL", "UpperFootR", "LowerFootR"]
+  }
+}

@@ -1,4 +1,5 @@
-﻿using OpenTK.Mathematics;
+﻿using HarmonyLib;
+using OpenTK.Mathematics;
 using ProtoBuf;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -25,6 +26,7 @@ public class CustomModelConfig
     public string Icon { get; set; } = "";
     public string GroupIcon { get; set; } = "";
     public string ShapePath { get; set; } = "";
+    public string BaseShapeCode { get; set; } = "";
     public string MainTextureCode { get; set; } = "seraph";
     public SkinnablePartExtended[] SkinnableParts { get; set; } = [];
     public Dictionary<string, string> WearableModelReplacers { get; set; } = [];
@@ -58,6 +60,8 @@ public class CustomModelData
     public AssetLocation? Icon { get; set; } = null;
     public AssetLocation? GroupIcon { get; set; } = null;
     public Shape Shape { get; set; }
+    public string BaseShapeCode { get; set; } = "";
+    public Dictionary<string, (Vector3d origin, Vector3d size)> ElementSizes { get; set; } = [];
     public Dictionary<string, SkinnablePart> SkinParts { get; set; } = [];
     public SkinnablePart[] SkinPartsArray { get; set; } = [];
     public string MainTextureCode { get; set; } = "";
@@ -92,6 +96,26 @@ public class CustomModelData
         Code = code;
         Shape = shape;
     }
+}
+
+public class BaseShapeDataJson
+{
+    public string Domain { get; set; } = "";
+    public AssetLocation ShapePath { get; set; } = new();
+    public string[] KeyElements { get; set; } = [];
+    public Dictionary<string, string> WearableModelReplacers { get; set; } = [];
+    public Dictionary<string, CompositeShape> WearableCompositeModelReplacers { get; set; } = [];
+    public Dictionary<string, string> WearableModelReplacersByShape { get; set; } = [];
+}
+
+
+public class BaseShapeData
+{
+    public string Code { get; set; } = "";
+    public Dictionary<string, (Vector3d origin, Vector3d size)> ElementSizes { get; set; } = [];
+    public Dictionary<string, string> WearableModelReplacers { get; set; } = [];
+    public Dictionary<string, CompositeShape> WearableCompositeModelReplacers { get; set; } = [];
+    public Dictionary<string, string> WearableModelReplacersByShape { get; set; } = [];
 }
 
 [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]

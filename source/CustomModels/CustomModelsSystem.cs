@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using HarmonyLib;
+using Newtonsoft.Json.Linq;
 using OpenTK.Mathematics;
 using SkiaSharp;
 using Vintagestory.API.Client;
@@ -24,6 +25,7 @@ public sealed class CustomModelsSystem : ModSystem
     public CustomModelData DefaultModelData => CustomModels[_defaultModelCode];
     public bool ModelsLoaded { get; private set; } = false;
     public HashSet<string> ExclusiveClasses { get; private set; } = [];
+    public Dictionary<string, BaseShapeData> BaseShapesData { get; private set; } = [];
 
     public event Action? OnCustomModelsLoaded;
 
@@ -57,6 +59,7 @@ public sealed class CustomModelsSystem : ModSystem
     }
     public override void AssetsFinalize(ICoreAPI api)
     {
+        LoadBaseShapes(api);
         LoadDefault();
         Load(api);
         CollectExclusiveClasses();
@@ -141,7 +144,6 @@ public sealed class CustomModelsSystem : ModSystem
     private const string _modelReplacementsByCodePath = "config/model-replacements-bycode";
     private const string _modelReplacementsByShapePath = "config/model-replacements-byshape";
     private const string _compositeModelReplacementsByCodePath = "config/composite-model-replacements-bycode";
-    private const string _emptyIconTexture = "playermodellib:icons/empty";
 
     private bool _defaultLoaded = false;
     private IClientNetworkChannel? _clientChannel;
@@ -293,7 +295,8 @@ public sealed class CustomModelsSystem : ModSystem
             ModelSizeFactor = modelConfig.ModelSizeFactor,
             HeadBobbingScale = modelConfig.HeadBobbingScale,
             GuiModelScale = modelConfig.GuiModelScale,
-            Enabled = modelConfig.Enabled
+            Enabled = modelConfig.Enabled,
+            BaseShapeCode = modelConfig.BaseShapeCode
         };
 
         AssetLocation icon = new AssetLocation(modelConfig.Icon).WithPathPrefixOnce("textures/").WithPathAppendixOnce(".png");
@@ -325,6 +328,11 @@ public sealed class CustomModelsSystem : ModSystem
         else
         {
             modelData.Group = code;
+        }
+
+        if (BaseShapesData.TryGetValue(modelData.BaseShapeCode, out BaseShapeData? baseShapeData))
+        {
+            CollectBaseShapeElements(shape.Elements, baseShapeData.ElementSizes.Keys.ToArray(), modelData.ElementSizes);
         }
 
         _wearableModelReplacers.Add(code, modelConfig.WearableModelReplacers);
@@ -484,6 +492,26 @@ public sealed class CustomModelsSystem : ModSystem
             }
         }
     }
+    private void LoadBaseShapes(ICoreAPI api)
+    {
+        List<IAsset> modelsConfigs = api.Assets.GetManyInCategory("config", "baseshapes");
+
+        foreach (Dictionary<string, BaseShapeDataJson> baseShapesDataJsons in modelsConfigs.Select(BaseShapesFromAsset))
+        {
+            foreach ((string code, BaseShapeDataJson baseShapeDataJson) in baseShapesDataJsons)
+            {
+                try
+                {
+                    LoadBaseShape(api, code, baseShapeDataJson);
+                }
+                catch (Exception exception)
+                {
+                    LoggerUtil.Error(api, this, $"Error on loading base shape '{code}': {exception}");
+                }
+            }
+        }
+    }
+
     private AssetLocation GetShapeLocation(string path) => new AssetLocation(path).WithPathPrefixOnce("shapes/").WithPathAppendixOnce(".json");
     private void ProcessAnimations(ICoreAPI api)
     {
@@ -705,6 +733,46 @@ public sealed class CustomModelsSystem : ModSystem
             return [];
         }
     }
+    private Dictionary<string, BaseShapeDataJson> BaseShapesFromAsset(IAsset asset)
+    {
+        Dictionary<string, BaseShapeDataJson> result = [];
+        string domain = asset.Location.Domain;
+        JObject? json;
+
+        try
+        {
+            string text = asset.ToText();
+            json = JsonObject.FromJson(text).Token as JObject;
+
+            if (json == null)
+            {
+                LoggerUtil.Error(_api, this, $"Error when trying to load base shape config '{asset.Location}'.");
+                return result;
+            }
+        }
+        catch (Exception exception)
+        {
+            LoggerUtil.Error(_api, this, $"Exception when trying to load base shape config '{asset.Location}':\n{exception}");
+            return result;
+        }
+
+        foreach ((string code, JToken? token) in json)
+        {
+            try
+            {
+                JsonObject configJson = new(token);
+                BaseShapeDataJson config = configJson.AsObject<BaseShapeDataJson>();
+                config.Domain = domain;
+                result.Add($"{domain}:{code}", config);
+            }
+            catch (Exception exception)
+            {
+                LoggerUtil.Error(_api, this, $"Exception when trying to load base shape config '{asset.Location}' for base shape '{code}':\n{exception}");
+            }
+        }
+
+        return result;
+    }
     private void ReplaceVariants(CompositeShape shape, Item item)
     {
         string processedPath = shape.Base;
@@ -772,6 +840,34 @@ public sealed class CustomModelsSystem : ModSystem
         }
 
         return patsByCode;
+    }
+    private void LoadBaseShape(ICoreAPI api, string code, BaseShapeDataJson json)
+    {
+        Shape? shape = LoadShape(api, json.ShapePath);
+
+        if (shape == null)
+        {
+            LoggerUtil.Error(api, this, $"Error while loading base shape '{code}': shape '{json.ShapePath}' does not exists.");
+            return;
+        }
+
+        BaseShapeData result = new()
+        {
+            Code = code,
+            WearableModelReplacers = json.WearableModelReplacers,
+            WearableCompositeModelReplacers = json.WearableCompositeModelReplacers,
+            WearableModelReplacersByShape = json.WearableModelReplacersByShape
+        };
+
+        CollectBaseShapeElements(shape.Elements, json.KeyElements, result.ElementSizes);
+
+        if (BaseShapesData.ContainsKey(code))
+        {
+            LoggerUtil.Error(api, this, $"Error while loading base shape '{code}': such base shape is already loaded.");
+            return;
+        }
+
+        BaseShapesData.Add(code, result);
     }
 
     private void RegisterServerChatCommands(ICoreServerAPI api)
@@ -1021,6 +1117,34 @@ public sealed class CustomModelsSystem : ModSystem
         foreach (HashSet<string> classes in CustomModels.Select(entry => entry.Value.ExclusiveClasses))
         {
             ExclusiveClasses.AddRange(classes);
+        }
+    }
+    private void CollectBaseShapeElements(ShapeElement[] elements, string[] elementsToCollect, Dictionary<string, (Vector3d, Vector3d)> collectedElements)
+    {
+        foreach (ShapeElement? element in elements)
+        {
+            if (element == null) continue;
+            
+            string code = element.Name ?? "";
+            if (elementsToCollect.Contains(code) && !collectedElements.ContainsKey(code) && element.From != null && element.To != null)
+            {
+                Vector3d size = new(
+                    MathF.Abs((float)element.To[0] - (float)element.From[0]),
+                    MathF.Abs((float)element.To[1] - (float)element.From[1]),
+                    MathF.Abs((float)element.To[2] - (float)element.From[2]));
+
+                Vector3d origin = new(
+                    MathF.Abs((float)element.From[0]),
+                    MathF.Abs((float)element.From[1]),
+                    MathF.Abs((float)element.From[2]));
+
+                collectedElements.TryAdd(code, (origin, size));
+            }
+
+            if (element.Children != null)
+            {
+                CollectBaseShapeElements(element.Children, elementsToCollect, collectedElements);
+            }
         }
     }
 }
