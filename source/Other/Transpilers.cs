@@ -1,14 +1,21 @@
 ﻿using HarmonyLib;
+using Newtonsoft.Json;
+using System.Globalization;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Text.RegularExpressions;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
+using Vintagestory.API.Config;
 using Vintagestory.GameContent;
+using YamlDotNet.Serialization;
 
 namespace PlayerModelLib;
 
 internal static class TranspilerPatches
 {
+    public static bool ExportingShape { get; set; } = false;
+    
     [HarmonyPatchCategory("PlayerModelLibTranspiler")]
     public class EntityBehaviorContainerPatchCommand
     {
@@ -71,68 +78,34 @@ internal static class TranspilerPatches
             CustomModelData customModel = system.CustomModels[currentModel];
 
             string? yadaPrefixCode = yadayada.GetTexturePrefixCode(stack);
-            //string prefixCode = yadaPrefixCode == null ? slotCode : yadaPrefixCode + "-" + slotCode;
             string prefixCode = yadaPrefixCode == null ? "" : yadaPrefixCode;
 
-            if (customModel.WearableShapeReplacers.TryGetValue(itemId, out string? shape))
+            if (ReplaceShapeByItem(prefixCode, entity, ref defaultShape, ref compositeShape, damageEffect, itemId, customModel))
             {
-                defaultShape = LoadShape(entity.Api, shape);
-
-                defaultShape?.SubclassForStepParenting(prefixCode, damageEffect);
-                defaultShape?.ResolveReferences(entity.World.Logger, currentModel);
-
-                if (compositeShape != null)
-                {
-                    compositeShape = compositeShape.Clone();
-                    compositeShape.Base = shape;
-                }
-
                 return;
             }
 
-            if (customModel.WearableCompositeShapeReplacers.TryGetValue(itemId, out CompositeShape? newCompositeShape))
+            if (ReplaceShapeByShape(prefixCode, stack, entity, ref defaultShape, ref compositeShape, damageEffect, customModel, yadayada))
             {
-                compositeShape = newCompositeShape.Clone();
-
-                compositeShape.Base = compositeShape.Base.WithPathAppendixOnce(".json").WithPathPrefixOnce("shapes/");
-
-                defaultShape = LoadShape(entity.Api, newCompositeShape.Base);
-
-                defaultShape?.SubclassForStepParenting(prefixCode, damageEffect);
-                defaultShape?.ResolveReferences(entity.World.Logger, currentModel);
+                return;
             }
+
+            ReplaceOverlays(stack, ref compositeShape, customModel, yadayada);
 
             CompositeShape oldCompositeShape = yadayada.GetAttachedShape(stack, "default").Clone();
-
             string shapePath = oldCompositeShape.Base.ToString();
 
-            if (false)//customModel.WearableShapeReplacersByShape.TryGetValue(shapePath, out shape))
-            {
-                defaultShape = LoadShape(entity.Api, shape);
 
+            if (system.BaseShapesData.TryGetValue(customModel.BaseShapeCode, out BaseShapeData? baseShapeData))
+            {
+                defaultShape = ShapeAdjustmentUtil.AdjustClothesShape(entity.Api, shapePath, baseShapeData, customModel);
                 defaultShape?.SubclassForStepParenting(prefixCode, damageEffect);
                 defaultShape?.ResolveReferences(entity.World.Logger, currentModel);
-            }
-            else
-            {
-                if (system.BaseShapesData.TryGetValue(customModel.BaseShapeCode, out var baseShapeData))
+
+                if (PlayerModelModSystem.Settings.ExportShapeFiles)
                 {
-                    defaultShape = ShapeAdjustmentUtil.AdjustClothesShape(entity.Api, shapePath, baseShapeData, customModel);
-                    defaultShape?.SubclassForStepParenting(prefixCode, damageEffect);
-                    defaultShape?.ResolveReferences(entity.World.Logger, currentModel);
+                    ExportShape(entity.Api, shapePath, shapePath.Replace(':', '-').Replace('/', '-').Replace('\\', '-'));
                 }
-            }
-
-            if (oldCompositeShape.Overlays != null)
-            {
-                foreach (CompositeShape? overlay in oldCompositeShape.Overlays)
-                {
-                    if (overlay == null) continue;
-
-                    ReplaceOverlay(overlay, customModel.WearableShapeReplacersByShape);
-                }
-
-                compositeShape = oldCompositeShape;
             }
         }
 
@@ -142,6 +115,42 @@ internal static class TranspilerPatches
             shapeLocation = shapeLocation.WithPathAppendixOnce(".json").WithPathPrefixOnce("shapes/");
             Shape? currentShape = Shape.TryGet(api, shapeLocation);
             return currentShape;
+        }
+
+        private static void ExportShape(ICoreAPI api, string shapePath, string fileName)
+        {
+            try
+            {
+                ExportingShape = true;
+                Shape? shape = LoadShape(api, shapePath);
+                FileInfo fifo = new FileInfo(Path.Combine(GamePaths.ModConfig, $"clothes-shapes/{fileName}.json"));
+                GamePaths.EnsurePathExists(fifo.Directory.FullName);
+                string json = JsonConvert.SerializeObject(shape, Formatting.Indented);
+                json = LowercaseJsonKeys(json);
+                json = "{\n \"editor\": {\"backDropShape\": \"\",\"entityTextureMode\": true}," + json[1..];
+                File.WriteAllText(fifo.FullName, json);
+                
+                ExportingShape = false;
+            }
+            catch (Exception exception)
+            {
+                ExportingShape = false;
+                LoggerUtil.Error(api, typeof(TranspilerPatches), $"Error on exporting shape '{fileName}':\n{exception}\n");
+            }
+        }
+
+        private static string LowercaseJsonKeys(string json)
+        {
+            return Regex.Replace(json, @"\""([A-Z][^\""]*)\"":", match =>
+            {
+                string key = match.Groups[1].Value;
+                if (string.IsNullOrEmpty(key))
+                    return match.Value;
+
+                // Lowercase only the first letter
+                string lowerKey = char.ToLowerInvariant(key[0]) + key.Substring(1);
+                return $"\"{lowerKey}\":";
+            });
         }
 
         private static void ReplaceOverlay(CompositeShape shape, Dictionary<string, string> replacements)
@@ -159,6 +168,86 @@ internal static class TranspilerPatches
 
                     ReplaceOverlay(overlay, replacements);
                 }
+            }
+        }
+
+        private static bool ReplaceShapeByItem(string prefixCode, Entity entity, ref Shape? defaultShape, ref CompositeShape? compositeShape, float damageEffect, int itemId, CustomModelData customModel)
+        {
+            if (customModel.WearableShapeReplacers.TryGetValue(itemId, out string? shape))
+            {
+                defaultShape = LoadShape(entity.Api, shape);
+
+                defaultShape?.SubclassForStepParenting(prefixCode, damageEffect);
+                defaultShape?.ResolveReferences(entity.World.Logger, "");
+
+                if (compositeShape != null)
+                {
+                    compositeShape = compositeShape.Clone();
+                    compositeShape.Base = shape;
+                }
+
+                return true;
+            }
+
+            if (customModel.WearableCompositeShapeReplacers.TryGetValue(itemId, out CompositeShape? newCompositeShape))
+            {
+                compositeShape = newCompositeShape.Clone();
+
+                compositeShape.Base = compositeShape.Base.WithPathAppendixOnce(".json").WithPathPrefixOnce("shapes/");
+
+                defaultShape = LoadShape(entity.Api, newCompositeShape.Base);
+
+                defaultShape?.SubclassForStepParenting(prefixCode, damageEffect);
+                defaultShape?.ResolveReferences(entity.World.Logger, "");
+
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool ReplaceShapeByShape(string prefixCode, ItemStack? stack, Entity entity, ref Shape? defaultShape, ref CompositeShape? compositeShape, float damageEffect, CustomModelData customModel, IAttachableToEntity yadayada)
+        {
+            CompositeShape oldCompositeShape = yadayada.GetAttachedShape(stack, "default").Clone();
+
+            string shapePath = oldCompositeShape.Base.ToString();
+
+            if (!customModel.WearableShapeReplacersByShape.TryGetValue(shapePath, out string? shape)) return false;
+
+            defaultShape = LoadShape(entity.Api, shape);
+
+            defaultShape?.SubclassForStepParenting(prefixCode, damageEffect);
+            defaultShape?.ResolveReferences(entity.World.Logger, "");
+
+            if (oldCompositeShape.Overlays != null)
+            {
+                foreach (CompositeShape? overlay in oldCompositeShape.Overlays)
+                {
+                    if (overlay == null) continue;
+
+                    ReplaceOverlay(overlay, customModel.WearableShapeReplacersByShape);
+                }
+
+                compositeShape = oldCompositeShape;
+            }
+
+            return true;
+        }
+
+        private static void ReplaceOverlays(ItemStack? stack, ref CompositeShape? compositeShape, CustomModelData customModel, IAttachableToEntity yadayada)
+        {
+            CompositeShape oldCompositeShape = yadayada.GetAttachedShape(stack, "default").Clone();
+
+            if (oldCompositeShape.Overlays != null)
+            {
+                foreach (CompositeShape? overlay in oldCompositeShape.Overlays)
+                {
+                    if (overlay == null) continue;
+
+                    ReplaceOverlay(overlay, customModel.WearableShapeReplacersByShape);
+                }
+
+                compositeShape = oldCompositeShape;
             }
         }
     }

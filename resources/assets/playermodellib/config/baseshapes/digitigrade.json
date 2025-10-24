@@ -1,6 +1,6 @@
 {
   "digitigrade": {
     "ShapePath": "playermodellib:shapes/baseshapes/digitigrade.json",
-    "KeyElements": ["LowerTorso", "UpperTorso", "UpperArmR", "LowerArmR", "UpperArmL", "LowerArmL", "Neck", "Head", "UpperFootL", "LowerFootL", "UpperFootR", "LowerFootR"]
+    "KeyElements": ["LowerTorso", "UpperTorso", "Tail", "UpperArmR", "LowerArmR", "UpperArmL", "LowerArmL", "Neck", "Head", "Snout", "UpperFootL", "MiddleFootL", "LowerFootL", "UpperFootR", "MiddleFootR", "LowerFootR"]
   }
 }

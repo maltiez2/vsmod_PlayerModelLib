@@ -118,6 +118,13 @@
       "type": "boolean",
       "ingui": "playermodellib:setting-scale_collider_vertically",
       "default": true
+    },
+    {
+      "code": "export_shape_files",
+      "type": "boolean",
+      "ingui": "playermodellib:setting-export_shape_files",
+      "comment": "playermodellib:setting-comment-export_shape_files",
+      "default": false
     }
   ]
 }

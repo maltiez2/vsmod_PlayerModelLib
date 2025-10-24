@@ -7,6 +7,7 @@ using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
+using Vintagestory.API.Util;
 using Vintagestory.GameContent;
 
 namespace PlayerModelLib;
@@ -41,6 +42,10 @@ internal static class OtherPatches
                 typeof(EntityShapeRenderer).GetMethod("loadModelMatrixForGui", AccessTools.all),
                 postfix: new HarmonyMethod(AccessTools.Method(typeof(OtherPatches), nameof(ApplyModelMatrixForGui)))
             );
+        new Harmony(harmonyId).Patch(
+                typeof(ShapeElement).GetMethod("TrimTextureNamesAndResolveFaces", AccessTools.all),
+                prefix: new HarmonyMethod(AccessTools.Method(typeof(OtherPatches), nameof(ShapeElement_TrimTextureNamesAndResolveFaces)))
+            );
     }
 
     public static void Unpatch(string harmonyId)
@@ -50,6 +55,7 @@ internal static class OtherPatches
         new Harmony(harmonyId).Unpatch(typeof(CharacterSystem).GetMethod("applyTraitAttributes", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
         new Harmony(harmonyId).Unpatch(typeof(CharacterSystem).GetMethod("getClassTraitText", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
         new Harmony(harmonyId).Unpatch(typeof(EntityShapeRenderer).GetMethod("loadModelMatrixForGui", AccessTools.all), HarmonyPatchType.Postfix, harmonyId);
+        new Harmony(harmonyId).Unpatch(typeof(ShapeElement).GetMethod("TrimTextureNamesAndResolveFaces", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
 
         _clientApi = null;
         _serverApi = null;
@@ -219,6 +225,39 @@ internal static class OtherPatches
         }
 
         __result = fullDescription.ToString();
+
+        return false;
+    }
+
+    private static bool ShapeElement_TrimTextureNamesAndResolveFaces(ShapeElement __instance)
+    {
+        if (!TranspilerPatches.ExportingShape) return true;
+
+        if (__instance.Faces != null)
+        {
+            foreach (KeyValuePair<string, ShapeElementFace> val in __instance.Faces)
+            {
+                ShapeElementFace f = val.Value;
+                if (!f.Enabled) continue;
+                BlockFacing facing = BlockFacing.FromFirstLetter(val.Key);
+                __instance.FacesResolved[facing.Index] = f;
+                f.Texture = f.Texture.Substring(1).DeDuplicate();
+            }
+        }
+        //__instance.Faces = null;
+
+        if (__instance.Children != null)
+        {
+            foreach (ShapeElement child in __instance.Children) ShapeElement_TrimTextureNamesAndResolveFaces(child);
+        }
+
+        __instance.Name = __instance.Name.DeDuplicate();
+        __instance.StepParentName = __instance.StepParentName.DeDuplicate();
+        AttachmentPoint[] AttachmentPoints = __instance.AttachmentPoints;
+        if (AttachmentPoints != null)
+        {
+            for (int i = 0; i < AttachmentPoints.Length; i++) AttachmentPoints[i].DeDuplicate();
+        }
 
         return false;
     }
