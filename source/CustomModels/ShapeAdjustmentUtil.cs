@@ -1,4 +1,5 @@
 ﻿using OpenTK.Mathematics;
+using System.Drawing;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 
@@ -62,27 +63,30 @@ public static class ShapeAdjustmentUtil
     {
         if (element == null) return;
 
-        if (element.RotationOrigin != null && element.RotationOrigin.Length >= 3)
+        if (element.From != null && element.From.Length >= 3 && element.To != null && element.To.Length >= 3 && element.RotationOrigin != null && element.RotationOrigin.Length >= 3)
         {
-            element.RotationOrigin[0] *= scale.X;
-            element.RotationOrigin[1] *= scale.Y;
-            element.RotationOrigin[2] *= scale.Z;
-        }
+            Vector3d from = new(element.From[0], element.From[1], element.From[2]);
+            Vector3d to = new(element.To[0], element.To[1], element.To[2]);
+            Vector3d origin = new(element.RotationOrigin[0], element.RotationOrigin[1], element.RotationOrigin[2]);
+            Vector3d fromSize = from - origin;
+            Vector3d toSize = to - origin;
+            Vector3d oldScale = scale;
 
-        AdjustScaleToRotation(element, ref scale);
+            AdjustScaleToRotation(element, ref scale);
 
-        if (element.From != null && element.From.Length >= 3)
-        {
-            element.From[0] *= scale.X;
-            element.From[1] *= scale.Y;
-            element.From[2] *= scale.Z;
-        }
+            fromSize *= scale;
+            toSize *= scale;
+            origin *= oldScale;
 
-        if (element.To != null && element.To.Length >= 3)
-        {
-            element.To[0] *= scale.X;
-            element.To[1] *= scale.Y;
-            element.To[2] *= scale.Z;
+            element.RotationOrigin[0] = origin.X;
+            element.RotationOrigin[1] = origin.Y;
+            element.RotationOrigin[2] = origin.Z;
+            element.From[0] = origin.X + fromSize.X;
+            element.From[1] = origin.Y + fromSize.Y;
+            element.From[2] = origin.Z + fromSize.Z;
+            element.To[0] = origin.X + toSize.X;
+            element.To[1] = origin.Y + toSize.Y;
+            element.To[2] = origin.Z + toSize.Z;
         }
 
         if (element.Children != null)
@@ -123,7 +127,13 @@ public static class ShapeAdjustmentUtil
         const double max = 90;
         const double doubleMax = max * 2;
         const double halfMax = max / 2;
-        double angle = Math.Abs(angleDeg);
+
+        double angle = angleDeg;
+
+        if (angle < 0)
+        {
+            angle = -angle;
+        }
 
         while (angle > doubleMax)
         {
