@@ -1,5 +1,4 @@
 ﻿using OpenTK.Mathematics;
-using System.Diagnostics;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 
@@ -13,14 +12,21 @@ public static class ShapeAdjustmentUtil
         {
             shapePath = modelData.WearableShapeReplacersByShape[shapePath];
         }
-        
+
         Shape? result = LoadShape(api, shapePath)?.Clone();
         if (result == null)
         {
             return null;
         }
 
-        foreach (ShapeElement? element in result.Elements)
+        AdjustClothesShape(api, result, baseShape, modelData);
+
+        return result;
+    }
+
+    public static Shape? AdjustClothesShape(ICoreAPI api, Shape shapeToChange, BaseShapeData baseShape, CustomModelData modelData)
+    {
+        foreach (ShapeElement? element in shapeToChange.Elements)
         {
             if (element == null) continue;
             string code = element.StepParentName ?? "";
@@ -31,28 +37,7 @@ public static class ShapeAdjustmentUtil
             }
         }
 
-        return result;
-    }
-
-    public static Shape? AdjustClothesShape(ICoreAPI api, Shape shapeToChange, BaseShapeData baseShape, CustomModelData modelData)
-    {
-        Shape? result = shapeToChange;
-        if (result == null)
-        {
-            return null;
-        }
-
-        foreach (ShapeElement? element in result.Elements)
-        {
-            if (element == null) continue;
-            string code = element.StepParentName ?? "";
-            if (baseShape.ElementSizes.ContainsKey(code) && modelData.ElementSizes.ContainsKey(code) && baseShape.ElementSizes[code] != modelData.ElementSizes[code])
-            {
-                RescaleShapeElement(element, GetScaleVector(baseShape.ElementSizes[code].size, modelData.ElementSizes[code].size));
-            }
-        }
-
-        return result;
+        return shapeToChange;
     }
 
     public static Shape? LoadShape(ICoreAPI api, AssetLocation path)
@@ -102,7 +87,7 @@ public static class ShapeAdjustmentUtil
 
         if (element.Children != null)
         {
-            foreach (var child in element.Children)
+            foreach (ShapeElement? child in element.Children)
             {
                 RescaleShapeElementRecursive(child, scale);
             }
@@ -139,7 +124,7 @@ public static class ShapeAdjustmentUtil
         const double doubleMax = max * 2;
         const double halfMax = max / 2;
         double angle = Math.Abs(angleDeg);
-        
+
         while (angle > doubleMax)
         {
             angle -= doubleMax;
