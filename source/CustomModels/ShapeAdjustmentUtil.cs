@@ -1,6 +1,5 @@
 ﻿using OpenTK.Mathematics;
 using Vintagestory.API.Common;
-using Vintagestory.API.MathTools;
 
 namespace PlayerModelLib;
 
@@ -8,6 +7,11 @@ public static class ShapeAdjustmentUtil
 {
     public static Shape? AdjustClothesShape(ICoreAPI api, AssetLocation shapePath, BaseShapeData baseShape, CustomModelData modelData)
     {
+        if (modelData.WearableShapeReplacersByShape.ContainsKey(shapePath))
+        {
+            shapePath = modelData.WearableShapeReplacersByShape[shapePath];
+        }
+        
         Shape? result = LoadShape(api, shapePath)?.Clone();
         if (result == null)
         {
