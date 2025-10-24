@@ -27,6 +27,27 @@ public static class ShapeAdjustmentUtil
         return result;
     }
 
+    public static Shape? AdjustClothesShape(ICoreAPI api, Shape shapeToChange, BaseShapeData baseShape, CustomModelData modelData)
+    {
+        Shape? result = shapeToChange;
+        if (result == null)
+        {
+            return null;
+        }
+
+        foreach (ShapeElement? element in result.Elements)
+        {
+            if (element == null) continue;
+            string code = element.StepParentName ?? "";
+            if (baseShape.ElementSizes.ContainsKey(code) && modelData.ElementSizes.ContainsKey(code) && baseShape.ElementSizes[code] != modelData.ElementSizes[code])
+            {
+                RescaleShapeElement(element, GetScaleVector(baseShape.ElementSizes[code].size, modelData.ElementSizes[code].size));
+            }
+        }
+
+        return result;
+    }
+
     public static Shape? LoadShape(ICoreAPI api, AssetLocation path)
     {
         path = path.WithPathAppendixOnce(".json").WithPathPrefixOnce("shapes/");

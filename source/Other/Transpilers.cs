@@ -104,7 +104,7 @@ internal static class TranspilerPatches
 
                 if (PlayerModelModSystem.Settings.ExportShapeFiles)
                 {
-                    ExportShape(entity.Api, shapePath, shapePath.Replace(':', '-').Replace('/', '-').Replace('\\', '-'));
+                    ExportShape(entity.Api, shapePath, shapePath.Replace(':', '-').Replace('/', '-').Replace('\\', '-'), baseShapeData, customModel);
                 }
             }
         }
@@ -117,12 +117,13 @@ internal static class TranspilerPatches
             return currentShape;
         }
 
-        private static void ExportShape(ICoreAPI api, string shapePath, string fileName)
+        private static void ExportShape(ICoreAPI api, string shapePath, string fileName, BaseShapeData baseShape, CustomModelData modelData)
         {
             try
             {
                 ExportingShape = true;
                 Shape? shape = LoadShape(api, shapePath);
+                shape = ShapeAdjustmentUtil.AdjustClothesShape(api, shape, baseShape, modelData);
                 FileInfo fifo = new FileInfo(Path.Combine(GamePaths.ModConfig, $"clothes-shapes/{fileName}.json"));
                 GamePaths.EnsurePathExists(fifo.Directory.FullName);
                 string json = JsonConvert.SerializeObject(shape, Formatting.Indented);
