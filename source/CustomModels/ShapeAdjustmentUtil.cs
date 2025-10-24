@@ -1,5 +1,7 @@
 ﻿using OpenTK.Mathematics;
+using System.Diagnostics;
 using Vintagestory.API.Common;
+using Vintagestory.API.MathTools;
 
 namespace PlayerModelLib;
 
@@ -24,7 +26,8 @@ public static class ShapeAdjustmentUtil
             string code = element.StepParentName ?? "";
             if (baseShape.ElementSizes.ContainsKey(code) && modelData.ElementSizes.ContainsKey(code) && baseShape.ElementSizes[code] != modelData.ElementSizes[code])
             {
-                RescaleShapeElement(element, GetScaleVector(baseShape.ElementSizes[code].size, modelData.ElementSizes[code].size));
+                Vector3d scaleVector = GetScaleVector(baseShape.ElementSizes[code].size, modelData.ElementSizes[code].size);
+                RescaleShapeElement(element, scaleVector);
             }
         }
 
@@ -81,6 +84,8 @@ public static class ShapeAdjustmentUtil
             element.RotationOrigin[2] *= scale.Z;
         }
 
+        AdjustScaleToRotation(element, ref scale);
+
         if (element.From != null && element.From.Length >= 3)
         {
             element.From[0] *= scale.X;
@@ -101,6 +106,33 @@ public static class ShapeAdjustmentUtil
             {
                 RescaleShapeElementRecursive(child, scale);
             }
+        }
+    }
+
+    private static void AdjustScaleToRotation(ShapeElement element, ref Vector3d scale)
+    {
+        double angleThreshold = 45;
+        double xAngle = Math.Abs(element.RotationX);
+        double yAngle = Math.Abs(element.RotationY);
+        double zAngle = Math.Abs(element.RotationZ);
+
+        if (xAngle > 0)
+        {
+            double factor = GameMath.Clamp(xAngle / angleThreshold, 0, 1);
+            double yzScale = (scale.Y + scale.Z) / 2;
+            scale = new(scale.X, scale.Y * (1 - factor) + yzScale * factor, scale.Z * (1 - factor) + yzScale * factor);
+        }
+        if (yAngle > 0)
+        {
+            double factor = GameMath.Clamp(yAngle / angleThreshold, 0, 1);
+            double xzScale = (scale.X + scale.Z) / 2;
+            scale = new(scale.X * (1 - factor) + xzScale * factor, scale.Y, scale.Z * (1 - factor) + xzScale * factor);
+        }
+        if (zAngle > 0)
+        {
+            double factor = GameMath.Clamp(zAngle / angleThreshold, 0, 1);
+            double yxScale = (scale.Y + scale.X) / 2;
+            scale = new(scale.X * (1 - factor) + yxScale * factor, scale.Y * (1 - factor) + yxScale * factor, scale.Z);
         }
     }
 }
