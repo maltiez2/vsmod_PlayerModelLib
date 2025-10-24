@@ -111,28 +111,54 @@ public static class ShapeAdjustmentUtil
 
     private static void AdjustScaleToRotation(ShapeElement element, ref Vector3d scale)
     {
-        double angleThreshold = 45;
-        double xAngle = Math.Abs(element.RotationX);
-        double yAngle = Math.Abs(element.RotationY);
-        double zAngle = Math.Abs(element.RotationZ);
-
-        if (xAngle > 0)
+        if (Math.Abs(element.RotationX) > 0)
         {
-            double factor = GameMath.Clamp(xAngle / angleThreshold, 0, 1);
+            (double uniform, double main, double opposite) = GetFactorFromAngle(element.RotationX);
             double yzScale = (scale.Y + scale.Z) / 2;
-            scale = new(scale.X, scale.Y * (1 - factor) + yzScale * factor, scale.Z * (1 - factor) + yzScale * factor);
+            scale = new(scale.X, yzScale * uniform + scale.Y * main + scale.Z * opposite, yzScale * uniform + scale.Z * main + scale.Y * opposite);
         }
-        if (yAngle > 0)
+
+        if (Math.Abs(element.RotationY) > 0)
         {
-            double factor = GameMath.Clamp(yAngle / angleThreshold, 0, 1);
+            (double uniform, double main, double opposite) = GetFactorFromAngle(element.RotationY);
             double xzScale = (scale.X + scale.Z) / 2;
-            scale = new(scale.X * (1 - factor) + xzScale * factor, scale.Y, scale.Z * (1 - factor) + xzScale * factor);
+            scale = new(xzScale * uniform + scale.X * main + scale.Z * opposite, scale.Y, xzScale * uniform + scale.Z * main + scale.X * opposite);
         }
-        if (zAngle > 0)
+
+        if (Math.Abs(element.RotationZ) > 0)
         {
-            double factor = GameMath.Clamp(zAngle / angleThreshold, 0, 1);
-            double yxScale = (scale.Y + scale.X) / 2;
-            scale = new(scale.X * (1 - factor) + yxScale * factor, scale.Y * (1 - factor) + yxScale * factor, scale.Z);
+            (double uniform, double main, double opposite) = GetFactorFromAngle(element.RotationZ);
+            double xyScale = (scale.X + scale.Y) / 2;
+            scale = new(xyScale * uniform + scale.X * main + scale.Y * opposite, xyScale * uniform + scale.Y * main + scale.X * opposite, scale.Z);
+        }
+    }
+
+    private static (double uniform, double main, double opposite) GetFactorFromAngle(double angleDeg)
+    {
+        const double max = 90;
+        const double doubleMax = max * 2;
+        const double halfMax = max / 2;
+        double angle = Math.Abs(angleDeg);
+        
+        while (angle > doubleMax)
+        {
+            angle -= doubleMax;
+        }
+
+        if (angle > max)
+        {
+            angle = doubleMax - angle;
+        }
+
+        if (angle <= halfMax)
+        {
+            double uniform = GameMath.Clamp(angle / halfMax, 0, 1);
+            return (uniform, 1 - uniform, 0);
+        }
+        else
+        {
+            double uniform = GameMath.Clamp((max - angle) / halfMax, 0, 1);
+            return (uniform, 0, 1 - uniform);
         }
     }
 }
