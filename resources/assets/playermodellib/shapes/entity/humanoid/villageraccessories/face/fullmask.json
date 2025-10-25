@@ -1,0 +1,34 @@
+{
+	"editor": {
+		"backDropShape": "C:/Users/Cal/AppData/Roaming/VintagestoryData/Mods/koboldplayerrdx_1.0.26/assets/koboldrdx/shapes/entity/humanoid/kobold-faceless",
+		"allAngles": true,
+		"entityTextureMode": true
+	},
+	"textureWidth": 24,
+	"textureHeight": 16,
+	"textureSizes": {
+		"facetex": [24,16]
+	},
+	"textures": {
+		"facetex": "entity/humanoid/villagerclothes/face/barber"
+	},
+	"elements": [
+		{
+			"name": "hideme",
+			"stepParentName": "Head",
+			"from": [ -2.68, -1.93, -0.05 ],
+			"to": [ 5.52, 5.07, 5.05 ],
+			"renderPass": 1,
+			"unwrapMode": 4,
+			"autoUnwrap": false,
+			"uv": [ 0.5, 0.5 ],
+			"rotationOrigin": [ -0.3519, 1.17, 2.6 ],
+			"faces": {
+				"north": { "texture": "#facetex", "uv": [ 0.0, 8.0, 8.0, 15.0 ] },
+				"east": { "texture": "#facetex", "uv": [ 17.0, 8.0, 22.0, 15.0 ] },
+				"south": { "texture": "#facetex", "uv": [ 11.5, 8.0, 19.5, 15.0 ] },
+				"west": { "texture": "#facetex", "uv": [ 6.0, 8.0, 11.0, 15.0 ] },
+				"up": { "texture": "#facetex", "uv": [ 6.0, 2.5, 11.0, 10.5 ], "rotation": 90 }
+			}
+		}
+	]}

@@ -9,9 +9,12 @@ public static class ShapeAdjustmentUtil
 {
     public static Shape? AdjustClothesShape(ICoreAPI api, AssetLocation shapePath, BaseShapeData baseShape, CustomModelData modelData)
     {
-        if (modelData.WearableShapeReplacersByShape.ContainsKey(shapePath))
+        string key = shapePath.ToString();
+
+
+        if (baseShape.WearableModelReplacersByShape.ContainsKey(key))
         {
-            shapePath = modelData.WearableShapeReplacersByShape[shapePath];
+            shapePath = baseShape.WearableModelReplacersByShape[shapePath];
         }
 
         Shape? result = LoadShape(api, shapePath)?.Clone();

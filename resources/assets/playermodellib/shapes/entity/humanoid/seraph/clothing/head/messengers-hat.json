@@ -1,0 +1,67 @@
+{
+	"editor": {
+		"backDropShape": "entity/humanoid/seraph-hairless",
+		"allAngles": true,
+		"entityTextureMode": true
+	},
+	"textureWidth": 32,
+	"textureHeight": 24,
+	"textureSizes": {
+		"hat": [32,24]
+	},
+	"textures": {
+		"hat": "entity/humanoid/seraphclothes/head/messengers-hat"
+	},
+	"elements": [
+		{
+			"name": "hidehat",
+			"stepParentName": "Head",
+			"from": [ -0.5, -2.8, -0.55 ],
+			"to": [ 6.2, 5.6, 5.55 ],
+			"renderPass": 1,
+			"unwrapMode": 4,
+			"autoUnwrap": false,
+			"uv": [ 6.0, 9.0 ],
+			"rotationOrigin": [ 1.85, 1.27, 2.8 ],
+			"rotationZ": 1.0,
+			"faces": {
+				"north": { "texture": "#hat", "uv": [ 6.0, 15.5, 12.5, 23.5 ] },
+				"east": { "texture": "#hat", "uv": [ 25.5, 15.5, 31.5, 23.5 ] },
+				"south": { "texture": "#hat", "uv": [ 18.5, 15.5, 25.0, 23.5 ] },
+				"west": { "texture": "#hat", "uv": [ 12.5, 15.5, 18.5, 23.5 ] },
+				"up": { "texture": "#hat", "uv": [ 12.5, 9.0, 18.5, 15.5 ], "rotation": 90 }
+			},
+			"children": [
+				{
+					"name": "flapR",
+					"from": [ 1.5, 2.0, 0.0 ],
+					"to": [ 3.0, 8.0, 0.2 ],
+					"unwrapMode": 3,
+					"uv": [ 0.0, 16.5 ],
+					"rotationOrigin": [ 1.5, 2.0, 0.0 ],
+					"faces": {
+						"east": { "texture": "#hat", "uv": [ 2.0, 17.0, 2.5, 23.0 ] },
+						"south": { "texture": "#hat", "uv": [ 0.5, 17.0, 2.0, 23.0 ] },
+						"west": { "texture": "#hat", "uv": [ 0.0, 17.0, 0.5, 23.0 ] },
+						"up": { "texture": "#hat", "uv": [ 0.5, 16.5, 2.0, 17.0 ] },
+						"down": { "texture": "#hat", "uv": [ 0.5, 23.0, 2.0, 23.5 ], "rotation": 180 }
+					}
+				},
+				{
+					"name": "flapL",
+					"from": [ 1.5, 2.0, 5.9 ],
+					"to": [ 3.0, 8.0, 6.1 ],
+					"unwrapMode": 1,
+					"uv": [ 1.0, 12.5 ],
+					"rotationOrigin": [ 1.5, 2.0, 5.9 ],
+					"faces": {
+						"north": { "texture": "#hat", "uv": [ 1.5, 13.0, 3.0, 19.0 ], "windMode": [-1,-1,-1,-1], "windData": [1,1,1,1] },
+						"east": { "texture": "#hat", "uv": [ 1.0, 13.0, 1.5, 19.0 ] },
+						"west": { "texture": "#hat", "uv": [ 3.0, 13.0, 3.5, 19.0 ] },
+						"up": { "texture": "#hat", "uv": [ 1.5, 12.5, 3.0, 13.0 ], "rotation": 180 },
+						"down": { "texture": "#hat", "uv": [ 1.5, 19.0, 3.0, 19.5 ] }
+					}
+				}
+			]
+		}
+	]}

@@ -427,23 +427,27 @@ public sealed class CustomModelsSystem : ModSystem
         {
             Dictionary<string, Dictionary<string, CompositeShape>> replacements = CompositeReplacementsFromAsset(asset);
 
-            foreach ((string modelCode, Dictionary<string, CompositeShape> paths) in replacements)
+            foreach ((string modelCodeExpression, Dictionary<string, CompositeShape> paths) in replacements)
             {
-                if (!CustomModels.ContainsKey(modelCode))
+                string[] modelCodes = modelCodeExpression.Split('|');
+                foreach (string modelCode in modelCodes)
                 {
-                    LoggerUtil.Error(_api, this, $"Error while loading wearable composite model replacements by code: custom model with code '{modelCode}' does not exists.");
-                    continue;
-                }
-
-                foreach ((string itemCodeWildcard, CompositeShape path) in paths)
-                {
-                    foreach (Item item in api.World.Items)
+                    if (!CustomModels.ContainsKey(modelCode))
                     {
-                        if (!WildcardUtil.Match(itemCodeWildcard, item.Code?.ToString() ?? "")) continue;
+                        LoggerUtil.Error(_api, this, $"Error while loading wearable composite model replacements by code: custom model with code '{modelCode}' does not exists.");
+                        continue;
+                    }
 
-                        ReplaceVariants(path, item);
+                    foreach ((string itemCodeWildcard, CompositeShape path) in paths)
+                    {
+                        foreach (Item item in api.World.Items)
+                        {
+                            if (!WildcardUtil.Match(itemCodeWildcard, item.Code?.ToString() ?? "")) continue;
 
-                        CustomModels[modelCode].WearableCompositeShapeReplacers[item.Id] = path;
+                            ReplaceVariants(path, item);
+
+                            CustomModels[modelCode].WearableCompositeShapeReplacers[item.Id] = path;
+                        }
                     }
                 }
             }
@@ -454,34 +458,38 @@ public sealed class CustomModelsSystem : ModSystem
         {
             Dictionary<string, Dictionary<string, string>> replacements = ReplacementsFromAsset(asset);
 
-            foreach ((string modelCode, Dictionary<string, string> paths) in replacements)
+            foreach ((string modelCodeExpression, Dictionary<string, string> paths) in replacements)
             {
-                if (!CustomModels.ContainsKey(modelCode))
+                string[] modelCodes = modelCodeExpression.Split('|');
+                foreach (string modelCode in modelCodes)
                 {
-                    LoggerUtil.Error(_api, this, $"Error while loading wearable model replacements by code: custom model with code '{modelCode}' does not exists.");
-                    continue;
-                }
-
-                foreach ((string itemCodeWildcard, string path) in paths)
-                {
-                    foreach (Item item in api.World.Items)
+                    if (!CustomModels.ContainsKey(modelCode))
                     {
-                        if (!WildcardUtil.Match(itemCodeWildcard, item.Code?.ToString() ?? "")) continue;
+                        LoggerUtil.Error(_api, this, $"Error while loading wearable model replacements by code: custom model with code '{modelCode}' does not exists.");
+                        continue;
+                    }
 
-                        string processedPath = path;
+                    foreach ((string itemCodeWildcard, string path) in paths)
+                    {
+                        foreach (Item item in api.World.Items)
+                        {
+                            if (!WildcardUtil.Match(itemCodeWildcard, item.Code?.ToString() ?? "")) continue;
 
-                        foreach ((string variantCode, string variantValue) in item.Variant)
-                        {
-                            processedPath = processedPath.Replace($"{{{variantCode}}}", variantValue);
-                        }
+                            string processedPath = path;
 
-                        if (api.Assets.Exists(GetShapeLocation(processedPath)))
-                        {
-                            CustomModels[modelCode].WearableShapeReplacers.TryAdd(item.Id, processedPath);
-                        }
-                        else
-                        {
-                            LoggerUtil.Error(_api, this, $"Shape '{processedPath}' that replaces shape for item '{item.Code}' for model '{modelCode}' was not found, skipping.");
+                            foreach ((string variantCode, string variantValue) in item.Variant)
+                            {
+                                processedPath = processedPath.Replace($"{{{variantCode}}}", variantValue);
+                            }
+
+                            if (api.Assets.Exists(GetShapeLocation(processedPath)))
+                            {
+                                CustomModels[modelCode].WearableShapeReplacers.TryAdd(item.Id, processedPath);
+                            }
+                            else
+                            {
+                                LoggerUtil.Error(_api, this, $"Shape '{processedPath}' that replaces shape for item '{item.Code}' for model '{modelCode}' was not found, skipping.");
+                            }
                         }
                     }
                 }
@@ -493,23 +501,27 @@ public sealed class CustomModelsSystem : ModSystem
         {
             Dictionary<string, Dictionary<string, string>> replacements = ReplacementsFromAsset(asset);
 
-            foreach ((string modelCode, Dictionary<string, string> paths) in replacements)
+            foreach ((string modelCodeExpression, Dictionary<string, string> paths) in replacements)
             {
-                if (!CustomModels.ContainsKey(modelCode))
+                string[] modelCodes = modelCodeExpression.Split('|');
+                foreach (string modelCode in modelCodes)
                 {
-                    LoggerUtil.Error(_api, this, $"Error while loading wearable model replacements by shape: custom model with code '{modelCode}' does not exists.");
-                    continue;
-                }
-
-                foreach ((string fromPath, string toPath) in paths)
-                {
-                    if (api.Assets.Exists(GetShapeLocation(toPath)))
+                    if (!CustomModels.ContainsKey(modelCode))
                     {
-                        CustomModels[modelCode].WearableShapeReplacersByShape[fromPath] = toPath;
+                        LoggerUtil.Error(_api, this, $"Error while loading wearable model replacements by shape: custom model with code '{modelCode}' does not exists.");
+                        continue;
                     }
-                    else
+
+                    foreach ((string fromPath, string toPath) in paths)
                     {
-                        LoggerUtil.Error(_api, this, $"Shape '{toPath}' that replaces shape '{fromPath}' for model '{modelCode}' was not found, skipping.");
+                        if (api.Assets.Exists(GetShapeLocation(toPath)))
+                        {
+                            CustomModels[modelCode].WearableShapeReplacersByShape[fromPath] = toPath;
+                        }
+                        else
+                        {
+                            LoggerUtil.Error(_api, this, $"Shape '{toPath}' that replaces shape '{fromPath}' for model '{modelCode}' was not found, skipping.");
+                        }
                     }
                 }
             }
