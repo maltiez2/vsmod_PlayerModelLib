@@ -1,6 +1,5 @@
 ﻿using HarmonyLib;
 using Newtonsoft.Json;
-using System.Globalization;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Text.RegularExpressions;
@@ -8,14 +7,13 @@ using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Config;
 using Vintagestory.GameContent;
-using YamlDotNet.Serialization;
 
 namespace PlayerModelLib;
 
 internal static class TranspilerPatches
 {
     public static bool ExportingShape { get; set; } = false;
-    
+
     [HarmonyPatchCategory("PlayerModelLibTranspiler")]
     public class EntityBehaviorContainerPatchCommand
     {
@@ -124,13 +122,19 @@ internal static class TranspilerPatches
                 ExportingShape = true;
                 Shape? shape = LoadShape(api, shapePath);
                 shape = ShapeAdjustmentUtil.AdjustClothesShape(api, shape, baseShape, modelData);
-                FileInfo fifo = new FileInfo(Path.Combine(GamePaths.ModConfig, $"clothes-shapes/{fileName}.json"));
+                AddHashesToTextureCodes(shape.Elements);
+                string fullFilePath = Path.Combine(GamePaths.ModConfig, $"clothes-shapes/{modelData.Code.Replace(':', '-')}-{fileName}.json");
+                FileInfo fifo = new(fullFilePath);
                 GamePaths.EnsurePathExists(fifo.Directory.FullName);
                 string json = JsonConvert.SerializeObject(shape, Formatting.Indented);
-                json = LowercaseJsonKeys(json);
-                json = "{\n \"editor\": {\"backDropShape\": \"\",\"entityTextureMode\": true}," + json[1..];
+
+                FixShapeJson(ref json);
+
                 File.WriteAllText(fifo.FullName, json);
-                
+
+                LoggerUtil.Verbose(api, typeof(TranspilerPatches), $"('{modelData.Code}') Exported '{shapePath}' to '{fullFilePath}'");
+                LoggerUtil.Dev(api, typeof(TranspilerPatches), $"('{modelData.Code}') Exported '{shapePath}' to '{fullFilePath}'");
+
                 ExportingShape = false;
             }
             catch (Exception exception)
@@ -140,9 +144,61 @@ internal static class TranspilerPatches
             }
         }
 
-        private static string LowercaseJsonKeys(string json)
+        private static void FixShapeJson(ref string json)
         {
-            return Regex.Replace(json, @"\""([A-Z][^\""]*)\"":", match =>
+            json = "{\n \"editor\": {\"backDropShape\": \"\",\"entityTextureMode\": true}," + json[1..];
+            LowercaseJsonKeys(ref json);
+            TurnOffAutoUv(ref json);
+            FixAnimationsEnums(ref json);
+            json = json.Replace("keyFrames", "keyframes").Replace("quantityFrames", "quantityframes").Replace("game:", "");
+        }
+        private static void FixAnimationsEnums(ref string json)
+        {
+            json = Regex.Replace(json, @"""onAnimationEnd""\s*:\s*(\d+)", match =>
+            {
+                int value = int.Parse(match.Groups[1].Value);
+                string enumName = value switch
+                {
+                    0 => "Repeat",
+                    1 => "Hold",
+                    2 => "Stop",
+                    3 => "EaseOut",
+                    _ => "Repeat"
+                };
+                return $"\"onAnimationEnd\": \"{enumName}\"";
+            });
+
+            json = Regex.Replace(json, @"""onActivityStopped""\s*:\s*(\d+)", match =>
+            {
+                int value = int.Parse(match.Groups[1].Value);
+                string enumName = value switch
+                {
+                    0 => "PlayTillEnd",
+                    1 => "Rewind",
+                    2 => "Stop",
+                    3 => "EaseOut",
+                    _ => "PlayTillEnd"
+                };
+                return $"\"onActivityStopped\": \"{enumName}\"";
+            });
+        }
+        private static void TurnOffAutoUv(ref string json)
+        {
+            string pattern = @"(\""(north|south|east|west|up|down)\""\s*:\s*\{)([^{}]*\{[^{}]*\}[^{}]*|[^{}])*?\}";
+
+            json = Regex.Replace(json, pattern, match =>
+            {
+                string faceJson = match.Value;
+
+                if (Regex.IsMatch(faceJson, @"""autoUv""\s*:"))
+                    return faceJson;
+
+                return Regex.Replace(faceJson, @"\}\s*$", @", ""autoUv"": false}");
+            }, RegexOptions.Singleline);
+        }
+        private static void LowercaseJsonKeys(ref string json)
+        {
+            json = Regex.Replace(json, @"\""([A-Z][^\""]*)\"":", match =>
             {
                 string key = match.Groups[1].Value;
                 if (string.IsNullOrEmpty(key))
@@ -152,6 +208,24 @@ internal static class TranspilerPatches
                 string lowerKey = char.ToLowerInvariant(key[0]) + key.Substring(1);
                 return $"\"{lowerKey}\":";
             });
+        }
+        private static void AddHashesToTextureCodes(ShapeElement[] elements)
+        {
+            foreach (ShapeElement element in elements)
+            {
+                if (element.Faces != null)
+                {
+                    foreach (ShapeElementFace face in element.Faces.Values)
+                    {
+                        face.Texture = "#" + face.Texture;
+                    }
+                }
+
+                if (element.Children != null)
+                {
+                    AddHashesToTextureCodes(element.Children);
+                }
+            }
         }
 
         private static void ReplaceOverlay(CompositeShape shape, Dictionary<string, string> replacements)

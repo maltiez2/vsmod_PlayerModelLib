@@ -1,5 +1,4 @@
-﻿using HarmonyLib;
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 using OpenTK.Mathematics;
 using SkiaSharp;
 using Vintagestory.API.Client;
@@ -258,11 +257,35 @@ public sealed class CustomModelsSystem : ModSystem
             return;
         }
 
+        if (shape.Textures == null)
+        {
+            LoggerUtil.Error(_api, this, $"({code}) Shape '{modelConfig.ShapePath}' does not have textures list defined");
+            return;
+        }
+
         if (!shape.Textures.ContainsKey(modelConfig.MainTextureCode))
         {
             string textures = shape.Textures.Keys.Aggregate((a, b) => $"{a}, {b}");
             LoggerUtil.Error(_api, this, $"({code}) Shape '{modelConfig.ShapePath}' does not have main texture with code '{modelConfig.MainTextureCode}'. Textures that this shape has: {textures}");
             return;
+        }
+
+        foreach ((string textureCode, AssetLocation? texturePath) in shape.Textures)
+        {
+            if (texturePath == null) continue;
+            
+            if (!texturePath.HasDomain())
+            {
+                texturePath.Domain = new AssetLocation(modelConfig.ShapePath).Domain;
+            }
+
+            AssetLocation path = texturePath.WithPathPrefixOnce("textures/").WithPathAppendixOnce(".png");
+
+            if (!api.Assets.Exists(path) && api.Side == EnumAppSide.Client)
+            {
+                LoggerUtil.Error(_api, this, $"({code}) Shape '{modelConfig.ShapePath}' has texture with code '{textureCode}' and path '{texturePath}'. This texture was not found in assets, will skip loading this model.");
+                return;
+            }
         }
 
         modelConfig.SkinnableParts = [.. modelConfig.SkinnableParts.Where(part => part.Enabled)];
@@ -1124,7 +1147,7 @@ public sealed class CustomModelsSystem : ModSystem
         foreach (ShapeElement? element in elements)
         {
             if (element == null) continue;
-            
+
             string code = element.Name ?? "";
             if (elementsToCollect.Contains(code) && !collectedElements.ContainsKey(code) && element.From != null && element.To != null)
             {

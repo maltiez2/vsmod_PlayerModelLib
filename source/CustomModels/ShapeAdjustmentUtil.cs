@@ -1,5 +1,5 @@
 ﻿using OpenTK.Mathematics;
-using System.Drawing;
+using System.Diagnostics;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 
@@ -62,6 +62,16 @@ public static class ShapeAdjustmentUtil
     private static void RescaleShapeElementRecursive(ShapeElement element, Vector3d scale)
     {
         if (element == null) return;
+
+        if (element.Name == "LowertorsoD")
+        {
+            Debug.WriteLine(element.Name);
+        }
+
+        if (element.RotationOrigin == null)
+        {
+            element.RotationOrigin = [0, 0, 0];
+        }
 
         if (element.From != null && element.From.Length >= 3 && element.To != null && element.To.Length >= 3 && element.RotationOrigin != null && element.RotationOrigin.Length >= 3)
         {
