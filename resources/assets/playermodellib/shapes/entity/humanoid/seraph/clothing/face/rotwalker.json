@@ -1,6 +1,6 @@
 {
 	"editor": {
-		"backDropShape": "C:/Users/Cal/Desktop/Kobold Player Redux/seraph-faceless",
+		"backDropShape": "C:/Users/Cal/Desktop/digitigrade",
 		"allAngles": true,
 		"entityTextureMode": false
 	},
@@ -14,10 +14,10 @@
 	"elements": [
 		{
 			"name": "origin",
-			"stepParentName": "Head",
-			"from": [ -2.2, 3.0, 2.3 ],
-			"to": [ -2.2, 3.0, 2.3 ],
-			"rotationOrigin": [ -2.2, 3.0, 1.9 ],
+			"stepParentName": "HeadWithSnout",
+			"from": [ 0.8, 3.0, 2.3 ],
+			"to": [ 0.8, 3.0, 2.3 ],
+			"rotationOrigin": [ 0.8, 3.0, 1.9 ],
 			"rotationZ": -44.0,
 			"faces": {
 				"north": { "texture": "#mask-hazmat", "uv": [ 0.0, 0.0, 0.5, 0.5 ] },
@@ -274,7 +274,4 @@
 				}
 			]
 		}
-	],
-	"animations": [
-	]
-}
+	]}
