@@ -1,6 +1,6 @@
 {
 	"editor": {
-		"backDropShape": "entity/humanoid/seraph",
+		"backDropShape": "C:/Users/Cal/Desktop/digitigrade",
 		"allAngles": true,
 		"entityTextureMode": true
 	},
@@ -279,5 +279,35 @@
 					]
 				}
 			]
+		},
+		{
+			"name": "MidFootL",
+			"stepParentName": "MiddleFootL",
+			"from": [ -0.01, -0.01, -0.01 ],
+			"to": [ 4.01, 5.91, 3.01 ],
+			"unwrapMode": 4,
+			"uv": [ 16.5, 21.5 ],
+			"faces": {
+				"north": { "texture": "#lowerbody", "uv": [ 16.5, 25.5, 20.5, 31.0 ] },
+				"east": { "texture": "#lowerbody", "uv": [ 27.5, 25.5, 30.5, 31.0 ] },
+				"south": { "texture": "#lowerbody", "uv": [ 23.5, 25.5, 27.5, 31.0 ] },
+				"west": { "texture": "#lowerbody", "uv": [ 20.5, 25.5, 23.5, 31.0 ] },
+				"up": { "texture": "#lowerbody", "uv": [ 20.5, 21.5, 23.5, 25.5 ], "rotation": 90, "windMode": [-1,-1,-1,-1] }
+			}
+		},
+		{
+			"name": "MidFootR",
+			"stepParentName": "MiddleFootR",
+			"from": [ -0.01, -0.01, -0.01 ],
+			"to": [ 4.01, 5.91, 3.01 ],
+			"unwrapMode": 4,
+			"uv": [ 1.5, 21.5 ],
+			"faces": {
+				"north": { "texture": "#lowerbody", "uv": [ 1.5, 25.5, 5.5, 31.0 ] },
+				"east": { "texture": "#lowerbody", "uv": [ 12.5, 25.5, 15.5, 31.0 ] },
+				"south": { "texture": "#lowerbody", "uv": [ 8.5, 25.5, 12.5, 31.0 ] },
+				"west": { "texture": "#lowerbody", "uv": [ 5.5, 25.5, 8.5, 31.0 ] },
+				"up": { "texture": "#lowerbody", "uv": [ 5.5, 21.5, 8.5, 25.5 ], "rotation": 90, "windMode": [-1,-1,-1,-1] }
+			}
 		}
 	]}
