@@ -1,6 +1,6 @@
 {
 	"editor": {
-		"backDropShape": "C:/Users/Cal/Desktop/Kobold Player Redux/seraph-faceless",
+		"backDropShape": "E:/Programs/VSModelCreator/digitigrade",
 		"allAngles": true,
 		"entityTextureMode": false
 	},
@@ -13,10 +13,10 @@
 	"elements": [
 		{
 			"name": "origin",
-			"stepParentName": "Head",
-			"from": [ -2.5, 1.7, 2.4 ],
-			"to": [ -2.5, 1.7, 2.4 ],
-			"rotationOrigin": [ -2.5, 1.7, 2.4 ],
+			"stepParentName": "HeadWithSnout",
+			"from": [ 0.0, 1.7, 2.4 ],
+			"to": [ 0.0, 1.7, 2.4 ],
+			"rotationOrigin": [ 0.0, 1.7, 2.4 ],
 			"rotationZ": -33.0,
 			"faces": {
 			},
@@ -39,17 +39,17 @@
 						{
 							"name": "L string",
 							"from": [ 0.0, 1.0, -0.5 ],
-							"to": [ 5.9, 1.5, 0.0 ],
+							"to": [ 6.9, 1.5, 0.0 ],
 							"rotationOrigin": [ 0.0, 1.5, -0.5 ],
-							"rotationY": 18.0,
+							"rotationY": 20.0,
 							"rotationZ": 30.0,
 							"faces": {
-								"north": { "texture": "#cat-mask", "uv": [ 0.0, 0.0, 5.5, 0.5 ] },
+								"north": { "texture": "#cat-mask", "uv": [ 0.0, 0.0, 6.5, 0.5 ] },
 								"east": { "texture": "#cat-mask", "uv": [ 0.0, 0.0, 0.5, 0.5 ] },
-								"south": { "texture": "#cat-mask", "uv": [ 0.0, 0.0, 5.5, 0.5 ] },
+								"south": { "texture": "#cat-mask", "uv": [ 0.0, 0.0, 6.5, 0.5 ] },
 								"west": { "texture": "#cat-mask", "uv": [ 0.0, 0.0, 0.5, 0.5 ] },
-								"up": { "texture": "#cat-mask", "uv": [ 0.0, 0.0, 5.5, 0.5 ] },
-								"down": { "texture": "#cat-mask", "uv": [ 0.0, 0.0, 5.5, 0.5 ] }
+								"up": { "texture": "#cat-mask", "uv": [ 0.0, 0.0, 6.5, 0.5 ] },
+								"down": { "texture": "#cat-mask", "uv": [ 0.0, 0.0, 6.5, 0.5 ] }
 							}
 						},
 						{
@@ -118,17 +118,17 @@
 						{
 							"name": "R string",
 							"from": [ 0.1, 1.0, 2.5 ],
-							"to": [ 5.9, 1.5, 3.0 ],
+							"to": [ 6.9, 1.5, 3.0 ],
 							"rotationOrigin": [ 0.1, 1.5, 2.9 ],
 							"rotationY": -18.0,
 							"rotationZ": 30.0,
 							"faces": {
-								"north": { "texture": "#cat-mask", "uv": [ 0.0, 0.0, 5.5, 0.5 ] },
+								"north": { "texture": "#cat-mask", "uv": [ 0.0, 0.0, 6.5, 0.5 ] },
 								"east": { "texture": "#cat-mask", "uv": [ 0.0, 0.0, 0.5, 0.5 ] },
-								"south": { "texture": "#cat-mask", "uv": [ 0.0, 0.0, 5.5, 0.5 ] },
+								"south": { "texture": "#cat-mask", "uv": [ 0.0, 0.0, 6.5, 0.5 ] },
 								"west": { "texture": "#cat-mask", "uv": [ 0.0, 0.0, 0.5, 0.5 ] },
-								"up": { "texture": "#cat-mask", "uv": [ 0.0, 0.0, 5.5, 0.5 ] },
-								"down": { "texture": "#cat-mask", "uv": [ 0.0, 0.0, 5.5, 0.5 ] }
+								"up": { "texture": "#cat-mask", "uv": [ 0.0, 0.0, 6.5, 0.5 ] },
+								"down": { "texture": "#cat-mask", "uv": [ 0.0, 0.0, 6.5, 0.5 ] }
 							}
 						},
 						{
@@ -509,7 +509,4 @@
 				}
 			]
 		}
-	],
-	"animations": [
-	]
-}
+	]}
