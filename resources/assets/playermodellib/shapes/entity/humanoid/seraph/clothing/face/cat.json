@@ -1,5 +1,6 @@
 {
 	"editor": {
+		"backDropShape": "C:/Users/Cal/Desktop/digitigrade",
 		"backDropShape": "E:/Programs/VSModelCreator/digitigrade",
 		"allAngles": true,
 		"entityTextureMode": false
