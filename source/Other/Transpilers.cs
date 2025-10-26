@@ -15,7 +15,7 @@ internal static class TranspilerPatches
     public static bool ExportingShape { get; set; } = false;
 
     [HarmonyPatchCategory("PlayerModelLibTranspiler")]
-    public class EntityBehaviorContainerPatchCommand
+    public static class EntityBehaviorContainerPatchCommand
     {
         [HarmonyTargetMethod]
         static MethodBase TargetMethod()
@@ -121,10 +121,13 @@ internal static class TranspilerPatches
             {
                 ExportingShape = true;
                 Shape? shape = LoadShape(api, shapePath);
+                if (shape == null) return;
                 shape = ShapeAdjustmentUtil.AdjustClothesShape(api, shape, baseShape, modelData);
+                if (shape == null) return;
                 AddHashesToTextureCodes(shape.Elements);
                 string fullFilePath = Path.Combine(GamePaths.ModConfig, $"clothes-shapes/{modelData.Code.Replace(':', '-')}-{fileName}.json");
-                FileInfo fifo = new(fullFilePath);
+                FileInfo? fifo = new(fullFilePath);
+                if (fifo.Directory == null) return;
                 GamePaths.EnsurePathExists(fifo.Directory.FullName);
                 string json = JsonConvert.SerializeObject(shape, Formatting.Indented);
 
@@ -213,6 +216,7 @@ internal static class TranspilerPatches
         {
             foreach (ShapeElement element in elements)
             {
+#pragma warning disable CS0618 // Type or member is obsolete
                 if (element.Faces != null)
                 {
                     foreach (ShapeElementFace face in element.Faces.Values)
@@ -220,6 +224,7 @@ internal static class TranspilerPatches
                         face.Texture = "#" + face.Texture;
                     }
                 }
+#pragma warning restore CS0618 // Type or member is obsolete
 
                 if (element.Children != null)
                 {

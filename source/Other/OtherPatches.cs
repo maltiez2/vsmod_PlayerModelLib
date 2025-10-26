@@ -20,7 +20,6 @@ internal static class OtherPatches
     public static void Patch(string harmonyId, ICoreAPI api)
     {
         _clientApi = api as ICoreClientAPI;
-        _serverApi = api as ICoreServerAPI;
 
         new Harmony(harmonyId).Patch(
                 typeof(EntityBehaviorTexturedClothing).GetMethod("reloadSkin", AccessTools.all),
@@ -58,13 +57,11 @@ internal static class OtherPatches
         new Harmony(harmonyId).Unpatch(typeof(ShapeElement).GetMethod("TrimTextureNamesAndResolveFaces", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
 
         _clientApi = null;
-        _serverApi = null;
     }
 
     private static bool ReloadSkin() => false;
 
     private static ICoreClientAPI? _clientApi;
-    private static ICoreServerAPI? _serverApi;
 
     private static readonly FieldInfo? _characterSystem_didSelect = typeof(CharacterSystem).GetField("didSelect", BindingFlags.NonPublic | BindingFlags.Instance);
     private static readonly FieldInfo? _characterSystem_createCharDlg = typeof(CharacterSystem).GetField("createCharDlg", BindingFlags.NonPublic | BindingFlags.Instance);
@@ -176,7 +173,7 @@ internal static class OtherPatches
     private static bool getClassTraitText(CharacterSystem __instance, ref string __result)
     {
         string? classCode = _clientApi?.World?.Player?.Entity?.WatchedAttributes?.GetString("characterClass");
-        CharacterClass? characterClass = __instance.characterClasses.FirstOrDefault(c => c.Code == classCode);
+        CharacterClass? characterClass = __instance.characterClasses.Find(c => c.Code == classCode);
 
         if (characterClass == null)
         {
@@ -229,9 +226,13 @@ internal static class OtherPatches
         return false;
     }
 
+#pragma warning disable CS0618 // Type or member is obsolete - It is not in this case
+#pragma warning disable S3241 // Methods should not return values that are never used - harmony prefix need to return bool in this case
     private static bool ShapeElement_TrimTextureNamesAndResolveFaces(ShapeElement __instance)
+
     {
         if (!TranspilerPatches.ExportingShape) return true;
+
 
         if (__instance.Faces != null)
         {
@@ -243,8 +244,8 @@ internal static class OtherPatches
                 __instance.FacesResolved[facing.Index] = f;
                 f.Texture = f.Texture.Substring(1).DeDuplicate();
             }
+
         }
-        //__instance.Faces = null;
 
         if (__instance.Children != null)
         {
@@ -261,4 +262,6 @@ internal static class OtherPatches
 
         return false;
     }
+#pragma warning restore S3241 // Methods should not return values that are never used
+#pragma warning restore CS0618 // Type or member is obsolete
 }
