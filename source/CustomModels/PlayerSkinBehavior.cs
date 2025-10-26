@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using System.Diagnostics;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
@@ -110,6 +111,8 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
     public override void OnTesselation(ref Shape entityShape, string shapePathForLogging, ref bool shapeIsCloned, ref string[]? willDeleteElements)
     {
+        Debug.WriteLine($"PlayerSkinBehavior - OnTesselation - before");
+        
         if (ModelSystem == null || ClientApi == null || !ModelSystem.ModelsLoaded) return;
 
         Shape backup = entityShape;
@@ -136,6 +139,8 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
             entityShape = backup;
             LoggerUtil.Error(ClientApi, this, $"({CurrentModelCode}) Error when tesselating custom player model:\n{exception}");
         }
+
+        Debug.WriteLine($"PlayerSkinBehavior - OnTesselation - after");
     }
 
     public void SetCurrentModel(string code, float size)
