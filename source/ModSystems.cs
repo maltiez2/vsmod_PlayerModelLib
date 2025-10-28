@@ -20,6 +20,7 @@ public sealed class PlayerModelModSystem : ModSystem
 
         new Harmony("PlayerModelLibTranspiler").PatchAll();
         OtherPatches.Patch("PlayerModelLib", api);
+        StatsPatches.Patch("PlayerModelLib", api);
 
         if (api is ICoreClientAPI clientApi)
         {
@@ -36,6 +37,7 @@ public sealed class PlayerModelModSystem : ModSystem
     {
         new Harmony("PlayerModelLib").UnpatchAll("PlayerModelLibTranspiler");
         OtherPatches.Unpatch("PlayerModelLib");
+        StatsPatches.Unpatch("PlayerModelLib");
     }
 
     private void SubscribeToConfigChange(ICoreAPI api)
