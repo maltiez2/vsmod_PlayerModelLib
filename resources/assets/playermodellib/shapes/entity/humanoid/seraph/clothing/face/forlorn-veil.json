@@ -34,10 +34,10 @@
 					"uv": [ 1.0, 1.5 ],
 					"rotationOrigin": [ -1.3, -5.0, -2.4 ],
 					"faces": {
-						"north": { "texture": "#mask", "uv": [ 1.5, 1.5, 9.5, 7.0 ] },
-						"east": { "texture": "#mask", "uv": [ 17.5, 1.5, 22.5, 7.0 ] },
-						"south": { "texture": "#mask", "uv": [ 12.0, 1.5, 20.0, 7.0 ] },
-						"west": { "texture": "#mask", "uv": [ 7.0, 1.5, 12.0, 7.0 ] }
+						"north": { "texture": "#mask", "uv": [ 1.5, 1.5, 9.5, 7.0 ], "autoUv": false },
+						"east": { "texture": "#mask", "uv": [ 17.5, 1.5, 22.5, 7.0 ], "autoUv": false },
+						"south": { "texture": "#mask", "uv": [ 12.0, 1.5, 20.0, 7.0 ], "autoUv": false },
+						"west": { "texture": "#mask", "uv": [ 7.0, 1.5, 12.0, 7.0 ], "autoUv": false }
 					}
 				}
 			]
