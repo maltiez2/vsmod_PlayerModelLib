@@ -50,6 +50,9 @@ public class CustomModelConfig
     public float ModelSizeFactor { get; set; } = 1;
     public float HeadBobbingScale { get; set; } = 1;
     public float GuiModelScale { get; set; } = 1;
+    public float WalkEyeHeightMultiplier { get; set; } = 1;
+    public float SprintEyeHeightMultiplier { get; set; } = 1;
+    public float SneakEyeHeightMultiplier { get; set; } = 1;
 }
 
 public class CustomModelData
@@ -89,6 +92,9 @@ public class CustomModelData
     public float ModelSizeFactor { get; set; } = 1;
     public float HeadBobbingScale { get; set; } = 1;
     public float GuiModelScale { get; set; } = 1;
+    public float WalkEyeHeightMultiplier { get; set; } = 1;
+    public float SprintEyeHeightMultiplier { get; set; } = 1;
+    public float SneakEyeHeightMultiplier { get; set; } = 1;
 
 
     public CustomModelData(string code, Shape shape)
