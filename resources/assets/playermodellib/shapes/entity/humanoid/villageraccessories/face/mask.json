@@ -1,6 +1,6 @@
 {
 	"editor": {
-		"backDropShape": "C:/Users/Cal/AppData/Roaming/VintagestoryData/Mods/koboldplayerrdx_1.0.26/assets/koboldrdx/shapes/entity/humanoid/kobold-faceless",
+		"backDropShape": "C:/Users/Cal/Desktop/digitigrade",
 		"collapsedPaths": "Root/bandN/toothR1,Root/bandN/toothL1",
 		"allAngles": true,
 		"entityTextureMode": true
@@ -26,18 +26,18 @@
 			"children": [
 				{
 					"name": "Mask",
-					"from": [ -2.3, -3.4, -2.35 ],
+					"from": [ -2.7, -3.4, -2.35 ],
 					"to": [ 6.0, 0.1, 2.75 ],
 					"renderPass": 1,
 					"unwrapMode": 4,
 					"autoUnwrap": false,
 					"uv": [ 1.0, 4.0 ],
-					"rotationOrigin": [ -2.3, -3.4, -2.4 ],
+					"rotationOrigin": [ -2.7, -3.4, -2.4 ],
 					"faces": {
-						"north": { "texture": "#facetex", "uv": [ 1.5, 4.0, 9.5, 7.5 ] },
-						"east": { "texture": "#facetex", "uv": [ 18.0, 4.0, 23.0, 7.5 ] },
-						"south": { "texture": "#facetex", "uv": [ 12.0, 4.0, 20.0, 7.5 ] },
-						"west": { "texture": "#facetex", "uv": [ 7.0, 4.0, 12.0, 7.5 ] }
+						"north": { "texture": "#facetex", "uv": [ 1.5, 4.0, 9.5, 7.5 ], "autoUv": false },
+						"east": { "texture": "#facetex", "uv": [ 18.0, 4.0, 23.0, 7.5 ], "autoUv": false },
+						"south": { "texture": "#facetex", "uv": [ 12.0, 4.0, 20.0, 7.5 ], "autoUv": false },
+						"west": { "texture": "#facetex", "uv": [ 7.0, 4.0, 12.0, 7.5 ], "autoUv": false }
 					},
 					"children": [
 						{
@@ -49,7 +49,7 @@
 							"uv": [ 18.0, 0.5 ],
 							"rotationOrigin": [ 0.0, 1.0, 0.0 ],
 							"faces": {
-								"down": { "texture": "#facetex", "uv": [ 18.0, 0.5, 23.0, 8.0 ], "rotation": 90, "windMode": [-1,-1,-1,-1], "windData": [1,1,1,1] }
+								"down": { "texture": "#facetex", "uv": [ 18.0, 0.5, 23.0, 8.0 ], "rotation": 90, "autoUv": false, "windMode": [-1,-1,-1,-1], "windData": [1,1,1,1] }
 							}
 						}
 					]
