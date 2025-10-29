@@ -48,7 +48,6 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
     public Size2i? AtlasSize => ModelSystem?.GetAtlasSize(CurrentModelCode, entity);
     public TextureAtlasPosition? this[string textureCode] => GetAtlasPosition(textureCode, entity);
 
-
     public override void Initialize(EntityProperties properties, JsonObject attributes)
     {
         DefaultSize = entity.Properties.Client.Size;
@@ -235,12 +234,6 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
         SetZNear();
     }
-
-    /*public HeadControllerConfig GetHeadControllerConfig()
-    {
-
-    }*/
-
 
     protected CustomModelsSystem? ModelSystem;
     protected ICoreClientAPI? ClientApi;

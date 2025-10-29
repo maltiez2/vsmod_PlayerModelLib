@@ -1,4 +1,5 @@
-﻿using HarmonyLib;
+﻿using CombatOverhaul.Integration;
+using HarmonyLib;
 using Newtonsoft.Json;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -13,6 +14,8 @@ namespace PlayerModelLib;
 internal static class TranspilerPatches
 {
     public static bool ExportingShape { get; set; } = false;
+    public static ObjectCache<string, Shape>? RescaledShapesCache { get; set; }
+    public static ObjectCache<string, Shape>? ReplacedShapesCache { get; set; }
 
     [HarmonyPatchCategory("PlayerModelLibTranspiler")]
     public static class EntityBehaviorContainerPatchCommand
@@ -93,12 +96,20 @@ internal static class TranspilerPatches
             CompositeShape oldCompositeShape = yadayada.GetAttachedShape(stack, "default").Clone();
             string shapePath = oldCompositeShape.Base.ToString();
 
-
             if (system.BaseShapesData.TryGetValue(customModel.BaseShapeCode, out BaseShapeData? baseShapeData))
             {
+                string cacheKey = $"{customModel}_{shapePath}";
+                if (RescaledShapesCache != null && RescaledShapesCache.Get(cacheKey, out Shape? cachedShape))
+                {
+                    defaultShape = cachedShape;
+                    return;
+                }
+
                 defaultShape = ShapeAdjustmentUtil.AdjustClothesShape(entity.Api, shapePath, baseShapeData, customModel);
                 defaultShape?.SubclassForStepParenting(prefixCode, damageEffect);
                 defaultShape?.ResolveReferences(entity.World.Logger, currentModel);
+
+                if (defaultShape != null) RescaledShapesCache?.Add(cacheKey, defaultShape);
 
                 if (PlayerModelModSystem.Settings.ExportShapeFiles)
                 {
@@ -255,16 +266,27 @@ internal static class TranspilerPatches
         {
             if (customModel.WearableShapeReplacers.TryGetValue(itemId, out string? shape))
             {
-                defaultShape = LoadShape(entity.Api, shape);
+                string cacheKey = $"{customModel.Code}_{itemId}";
+                if (ReplacedShapesCache != null && ReplacedShapesCache.Get(cacheKey, out Shape? cachedShape))
+                {
+                    defaultShape = cachedShape;
+                }
+                else
+                {
+                    defaultShape = LoadShape(entity.Api, shape);
+                    defaultShape?.SubclassForStepParenting(prefixCode, damageEffect);
+                    defaultShape?.ResolveReferences(entity.World.Logger, "");
 
-                defaultShape?.SubclassForStepParenting(prefixCode, damageEffect);
-                defaultShape?.ResolveReferences(entity.World.Logger, "");
+                    if (defaultShape != null) ReplacedShapesCache?.Add(cacheKey, defaultShape);
+                }
 
                 if (compositeShape != null)
                 {
                     compositeShape = compositeShape.Clone();
                     compositeShape.Base = shape;
                 }
+
+
 
                 return true;
             }
@@ -294,10 +316,19 @@ internal static class TranspilerPatches
 
             if (!customModel.WearableShapeReplacersByShape.TryGetValue(shapePath, out string? shape)) return false;
 
-            defaultShape = LoadShape(entity.Api, shape);
+            string cacheKey = $"{customModel.Code}_{shapePath}";
+            if (ReplacedShapesCache != null && ReplacedShapesCache.Get(cacheKey, out Shape? cachedShape))
+            {
+                defaultShape = cachedShape;
+            }
+            else
+            {
+                defaultShape = LoadShape(entity.Api, shape);
+                defaultShape?.SubclassForStepParenting(prefixCode, damageEffect);
+                defaultShape?.ResolveReferences(entity.World.Logger, "");
 
-            defaultShape?.SubclassForStepParenting(prefixCode, damageEffect);
-            defaultShape?.ResolveReferences(entity.World.Logger, "");
+                if (defaultShape != null) ReplacedShapesCache?.Add(cacheKey, defaultShape);
+            }
 
             if (oldCompositeShape.Overlays != null)
             {

@@ -16,6 +16,7 @@ public static class StatsPatches
     public const string NutritionFactorStat = "nutritionFactor";
     public const string DamageFactorStat = "damageReceivedFactor";
     public const string MaxSaturationFactorStat = "maxSaturationFactor";
+   
     public const string TemporalStabilityDropRateStat = "temporalStabilityDropRate";
     public const string TemporalStabilityOffsetStat = "temporalStabilityOffset";
     public const string TemporalStabilityRecoveryRateStat = "temporalStabilityRecoveryRate";
