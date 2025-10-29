@@ -75,7 +75,7 @@ public static class StatsPatches
 
         new Harmony(harmonyId).Patch(
                 typeof(EntityBehaviorHealth).GetMethod("OnEntityReceiveDamage", AccessTools.all),
-                postfix: new HarmonyMethod(AccessTools.Method(typeof(StatsPatches), nameof(ApplyDamageStats)))
+                prefix: new HarmonyMethod(AccessTools.Method(typeof(StatsPatches), nameof(ApplyDamageStats)))
             );
 
         new Harmony(harmonyId).Patch(
@@ -161,7 +161,7 @@ public static class StatsPatches
         ITreeAttribute? hungerTree = (ITreeAttribute?)_entityBehaviorHunger_hungerTree?.GetValue(__instance);
         if (hungerTree == null) return;
 
-        float statValue = Math.Max(__instance.entity.Stats.GetBlended(DamageFactorStat), 0.001f);
+        float statValue = Math.Max(__instance.entity.Stats.GetBlended(MaxSaturationFactorStat), 0.001f);
         float prevStatValue = hungerTree.GetFloat("maxSaturationStatMultiplier", 1);
 
         if (statValue == prevStatValue) return;

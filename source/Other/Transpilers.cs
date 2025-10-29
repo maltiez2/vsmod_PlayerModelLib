@@ -1,5 +1,4 @@
-﻿using CombatOverhaul.Integration;
-using HarmonyLib;
+﻿using HarmonyLib;
 using Newtonsoft.Json;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -74,7 +73,7 @@ internal static class TranspilerPatches
 
             string? currentModel = skinBehavior?.CurrentModelCode;
 
-            if (currentModel == null || itemId == 0 || system == null || !system.ModelsLoaded) return;
+            if (currentModel == null || itemId == 0 || system == null || !system.ModelsLoaded || currentModel == "seraph") return;
 
             CustomModelData customModel = system.CustomModels[currentModel];
 
