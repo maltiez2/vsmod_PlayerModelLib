@@ -279,7 +279,7 @@ public sealed class CustomModelsSystem : ModSystem
                 texturePath.Domain = new AssetLocation(modelConfig.ShapePath).Domain;
             }
 
-            AssetLocation path = texturePath.WithPathPrefixOnce("textures/").WithPathAppendixOnce(".png");
+            AssetLocation path = texturePath.Clone().WithPathPrefixOnce("textures/").WithPathAppendixOnce(".png");
 
             if (!api.Assets.Exists(path) && api.Side == EnumAppSide.Client)
             {
