@@ -1,6 +1,7 @@
 ﻿using HarmonyLib;
 using System.Reflection;
 using Vintagestory.API.Common;
+using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Datastructures;
 using Vintagestory.GameContent;
 
@@ -16,6 +17,8 @@ public static class StatsPatches
     public const string NutritionFactorStat = "nutritionFactor";
     public const string DamageFactorStat = "damageReceivedFactor";
     public const string MaxSaturationFactorStat = "maxSaturationFactor";
+    public const string StepHeightStat = "stepHeight";
+    public const string ClimbSpeedStat = "climbSpeed";
    
     public const string TemporalStabilityDropRateStat = "temporalStabilityDropRate";
     public const string TemporalStabilityOffsetStat = "temporalStabilityOffset";
@@ -87,7 +90,13 @@ public static class StatsPatches
                typeof(EntityBehaviorTemporalStabilityAffected).GetMethod("OnGameTick", AccessTools.all),
                prefix: new HarmonyMethod(AccessTools.Method(typeof(StatsPatches), nameof(ApplyStabilityStats)))
            );
+        
+        new Harmony(harmonyId).Patch(
+            typeof(EntityBehaviorPlayerPhysics).GetMethod("Initialize", AccessTools.all),
+            postfix: new HarmonyMethod(AccessTools.Method(typeof(StatsPatches), nameof(ApplyPlayerPhysicsPatches)))
+        );
     }
+
     public static void Unpatch(string harmonyId)
     {
         new Harmony(harmonyId).Unpatch(typeof(EntityPlayer).GetMethod("GetWalkSpeedMultiplier", AccessTools.all), HarmonyPatchType.Postfix, harmonyId);
@@ -217,5 +226,11 @@ public static class StatsPatches
                 __instance.TempStabChangeVelocity += surfaceStabilityOffset * deltaTime;
             }
         }
+    }
+
+    private static void ApplyPlayerPhysicsPatches(EntityBehaviorPlayerPhysics __instance, EntityProperties properties, JsonObject attributes)
+    {
+        __instance.StepHeight *= __instance.Entity.Stats.GetBlended(StepHeightStat);
+        __instance.climbUpSpeed  *= __instance.Entity.Stats.GetBlended(ClimbSpeedStat);
     }
 }
