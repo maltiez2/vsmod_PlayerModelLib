@@ -1,5 +1,6 @@
 ﻿using HarmonyLib;
 using System.Reflection;
+using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Datastructures;
@@ -90,11 +91,14 @@ public static class StatsPatches
                typeof(EntityBehaviorTemporalStabilityAffected).GetMethod("OnGameTick", AccessTools.all),
                prefix: new HarmonyMethod(AccessTools.Method(typeof(StatsPatches), nameof(ApplyStabilityStats)))
            );
-        
-        new Harmony(harmonyId).Patch(
-            typeof(EntityBehaviorPlayerPhysics).GetMethod("Initialize", AccessTools.all),
-            postfix: new HarmonyMethod(AccessTools.Method(typeof(StatsPatches), nameof(ApplyPlayerPhysicsPatches)))
-        );
+
+        if (api is ICoreClientAPI) // This is a client sided behavior
+        {
+            new Harmony(harmonyId).Patch(
+                typeof(EntityBehaviorPlayerPhysics).GetMethod("Initialize", AccessTools.all),
+                postfix: new HarmonyMethod(AccessTools.Method(typeof(StatsPatches), nameof(ApplyPlayerPhysicsPatches)))
+            );
+        }
     }
 
     public static void Unpatch(string harmonyId)
