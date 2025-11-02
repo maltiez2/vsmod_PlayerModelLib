@@ -54,6 +54,7 @@ public class CustomModelConfig
     public float SprintEyeHeightMultiplier { get; set; } = 1;
     public float SneakEyeHeightMultiplier { get; set; } = 0.8f;
     public float StepHeight { get; set; } = 1.2f;
+    public float MaxOxygenFactor { get; set; } = 1;
 }
 
 public class CustomModelData
@@ -97,6 +98,7 @@ public class CustomModelData
     public float SprintEyeHeightMultiplier { get; set; } = 1;
     public float SneakEyeHeightMultiplier { get; set; } = 0.8f;
     public float StepHeight { get; set; } = 1.2f;
+    public float MaxOxygenFactor { get; set; } = 1;
 
 
     public CustomModelData(string code, Shape shape)

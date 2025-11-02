@@ -2,6 +2,7 @@
 using System.Reflection;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
+using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.GameContent;
 
@@ -18,6 +19,8 @@ public static class StatsPatches
     public const string DamageFactorStat = "damageReceivedFactor";
     public const string HealingFactorStat = "healingReceivedFactor";
     public const string MaxSaturationFactorStat = "maxSaturationFactor";
+    public const string BuoyancyFactorStat = "buoyancyFactor";
+    public const string CanSwimStat = "canSwim";
 
     public const string TemporalStabilityDropRateStat = "temporalStabilityDropRate";
     public const string TemporalStabilityOffsetStat = "temporalStabilityOffset";
@@ -41,6 +44,15 @@ public static class StatsPatches
     public const string LightDamageFactor = "lightDamageFactor";
     public const string DarknessHealingFactor = "darknessHealingFactor";
     public const string LightHealingFactor = "lightHealingFactor";
+
+    public const string SaturationLossStat = "SaturationLossFactor";
+
+    public const string BreathTypeStat = "breathType";
+    public const string DarknessCanBreathStat = "canBreathInLight";
+    public const string LightCanBreathStat = "canBreathInDarkness";
+    public const string CaveCanBreathStat = "canBreathInLight";
+    public const string SurfaceCanBreathStat = "canBreathInDarkness";
+
 
     public static Dictionary<EnumFoodCategory, string> NutritionFactorStats { get; } = new()
     {
@@ -70,8 +82,9 @@ public static class StatsPatches
         { EnumDamageType.Acid, "acidDamageFactor" }
     };
 
-    public static int SurfaceCaveLightThreshold { get; set; } = 5;
-    public static int DarknessLightThreshold { get; set; } = 5;
+    public static int SurfaceCaveLightThreshold { get; set; } = 8;
+    public static int DarknessLightThreshold { get; set; } = 3;
+    public static int LightLightThreshold { get; set; } = 8;
     public static readonly Vintagestory.API.Common.DayTimeFrame DayFrame = new(6, 18);
 
     public static void Patch(string harmonyId, ICoreAPI api)
@@ -108,6 +121,26 @@ public static class StatsPatches
                prefix: new HarmonyMethod(AccessTools.Method(typeof(StatsPatches), nameof(ApplyStabilityStats)))
            );
 
+        new Harmony(harmonyId).Patch(
+               typeof(EntityBehaviorHunger).GetMethod("ReduceSaturation", AccessTools.all),
+               prefix: new HarmonyMethod(AccessTools.Method(typeof(StatsPatches), nameof(ApplySaturationLossStats)))
+           );
+
+        new Harmony(harmonyId).Patch(
+               typeof(EntityBehaviorBreathe).GetMethod("Check", AccessTools.all),
+               postfix: new HarmonyMethod(AccessTools.Method(typeof(StatsPatches), nameof(ApplyBreathCheckStats)))
+           );
+
+        new Harmony(harmonyId).Patch(
+               typeof(PModuleGravity).GetMethod("DoApply", AccessTools.all),
+               postfix: new HarmonyMethod(AccessTools.Method(typeof(StatsPatches), nameof(ApplyGravityStats)))
+           );
+
+        new Harmony(harmonyId).Patch(
+               typeof(EntityBehaviorPlayerPhysics).GetMethod("SetPlayerControls", AccessTools.all),
+               prefix: new HarmonyMethod(AccessTools.Method(typeof(StatsPatches), nameof(ApplyControlsStats)))
+           );
+
         _applied = true;
     }
     public static void Unpatch(string harmonyId)
@@ -119,6 +152,7 @@ public static class StatsPatches
         new Harmony(harmonyId).Unpatch(typeof(EntityBehaviorHunger).GetMethod("OnEntityReceiveSaturation", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
         new Harmony(harmonyId).Unpatch(typeof(EntityBehaviorHealth).GetMethod("OnEntityReceiveDamage", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
         new Harmony(harmonyId).Unpatch(typeof(EntityBehaviorHunger).GetProperty("MaxSaturation", AccessTools.all)?.GetMethod, HarmonyPatchType.Postfix, harmonyId);
+        new Harmony(harmonyId).Unpatch(typeof(EntityBehaviorHunger).GetMethod("ReduceSaturation", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
 
         _applied = false;
     }
@@ -159,7 +193,7 @@ public static class StatsPatches
             {
                 resultingMultiplier += darknessWalkSpeed;
             }
-            else
+            else if (lightLevel > LightLightThreshold)
             {
                 resultingMultiplier += lightWalkSpeed;
             }
@@ -229,7 +263,7 @@ public static class StatsPatches
             {
                 resultingMultiplier += darknessDamageFactor;
             }
-            else
+            else if (lightLevel > LightLightThreshold)
             {
                 resultingMultiplier += lightDamageFactor;
             }
@@ -299,6 +333,111 @@ public static class StatsPatches
             }
         }
     }
+    private static void ApplySaturationLossStats(EntityBehaviorHunger __instance, ref float satLossMultiplier)
+    {
+        satLossMultiplier *= __instance.entity.Stats.GetBlended(SaturationLossStat);
+    }
+    private static void ApplyBreathCheckStats(EntityBehaviorBreathe __instance)
+    {
+        if (IsInCreative(__instance.entity)) return;
+
+        float type = __instance.entity.Stats.GetBlended(BreathTypeStat) - 1;
+        if (type < 0 - float.Epsilon)
+        {
+            __instance.HasAir = !__instance.HasAir;
+        }
+        else if (type > 0 + float.Epsilon)
+        {
+            __instance.HasAir = true;
+        }
+        else
+        {
+            // preserver vanilla behavior
+        }
+
+        float caveCanBreath = __instance.entity.Stats.GetBlended(CaveCanBreathStat) - 1;
+        float surfaceCanBreath = __instance.entity.Stats.GetBlended(SurfaceCanBreathStat) - 1;
+        if (caveCanBreath != 0 || surfaceCanBreath != 0)
+        {
+            int lightLevel = GetLightLevel(__instance.entity, EnumLightLevelType.OnlySunLight);
+            if (lightLevel < SurfaceCaveLightThreshold)
+            {
+                if (caveCanBreath < 0 - float.Epsilon)
+                {
+                    __instance.HasAir = false;
+                }
+                else if (caveCanBreath > 0 + float.Epsilon)
+                {
+                    __instance.HasAir = true;
+                }
+            }
+            else
+            {
+                if (surfaceCanBreath < 0 - float.Epsilon)
+                {
+                    __instance.HasAir = false;
+                }
+                else if (surfaceCanBreath > 0 + float.Epsilon)
+                {
+                    __instance.HasAir = true;
+                }
+            }
+        }
+
+        float darknessCanBreath = __instance.entity.Stats.GetBlended(DarknessCanBreathStat) - 1;
+        float lightCanBreath = __instance.entity.Stats.GetBlended(LightCanBreathStat) - 1;
+        if (darknessCanBreath != 0 || lightCanBreath != 0)
+        {
+            int lightLevel = GetLightLevel(__instance.entity, EnumLightLevelType.MaxTimeOfDayLight);
+            if (lightLevel < DarknessLightThreshold)
+            {
+                if (darknessCanBreath < 0 - float.Epsilon)
+                {
+                    __instance.HasAir = false;
+                }
+                else if (darknessCanBreath > 0 + float.Epsilon)
+                {
+                    __instance.HasAir = true;
+                }
+            }
+            else if (lightLevel > LightLightThreshold)
+            {
+                if (lightCanBreath < 0 - float.Epsilon)
+                {
+                    __instance.HasAir = false;
+                }
+                else if (lightCanBreath > 0 + float.Epsilon)
+                {
+                    __instance.HasAir = true;
+                }
+            }
+        }
+    }
+    private static void ApplyGravityStats(float dt, Entity entity, EntityPos pos, EntityControls controls)
+    {
+        if (pos.Y < -100) return;
+
+        double trueGravity = GlobalConstants.GravityPerSecond * dt;
+        double gravity = GlobalConstants.GravityPerSecond * (entity.FeetInLiquid ? 0.33f : 1f) * dt;
+        float buoyancyFactor = entity.Stats.GetBlended(BuoyancyFactorStat) - 1;
+
+        if (entity.Swimming)
+        {
+            pos.Motion.Y += gravity * buoyancyFactor;
+        }
+        else if (entity.Swimming && controls.TriesToMove && entity.Alive)
+        {
+            pos.Motion.Y += trueGravity * buoyancyFactor;
+        }
+    }
+    private static void ApplyControlsStats(EntityBehaviorPlayerPhysics __instance)
+    {
+        float canSwim = __instance.entity.Stats.GetBlended(CanSwimStat) - 1;
+        if (canSwim < 0 - float.Epsilon)
+        {
+            __instance.Entity.Swimming = false;
+        }
+    }
 
     private static bool IsCurrentlyDay(IWorldAccessor world)
     {
@@ -308,9 +447,21 @@ public static class StatsPatches
 
         return DayFrame.Matches(hourOfDay);
     }
-
     private static int GetLightLevel(Entity entity, EnumLightLevelType lightType)
     {
         return entity.World.BlockAccessor.GetLightLevel(entity.Pos.AsBlockPos, lightType);
+    }
+    private static bool IsInCreative(Entity entity)
+    {
+        if (entity is EntityPlayer player)
+        {
+            EnumGameMode mode = entity.World.PlayerByUid(player.PlayerUID).WorldData.CurrentGameMode;
+            if (mode == EnumGameMode.Creative || mode == EnumGameMode.Spectator)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

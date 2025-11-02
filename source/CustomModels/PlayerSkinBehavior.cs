@@ -204,12 +204,20 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
             PreviousHeadBobbingAmplitudeFactor = factor;
         }
 
-        EntityBehaviorPlayerPhysics? physBehavior = entity.GetBehavior<EntityBehaviorPlayerPhysics>();
-        if (physBehavior != null)
+        EntityBehaviorPlayerPhysics? physicsBehavior = entity.GetBehavior<EntityBehaviorPlayerPhysics>();
+        if (physicsBehavior != null)
         {
-            physBehavior.StepHeight /= PreviousStepHeight;
+            physicsBehavior.StepHeight /= PreviousStepHeight;
             PreviousStepHeight = CurrentModel.StepHeight / DefaultStepHeight;
-            physBehavior.StepHeight *= PreviousStepHeight;
+            physicsBehavior.StepHeight *= PreviousStepHeight;
+        }
+
+        EntityBehaviorBreathe? breathBehavior = entity.GetBehavior<EntityBehaviorBreathe>();
+        if (breathBehavior != null)
+        {
+            breathBehavior.MaxOxygen /= PreviousMaxOxygen;
+            PreviousMaxOxygen = CurrentModel.MaxOxygenFactor;
+            breathBehavior.MaxOxygen *= PreviousMaxOxygen;
         }
 
         OtherPatches.CurrentModelGuiScale = CurrentModel.GuiModelScale;
@@ -254,6 +262,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
     protected float PreviousHeadBobbingAmplitudeFactor = 1;
     protected float PreviousZNearFactor = 1;
     protected float PreviousStepHeight = 1;
+    protected float PreviousMaxOxygen = 1;
     protected float DefaultEyeHeight = 1.7f;
     protected string DefaultModelCode => ModelSystem?.DefaultModelCode ?? "seraph";
 

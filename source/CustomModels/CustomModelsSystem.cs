@@ -219,7 +219,8 @@ public sealed class CustomModelsSystem : ModSystem
             WalkEyeHeightMultiplier = defaultConfig.WalkEyeHeightMultiplier,
             SprintEyeHeightMultiplier = defaultConfig.SprintEyeHeightMultiplier,
             SneakEyeHeightMultiplier = defaultConfig.SneakEyeHeightMultiplier,
-            StepHeight = defaultConfig.StepHeight
+            StepHeight = defaultConfig.StepHeight,
+            MaxOxygenFactor = defaultConfig.MaxOxygenFactor
         };
 
         CustomModels.Add(_defaultModelCode, defaultModelData);
@@ -333,7 +334,8 @@ public sealed class CustomModelsSystem : ModSystem
             WalkEyeHeightMultiplier = modelConfig.WalkEyeHeightMultiplier,
             SprintEyeHeightMultiplier = modelConfig.SprintEyeHeightMultiplier,
             SneakEyeHeightMultiplier = modelConfig.SneakEyeHeightMultiplier,
-            StepHeight = modelConfig.StepHeight
+            StepHeight = modelConfig.StepHeight,
+            MaxOxygenFactor = modelConfig.MaxOxygenFactor
         };
 
         AssetLocation icon = new AssetLocation(modelConfig.Icon).WithPathPrefixOnce("textures/").WithPathAppendixOnce(".png");
