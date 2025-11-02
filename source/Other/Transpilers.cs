@@ -100,7 +100,7 @@ internal static class TranspilerPatches
                 string cacheKey = $"{customModel}_{shapePath}_{itemId}";
                 if (RescaledShapesCache != null && RescaledShapesCache.Get(cacheKey, out Shape? cachedShape))
                 {
-                    defaultShape = cachedShape;
+                    defaultShape = cachedShape.Clone();
                     return;
                 }
 
@@ -268,7 +268,7 @@ internal static class TranspilerPatches
                 string cacheKey = $"{customModel.Code}_{itemId}";
                 if (ReplacedShapesCache != null && ReplacedShapesCache.Get(cacheKey, out Shape? cachedShape))
                 {
-                    defaultShape = cachedShape;
+                    defaultShape = cachedShape.Clone();
                 }
                 else
                 {
@@ -318,7 +318,7 @@ internal static class TranspilerPatches
             string cacheKey = $"{customModel.Code}_{shapePath}";
             if (ReplacedShapesCache != null && ReplacedShapesCache.Get(cacheKey, out Shape? cachedShape))
             {
-                defaultShape = cachedShape;
+                defaultShape = cachedShape.Clone();
             }
             else
             {

@@ -218,7 +218,8 @@ public sealed class CustomModelsSystem : ModSystem
             GroupIcon = new("playermodellib:textures/icons/temporal.png"),
             WalkEyeHeightMultiplier = defaultConfig.WalkEyeHeightMultiplier,
             SprintEyeHeightMultiplier = defaultConfig.SprintEyeHeightMultiplier,
-            SneakEyeHeightMultiplier = defaultConfig.SneakEyeHeightMultiplier
+            SneakEyeHeightMultiplier = defaultConfig.SneakEyeHeightMultiplier,
+            StepHeight = defaultConfig.StepHeight
         };
 
         CustomModels.Add(_defaultModelCode, defaultModelData);
@@ -331,7 +332,8 @@ public sealed class CustomModelsSystem : ModSystem
             BaseShapeCode = modelConfig.BaseShapeCode,
             WalkEyeHeightMultiplier = modelConfig.WalkEyeHeightMultiplier,
             SprintEyeHeightMultiplier = modelConfig.SprintEyeHeightMultiplier,
-            SneakEyeHeightMultiplier = modelConfig.SneakEyeHeightMultiplier
+            SneakEyeHeightMultiplier = modelConfig.SneakEyeHeightMultiplier,
+            StepHeight = modelConfig.StepHeight
         };
 
         AssetLocation icon = new AssetLocation(modelConfig.Icon).WithPathPrefixOnce("textures/").WithPathAppendixOnce(".png");
