@@ -98,7 +98,7 @@ internal static class TranspilerPatches
             if (system.BaseShapesData.TryGetValue(customModel.BaseShapeCode, out BaseShapeData? baseShapeData))
             {
                 string cacheKey = $"{customModel}_{shapePath}_{itemId}";
-                if (RescaledShapesCache != null && RescaledShapesCache.Get(cacheKey, out Shape? cachedShape))
+                if (!PlayerModelModSystem.Settings.ExportShapeFiles && RescaledShapesCache != null && RescaledShapesCache.Get(cacheKey, out Shape? cachedShape))
                 {
                     defaultShape = cachedShape.Clone();
                     return;

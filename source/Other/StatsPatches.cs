@@ -1,10 +1,12 @@
 ﻿using HarmonyLib;
+using System.Diagnostics;
 using System.Reflection;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.GameContent;
+using VSImGui.Debug;
 
 namespace PlayerModelLib;
 
@@ -21,7 +23,6 @@ public static class StatsPatches
     public const string MaxSaturationFactorStat = "maxSaturationFactor";
     public const string BuoyancyFactorStat = "buoyancyFactor";
     public const string CanSwimStat = "canSwim";
-
     public const string TemporalStabilityDropRateStat = "temporalStabilityDropRate";
     public const string TemporalStabilityOffsetStat = "temporalStabilityOffset";
     public const string TemporalStabilityRecoveryRateStat = "temporalStabilityRecoveryRate";
@@ -30,29 +31,24 @@ public static class StatsPatches
     public const string TemporalStabilitySurfaceDropRateStat = "temporalStabilitySurfaceDropRate";
     public const string TemporalStabilityCaveOffsetStat = "temporalStabilityCaveOffset";
     public const string TemporalStabilitySurfaceOffsetStat = "temporalStabilitySurfaceOffset";
-
     public const string NightWalkSpeed = "nightWalkSpeed";
     public const string DayWalkSpeed = "dayWalkSpeed";
     public const string NightDamageFactor = "nightDamageFactor";
     public const string DayDamageFactor = "dayDamageFactor";
     public const string NightHealingFactor = "nightHealingFactor";
     public const string DayHealingFactor = "dayHealingFactor";
-
     public const string DarknessWalkSpeed = "darknessWalkSpeed";
     public const string LightWalkSpeed = "lightWalkSpeed";
     public const string DarknessDamageFactor = "darknessDamageFactor";
     public const string LightDamageFactor = "lightDamageFactor";
     public const string DarknessHealingFactor = "darknessHealingFactor";
     public const string LightHealingFactor = "lightHealingFactor";
-
-    public const string SaturationLossStat = "SaturationLossFactor";
-
+    public const string SaturationLossStat = "saturationLossFactor";
     public const string BreathTypeStat = "breathType";
     public const string DarknessCanBreathStat = "canBreathInLight";
     public const string LightCanBreathStat = "canBreathInDarkness";
-    public const string CaveCanBreathStat = "canBreathInLight";
-    public const string SurfaceCanBreathStat = "canBreathInDarkness";
-
+    public const string CaveCanBreathStat = "canBreathInCaves";
+    public const string SurfaceCanBreathStat = "canBreathOnSurface";
 
     public static Dictionary<EnumFoodCategory, string> NutritionFactorStats { get; } = new()
     {
@@ -85,7 +81,7 @@ public static class StatsPatches
     public static int SurfaceCaveLightThreshold { get; set; } = 8;
     public static int DarknessLightThreshold { get; set; } = 3;
     public static int LightLightThreshold { get; set; } = 8;
-    public static readonly Vintagestory.API.Common.DayTimeFrame DayFrame = new(6, 18);
+    public static Vintagestory.API.Common.DayTimeFrame DayFrame { get; set; } = new(6, 18);
 
     public static void Patch(string harmonyId, ICoreAPI api)
     {
@@ -299,8 +295,6 @@ public static class StatsPatches
         {
             __instance.TempStabChangeVelocity *= Math.Max(__instance.entity.Stats.GetBlended(TemporalStabilityRecoveryRateStat), 0);
         }
-        __instance.TempStabChangeVelocity += (__instance.entity.Stats.GetBlended(TemporalStabilityOffsetStat) - 1) * deltaTime;
-
 
         float caveStabilityFactor = Math.Max(__instance.entity.Stats.GetBlended(TemporalStabilityCaveDropRateStat), 0);
         float surfaceStabilityFactor = Math.Max(__instance.entity.Stats.GetBlended(TemporalStabilitySurfaceDropRateStat), 0);
@@ -317,9 +311,10 @@ public static class StatsPatches
             }
         }
 
+        __instance.TempStabChangeVelocity += CorrectStabilityOffset(__instance.entity.Stats.GetBlended(TemporalStabilityOffsetStat) - 1) * deltaTime;
 
-        float caveStabilityOffset = __instance.entity.Stats.GetBlended(TemporalStabilityCaveOffsetStat) - 1;
-        float surfaceStabilityOffset = __instance.entity.Stats.GetBlended(TemporalStabilitySurfaceOffsetStat) - 1;
+        float caveStabilityOffset = CorrectStabilityOffset(__instance.entity.Stats.GetBlended(TemporalStabilityCaveOffsetStat) - 1);
+        float surfaceStabilityOffset = CorrectStabilityOffset(__instance.entity.Stats.GetBlended(TemporalStabilitySurfaceOffsetStat) - 1);
         if (caveStabilityOffset != 0 || surfaceStabilityOffset != 0)
         {
             int lightLevel = GetLightLevel(__instance.entity, EnumLightLevelType.OnlySunLight);
@@ -455,7 +450,7 @@ public static class StatsPatches
     {
         if (entity is EntityPlayer player)
         {
-            EnumGameMode mode = entity.World.PlayerByUid(player.PlayerUID).WorldData.CurrentGameMode;
+            EnumGameMode mode = entity.World?.PlayerByUid(player?.PlayerUID ?? "")?.WorldData?.CurrentGameMode ?? EnumGameMode.Survival;
             if (mode == EnumGameMode.Creative || mode == EnumGameMode.Spectator)
             {
                 return true;
@@ -463,5 +458,16 @@ public static class StatsPatches
         }
 
         return false;
+    }
+    private static float CorrectStabilityOffset(float value)
+    {
+        if (value < 0)
+        {
+            return value * 800;
+        }
+        else
+        {
+            return value * 200;
+        }
     }
 }
