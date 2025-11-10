@@ -97,6 +97,7 @@
 		"game:entity/humanoid/villageraccessories/upperbody/male/longsleeve-extended": "playermodellib:entity/humanoid/villageraccessories/upperbody/male/longsleeve-extended",
 		"game:entity/humanoid/villageraccessories/upperbodyover/male/longsleeve-extended": "playermodellib:entity/humanoid/villageraccessories/upperbodyover/male/longsleeve-extended",
 		"game:item/jonas/nightvision": "playermodellib:item/jonas/nightvision"
-    }
+    },
+	"WearableModelReplacersByCode": {}
   }
 }

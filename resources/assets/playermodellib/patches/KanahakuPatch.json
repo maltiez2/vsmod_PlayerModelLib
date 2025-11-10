@@ -1,0 +1,26 @@
+﻿[
+	{
+	"file": "playermodellib:config/baseshapes/digitigrade.json",
+	"op": "addmerge",
+	"path": "/digitigrade/WearableModelReplacersByCode",
+	"dependsOn": [{ "modid": "spearexpantion" }],
+	"value": {
+		"game:*temporalitvisiondevice*": "playermodellib:entity/humanoid/seraph/mods/armor/kanahaku/metal-nighthelmet",
+		"game:temporalitvisiondevice-leather_reinforced": "playermodellib:entity/humanoid/seraph/mods/armor/kanahaku/leather_reinforced-nighthelmet",
+		"spearexpantion:armorr-head-plate-temporalit": "playermodellib:entity/humanoid/seraph/mods/armor/plate/head-steel"
+		}
+	},
+	{
+	"file": "playermodellib:config/baseshapes/digitigrade.json",
+	"op": "addmerge",
+	"path": "/digitigrade/WearableModelReplacersByCode",
+	"dependsOn": [{ "modid": "nightvisionhelmets" }],
+	"value": {
+		"game:*temporalitvisiondevice*": "playermodellib:entity/humanoid/seraph/mods/armor/kanahaku/metal-nighthelmet",
+		"game:temporalitvisiondevice-leather_reinforced": "playermodellib:entity/humanoid/seraph/mods/armor/kanahaku/leather_reinforced-nighthelmet",
+		"nightvisionhelmets:armorr-head-plate-temporalit": "playermodellib:entity/humanoid/seraph/mods/armor/plate/head-steel",
+		"spearexpantion:armorr-head-plate-temporalit": "playermodellib:entity/humanoid/seraph/mods/armor/plate/head-steel",
+		"spearexpansion:armorr-head-plate-temporalit": "playermodellib:entity/humanoid/seraph/mods/armor/plate/head-steel"
+		}
+	}
+]

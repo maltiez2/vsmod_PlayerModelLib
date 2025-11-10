@@ -1,0 +1,14 @@
+[
+	{
+	"file": "playermodellib:config/baseshapes/digitigrade.json",
+	"op": "addmerge",
+	"path": "/digitigrade/WearableModelReplacersByShape",
+	"dependsOn": [{ "modid": "exoskeletons" }],
+	"value": {
+		"exoskeletons:armored/legs": "playermodellib:entity/humanoid/seraph/mods/armor/exoskeletons/armored/legs",
+		"exoskeletons:unarmored/legs": "playermodellib:entity/humanoid/seraph/mods/armor/exoskeletons/unarmored/legs",
+		"exoskeletons:armored/armor/legs": "playermodellib:entity/humanoid/seraph/mods/armor/exoskeletons/armored/armor/legs",
+		"exoskeletons:armored/armor/feet": "playermodellib:entity/humanoid/seraph/mods/armor/exoskeletons/armored/armor/feet"
+		}
+	}
+]

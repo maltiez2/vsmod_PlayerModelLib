@@ -1,0 +1,75 @@
+[
+	{
+	"file": "playermodellib:config/baseshapes/digitigrade.json",
+	"op": "addmerge",
+	"path": "/digitigrade/WearableModelReplacersByCode",
+	"dependsOn": [{ "modid": "fagothic" }],
+	"value": {
+		"fagothic:fa-gothic-legs-*": "playermodellib:shapes/entity/humanoid/seraph/mods/armor/gothic/gothiclegs",
+		"fagothic:fa-gothic-head-sallet-*": "playermodellib:shapes/entity/humanoid/seraph/mods/armor/gothic/gothicsallethead",
+		"fagothic:fa-gothic-head-salletwreath-*": "playermodellib:shapes/entity/humanoid/seraph/mods/armor/gothic/gothicsalletwreathhead"
+		}
+	},
+	{
+	"file": "playermodellib:config/baseshapes/digitigrade.json",
+	"op": "addmerge",
+	"path": "/digitigrade/WearableModelReplacersByCode",
+	"dependsOn": [{ "modid": "fagreenwich" }],
+	"value": {
+		"fagreenwich:fa-greenwich-legs-*": "playermodellib:shapes/entity/humanoid/seraph/mods/armor/greenwich/greenwichlegs",
+		"fagreenwich:fa-greenwich-head-armet-*": "playermodellib:shapes/entity/humanoid/seraph/mods/armor/greenwich/greenwicharmethead",
+		"fagreenwich:fa-greenwich-head-armetwing-*": "playermodellib:shapes/entity/humanoid/seraph/mods/armor/greenwich/greenwicharmetwinghead"
+		}
+	},
+	{
+	"file": "playermodellib:config/baseshapes/digitigrade.json",
+	"op": "addmerge",
+	"path": "/digitigrade/WearableModelReplacersByCode",
+	"dependsOn": [{ "modid": "falandsknecht" }],
+	"value": {
+		"falandsknecht:fa-landsknecht-legs-*": "playermodellib:shapes/entity/humanoid/seraph/mods/armor/landsknecht/landsknechtlegs"
+		}
+	},
+	{
+	"file": "playermodellib:config/baseshapes/digitigrade.json",
+	"op": "addmerge",
+	"path": "/digitigrade/WearableModelReplacersByCode",
+	"dependsOn": [{ "modid": "fatemplar" }],
+	"value": {
+		"fatemplar:fa-templar-legs-light-*": "playermodellib:shapes/entity/humanoid/seraph/mods/armor/templar/templar_light_legs",
+		"fatemplar:fa-templar-legs-balance-*": "playermodellib:shapes/entity/humanoid/seraph/mods/armor/templar/templar_balance_legs",
+		"fatemplar:fa-templar-legs-heavy-*": "playermodellib:shapes/entity/humanoid/seraph/mods/armor/templar/templar_heavy_legs",
+		"fatemplar:fa-templar-head-greathelm-*-plain": "playermodellib:shapes/entity/humanoid/seraph/mods/armor/templar/templar_greathelm_none",
+		"fatemplar:fa-templar-head-greathelmwinged-*": "playermodellib:shapes/entity/humanoid/seraph/mods/armor/templar/templar_greathelm_winged",
+		"fatemplar:fa-templar-head-greathelmwreath-*": "playermodellib:shapes/entity/humanoid/seraph/mods/armor/templar/templar_greathelm_wreath",
+		"fatemplar:fa-templar-head-pothelmheavy-*-plain": "playermodellib:shapes/entity/humanoid/seraph/mods/armor/templar/templar_pothelm_light",
+		"fatemplar:fa-templar-head-pothelmheavy-*": "playermodellib:shapes/entity/humanoid/seraph/mods/armor/templar/templar_pothelm_heavy"
+		}
+	},
+	{
+	"file": "playermodellib:config/baseshapes/digitigrade.json",
+	"op": "addmerge",
+	"path": "/digitigrade/WearableModelReplacersByCode",
+	"dependsOn": [{ "modid": "fahussar" }],
+	"value": {
+		"fahussar:fa-hussar-legs-*heavy*": "playermodellib:shapes/entity/humanoid/seraph/mods/armor/hussar/hussar_heavy_legs",
+		"fahussar:fa-hussar-legs-*light*": "playermodellib:shapes/entity/humanoid/seraph/mods/armor/hussar/hussar_light_legs",
+		"fahussar:fa-hussar-head-maskedsziszak-*": "playermodellib:shapes/entity/humanoid/seraph/mods/armor/hussar/hussarmaskedsziszakhead",
+		"fahussar:fa-hussar-head-maskedkapalin-*": "playermodellib:shapes/entity/humanoid/seraph/mods/armor/hussar/hussarmaskedkapalinhead"
+		}
+	},
+	{
+	"file": "playermodellib:config/baseshapes/digitigrade.json",
+	"op": "addmerge",
+	"path": "/digitigrade/WearableModelReplacersByCode",
+	"dependsOn": [{ "modid": "fadynasties" }],
+	"value": {
+		"fadynasties:fa-dynasties-legs-*ming*bear*": "playermodellib:shapes/entity/humanoid/seraph/mods/armor/dynasties/mingdynastiesbearlegs",
+		"fadynasties:fa-dynasties-legs-*ming*": "playermodellib:shapes/entity/humanoid/seraph/mods/armor/dynasties/mingdynastieslegs",
+		"fadynasties:fa-dynasties-legs-*song*bear*": "playermodellib:shapes/entity/humanoid/seraph/mods/armor/dynasties/songdynastiesbearlegs",
+		"fadynasties:fa-dynasties-legs-*song*": "playermodellib:shapes/entity/humanoid/seraph/mods/armor/dynasties/songdynastieslegs",
+		"fadynasties:fa-dynasties-head-*song*bear*": "playermodellib:shapes/entity/humanoid/seraph/mods/armor/dynasties/songdynastiesbearhead",
+		"fadynasties:fa-dynasties-head-*song*": "playermodellib:shapes/entity/humanoid/seraph/mods/armor/dynasties/songdynastieshead"
+		}
+	}
+]

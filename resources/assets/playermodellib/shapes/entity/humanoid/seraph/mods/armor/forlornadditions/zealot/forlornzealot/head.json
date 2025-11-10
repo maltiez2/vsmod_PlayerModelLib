@@ -1,0 +1,152 @@
+{
+	"editor": {
+		"backDropShape": "C:/Users/Cal/AppData/Roaming/VintagestoryData/Mods/koboldplayerrdx_1.0.7/assets/koboldrdx/shapes/entity/humanoid/kobold-faceless",
+		"collapsedPaths": "Root/HoodChest,Root/GloveL,Root/BootR,Root/Cowl,Root/ShoulderR,Root/GloveR,Root/Chest,Root/HoodChest/Capelet1,Root/ThighL,Root/ShoulderL,Root/BootL,Root/ThighR",
+		"allAngles": false,
+		"entityTextureMode": true
+	},
+	"textureWidth": 64,
+	"textureHeight": 64,
+	"textureSizes": {
+		"zealot": [64,64]
+	},
+	"textures": {
+		"zealothead": "forlornadditions:zealot"
+	},
+	"elements": [
+		{
+			"name": "HemletMain",
+			"stepParentName": "Head",
+			"from": [ -1.35, -0.85, -0.25 ],
+			"to": [ 5.65, 5.05, 5.25 ],
+			"autoUnwrap": false,
+			"uv": [ 44.0, 1.0 ],
+			"rotationOrigin": [ -1.1, -0.6, 0.0 ],
+			"faces": {
+				"north": { "texture": "#zealothead", "uv": [ 50.0, 5.5, 55.5, 12.5 ], "rotation": 90 },
+				"east": { "texture": "#zealothead", "uv": [ 50.0, 1.0, 55.5, 6.5 ] },
+				"south": { "texture": "#zealothead", "uv": [ 50.0, 2.5, 55.5, 9.5 ], "rotation": 90 },
+				"up": { "texture": "#zealothead", "uv": [ 50.0, 5.5, 55.5, 12.5 ], "rotation": 90 },
+				"down": { "texture": "#zealothead", "uv": [ 50.0, 5.5, 55.5, 12.5 ], "rotation": 270 }
+			},
+			"children": [
+				{
+					"name": "HelmetTrim1",
+					"from": [ 0.5, 5.5, 2.25 ],
+					"to": [ 6.5, 6.2, 3.25 ],
+					"autoUnwrap": false,
+					"uv": [ 30.5, 3.0 ],
+					"rotationOrigin": [ 0.5, 5.5, 2.75 ],
+					"faces": {
+						"north": { "texture": "#zealothead", "uv": [ 30.5, 4.0, 36.5, 4.5 ] },
+						"east": { "texture": "#zealothead", "uv": [ 33.0, 3.0, 33.5, 4.0 ], "rotation": 90 },
+						"south": { "texture": "#zealothead", "uv": [ 37.0, 4.0, 43.0, 4.5 ] },
+						"up": { "texture": "#zealothead", "uv": [ 30.5, 3.0, 36.5, 4.0 ] }
+					},
+					"children": [
+						{
+							"name": "HelmetTrim2",
+							"from": [ 5.5, -5.0, 0.0 ],
+							"to": [ 6.0, 0.0, 1.0 ],
+							"uv": [ 29.5, 2.5 ],
+							"rotationOrigin": [ 5.5, -5.0, 0.5 ],
+							"faces": {
+								"north": { "texture": "#zealothead", "uv": [ 30.0, 4.0, 35.0, 4.5 ], "rotation": 90 },
+								"east": { "texture": "#zealothead", "uv": [ 30.0, 3.0, 35.0, 4.0 ], "rotation": 90 },
+								"south": { "texture": "#zealothead", "uv": [ 30.0, 2.5, 35.0, 3.0 ], "rotation": 90 },
+								"down": { "texture": "#zealothead", "uv": [ 29.5, 3.0, 30.0, 4.0 ] }
+							}
+						},
+						{
+							"name": "HelmetTrimTip",
+							"from": [ 0.0, 0.005, 0.0 ],
+							"to": [ 0.708, 0.705, 0.708 ],
+							"uv": [ 30.0, 2.5 ],
+							"rotationOrigin": [ 0.0, 0.0, 0.0 ],
+							"rotationY": -45.0,
+							"faces": {
+								"south": { "texture": "#zealothead", "uv": [ 30.0, 3.0, 30.5, 3.5 ] },
+								"west": { "texture": "#zealothead", "uv": [ 30.5, 3.0, 31.0, 3.5 ] },
+								"up": { "texture": "#zealothead", "uv": [ 30.0, 2.5, 30.5, 3.0 ] }
+							}
+						}
+					]
+				},
+				{
+					"name": "Visor",
+					"from": [ 0.0, -0.01, 0.0 ],
+					"to": [ 3.89, 5.89, 3.89 ],
+					"autoUnwrap": false,
+					"uv": [ 2.5, 54.5 ],
+					"rotationOrigin": [ 0.0, 0.0, 0.0 ],
+					"rotationY": -45.0,
+					"faces": {
+						"south": { "texture": "#zealothead", "uv": [ 2.5, 58.0, 6.0, 63.5 ] },
+						"west": { "texture": "#zealothead", "uv": [ 6.0, 58.0, 9.5, 63.5 ] },
+						"up": { "texture": "#zealothead", "uv": [ 2.5, 54.5, 6.0, 58.0 ], "rotation": 90 },
+						"down": { "texture": "#zealothead", "uv": [ 2.5, 54.5, 6.0, 58.0 ] }
+					}
+				},
+				{
+					"name": "HelmetJoinR",
+					"from": [ 2.5, 1.75, -0.5 ],
+					"to": [ 4.5, 3.75, 0.0 ],
+					"uv": [ 56.0, 10.0 ],
+					"rotationOrigin": [ 3.5, 2.75, 0.0 ],
+					"rotationZ": 22.5,
+					"faces": {
+						"north": { "texture": "#zealothead", "uv": [ 56.0, 10.0, 58.0, 12.0 ] },
+						"east": { "texture": "#zealothead", "uv": [ 56.0, 10.0, 56.5, 12.0 ] },
+						"south": { "texture": "#zealothead", "uv": [ 58.5, 10.0, 60.5, 12.0 ] },
+						"west": { "texture": "#zealothead", "uv": [ 60.0, 10.0, 60.5, 12.0 ] },
+						"up": { "texture": "#zealothead", "uv": [ 56.0, 10.0, 58.0, 10.5 ] },
+						"down": { "texture": "#zealothead", "uv": [ 58.5, 11.5, 60.5, 12.0 ] }
+					},
+					"children": [
+						{
+							"name": "FeatherR",
+							"from": [ 1.75, -0.25, 0.25 ],
+							"to": [ 7.75, 3.25, 0.26 ],
+							"uv": [ 22.0, 46.5 ],
+							"rotationOrigin": [ 2.0, 1.0, 0.25 ],
+							"rotationX": 11.25,
+							"faces": {
+								"north": { "texture": "#zealothead", "uv": [ 22.0, 46.5, 28.0, 50.0 ] },
+								"south": { "texture": "#zealothead", "uv": [ 28.5, 46.5, 34.5, 50.0 ] }
+							}
+						}
+					]
+				},
+				{
+					"name": "HelmetJoinL",
+					"from": [ 2.5, 1.75, 5.5 ],
+					"to": [ 4.5, 3.75, 6.0 ],
+					"uv": [ 56.0, 10.0 ],
+					"rotationOrigin": [ 3.5, 2.75, 6.0 ],
+					"rotationZ": 22.5,
+					"faces": {
+						"north": { "texture": "#zealothead", "uv": [ 56.0, 10.0, 58.0, 12.0 ] },
+						"east": { "texture": "#zealothead", "uv": [ 56.0, 10.0, 56.5, 12.0 ] },
+						"south": { "texture": "#zealothead", "uv": [ 58.5, 10.0, 60.5, 12.0 ] },
+						"west": { "texture": "#zealothead", "uv": [ 60.0, 10.0, 60.5, 12.0 ] },
+						"up": { "texture": "#zealothead", "uv": [ 56.0, 10.0, 58.0, 10.5 ] },
+						"down": { "texture": "#zealothead", "uv": [ 58.5, 11.5, 60.5, 12.0 ] }
+					},
+					"children": [
+						{
+							"name": "FeatherL",
+							"from": [ 1.75, -0.25, 0.25 ],
+							"to": [ 7.75, 3.25, 0.26 ],
+							"uv": [ 22.0, 46.5 ],
+							"rotationOrigin": [ 2.0, 1.0, 0.25 ],
+							"rotationX": -11.25,
+							"faces": {
+								"north": { "texture": "#zealothead", "uv": [ 22.0, 46.5, 28.0, 50.0 ] },
+								"south": { "texture": "#zealothead", "uv": [ 28.5, 46.5, 34.5, 50.0 ] }
+							}
+						}
+					]
+				}
+			]
+		}
+	]}

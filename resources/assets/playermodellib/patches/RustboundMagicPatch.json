@@ -1,0 +1,34 @@
+[
+	{
+	"file": "playermodellib:config/baseshapes/digitigrade.json",
+	"op": "addmerge",
+	"path": "/digitigrade/WearableModelReplacersByShape",
+	"dependsOn": [{ "modid": "rustboundmagic" }],
+	"value": {
+		"rustboundmagic:entities/humanoids/armor/basic/basic-legs-inert": "playermodellib:entity/humanoid/seraph/mods/armor/rustbound/armor/basic/basic-legs-inert",
+		"rustboundmagic:entities/humanoids/armor/basic/basic-legs-tier1": "playermodellib:entity/humanoid/seraph/mods/armor/rustbound/armor/basic/basic-legs-tier1",
+		"rustboundmagic:entities/humanoids/armor/basic/basic-legs-tier2": "playermodellib:entity/humanoid/seraph/mods/armor/rustbound/armor/basic/basic-legs-tier2",
+		"rustboundmagic:entities/humanoids/armor/basic/basic-legs-tier3": "playermodellib:entity/humanoid/seraph/mods/armor/rustbound/armor/basic/basic-legs-tier3",
+		"rustboundmagic:entities/humanoids/armor/wanderer/wanderer-legs-tier1": "playermodellib:entity/humanoid/seraph/mods/armor/rustbound/armor/wanderer-legs-tier1",
+		"rustboundmagic:entities/humanoids/armor/wanderer/wanderer-legs-tier2": "playermodellib:entity/humanoid/seraph/mods/armor/rustbound/armor/wanderer-legs-tier2",
+		"rustboundmagic:entities/humanoids/armor/wanderer/wanderer-legs-tier3": "playermodellib:entity/humanoid/seraph/mods/armor/rustbound/armor/wanderer-legs-tier3",
+		"rustboundmagic:entities/humanoids/armor/rustyjonas/rustyjonas-legs": "playermodellib:entity/humanoid/seraph/mods/armor/rustbound/armor/rustyjonas/rustyjonas-legs",
+		"rustboundmagic:entities/humanoids/armor/necromancer/necromancer-head": "playermodellib:entity/humanoid/seraph/mods/armor/rustbound/armor/necromancer/necromancer-head",
+		"rustboundmagic:entities/humanoids/armor/necromancer/necromancer-legs": "playermodellib:entity/humanoid/seraph/mods/armor/rustbound/armor/necromancer/necromancer-legs",
+		"rustboundmagic:entities/humanoids/armor/temporaljonas/temporaljonas-legs": "playermodellib:entity/humanoid/seraph/mods/armor/rustbound/armor/temporaljonas/temporaljonas-legs"
+		}
+	},
+	{
+	"file": "playermodellib:config/baseshapes/digitigrade.json",
+	"op": "addmerge",
+	"path": "/digitigrade/WearableModelReplacersByCode",
+	"dependsOn": [{ "modid": "rustboundmagic" }],
+	"value": {
+		"rustboundmagic:armorlegs*-basic-*": "playermodellib:shapes/entity/humanoid/seraph/mods/armor/rustbound/armor/{model}/{model}-legs-{type}",
+		"rustboundmagic:armorlegs*-wanderer-*": "playermodellib:shapes/entity/humanoid/seraph/mods/armor/rustbound/armor/{model}/{model}-legs-{type}",
+		"rustboundmagic:armorlegs*-rustyjonas-*": "playermodellib:shapes/entity/humanoid/seraph/mods/armor/rustbound/armor/{model}/{model}-legs",
+		"rustboundmagic:armorlegs*-necromancer-*": "playermodellib:shapes/entity/humanoid/seraph/mods/armor/rustbound/armor/{model}/{model}-legs",
+		"rustboundmagic:armorlegs*-temporaljonas-*": "playermodellib:shapes/entity/humanoid/seraph/mods/armor/rustbound/armor/{model}/{model}-legs"
+		}
+	}
+]

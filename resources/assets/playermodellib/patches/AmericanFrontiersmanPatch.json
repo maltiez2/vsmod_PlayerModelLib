@@ -1,0 +1,14 @@
+[
+	{
+	"file": "playermodellib:config/baseshapes/digitigrade.json",
+	"op": "addmerge",
+	"path": "/digitigrade/WearableModelReplacersByCode",
+	"dependsOn": [{ "modid": "americanfrontiersman" }],
+	"value": {
+		"americanfrontiersman:*bluejeans*": "playermodellib:shapes/entity/humanoid/seraph/mods/clothing/americanfrontiersman/bluejeans",
+		"americanfrontiersman:*mountaineerpants*": "playermodellib:shapes/entity/humanoid/seraph/mods/clothing/americanfrontiersman/mountaineerpants",
+		"americanfrontiersman:*chapsbasic*": "playermodellib:shapes/entity/humanoid/seraph/mods/clothing/americanfrontiersman/chapsbasic",
+		"americanfrontiersman:*leatherchaps*": "playermodellib:shapes/entity/humanoid/seraph/mods/clothing/americanfrontiersman/chapsleather"
+		}
+	}
+]
