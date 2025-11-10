@@ -263,6 +263,12 @@ public sealed class CustomModelsSystem : ModSystem
             return;
         }
 
+        if (!shape.Textures.Any())
+        {
+            LoggerUtil.Error(_api, this, $"({code}) Shape '{modelConfig.ShapePath}' does not have any textures specified, will skip the model.");
+            return;
+        }
+
         if (!shape.Textures.ContainsKey(modelConfig.MainTextureCode))
         {
             string textures = shape.Textures.Keys.Aggregate((a, b) => $"{a}, {b}");

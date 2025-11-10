@@ -1,7 +1,7 @@
 {
   "digitigrade": {
     "ShapePath": "playermodellib:shapes/baseshapes/digitigrade.json",
-    "KeyElements": ["LowerTorso", "UpperTorso", "Tail", "UpperArmR", "LowerArmR", "UpperArmL", "LowerArmL", "Neck", "Head", "Snout", "UpperFootL", "MiddleFootL", "LowerFootL", "UpperFootR", "MiddleFootR", "LowerFootR","HeadWithSnout","AboveSnout"],
+    "KeyElements": ["LowerTorso", "UpperTorso", "Tail", "UpperArmR", "LowerArmR", "UpperArmL", "LowerArmL", "Neck", "Head", "Snout", "UpperFootL", "MiddleFootL", "LowerFootL", "UpperFootR", "MiddleFootR", "LowerFootR", "HeadWithSnout", "AboveSnout", "SnoutHeadWide"],
     "WearableModelReplacersByShape": {
 		"game:entity/humanoid/seraph/armor/antique/blackguard-broken/legs": "playermodellib:entity/humanoid/seraph/armor/antique/blackguard-broken/legs",
 		"game:entity/humanoid/seraph/armor/antique/blackguard-damaged/legs": "playermodellib:entity/humanoid/seraph/armor/antique/blackguard-damaged/legs",

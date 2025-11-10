@@ -1,6 +1,1 @@
-{
-  "seraph": {
-    "ShapePath": "playermodellib:shapes/baseshapes/seraph.json",
-    "KeyElements": ["LowerTorso", "UpperTorso", "UpperArmR", "LowerArmR", "UpperArmL", "LowerArmL", "Neck", "Head", "UpperFootL", "LowerFootL", "UpperFootR", "LowerFootR"]
-  }
-}
+{}
