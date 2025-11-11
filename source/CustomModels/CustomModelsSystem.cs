@@ -215,7 +215,12 @@ public sealed class CustomModelsSystem : ModSystem
             Enabled = defaultConfig.Enabled,
             Group = "temporal",
             Icon = new("playermodellib:textures/icons/seraph.png"),
-            GroupIcon = new("playermodellib:textures/icons/temporal.png")
+            GroupIcon = new("playermodellib:textures/icons/temporal.png"),
+            WalkEyeHeightMultiplier = defaultConfig.WalkEyeHeightMultiplier,
+            SprintEyeHeightMultiplier = defaultConfig.SprintEyeHeightMultiplier,
+            SneakEyeHeightMultiplier = defaultConfig.SneakEyeHeightMultiplier,
+            StepHeight = defaultConfig.StepHeight,
+            MaxOxygenFactor = defaultConfig.MaxOxygenFactor
         };
 
         CustomModels.Add(_defaultModelCode, defaultModelData);
@@ -325,7 +330,12 @@ public sealed class CustomModelsSystem : ModSystem
             HeadBobbingScale = modelConfig.HeadBobbingScale,
             GuiModelScale = modelConfig.GuiModelScale,
             Enabled = modelConfig.Enabled,
-            BaseShapeCode = modelConfig.BaseShapeCode
+            BaseShapeCode = modelConfig.BaseShapeCode,
+            WalkEyeHeightMultiplier = modelConfig.WalkEyeHeightMultiplier,
+            SprintEyeHeightMultiplier = modelConfig.SprintEyeHeightMultiplier,
+            SneakEyeHeightMultiplier = modelConfig.SneakEyeHeightMultiplier,
+            StepHeight = modelConfig.StepHeight,
+            MaxOxygenFactor = modelConfig.MaxOxygenFactor
         };
 
         AssetLocation icon = new AssetLocation(modelConfig.Icon).WithPathPrefixOnce("textures/").WithPathAppendixOnce(".png");

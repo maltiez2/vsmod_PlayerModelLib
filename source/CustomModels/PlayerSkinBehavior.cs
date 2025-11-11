@@ -111,7 +111,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
     public override void OnTesselation(ref Shape entityShape, string shapePathForLogging, ref bool shapeIsCloned, ref string[]? willDeleteElements)
     {
         Debug.WriteLine($"PlayerSkinBehavior - OnTesselation - before");
-        
+
         if (ModelSystem == null || ClientApi == null || !ModelSystem.ModelsLoaded) return;
 
         Shape backup = entityShape;
@@ -204,6 +204,22 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
             PreviousHeadBobbingAmplitudeFactor = factor;
         }
 
+        EntityBehaviorPlayerPhysics? physicsBehavior = entity.GetBehavior<EntityBehaviorPlayerPhysics>();
+        if (physicsBehavior != null)
+        {
+            physicsBehavior.StepHeight /= PreviousStepHeight;
+            PreviousStepHeight = CurrentModel.StepHeight / DefaultStepHeight;
+            physicsBehavior.StepHeight *= PreviousStepHeight;
+        }
+
+        EntityBehaviorBreathe? breathBehavior = entity.GetBehavior<EntityBehaviorBreathe>();
+        if (breathBehavior != null)
+        {
+            breathBehavior.MaxOxygen /= PreviousMaxOxygen;
+            PreviousMaxOxygen = CurrentModel.MaxOxygenFactor;
+            breathBehavior.MaxOxygen *= PreviousMaxOxygen;
+        }
+
         OtherPatches.CurrentModelGuiScale = CurrentModel.GuiModelScale;
         OtherPatches.CurrentModelScale = CurrentModel.ModelSizeFactor;
 
@@ -241,9 +257,12 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
     protected Dictionary<string, BlendedOverlayTexture[]> OverlaysByTextures = [];
     protected EntityTagArray PreviousAddedTags = EntityTagArray.Empty;
     protected EntityTagArray PreviousRemovedTags = EntityTagArray.Empty;
+    protected const float DefaultStepHeight = 1.2f;
     protected float DefaultSize = 1;
     protected float PreviousHeadBobbingAmplitudeFactor = 1;
     protected float PreviousZNearFactor = 1;
+    protected float PreviousStepHeight = 1;
+    protected float PreviousMaxOxygen = 1;
     protected float DefaultEyeHeight = 1.7f;
     protected string DefaultModelCode => ModelSystem?.DefaultModelCode ?? "seraph";
 

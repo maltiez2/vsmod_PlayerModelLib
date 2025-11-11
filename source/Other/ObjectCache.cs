@@ -1,8 +1,7 @@
-﻿using PlayerModelLib;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using Vintagestory.API.Common;
 
-namespace CombatOverhaul.Integration;
+namespace PlayerModelLib;
 
 public sealed class ObjectCache<TKey, TValue> : IDisposable
     where TKey : notnull
@@ -31,20 +30,20 @@ public sealed class ObjectCache<TKey, TValue> : IDisposable
 
     public void Add(TKey key, TValue value)
     {
-        bool requiresCleanUp = false;
+        //bool requiresCleanUp = false;
         bool threadSafe = _threadSafe;
 
         if (threadSafe) _lock.AcquireWriterLock(5000);
         _addCountBetweenCleanUps++;
         _mapping[key] = value;
         _lastAccess[key] = CurrentTime();
-        requiresCleanUp = _mapping.Count > _cleanUpThreshold;
+        //requiresCleanUp = _mapping.Count > _cleanUpThreshold;
         if (threadSafe) _lock.ReleaseWriterLock();
 
-        if (requiresCleanUp)
-        {
-            Clean();
-        }
+        //if (requiresCleanUp)
+        //{
+        //    Clean();
+        //}
     }
 
     public bool Get(TKey key, [NotNullWhen(true)] out TValue? value)
@@ -73,7 +72,6 @@ public sealed class ObjectCache<TKey, TValue> : IDisposable
 
         try
         {
-            // @TODO change tp Verbose
             LoggerUtil.Notify(_api, this, $"({_loggedCacheName}) Starting clean up. Current world time: {TimeSpan.FromMilliseconds(currentTime)}\nSize: {_mapping.Count}\n'Get' count: {_getCountBetweenCleanUps}\n'Add' count: {_addCountBetweenCleanUps}");
             _getCountBetweenCleanUps = 0;
             _addCountBetweenCleanUps = 0;
@@ -95,7 +93,6 @@ public sealed class ObjectCache<TKey, TValue> : IDisposable
                 _lastAccess.Remove(key);
             }
 
-            // @TODO change tp Verbose
             LoggerUtil.Notify(_api, this, $"({_loggedCacheName}) Cleaned up '{keysToRemove.Count}' keys for '{entities.Count}' values.");
         }
         catch (Exception exception)

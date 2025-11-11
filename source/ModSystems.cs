@@ -1,5 +1,4 @@
-﻿using CombatOverhaul.Integration;
-using ConfigLib;
+﻿using ConfigLib;
 using HarmonyLib;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
