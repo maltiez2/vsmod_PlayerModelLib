@@ -176,6 +176,8 @@ internal static class OtherPatches
 
     private static bool composeTraitsTab(CharacterSystem __instance, GuiComposer compo)
     {
+        if (_clientApi == null) return false;
+        
         _composer = compo;
 
         string text = "";
@@ -227,6 +229,8 @@ internal static class OtherPatches
         }
     }
 
+#pragma warning disable CS0618 // Type or member is obsolete - It is not in this case
+#pragma warning disable S3241 // Methods should not return values that are never used - harmony prefix need to return bool in this case
     private static bool getClassTraitText(CharacterSystem __instance, ref string __result)
     {
         string? classCode = _clientApi?.World?.Player?.Entity?.WatchedAttributes?.GetString("characterClass");
@@ -285,9 +289,6 @@ internal static class OtherPatches
 
         return false;
     }
-
-#pragma warning disable CS0618 // Type or member is obsolete - It is not in this case
-#pragma warning disable S3241 // Methods should not return values that are never used - harmony prefix need to return bool in this case
     private static bool ShapeElement_TrimTextureNamesAndResolveFaces(ShapeElement __instance)
 
     {

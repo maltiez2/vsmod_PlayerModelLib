@@ -918,8 +918,8 @@ public sealed class CustomModelsSystem : ModSystem
 
     private void RegisterServerChatCommands(ICoreServerAPI api)
     {
-        IChatCommandApi? chatCommandApi = _api?.ChatCommands;
-        CommandArgumentParsers? chatCommandParser = _api?.ChatCommands.Parsers;
+        IChatCommandApi? chatCommandApi = api?.ChatCommands;
+        CommandArgumentParsers? chatCommandParser = api?.ChatCommands.Parsers;
 
         chatCommandApi?
             .GetOrCreate("player")
