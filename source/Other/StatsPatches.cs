@@ -1,12 +1,10 @@
 ﻿using HarmonyLib;
-using System.Diagnostics;
 using System.Reflection;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.GameContent;
-using VSImGui.Debug;
 
 namespace PlayerModelLib;
 
@@ -164,10 +162,6 @@ public static class StatsPatches
         __result /= baseWalkSpeedStat;
 
         float resultingMultiplier = baseWalkSpeedStat;
-        if (__instance.Controls.Backward)
-        {
-            resultingMultiplier += Math.Max(__instance.Stats.GetBlended(BackwardSpeedStat), 0) - 1;
-        }
 
         if (IsCurrentlyDay(__instance.Api.World))
         {
@@ -209,6 +203,10 @@ public static class StatsPatches
         else if (__instance.Swimming)
         {
             __result *= Math.Clamp(__instance.Stats.GetBlended(SwimSpeedStat), 0, 1000);
+        }
+        if (__instance.Controls.Backward)
+        {
+            __result *= Math.Max(__instance.Stats.GetBlended(BackwardSpeedStat), 0);
         }
     }
     private static void ApplyWarmthStats(EntityBehaviorBodyTemperature __instance)
@@ -330,7 +328,12 @@ public static class StatsPatches
     }
     private static void ApplySaturationLossStats(EntityBehaviorHunger __instance, ref float satLossMultiplier)
     {
-        satLossMultiplier *= __instance.entity.Stats.GetBlended(SaturationLossStat);
+        float statMultiplier = __instance.entity.Stats.GetBlended(SaturationLossStat);
+        satLossMultiplier *= Math.Max(statMultiplier, 0);
+        if (statMultiplier <= 0)
+        {
+            __instance.Saturation = __instance.MaxSaturation;
+        }
     }
     private static void ApplyBreathCheckStats(EntityBehaviorBreathe __instance)
     {

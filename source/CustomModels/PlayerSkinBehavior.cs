@@ -1,5 +1,4 @@
 ﻿using HarmonyLib;
-using System.Diagnostics;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
@@ -110,8 +109,6 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
     public override void OnTesselation(ref Shape entityShape, string shapePathForLogging, ref bool shapeIsCloned, ref string[]? willDeleteElements)
     {
-        Debug.WriteLine($"PlayerSkinBehavior - OnTesselation - before");
-
         if (ModelSystem == null || ClientApi == null || !ModelSystem.ModelsLoaded) return;
 
         Shape backup = entityShape;
@@ -138,8 +135,6 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
             entityShape = backup;
             LoggerUtil.Error(ClientApi, this, $"({CurrentModelCode}) Error when tesselating custom player model:\n{exception}");
         }
-
-        Debug.WriteLine($"PlayerSkinBehavior - OnTesselation - after");
     }
 
     public void SetCurrentModel(string code, float size)
@@ -257,7 +252,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
     protected Dictionary<string, BlendedOverlayTexture[]> OverlaysByTextures = [];
     protected EntityTagArray PreviousAddedTags = EntityTagArray.Empty;
     protected EntityTagArray PreviousRemovedTags = EntityTagArray.Empty;
-    protected const float DefaultStepHeight = 1.2f;
+    protected const float DefaultStepHeight = 0.6f;
     protected float DefaultSize = 1;
     protected float PreviousHeadBobbingAmplitudeFactor = 1;
     protected float PreviousZNearFactor = 1;
@@ -405,7 +400,10 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
         foreach ((_, CustomModelData? data) in ModelSystem.CustomModels)
         {
-            entity.Properties.Client.Textures[data.MainTextureCode] = data.MainTexture;
+            foreach (string code in data.MainTextureCodes)
+            {
+                entity.Properties.Client.Textures[code] = data.MainTextures[code];
+            }
         }
     }
 

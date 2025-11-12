@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using System.Diagnostics;
 using System.Reflection;
 using System.Text;
 using Vintagestory.API.Client;
@@ -35,6 +36,10 @@ internal static class OtherPatches
         new Harmony(harmonyId).Patch(
                 typeof(CharacterSystem).GetMethod("getClassTraitText", AccessTools.all),
                 prefix: new HarmonyMethod(AccessTools.Method(typeof(OtherPatches), nameof(getClassTraitText)))
+            );
+        new Harmony(harmonyId).Patch(
+                typeof(CharacterSystem).GetMethod("composeTraitsTab", AccessTools.all),
+                prefix: new HarmonyMethod(AccessTools.Method(typeof(OtherPatches), nameof(composeTraitsTab)))
             );
         new Harmony(harmonyId).Patch(
                 typeof(EntityShapeRenderer).GetMethod("loadModelMatrixForGui", AccessTools.all),
@@ -169,6 +174,59 @@ internal static class OtherPatches
         return false;
     }
 
+    private static bool composeTraitsTab(CharacterSystem __instance, GuiComposer compo)
+    {
+        _composer = compo;
+
+        string text = "";
+        getClassTraitText(__instance, ref text);
+
+        ElementBounds charTextBounds;
+
+        if (_clientApi.ModLoader.IsModEnabled("overhaullib"))
+        {
+            charTextBounds = ElementBounds.Fixed(-18, 14, 417, 370);
+        }
+        else
+        {
+            charTextBounds = ElementBounds.Fixed(-18, 14, 375, 316);
+        }
+
+        ElementBounds bgBounds = charTextBounds.ForkBoundingParent(6, 6, 6, 6);
+        ElementBounds clipBounds = charTextBounds.FlatCopy().FixedGrow(6, 11).WithFixedOffset(0, -6);
+        ElementBounds scrollbarBounds = charTextBounds.CopyOffsetedSibling(charTextBounds.fixedWidth + 7, -6, 0, 12).WithFixedWidth(20);
+
+        compo
+            .BeginChildElements(bgBounds)
+                .BeginClip(clipBounds)
+                    .AddRichtext(text, CairoFont.WhiteDetailText().WithLineHeightMultiplier(1.15), charTextBounds, "traitsDesc")
+                .EndClip()
+                .AddVerticalScrollbar(OnNewScrollbarValue, scrollbarBounds, "scrollbar")
+            .EndChildElements()
+        ;
+
+        compo.GetScrollbar("scrollbar").SetHeights(
+            316,
+            632
+        );
+        compo.GetScrollbar("scrollbar").SetScrollbarPosition(0);
+
+        return false;
+    }
+
+    private static GuiComposer? _composer;
+
+    private static void OnNewScrollbarValue(float value)
+    {
+        GuiElementRichtext? richtextElem = _composer?.GetRichtext("traitsDesc");
+
+        if (richtextElem != null)
+        {
+            richtextElem.Bounds.fixedY = 0 - value;
+            richtextElem.Bounds.CalcWorldBounds();
+        }
+    }
+
     private static bool getClassTraitText(CharacterSystem __instance, ref string __result)
     {
         string? classCode = _clientApi?.World?.Player?.Entity?.WatchedAttributes?.GetString("characterClass");
@@ -186,7 +244,10 @@ internal static class OtherPatches
 
         string[] extraTraits = _clientApi?.World?.Player?.Entity.WatchedAttributes.GetStringArray("extraTraits") ?? [];
         IEnumerable<string> allTraits = characterClass.Traits.Concat(extraTraits);
-        IOrderedEnumerable<Trait> characterTraits = allTraits.Select(code => __instance.TraitsByCode[code]).OrderBy(trait => (int)trait.Type);
+        IOrderedEnumerable<Trait> characterTraits = allTraits
+            .Where(__instance.TraitsByCode.ContainsKey)
+            .Select(code => __instance.TraitsByCode[code])
+            .OrderBy(trait => (int)trait.Type);
 
         foreach (Trait? trait in characterTraits)
         {
@@ -194,7 +255,7 @@ internal static class OtherPatches
             foreach ((string attribute, double attributeValue) in trait.Attributes)
             {
                 if (attributes.Length > 0) attributes.Append(", ");
-                attributes.Append(Lang.Get(string.Format(GlobalConstants.DefaultCultureInfo, "charattribute-{0}-{1}", attribute, attributeValue)));
+                attributes.Append(GuiDialogCreateCustomCharacter.GetAttributeDescription(attribute, attributeValue));
             }
 
             if (attributes.Length > 0)
@@ -230,7 +291,7 @@ internal static class OtherPatches
     private static bool ShapeElement_TrimTextureNamesAndResolveFaces(ShapeElement __instance)
 
     {
-        if (!TranspilerPatches.ExportingShape) return true;
+        if (!ShapeReplacementUtil.ExportingShape) return true;
 
 
         if (__instance.Faces != null)

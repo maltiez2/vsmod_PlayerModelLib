@@ -27,7 +27,6 @@ public class CustomModelConfig
     public string GroupIcon { get; set; } = "";
     public string ShapePath { get; set; } = "";
     public string BaseShapeCode { get; set; } = "";
-    public string MainTextureCode { get; set; } = "seraph";
     public SkinnablePartExtended[] SkinnableParts { get; set; } = [];
     public Dictionary<string, string> WearableModelReplacers { get; set; } = [];
     public Dictionary<string, CompositeShape> WearableCompositeModelReplacers { get; set; } = [];
@@ -53,7 +52,7 @@ public class CustomModelConfig
     public float WalkEyeHeightMultiplier { get; set; } = 1;
     public float SprintEyeHeightMultiplier { get; set; } = 1;
     public float SneakEyeHeightMultiplier { get; set; } = 0.8f;
-    public float StepHeight { get; set; } = 1.2f;
+    public float StepHeight { get; set; } = 0.6f;
     public float MaxOxygenFactor { get; set; } = 1;
 }
 
@@ -69,10 +68,9 @@ public class CustomModelData
     public Dictionary<string, (Vector3d origin, Vector3d size)> ElementSizes { get; set; } = [];
     public Dictionary<string, SkinnablePart> SkinParts { get; set; } = [];
     public SkinnablePart[] SkinPartsArray { get; set; } = [];
-    public string MainTextureCode { get; set; } = "";
-    public CompositeTexture? MainTexture { get; set; }
-    public Vector2i MainTextureSize { get; set; }
-    public TextureAtlasPosition? MainTexturePosition { get; set; }
+    public string[] MainTextureCodes { get; set; } = [];
+    public Dictionary<string, CompositeTexture?> MainTextures { get; set; } = [];
+    public Dictionary<string, Vector2i> MainTextureSizes { get; set; } = [];
     public Dictionary<int, string> WearableShapeReplacers { get; set; } = [];
     public Dictionary<int, CompositeShape> WearableCompositeShapeReplacers { get; set; } = [];
     public Dictionary<string, string> WearableShapeReplacersByShape { get; set; } = [];
@@ -97,7 +95,7 @@ public class CustomModelData
     public float WalkEyeHeightMultiplier { get; set; } = 1;
     public float SprintEyeHeightMultiplier { get; set; } = 1;
     public float SneakEyeHeightMultiplier { get; set; } = 0.8f;
-    public float StepHeight { get; set; } = 1.2f;
+    public float StepHeight { get; set; } = 0.6f;
     public float MaxOxygenFactor { get; set; } = 1;
 
 

@@ -33,6 +33,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     {
         _characterSystem = characterSystem;
         _customModelsSystem = api.ModLoader.GetModSystem<CustomModelsSystem>();
+        _api = api;
     }
     public override void OnGuiOpened()
     {
@@ -64,6 +65,8 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         {
             _characterInventory?.Open(capi.World.Player);
         }
+
+        ChangeModel(0);
     }
     public override void OnGuiClosed()
     {
@@ -275,7 +278,26 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         capi.Render.GlPopMatrix();
     }
 
+    public static string GetAttributeDescription(string attribute, double value)
+    {
+        string defaultKey = string.Format(GlobalConstants.DefaultCultureInfo, _attributeLangPrefix + "-{0}-{1}", attribute, value);
+        string newKey = $"{_attributeLangPrefix}-{attribute}";
 
+        if (Lang.HasTranslation(defaultKey))
+        {
+            return Lang.Get(defaultKey);
+        }
+        else if (Lang.HasTranslation(newKey))
+        {
+            return string.Format(GlobalConstants.DefaultCultureInfo, Lang.Get(newKey), value);
+        }
+        else
+        {
+            return Lang.Get(defaultKey);
+        }
+    }
+
+    private const string _attributeLangPrefix = "charattribute";
     private bool _didSelect = false;
     private IInventory? _characterInventory;
     private ElementBounds? _insetSlotBounds;
@@ -298,6 +320,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     private float _clipHeight = 377;
     private float _clipHeightModel = 200;
     internal static bool _applyScrollPatch = false;
+    private ICoreClientAPI _api;
 
     private new void ComposeGuis()
     {
@@ -421,7 +444,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         double buttonHeight = iconInsetSize - 4;
 
         // Size slider
-        
+
 
         // Scrollable description area
         int visibleHeight = (int)Math.Max(120, _dlgHeight - (modelSelectorY + totalIconHeight + 20 + 20 + 20) + 7);
@@ -453,7 +476,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         composer.AddInteractiveElement(groupDropDown, "groupDropdown");
 
         // Three model icons in insets (always display 3 slots)
-        AssetLocation emptyTexture = new AssetLocation("playermodellib", "textures/icons/empty.png");
+        AssetLocation emptyTexture = new("playermodellib", "textures/icons/empty.png");
 
         //double baseXOffset = 5 + 35 + 10; // Changed from 10 to 5 (after inset + left button + spacing)
 
@@ -617,7 +640,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
                 .EndClip()
                 .AddVerticalScrollbar(OnNewScrollbarValueModel, scrollbarBounds, "scrollbarModel")
             .EndChildElements();
-        
+
         _clipHeightModel = 500;
         _composer?.GetScrollbar("scrollbarModel")?.SetHeights(
             _clipHeightModel,
@@ -790,7 +813,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         ElementBounds clipBounds = charTextBounds.FlatCopy().FixedGrow(6, 11).WithFixedOffset(0, -6);
         ElementBounds scrollbarBounds = charTextBounds.CopyOffsetedSibling(charTextBounds.fixedWidth + 7, -6, 0, 12).WithFixedWidth(20);
 
-        
+
         _insetSlotBounds = ElementBounds.Fixed(0, yPosition + 25, 193, leftColBounds.fixedHeight - 2 * padding - 30).FixedRightOf(nextButtonBounds, 11);
 
         composer
@@ -992,8 +1015,15 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         fulldesc.AppendLine(Lang.Get("traits-title"));
 
 
-        IOrderedEnumerable<Trait> chartraitsExtra = _customModelsSystem.CustomModels[skinMod.CurrentModelCode].ExtraTraits.Select(code => _characterSystem.TraitsByCode[code]).OrderBy(trait => (int)trait.Type);
-        IOrderedEnumerable<Trait> chartraits = chclass.Traits.Where(code => !_customModelsSystem.CustomModels[skinMod.CurrentModelCode].ExtraTraits.Contains(code)).Select(code => _characterSystem.TraitsByCode[code]).OrderBy(trait => (int)trait.Type);
+        IOrderedEnumerable<Trait> chartraitsExtra = _customModelsSystem.CustomModels[skinMod.CurrentModelCode].ExtraTraits
+            .Where(_characterSystem.TraitsByCode.ContainsKey)
+            .Select(code => _characterSystem.TraitsByCode[code])
+            .OrderBy(trait => (int)trait.Type);
+        IOrderedEnumerable<Trait> chartraits = chclass.Traits
+            .Where(code => !_customModelsSystem.CustomModels[skinMod.CurrentModelCode].ExtraTraits.Contains(code))
+            .Where(_characterSystem.TraitsByCode.ContainsKey)
+            .Select(code => _characterSystem.TraitsByCode[code])
+            .OrderBy(trait => (int)trait.Type);
 
         AppendTraits(fulldesc, chartraits);
 
@@ -1050,7 +1080,28 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         fullDescription.AppendLine(Lang.Get($"{modelSplit[0]}:modeldesc-{modelSplit[1]}"));
 
-        IOrderedEnumerable<Trait> traits = modelConfig.ExtraTraits.Select(code => _characterSystem.TraitsByCode[code]).OrderBy(trait => (int)trait.Type);
+        IEnumerable<string> missingTraits = modelConfig.ExtraTraits.Where(code => !_characterSystem.TraitsByCode.ContainsKey(code));
+        if (missingTraits.Any())
+        {
+            string missingTraitsList = missingTraits.Aggregate((a, b) => $"{a}, {b}");
+            LoggerUtil.Error(_api, this, $"Custom model '{model}' has traits that does not exist: {missingTraitsList}.\nIt can be caused by either bug in the mod that adds that model, or it can be caused by some other mods breaking vanilla character system.");
+            IEnumerable<string> existingTraits = _characterSystem.TraitsByCode.Keys;
+            if (existingTraits.Any())
+            {
+                string existingTraitsList = existingTraits.Aggregate((a, b) => $"{a},\n{b}");
+                LoggerUtil.Error(_api, this, $"All existing traits:\n{existingTraitsList}\n");
+            }
+
+            fullDescription.AppendLine();
+            fullDescription.AppendLine($"<font color=\"#ff8484\">##########################################################</font>");
+            fullDescription.AppendLine($"<font color=\"#ff8484\">Error occurred while loading custom model traits. Check client-main.log file.</font>");
+            fullDescription.AppendLine($"<font color=\"#ff8484\">##########################################################</font>");
+        }
+
+        IOrderedEnumerable<Trait> traits = modelConfig.ExtraTraits
+            .Where(_characterSystem.TraitsByCode.ContainsKey)
+            .Select(code => _characterSystem.TraitsByCode[code])
+            .OrderBy(trait => (int)trait.Type);
 
         if (traits.Any())
         {
@@ -1087,7 +1138,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             {
                 if (attributes.Length > 0) attributes.Append(", ");
 
-                attributes.Append(Lang.Get(string.Format(GlobalConstants.DefaultCultureInfo, "charattribute-{0}-{1}", attribute, value)));
+                attributes.Append(GetAttributeDescription(attribute, value));
             }
 
             if (attributes.Length > 0)
@@ -1143,7 +1194,10 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         modelValues = GetAvailableModels(system).Where(code => system.CustomModels[code].Group == group).ToArray();
         modelNames = modelValues.Select(key => new AssetLocation(key)).Select(GetCustomModelLangEntry).ToArray();
         modelIcons = modelValues.Select(code => system.CustomModels[code].Icon).ToArray();
-        groupIcon = modelValues.Select(code => system.CustomModels[code].GroupIcon).Where(icon => icon != null).FirstOrDefault();
+        groupIcon = system.CustomModels
+            .Where(entry => entry.Value.Group == group)
+            .Select(entry => entry.Value.GroupIcon)
+            .FirstOrDefault(icon => icon != null);
 
         if (modelValues.Length == 0)
         {

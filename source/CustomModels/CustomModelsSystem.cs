@@ -149,7 +149,7 @@ public sealed class CustomModelsSystem : ModSystem
     private readonly Dictionary<string, AssetLocation> _textures = [];
     private ICoreClientAPI? _clientApi;
     private ICoreAPI? _api;
-    private readonly Dictionary<string, string> _oldMainTextureCodes = [];
+    private readonly Dictionary<string, string[]> _oldMainTextureCodes = [];
     private readonly Dictionary<string, Dictionary<string, string>> _wearableModelReplacers = [];
     private readonly Dictionary<string, Dictionary<string, CompositeShape>> _wearableCompositeModelReplacers = [];
 
@@ -191,7 +191,7 @@ public sealed class CustomModelsSystem : ModSystem
         {
             SkinParts = partsByCode,
             SkinPartsArray = parts,
-            MainTextureCode = PrefixTextureCode(_defaultModelCode, _defaultMainTextureCode),
+            MainTextureCodes = [PrefixTextureCode(_defaultModelCode, _defaultMainTextureCode)],
             CollisionBox = new(playerProperties.CollisionBoxSize.X, playerProperties.CollisionBoxSize.Y),
             EyeHeight = (float)playerProperties.EyeHeight,
 
@@ -224,7 +224,7 @@ public sealed class CustomModelsSystem : ModSystem
         };
 
         CustomModels.Add(_defaultModelCode, defaultModelData);
-        _oldMainTextureCodes.Add(_defaultModelCode, _defaultMainTextureCode);
+        _oldMainTextureCodes.Add(_defaultModelCode, [_defaultMainTextureCode]);
     }
     private static Shape? LoadShape(ICoreAPI api, string path)
     {
@@ -274,17 +274,12 @@ public sealed class CustomModelsSystem : ModSystem
             return;
         }
 
-        if (!shape.Textures.ContainsKey(modelConfig.MainTextureCode))
-        {
-            string textures = shape.Textures.Keys.Aggregate((a, b) => $"{a}, {b}");
-            LoggerUtil.Error(_api, this, $"({code}) Shape '{modelConfig.ShapePath}' does not have main texture with code '{modelConfig.MainTextureCode}'. Textures that this shape has: {textures}");
-            return;
-        }
+        IEnumerable<string> mainTextures = shape.Textures.Select(entry => entry.Key);
 
         foreach ((string textureCode, AssetLocation? texturePath) in shape.Textures)
         {
             if (texturePath == null) continue;
-            
+
             if (!texturePath.HasDomain())
             {
                 texturePath.Domain = new AssetLocation(modelConfig.ShapePath).Domain;
@@ -307,9 +302,10 @@ public sealed class CustomModelsSystem : ModSystem
 
         CustomModelData modelData = new(code, shape)
         {
+            Enabled = modelConfig.Enabled,
             SkinParts = partsByCode,
             SkinPartsArray = modelConfig.SkinnableParts,
-            MainTextureCode = PrefixTextureCode(code, modelConfig.MainTextureCode),
+            MainTextureCodes = mainTextures.Select(textureCode => PrefixTextureCode(code, textureCode)).ToArray(),
             AvailableClasses = [.. modelConfig.AvailableClasses],
             SkipClasses = [.. modelConfig.SkipClasses],
             ExclusiveClasses = [.. modelConfig.ExclusiveClasses],
@@ -329,7 +325,6 @@ public sealed class CustomModelsSystem : ModSystem
             ModelSizeFactor = modelConfig.ModelSizeFactor,
             HeadBobbingScale = modelConfig.HeadBobbingScale,
             GuiModelScale = modelConfig.GuiModelScale,
-            Enabled = modelConfig.Enabled,
             BaseShapeCode = modelConfig.BaseShapeCode,
             WalkEyeHeightMultiplier = modelConfig.WalkEyeHeightMultiplier,
             SprintEyeHeightMultiplier = modelConfig.SprintEyeHeightMultiplier,
@@ -378,7 +373,7 @@ public sealed class CustomModelsSystem : ModSystem
         _wearableCompositeModelReplacers.Add(code, modelConfig.WearableCompositeModelReplacers);
 
         CustomModels.Add(code, modelData);
-        _oldMainTextureCodes.Add(code, modelConfig.MainTextureCode);
+        _oldMainTextureCodes.Add(code, mainTextures.ToArray());
     }
     private void LoadModelReplacements(ICoreAPI api)
     {
@@ -1073,27 +1068,32 @@ public sealed class CustomModelsSystem : ModSystem
     {
         foreach ((string modelCode, CustomModelData data) in CustomModels)
         {
-            string oldTextureCode = _oldMainTextureCodes[modelCode];
-            string newTextureCode = data.MainTextureCode;
+            string[] oldTextureCodes = _oldMainTextureCodes[modelCode];
+            string[] newTextureCodes = data.MainTextureCodes;
 
-            if (data.Shape.Textures.ContainsKey(oldTextureCode))
+            for (int textureIndex = 0; textureIndex < newTextureCodes.Length; textureIndex++)
             {
-                AssetLocation texturePath = data.Shape.Textures[oldTextureCode];
-                data.Shape.Textures.Remove(oldTextureCode);
-                data.Shape.Textures[newTextureCode] = texturePath;
-            }
+                string oldTextureCode = oldTextureCodes[textureIndex];
+                string newTextureCode = newTextureCodes[textureIndex];
 
-            if (data.Shape.TextureSizes.ContainsKey(oldTextureCode))
-            {
-                int[] size = data.Shape.TextureSizes[oldTextureCode];
-                data.Shape.TextureSizes.Remove(oldTextureCode);
-                data.Shape.TextureSizes[newTextureCode] = size;
-                data.MainTextureSize = new(size[0], size[1]);
-            }
+                if (data.Shape.Textures.ContainsKey(oldTextureCode))
+                {
+                    AssetLocation texturePath = data.Shape.Textures[oldTextureCode];
+                    data.Shape.Textures.Remove(oldTextureCode);
+                    data.Shape.Textures[newTextureCode] = texturePath;
+                }
 
-            foreach (ShapeElement element in data.Shape.Elements)
-            {
-                ProcessShapeElement(element, oldTextureCode, newTextureCode);
+                if (data.Shape.TextureSizes.ContainsKey(oldTextureCode))
+                {
+                    int[] size = data.Shape.TextureSizes[oldTextureCode];
+                    data.Shape.TextureSizes.Remove(oldTextureCode);
+                    data.Shape.TextureSizes[newTextureCode] = size;
+                }
+
+                foreach (ShapeElement element in data.Shape.Elements)
+                {
+                    ProcessShapeElement(element, oldTextureCode, newTextureCode);
+                }
             }
         }
     }
@@ -1125,7 +1125,7 @@ public sealed class CustomModelsSystem : ModSystem
         {
             foreach ((string textureCode, AssetLocation texturePath) in data.Shape.Textures)
             {
-                if (textureCode == data.MainTextureCode)
+                if (data.MainTextureCodes.Contains(textureCode))
                 {
                     if (_textures.ContainsKey(textureCode)) continue;
 
@@ -1137,14 +1137,14 @@ public sealed class CustomModelsSystem : ModSystem
 
                     _clientApi.EntityTextureAtlas.GetOrInsertTexture(texturePath, out _, out TextureAtlasPosition texPos, () => textureAsset2.ToBitmap(_clientApi));
 
-                    data.MainTexturePosition = texPos;
-
-                    data.MainTexture = new CompositeTexture()
+                    CompositeTexture mainTexture = new CompositeTexture()
                     {
                         Base = texturePath
                     };
 
-                    data.MainTexture.Bake(_clientApi.Assets);
+                    mainTexture.Bake(_clientApi.Assets);
+
+                    data.MainTextures[textureCode] = mainTexture;
 
                     continue;
                 }
