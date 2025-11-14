@@ -1,0 +1,206 @@
+{
+	"editor": {
+		"backDropShape": "C:/Users/Cal/Desktop/digitigrade",
+		"allAngles": true,
+		"entityTextureMode": true
+	},
+	"textureWidth": 64,
+	"textureHeight": 64,
+	"textureSizes": {
+	},
+	"textures": {
+			"templarlegs": "armor/entity/templar_light_steel",
+			"line": "block/lines/linered"
+	},
+	"elements": [
+		{
+			"name": "ArmorUpperLegR",
+			"stepParentName": "UpperFootR",
+			"from": [ -0.19, -0.5, -0.1 ],
+			"to": [ 4.41, 9.5, 3.7 ],
+			"uv": [ 16.0, 35.0 ],
+			"rotationOrigin": [ -0.2, -0.5, -0.1 ],
+			"faces": {
+				"north": { "texture": "#templarlegs", "uv": [ 16.0, 38.5, 20.5, 48.5 ] },
+				"east": { "texture": "#templarlegs", "uv": [ 20.5, 38.5, 24.0, 48.5 ] },
+				"south": { "texture": "#templarlegs", "uv": [ 24.0, 38.5, 28.5, 48.5 ] },
+				"west": { "texture": "#templarlegs", "uv": [ 28.5, 38.5, 32.0, 48.5 ] },
+				"up": { "texture": "#templarlegs", "uv": [ 16.0, 35.0, 20.5, 38.5 ] },
+				"down": { "texture": "#templarlegs", "uv": [ 20.5, 35.0, 25.0, 38.5 ] }
+			}
+		},
+		{
+			"name": "ArmorUpperLegL",
+			"stepParentName": "UpperFootL",
+			"from": [ -0.19, -0.5, -0.5 ],
+			"to": [ 4.41, 9.5, 3.3 ],
+			"uv": [ 0.0, 35.0 ],
+			"rotationOrigin": [ -0.2, -0.5, -0.5 ],
+			"faces": {
+				"north": { "texture": "#templarlegs", "uv": [ 0.0, 38.5, 4.5, 48.5 ] },
+				"east": { "texture": "#templarlegs", "uv": [ 4.5, 38.5, 8.0, 48.5 ] },
+				"south": { "texture": "#templarlegs", "uv": [ 8.0, 38.5, 12.5, 48.5 ] },
+				"west": { "texture": "#templarlegs", "uv": [ 12.5, 38.5, 16.0, 48.5 ] },
+				"up": { "texture": "#templarlegs", "uv": [ 0.0, 35.0, 4.5, 38.5 ] },
+				"down": { "texture": "#templarlegs", "uv": [ 4.5, 35.0, 9.0, 38.5 ] }
+			}
+		},
+		{
+			"name": "ArmorLowerLegR",
+			"stepParentName": "LowerFootR",
+			"from": [ -0.3, 1.4, -0.25 ],
+			"to": [ 4.2, 10.4, 3.25 ],
+			"uv": [ 16.0, 48.5 ],
+			"rotationOrigin": [ -0.3, 1.4, -0.4 ],
+			"faces": {
+				"north": { "texture": "#templarlegs", "uv": [ 16.0, 52.0, 20.5, 61.0 ] },
+				"east": { "texture": "#templarlegs", "uv": [ 20.5, 52.0, 24.0, 61.0 ] },
+				"south": { "texture": "#templarlegs", "uv": [ 24.0, 52.0, 28.5, 61.0 ] },
+				"west": { "texture": "#templarlegs", "uv": [ 28.5, 52.0, 32.0, 61.0 ] },
+				"up": { "texture": "#templarlegs", "uv": [ 16.0, 48.5, 20.5, 52.0 ] },
+				"down": { "texture": "#templarlegs", "uv": [ 20.5, 48.5, 25.0, 52.0 ] }
+			},
+			"children": [
+				{
+					"name": "ArmorBootR2",
+					"from": [ -1.1, -1.5, -0.2 ],
+					"to": [ 5.0, 0.2, 3.7 ],
+					"unwrapMode": 5,
+					"unwrapRotation": 1,
+					"uv": [ 42.5, 53.5 ],
+					"rotationOrigin": [ 4.1071, -3.1078, 4.0276 ],
+					"rotationZ": 0.0026,
+					"faces": {
+						"north": { "texture": "#templarlegs", "uv": [ 42.5, 55.0, 44.0, 61.0 ], "rotation": 270 },
+						"east": { "texture": "#templarlegs", "uv": [ 44.0, 53.5, 47.5, 55.0 ], "rotation": 180 },
+						"south": { "texture": "#templarlegs", "uv": [ 47.5, 55.0, 49.0, 61.0 ], "rotation": 90 },
+						"west": { "texture": "#templarlegs", "uv": [ 44.0, 61.0, 47.5, 62.5 ] },
+						"up": { "texture": "#templarlegs", "uv": [ 44.0, 55.0, 47.5, 61.0 ], "rotation": 90 },
+						"down": { "texture": "#templarlegs", "uv": [ 49.0, 55.0, 52.5, 61.0 ], "rotation": 270 }
+					},
+					"children": [
+						{
+							"name": "ArmorBootR",
+							"from": [ 0.8, 4.0, 0.0 ],
+							"to": [ 5.9, 5.0, 3.9 ],
+							"unwrapMode": 5,
+							"unwrapRotation": 1,
+							"uv": [ 42.5, 53.5 ],
+							"rotationOrigin": [ 0.8, 4.0, 0.0 ],
+							"faces": {
+								"north": { "texture": "#templarlegs", "uv": [ 42.5, 54.5, 43.5, 59.5 ], "rotation": 270 },
+								"east": { "texture": "#templarlegs", "uv": [ 43.5, 53.5, 47.0, 54.5 ], "rotation": 180 },
+								"south": { "texture": "#templarlegs", "uv": [ 47.0, 54.5, 48.0, 59.5 ], "rotation": 90 },
+								"west": { "texture": "#templarlegs", "uv": [ 43.5, 59.5, 47.0, 60.5 ] },
+								"up": { "texture": "#templarlegs", "uv": [ 43.5, 54.5, 47.0, 59.5 ], "rotation": 90 },
+								"down": { "texture": "#templarlegs", "uv": [ 48.0, 54.5, 51.5, 59.5 ], "rotation": 270 }
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "ArmorLowerLegL",
+			"stepParentName": "LowerFootL",
+			"from": [ -0.3, 1.4, -0.25 ],
+			"to": [ 4.2, 10.4, 3.25 ],
+			"uv": [ 0.0, 48.5 ],
+			"rotationOrigin": [ -0.3, 1.4, -0.4 ],
+			"faces": {
+				"north": { "texture": "#templarlegs", "uv": [ 0.0, 52.0, 4.5, 61.0 ] },
+				"east": { "texture": "#templarlegs", "uv": [ 4.5, 52.0, 8.0, 61.0 ] },
+				"south": { "texture": "#templarlegs", "uv": [ 8.0, 52.0, 12.5, 61.0 ] },
+				"west": { "texture": "#templarlegs", "uv": [ 12.5, 52.0, 16.0, 61.0 ] },
+				"up": { "texture": "#templarlegs", "uv": [ 0.0, 48.5, 4.5, 52.0 ] },
+				"down": { "texture": "#templarlegs", "uv": [ 4.5, 48.5, 9.0, 52.0 ] }
+			},
+			"children": [
+				{
+					"name": "ArmorBootL2",
+					"from": [ -1.1, -1.5, -0.2 ],
+					"to": [ 5.0, 0.2, 3.7 ],
+					"unwrapMode": 5,
+					"unwrapRotation": 1,
+					"uv": [ 42.4, 53.3 ],
+					"rotationOrigin": [ 4.122, -3.1896, 8.1735 ],
+					"rotationZ": 0.0026,
+					"faces": {
+						"north": { "texture": "#templarlegs", "uv": [ 42.5, 55.0, 44.0, 61.0 ], "rotation": 270 },
+						"east": { "texture": "#templarlegs", "uv": [ 44.0, 53.5, 47.5, 55.0 ], "rotation": 180 },
+						"south": { "texture": "#templarlegs", "uv": [ 47.5, 55.0, 49.0, 61.0 ], "rotation": 90 },
+						"west": { "texture": "#templarlegs", "uv": [ 44.0, 61.0, 47.5, 62.5 ] },
+						"up": { "texture": "#templarlegs", "uv": [ 44.0, 55.0, 47.5, 61.0 ], "rotation": 90 },
+						"down": { "texture": "#templarlegs", "uv": [ 49.0, 55.0, 52.5, 61.0 ], "rotation": 270 }
+					},
+					"children": [
+						{
+							"name": "ArmorBootL",
+							"from": [ 0.8, 4.0, 0.0 ],
+							"to": [ 5.9, 5.0, 3.9 ],
+							"unwrapMode": 5,
+							"unwrapRotation": 1,
+							"uv": [ 47.0, 53.5 ],
+							"rotationOrigin": [ 0.8, 4.0, 0.0 ],
+							"faces": {
+								"north": { "texture": "#templarlegs", "uv": [ 47.0, 54.5, 48.0, 59.5 ], "rotation": 270 },
+								"east": { "texture": "#templarlegs", "uv": [ 48.0, 53.5, 51.5, 54.5 ], "rotation": 180 },
+								"south": { "texture": "#templarlegs", "uv": [ 51.5, 54.5, 52.5, 59.5 ], "rotation": 90 },
+								"west": { "texture": "#templarlegs", "uv": [ 48.0, 59.5, 51.5, 60.5 ] },
+								"up": { "texture": "#templarlegs", "uv": [ 48.0, 54.5, 51.5, 59.5 ], "rotation": 90 },
+								"down": { "texture": "#templarlegs", "uv": [ 52.5, 54.5, 56.0, 59.5 ], "rotation": 270 }
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Line",
+			"stepParentName": "LowerFootL",
+			"from": [ 2.8, 6.7, 2.0 ],
+			"to": [ 2.8, 6.7, 2.0 ],
+			"uv": [ 0.0, 0.0 ],
+			"rotationOrigin": [ 2.8, 6.7, 2.0 ],
+			"faces": {
+				"north": { "texture": "#line", "uv": [ 0.0, 0.5, 0.5, 1.0 ] },
+				"east": { "texture": "#line", "uv": [ 0.5, 0.5, 1.0, 1.0 ] },
+				"south": { "texture": "#line", "uv": [ 1.0, 0.5, 1.5, 1.0 ] },
+				"west": { "texture": "#line", "uv": [ 1.5, 0.5, 2.0, 1.0 ] },
+				"up": { "texture": "#line", "uv": [ 0.0, 0.0, 0.5, 0.5 ] },
+				"down": { "texture": "#line", "uv": [ 0.5, 0.0, 1.0, 0.5 ] }
+			}
+		},
+		{
+			"name": "ArmorUpperLegR2",
+			"stepParentName": "MiddleFootR",
+			"from": [ -0.19, -0.5, -0.1 ],
+			"to": [ 4.41, 5.5, 3.7 ],
+			"uv": [ 16.0, 35.0 ],
+			"rotationOrigin": [ -0.2, -0.5, -0.1 ],
+			"faces": {
+				"north": { "texture": "#templarlegs", "uv": [ 16.0, 38.5, 20.5, 44.5 ] },
+				"east": { "texture": "#templarlegs", "uv": [ 20.5, 38.5, 24.0, 44.5 ] },
+				"south": { "texture": "#templarlegs", "uv": [ 24.0, 38.5, 28.5, 44.5 ] },
+				"west": { "texture": "#templarlegs", "uv": [ 28.5, 38.5, 32.0, 44.5 ] },
+				"up": { "texture": "#templarlegs", "uv": [ 16.0, 35.0, 20.5, 38.5 ] },
+				"down": { "texture": "#templarlegs", "uv": [ 20.5, 35.0, 25.0, 38.5 ] }
+			}
+		},
+		{
+			"name": "ArmorUpperLegL2",
+			"stepParentName": "MiddleFootL",
+			"from": [ -0.19, -0.5, -0.5 ],
+			"to": [ 4.41, 5.5, 3.3 ],
+			"uv": [ 0.0, 35.0 ],
+			"rotationOrigin": [ -0.2, -0.5, -0.5 ],
+			"faces": {
+				"north": { "texture": "#templarlegs", "uv": [ 0.0, 38.5, 4.5, 44.5 ] },
+				"east": { "texture": "#templarlegs", "uv": [ 4.5, 38.5, 8.0, 44.5 ] },
+				"south": { "texture": "#templarlegs", "uv": [ 8.0, 38.5, 12.5, 44.5 ] },
+				"west": { "texture": "#templarlegs", "uv": [ 12.5, 38.5, 16.0, 44.5 ] },
+				"up": { "texture": "#templarlegs", "uv": [ 0.0, 35.0, 4.5, 38.5 ] },
+				"down": { "texture": "#templarlegs", "uv": [ 4.5, 35.0, 9.0, 38.5 ] }
+			}
+		}
+	]}

@@ -1,0 +1,47 @@
+{
+	"editor": {
+		"backDropShape": "E:/Programs/VSModelCreator/seraph",
+		"allAngles": true,
+		"entityTextureMode": true
+	},
+	"textureWidth": 64,
+	"textureHeight": 64,
+	"textureSizes": {
+	},
+	"textures": {
+		"material": "entity/humanoid/serapharmor/plate/steel"
+	},
+	"elements": [
+		{
+			"name": "ArmorLowerLegR",
+			"stepParentName": "LowerFootR",
+			"from": [ -0.3, -0.2, -0.35 ],
+			"to": [ 4.2, 9.3, 3.15 ],
+			"uv": [ 16.0, 51.0 ],
+			"rotationOrigin": [ -0.3, -0.2, -0.5 ],
+			"faces": {
+				"north": { "texture": "#material", "uv": [ 16.0, 54.5, 20.5, 64.0 ] },
+				"east": { "texture": "#material", "uv": [ 20.5, 54.5, 24.0, 64.0 ] },
+				"south": { "texture": "#material", "uv": [ 24.0, 54.5, 28.5, 64.0 ] },
+				"west": { "texture": "#material", "uv": [ 28.5, 54.5, 32.0, 64.0 ] },
+				"up": { "texture": "#material", "uv": [ 16.0, 51.0, 20.5, 54.5 ] },
+				"down": { "texture": "#material", "uv": [ 20.5, 51.0, 25.0, 54.5 ] }
+			}
+		},
+		{
+			"name": "ArmorLowerLegL",
+			"stepParentName": "LowerFootL",
+			"from": [ -0.3, -0.2, -0.15 ],
+			"to": [ 4.2, 9.3, 3.35 ],
+			"uv": [ 0.0, 51.0 ],
+			"rotationOrigin": [ -0.3, -0.2, -0.3 ],
+			"faces": {
+				"north": { "texture": "#material", "uv": [ 0.0, 54.5, 4.5, 64.0 ] },
+				"east": { "texture": "#material", "uv": [ 4.5, 54.5, 8.0, 64.0 ] },
+				"south": { "texture": "#material", "uv": [ 8.0, 54.5, 12.5, 64.0 ] },
+				"west": { "texture": "#material", "uv": [ 12.5, 54.5, 16.0, 64.0 ] },
+				"up": { "texture": "#material", "uv": [ 0.0, 51.0, 4.5, 54.5 ] },
+				"down": { "texture": "#material", "uv": [ 4.5, 51.0, 9.0, 54.5 ] }
+			}
+		}
+	]}

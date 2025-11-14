@@ -1,0 +1,71 @@
+[
+	{
+	"file": "playermodellib:config/baseshapes/digitigrade.json",
+	"op": "addmerge",
+	"path": "/digitigrade/WearableModelReplacersByShape",
+	"dependsOn": [{ "modid": "forlornadditions" }],
+	"value": {
+		"forlornadditions:wearable/zealot/forlornzealot/legs": "playermodellib:entity/humanoid/seraph/mods/armor/forlornadditions/zealot/forlornzealot/legs",
+		"forlornadditions:wearable/zealot/forlornzealot/head": "playermodellib:entity/humanoid/seraph/mods/armor/forlornadditions/zealot/forlornzealot/head",
+		"forlornadditions:wearable/acolyte/forlornacolyte/legs": "playermodellib:entity/humanoid/seraph/mods/armor/forlornadditions/acolyte/forlornacolyte/legs"
+		}
+	},
+	{
+	"file": "playermodellib:config/baseshapes/digitigrade.json",
+	"op": "addmerge",
+	"path": "/digitigrade/WearableModelReplacersByShape",
+	"dependsOn": [{ "modid": "forlornadditionsco" }],
+	"value": {
+		"forlornadditionsco:armor/antique/forlornzealot-pristine/legs": "playermodellib:entity/humanoid/seraph/mods/armor/forlornadditions/zealot/forlornzealot/legs",
+		"forlornadditionsco:armor/antique/forlornzealot-pristine/head": "playermodellib:entity/humanoid/seraph/mods/armor/forlornadditions/zealot/forlornzealot/head",
+		"forlornadditionsco:armor/antique/forlornzealot-pristine/head/opened": "playermodellib:entity/humanoid/seraph/mods/armor/forlornadditions/zealot/forlornzealot/head",
+		"forlornadditionsco:armor/antique/forlornzealot-pristine/head/closed": "playermodellib:entity/humanoid/seraph/mods/armor/forlornadditions/zealot/forlornzealot/head",
+		"forlornadditionsco:armor/acolyte/forlornacolyte/legs": "playermodellib:entity/humanoid/seraph/mods/armor/forlornadditions/acolyte/forlornacolyte/legs"
+		}
+	},
+	{
+	"file": "playermodellib:config/baseshapes/digitigrade.json",
+	"op": "addmerge",
+	"path": "/digitigrade/WearableModelReplacersByShape",
+	"dependsOn": [{ "modid": "blackguardadditions" }],
+	"value": {
+		"blackguardadditions:wearable/tracker/blackguardtracker/legs": "playermodellib:entity/humanoid/seraph/mods/armor/blackguardadditions/tracker/blackguardtracker/legs",
+		"blackguardadditions:wearable/antique/blackguardwarden-broken/legs": "playermodellib:entity/humanoid/seraph/mods/armor/blackguardadditions/antique/blackguardwarden-broken/legs",
+		"blackguardadditions:wearable/antique/blackguardwarden-broken/head": "playermodellib:entity/humanoid/seraph/mods/armor/blackguardadditions/antique/blackguardwarden-broken/head",
+		"blackguardadditions:wearable/antique/blackguardwarden-damaged/legs": "playermodellib:entity/humanoid/seraph/mods/armor/blackguardadditions/antique/blackguardwarden-damaged/legs",
+		"blackguardadditions:wearable/antique/blackguardwarden-damaged/head": "playermodellib:entity/humanoid/seraph/mods/armor/blackguardadditions/antique/blackguardwarden-damaged/head",
+		"blackguardadditions:wearable/antique/blackguardwarden-pristine/legs": "playermodellib:entity/humanoid/seraph/mods/armor/blackguardadditions/antique/blackguardwarden-pristine/legs",
+		"blackguardadditions:wearable/antique/blackguardwarden-pristine/head": "playermodellib:entity/humanoid/seraph/mods/armor/blackguardadditions/antique/blackguardwarden-pristine/head"
+		}
+	},
+	{
+	"file": "playermodellib:config/baseshapes/digitigrade.json",
+	"op": "addmerge",
+	"path": "/digitigrade/WearableModelReplacersByShape",
+	"dependsOn": [{ "modid": "blackguardadditionscombatoverhaulcompatible" }],
+	"value": {
+		"blackguardadditions:wearable/tracker/blackguardtracker/legs": "playermodellib:entity/humanoid/seraph/mods/armor/blackguardadditions/tracker/blackguardtracker/legs",
+		"blackguardadditions:wearable/antique/blackguardwarden-broken/legs": "playermodellib:entity/humanoid/seraph/mods/armor/blackguardadditions/antique/blackguardwarden-broken/legs",
+		"blackguardadditions:wearable/antique/blackguardwarden-broken/head": "playermodellib:entity/humanoid/seraph/mods/armor/blackguardadditions/antique/blackguardwarden-broken/head",
+		"blackguardadditions:wearable/antique/blackguardwarden-damaged/legs": "playermodellib:entity/humanoid/seraph/mods/armor/blackguardadditions/antique/blackguardwarden-damaged/legs",
+		"blackguardadditions:wearable/antique/blackguardwarden-damaged/head": "playermodellib:entity/humanoid/seraph/mods/armor/blackguardadditions/antique/blackguardwarden-damaged/head",
+		"blackguardadditions:wearable/antique/blackguardwarden-pristine/legs": "playermodellib:entity/humanoid/seraph/mods/armor/blackguardadditions/antique/blackguardwarden-pristine/legs",
+		"blackguardadditions:wearable/antique/blackguardwarden-pristine/head": "playermodellib:entity/humanoid/seraph/mods/armor/blackguardadditions/antique/blackguardwarden-pristine/head"
+		}
+	},
+	{
+	"file": "playermodellib:config/baseshapes/digitigrade.json",
+	"op": "addmerge",
+	"path": "/digitigrade/WearableModelReplacersByShape",
+	"dependsOn": [{ "modid": "bgacocadjust" }],
+	"value": {
+		"blackguardadditions:wearable/tracker/blackguardtracker/legs": "playermodellib:entity/humanoid/seraph/mods/armor/blackguardadditions/tracker/blackguardtracker/legs",
+		"blackguardadditions:wearable/antique/blackguardwarden-broken/legs": "playermodellib:entity/humanoid/seraph/mods/armor/blackguardadditions/antique/blackguardwarden-broken/legs",
+		"blackguardadditions:wearable/antique/blackguardwarden-broken/head": "playermodellib:entity/humanoid/seraph/mods/armor/blackguardadditions/antique/blackguardwarden-broken/head",
+		"blackguardadditions:wearable/antique/blackguardwarden-damaged/legs": "playermodellib:entity/humanoid/seraph/mods/armor/blackguardadditions/antique/blackguardwarden-damaged/legs",
+		"blackguardadditions:wearable/antique/blackguardwarden-damaged/head": "playermodellib:entity/humanoid/seraph/mods/armor/blackguardadditions/antique/blackguardwarden-damaged/head",
+		"blackguardadditions:wearable/antique/blackguardwarden-pristine/legs": "playermodellib:entity/humanoid/seraph/mods/armor/blackguardadditions/antique/blackguardwarden-pristine/legs",
+		"blackguardadditions:wearable/antique/blackguardwarden-pristine/head": "playermodellib:entity/humanoid/seraph/mods/armor/blackguardadditions/antique/blackguardwarden-pristine/head"
+		}
+	}
+]
