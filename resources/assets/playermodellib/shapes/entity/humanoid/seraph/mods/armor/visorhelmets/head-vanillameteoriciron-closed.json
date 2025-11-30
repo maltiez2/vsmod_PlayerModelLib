@@ -1,0 +1,104 @@
+{
+	"editor": {
+		"backDropShape": "C:/Users/Cal/Desktop/digitigrade",
+		"collapsedPaths": "",
+		"allAngles": true,
+		"entityTextureMode": true
+	},
+	"textureWidth": 64,
+	"textureHeight": 64,
+	"textureSizes": {
+	},
+	"textures": {
+		"material": "visorhelmets:plate/meteoriciron"
+	},
+	"elements": [
+		{
+			"name": "ArmorHelmet",
+			"stepParentName": "Head",
+			"from": [ -0.2, -0.5, -0.6 ],
+			"to": [ 5.9, 5.5, 5.7 ],
+			"unwrapMode": 4,
+			"uv": [ 27.0, 14.5 ],
+			"rotationOrigin": [ -0.2, -0.5, -0.6 ],
+			"faces": {
+				"north": { "texture": "#material", "uv": [ 27.0, 20.5, 33.0, 26.5 ] },
+				"east": { "texture": "#material", "uv": [ 45.0, 20.5, 51.0, 26.5 ] },
+				"south": { "texture": "#material", "uv": [ 39.0, 20.5, 45.0, 26.5 ] },
+				"west": { "texture": "#material", "uv": [ 33.0, 20.5, 39.0, 26.5 ] },
+				"up": { "texture": "#material", "uv": [ 33.0, 14.5, 39.0, 20.5 ], "rotation": 90 },
+				"down": { "texture": "#material", "uv": [ 33.0, 26.5, 39.0, 32.5 ], "rotation": 90 }
+			},
+			"children": [
+				{
+					"name": "Hinge",
+					"from": [ 0.0, 4.3, 0.0 ],
+					"to": [ 0.0, 4.3, 0.0 ],
+					"uv": [ 0.0, 0.0 ],
+					"rotationOrigin": [ 0.0, 4.3, 0.0 ],
+					"faces": {
+						"north": { "texture": "#null", "uv": [ 0.0, 0.5, 0.5, 1.0 ], "enabled": false },
+						"east": { "texture": "#null", "uv": [ 0.5, 0.5, 1.0, 1.0 ], "enabled": false },
+						"south": { "texture": "#null", "uv": [ 1.0, 0.5, 1.5, 1.0 ], "enabled": false },
+						"west": { "texture": "#null", "uv": [ 1.5, 0.5, 2.0, 1.0 ], "enabled": false },
+						"up": { "texture": "#null", "uv": [ 0.0, 0.0, 0.5, 0.5 ], "enabled": false },
+						"down": { "texture": "#null", "uv": [ 0.5, 0.0, 1.0, 0.5 ], "enabled": false }
+					},
+					"children": [
+						{
+							"name": "ArmorFace",
+							"from": [ -2.1, -5.4, 0.2 ],
+							"to": [ 3.7, -0.4, 6.2 ],
+							"autoUnwrap": false,
+							"uv": [ 47.5, 25.0 ],
+							"rotationOrigin": [ -0.6, -3.9, 3.2 ],
+							"rotationZ": 45.0,
+							"faces": {
+								"north": { "texture": "#material", "uv": [ 45.0, 21.0, 50.5, 26.0 ], "windMode": [-1,-1,-1,-1], "windData": [1,1,1,1] },
+								"east": { "texture": "#material", "uv": [ 3.0, 6.0, 9.0, 11.0 ], "windMode": [-1,-1,-1,-1], "windData": [1,1,1,1] },
+								"south": { "texture": "#material", "uv": [ 45.5, 20.5, 51.0, 25.5 ], "windMode": [-1,-1,-1,-1], "windData": [1,1,1,1] },
+								"west": { "texture": "#material", "uv": [ 34.0, 8.5, 40.0, 13.5 ] },
+								"up": { "texture": "#material", "uv": [ 34.0, 7.5, 40.0, 13.0 ], "rotation": 90, "windMode": [-1,-1,-1,-1], "windData": [1,1,1,1] },
+								"down": { "texture": "#material", "uv": [ 6.0, 2.5, 11.5, 8.5 ], "windMode": [-1,-1,-1,-1], "windData": [1,1,1,1] }
+							},
+							"children": [
+								{
+									"name": "ArmorNasal",
+									"from": [ 1.0, 3.001, 2.5 ],
+									"to": [ 3.6, 3.501, 3.5 ],
+									"autoUnwrap": false,
+									"uv": [ 39.5, 27.0 ],
+									"rotationOrigin": [ 1.0, 3.0, 3.0 ],
+									"faces": {
+										"north": { "texture": "#material", "uv": [ 39.5, 28.0, 42.0, 28.5 ] },
+										"east": { "texture": "#material", "uv": [ 0.0, 0.0, 1.0, 0.5 ], "windMode": [-1,-1,-1,-1], "windData": [1,1,1,1] },
+										"south": { "texture": "#material", "uv": [ 42.0, 28.0, 44.5, 28.5 ] },
+										"west": { "texture": "#material", "uv": [ 44.5, 28.0, 45.5, 28.5 ] },
+										"up": { "texture": "#material", "uv": [ 39.5, 27.0, 42.0, 28.0 ] },
+										"down": { "texture": "#material", "uv": [ 39.5, 27.0, 42.5, 28.0 ], "autoUv": false, "windMode": [-1,-1,-1,-1], "windData": [1,1,1,1] }
+									}
+								}
+							]
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "ArmorNeck",
+			"stepParentName": "Neck",
+			"from": [ -0.3, 0.6, -0.3 ],
+			"to": [ 3.3, 2.4, 3.3 ],
+			"unwrapMode": 4,
+			"uv": [ 12.0, 5.5 ],
+			"rotationOrigin": [ -0.3, 2.6, -0.3 ],
+			"faces": {
+				"north": { "texture": "#material", "uv": [ 12.0, 5.5, 15.5, 7.0 ] },
+				"east": { "texture": "#material", "uv": [ 22.5, 5.5, 26.0, 7.0 ] },
+				"south": { "texture": "#material", "uv": [ 19.0, 5.5, 22.5, 7.0 ] },
+				"west": { "texture": "#material", "uv": [ 15.5, 5.5, 19.0, 7.0 ] },
+				"up": { "texture": "#null", "uv": [ 15.5, 5.5, 19.0, 9.0 ], "rotation": 90, "enabled": false },
+				"down": { "texture": "#null", "uv": [ 15.5, 10.5, 19.0, 14.0 ], "rotation": 90, "enabled": false }
+			}
+		}
+	]}

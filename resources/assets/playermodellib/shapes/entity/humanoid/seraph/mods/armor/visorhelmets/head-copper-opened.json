@@ -1,0 +1,136 @@
+{
+	"editor": {
+		"backDropShape": "C:/Users/Cal/AppData/Roaming/VintagestoryData/Mods/koboldplayerrdx_1.0.7/assets/koboldrdx/shapes/entity/humanoid/kobold-faceless",
+		"collapsedPaths": "",
+		"allAngles": true,
+		"entityTextureMode": true
+	},
+	"textureWidth": 64,
+	"textureHeight": 64,
+	"textureSizes": {
+	},
+	"textures": {
+		"material": "visorhelmets:plate/copper"
+	},
+	"elements": [
+		{
+			"name": "ArmorHelmet",
+			"stepParentName": "Head",
+			"from": [ -0.2, -0.5, -0.6 ],
+			"to": [ 5.9, 5.5, 5.7 ],
+			"unwrapMode": 4,
+			"autoUnwrap": false,
+			"uv": [ 27.0, 14.5 ],
+			"rotationOrigin": [ -0.2, -0.5, -0.6 ],
+			"faces": {
+				"north": { "texture": "#material", "uv": [ 27.0, 20.5, 33.0, 26.5 ] },
+				"east": { "texture": "#material", "uv": [ 45.5, 20.5, 51.5, 26.5 ] },
+				"south": { "texture": "#material", "uv": [ 39.0, 20.5, 45.0, 26.5 ] },
+				"west": { "texture": "#material", "uv": [ 33.0, 20.5, 39.0, 26.5 ] },
+				"up": { "texture": "#material", "uv": [ 33.0, 14.5, 39.0, 20.5 ], "rotation": 90 },
+				"down": { "texture": "#material", "uv": [ 33.0, 26.5, 39.0, 32.5 ], "rotation": 90 }
+			},
+			"children": [
+				{
+					"name": "ArmorHelmetop",
+					"from": [ 0.5, 6.0, 0.5 ],
+					"to": [ 5.6, 6.5, 5.8 ],
+					"autoUnwrap": false,
+					"uv": [ 39.5, 27.5 ],
+					"rotationOrigin": [ 0.5, 6.0, 0.5 ],
+					"faces": {
+						"north": { "texture": "#material", "uv": [ 39.5, 20.5, 44.5, 21.0 ] },
+						"east": { "texture": "#material", "uv": [ 33.5, 18.5, 38.5, 19.0 ] },
+						"south": { "texture": "#material", "uv": [ 39.5, 24.5, 44.5, 25.0 ] },
+						"west": { "texture": "#material", "uv": [ 33.5, 14.5, 38.5, 15.0 ] },
+						"up": { "texture": "#material", "uv": [ 33.5, 15.0, 38.5, 20.0 ] }
+					}
+				},
+				{
+					"name": "ArmorHelmetop2",
+					"from": [ 2.0, 6.5, 2.0 ],
+					"to": [ 5.1, 7.0, 4.3 ],
+					"autoUnwrap": false,
+					"uv": [ 39.5, 27.5 ],
+					"rotationOrigin": [ 2.0, 6.5, 2.0 ],
+					"faces": {
+						"north": { "texture": "#material", "uv": [ 39.5, 20.5, 42.5, 21.0 ] },
+						"east": { "texture": "#material", "uv": [ 33.5, 18.5, 35.5, 19.0 ] },
+						"south": { "texture": "#material", "uv": [ 39.5, 24.5, 42.5, 25.0 ] },
+						"west": { "texture": "#material", "uv": [ 33.5, 14.5, 35.5, 15.0 ] },
+						"up": { "texture": "#material", "uv": [ 34.5, 16.0, 37.5, 18.0 ] }
+					}
+				},
+				{
+					"name": "VisorHinge",
+					"from": [ 3.8, 2.3, 0.0 ],
+					"to": [ 3.8, 2.3, 0.0 ],
+					"uv": [ 0.0, 0.0 ],
+					"rotationOrigin": [ 3.8, 2.3, 0.0 ],
+					"rotationZ": -58.0,
+					"faces": {
+						"north": { "texture": "#material", "uv": [ 0.0, 0.5, 0.5, 1.0 ] },
+						"east": { "texture": "#material", "uv": [ 0.5, 0.5, 1.0, 1.0 ] },
+						"south": { "texture": "#material", "uv": [ 1.0, 0.5, 1.5, 1.0 ] },
+						"west": { "texture": "#material", "uv": [ 1.5, 0.5, 2.0, 1.0 ] },
+						"up": { "texture": "#material", "uv": [ 0.0, 0.0, 0.5, 0.5 ] },
+						"down": { "texture": "#material", "uv": [ 0.5, 0.0, 1.0, 0.5 ] }
+					},
+					"children": [
+						{
+							"name": "Visor",
+							"from": [ -6.3, -3.3146, -0.1 ],
+							"to": [ -0.1, 2.6854, 6.4 ],
+							"unwrapMode": 4,
+							"autoUnwrap": false,
+							"uv": [ 27.0, 14.5 ],
+							"rotationOrigin": [ -6.2993, -3.3122, -0.1 ],
+							"faces": {
+								"north": { "texture": "#material", "uv": [ 27.0, 32.5, 33.0, 38.5 ], "windMode": [-1,-1,-1,-1], "windData": [1,1,1,1] },
+								"east": { "texture": "#material", "uv": [ 56.0, 28.5, 62.5, 34.5 ], "windMode": [-1,-1,-1,-1], "windData": [1,1,1,1] },
+								"south": { "texture": "#material", "uv": [ 39.0, 32.5, 45.0, 38.5 ], "windMode": [-1,-1,-1,-1], "windData": [1,1,1,1] },
+								"west": { "texture": "#material", "uv": [ 33.0, 32.5, 39.0, 38.5 ], "autoUv": false, "windMode": [-1,-1,-1,-1], "windData": [1,1,1,1] },
+								"up": { "texture": "#material", "uv": [ 56.0, 28.5, 62.5, 34.5 ], "rotation": 90 },
+								"down": { "texture": "#material", "uv": [ 56.0, 28.5, 62.5, 34.5 ], "rotation": 90 }
+							},
+							"children": [
+								{
+									"name": "ArmorFace",
+									"from": [ -0.4048, 0.0146, 2.6 ],
+									"to": [ -0.0048, 4.5146, 3.8 ],
+									"autoUnwrap": false,
+									"uv": [ 44.0, 27.0 ],
+									"rotationOrigin": [ -0.4048, 0.0146, 2.6 ],
+									"faces": {
+										"north": { "texture": "#material", "uv": [ 35.5, 34.0, 36.0, 38.5 ], "windMode": [-1,-1,-1,-1], "windData": [1,1,1,1] },
+										"south": { "texture": "#material", "uv": [ 36.0, 34.0, 36.5, 38.5 ], "windMode": [-1,-1,-1,-1], "windData": [1,1,1,1] },
+										"west": { "texture": "#material", "uv": [ 35.5, 34.0, 36.5, 38.5 ], "windMode": [-1,-1,-1,-1], "windData": [1,1,1,1] },
+										"up": { "texture": "#material", "uv": [ 39.0, 24.5, 39.5, 25.5 ] },
+										"down": { "texture": "#material", "uv": [ 32.5, 24.5, 33.0, 25.5 ] }
+									}
+								}
+							]
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "ArmorNeck",
+			"stepParentName": "Neck",
+			"from": [ -0.3, 0.6, -0.3 ],
+			"to": [ 3.3, 2.4, 3.3 ],
+			"unwrapMode": 4,
+			"uv": [ 12.0, 5.5 ],
+			"rotationOrigin": [ -0.3, 2.6, -0.3 ],
+			"faces": {
+				"north": { "texture": "#material", "uv": [ 12.0, 5.5, 15.5, 7.0 ] },
+				"east": { "texture": "#material", "uv": [ 22.5, 5.5, 26.0, 7.0 ] },
+				"south": { "texture": "#material", "uv": [ 19.0, 5.5, 22.5, 7.0 ] },
+				"west": { "texture": "#material", "uv": [ 15.5, 5.5, 19.0, 7.0 ] }
+			}
+		}
+	],
+	"animations": [
+	]
+}

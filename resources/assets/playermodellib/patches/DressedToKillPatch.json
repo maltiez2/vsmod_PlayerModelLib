@@ -1,0 +1,18 @@
+[
+	{
+	"file": "playermodellib:config/baseshapes/digitigrade.json",
+	"op": "addmerge",
+	"path": "/digitigrade/WearableModelReplacersByshape",
+	"dependsOn": [{ "modid": "dressedtokillredux" }],
+	"value": {
+		"dressedtokillredux:foot": "playermodellib:entity/humanoid/seraph/mods/clothing/dressedtokillredux/foot",
+		"dressedtokill:foot": "playermodellib:entity/humanoid/seraph/mods/clothing/dressedtokillredux/foot",
+		"dressedtokillredux:lowerbody": "playermodellib:entity/humanoid/seraph/mods/clothing/dressedtokillredux/lowerbody",
+		"dressedtokill:lowerbody": "playermodellib:entity/humanoid/seraph/mods/clothing/dressedtokillredux/lowerbody",
+		"dressedtokillredux:upperbody": "playermodellib:entity/humanoid/seraph/mods/clothing/dressedtokillredux/upperbody",
+		"dressedtokill:upperbody": "playermodellib:entity/humanoid/seraph/mods/clothing/dressedtokillredux/upperbody",
+		"dressedtokillredux:upperbodyover": "playermodellib:entity/humanoid/seraph/mods/clothing/dressedtokillredux/upperbodyover",
+		"dressedtokill:upperbodyover": "playermodellib:entity/humanoid/seraph/mods/clothing/dressedtokillredux/upperbodyover"
+		}
+	}
+]
