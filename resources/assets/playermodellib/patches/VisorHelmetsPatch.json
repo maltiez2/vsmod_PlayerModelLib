@@ -1,0 +1,34 @@
+[
+	{
+	"file": "playermodellib:config/baseshapes/digitigrade.json",
+	"op": "addmerge",
+	"path": "/digitigrade/WearableModelReplacersByShape",
+	"dependsOn": [{ "modid": "visorhelmets" }],
+	"value": {
+		"visorhelmets:armor/head-gold-closed": "playermodellib:entity/humanoid/seraph/mods/armor/visorhelmets/head-gold-closed",
+		"visorhelmets:armor/head-gold-opened": "playermodellib:entity/humanoid/seraph/mods/armor/visorhelmets/head-gold-opened",
+		"visorhelmets:armor/head-iron-closed": "playermodellib:entity/humanoid/seraph/mods/armor/visorhelmets/head-iron-closed",
+		"visorhelmets:armor/head-iron-opened": "playermodellib:entity/humanoid/seraph/mods/armor/visorhelmets/head-iron-opened",
+		"visorhelmets:armor/head-steel-closed": "playermodellib:entity/humanoid/seraph/mods/armor/visorhelmets/head-steel-closed",
+		"visorhelmets:armor/head-steel-opened": "playermodellib:entity/humanoid/seraph/mods/armor/visorhelmets/head-steel-opened",
+		"visorhelmets:armor/head-bronze-closed": "playermodellib:entity/humanoid/seraph/mods/armor/visorhelmets/head-bronze-closed",
+		"visorhelmets:armor/head-bronze-opened": "playermodellib:entity/humanoid/seraph/mods/armor/visorhelmets/head-bronze-opened",
+		"visorhelmets:armor/head-copper-closed": "playermodellib:entity/humanoid/seraph/mods/armor/visorhelmets/head-copper-closed",
+		"visorhelmets:armor/head-copper-opened": "playermodellib:entity/humanoid/seraph/mods/armor/visorhelmets/head-copper-opened",
+		"visorhelmets:armor/head-silver-closed": "playermodellib:entity/humanoid/seraph/mods/armor/visorhelmets/head-silver-closed",
+		"visorhelmets:armor/head-silver-opened": "playermodellib:entity/humanoid/seraph/mods/armor/visorhelmets/head-silver-opened",
+		"visorhelmets:armor/head-forlorn-closed": "playermodellib:entity/humanoid/seraph/mods/armor/visorhelmets/head-forlorn-closed",
+		"visorhelmets:armor/head-forlorn-opened": "playermodellib:entity/humanoid/seraph/mods/armor/visorhelmets/head-forlorn-opened",
+		"visorhelmets:armor/head-blackguard-closed": "playermodellib:entity/humanoid/seraph/mods/armor/visorhelmets/head-blackguard-closed",
+		"visorhelmets:armor/head-blackguard-opened": "playermodellib:entity/humanoid/seraph/mods/armor/visorhelmets/head-blackguard-opened",
+		"visorhelmets:armor/head-vanillagold-closed": "playermodellib:entity/humanoid/seraph/mods/armor/visorhelmets/head-vanillagold-closed",
+		"visorhelmets:armor/head-vanillagold-opened": "playermodellib:entity/humanoid/seraph/mods/armor/visorhelmets/head-vanillagold-opened",
+		"visorhelmets:armor/head-meteoriciron-closed": "playermodellib:entity/humanoid/seraph/mods/armor/visorhelmets/head-meteoriciron-closed",
+		"visorhelmets:armor/head-meteoriciron-opened": "playermodellib:entity/humanoid/seraph/mods/armor/visorhelmets/head-meteoriciron-opened",
+		"visorhelmets:armor/head-vanillasilver-closed": "playermodellib:entity/humanoid/seraph/mods/armor/visorhelmets/head-vanillasilver-closed",
+		"visorhelmets:armor/head-vanillasilver-opened": "playermodellib:entity/humanoid/seraph/mods/armor/visorhelmets/head-vanillasilver-opened",
+		"visorhelmets:armor/head-vanillameteoriciron-closed": "playermodellib:entity/humanoid/seraph/mods/armor/visorhelmets/head-vanillameteoriciron-closed",
+		"visorhelmets:armor/head-vanillameteoriciron-opened": "playermodellib:entity/humanoid/seraph/mods/armor/visorhelmets/head-vanillameteoriciron-opened"
+		}
+	}
+]
