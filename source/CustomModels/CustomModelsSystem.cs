@@ -30,6 +30,10 @@ public sealed class CustomModelsSystem : ModSystem
 
     public override double ExecuteOrder() => 0.21;
 
+    public override void Start(ICoreAPI api)
+    {
+        RegisterTags(api);
+    }
     public override void StartClientSide(ICoreClientAPI api)
     {
         _api = api;
@@ -554,6 +558,18 @@ public sealed class CustomModelsSystem : ModSystem
                 {
                     LoggerUtil.Error(api, this, $"Error on loading base shape '{code}': {exception}");
                 }
+            }
+        }
+    }
+    private void RegisterTags(ICoreAPI api)
+    {
+        List<IAsset> modelsConfigs = api.Assets.GetManyInCategory("config", "customplayermodels");
+
+        foreach (Dictionary<string, CustomModelConfig> customModelConfigs in modelsConfigs.Select(FromAsset))
+        {
+            foreach ((_, CustomModelConfig modelConfig) in customModelConfigs)
+            {
+                api.TagRegistry.RegisterEntityTags(modelConfig.AddTags);
             }
         }
     }
