@@ -15,6 +15,8 @@ public static class ShapeReplacementUtil
 
     public static void GetModelReplacement(ItemStack? stack, Entity entity, ref Shape? defaultShape, ref CompositeShape? compositeShape, IAttachableToEntity yadayada, float damageEffect, string slotCode, ref string[] willDeleteElements)
     {
+        if (entity.Api.Side != EnumAppSide.Client) return;
+
         int itemId = stack?.Item?.Id ?? 0;
 
         CustomModelsSystem system = entity.Api.ModLoader.GetModSystem<CustomModelsSystem>();
@@ -270,7 +272,7 @@ public static class ShapeReplacementUtil
 
         if (!customModel.WearableShapeReplacersByShape.TryGetValue(shapePath, out string? shape)) return false;
 
-        string cacheKey = $"{customModel.Code}_{shapePath}";
+        string cacheKey = $"{customModel.Code}_{shapePath}_{stack?.Collectible.Id}";
         if (ReplacedShapesCache != null && ReplacedShapesCache.Get(cacheKey, out Shape? cachedShape))
         {
             defaultShape = cachedShape.Clone();
