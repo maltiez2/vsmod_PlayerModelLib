@@ -579,6 +579,11 @@ public sealed class CustomModelsSystem : ModSystem
     {
         foreach (Shape customShape in CustomModels.Where(entry => entry.Key != _defaultModelCode).Select(entry => entry.Value.Shape))
         {
+            if (customShape.Animations == null)
+            {
+                customShape.Animations = [];
+            }
+            
             HashSet<string> existingAnimations = [.. customShape.Animations.Select(GetAnimationCode)];
 
             foreach ((uint crc32, Animation animation) in CustomModels[_defaultModelCode].Shape.AnimationsByCrc32)
@@ -591,7 +596,7 @@ public sealed class CustomModelsSystem : ModSystem
                 customShape.Animations = [.. customShape.Animations, animation.Clone()];
             }
 
-            customShape.ResolveReferences(api.Logger, "PlayerModelLib:CustomModel-test");
+            customShape.ResolveReferences(api.Logger, "PlayerModelLib:CustomModel-ProcessAnimations");
         }
     }
     private void ProcessAttachmentPoints()

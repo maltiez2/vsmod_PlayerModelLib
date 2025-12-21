@@ -91,6 +91,11 @@ public static class StatsPatches
             );
 
         new Harmony(harmonyId).Patch(
+                typeof(PModulePlayerInLiquid).GetMethod("HandleSwimming", AccessTools.all),
+                prefix: new HarmonyMethod(AccessTools.Method(typeof(StatsPatches), nameof(HandleSwimming)))
+            );
+
+        new Harmony(harmonyId).Patch(
                 typeof(EntityBehaviorBodyTemperature).GetMethod("updateWearableConditions", AccessTools.all),
                 postfix: new HarmonyMethod(AccessTools.Method(typeof(StatsPatches), nameof(ApplyWarmthStats)))
             );
@@ -142,11 +147,16 @@ public static class StatsPatches
         if (!_applied) return;
 
         new Harmony(harmonyId).Unpatch(typeof(EntityPlayer).GetMethod("GetWalkSpeedMultiplier", AccessTools.all), HarmonyPatchType.Postfix, harmonyId);
+        new Harmony(harmonyId).Unpatch(typeof(PModulePlayerInLiquid).GetMethod("HandleSwimming", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
         new Harmony(harmonyId).Unpatch(typeof(EntityBehaviorBodyTemperature).GetMethod("updateWearableConditions", AccessTools.all), HarmonyPatchType.Postfix, harmonyId);
         new Harmony(harmonyId).Unpatch(typeof(EntityBehaviorHunger).GetMethod("OnEntityReceiveSaturation", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
         new Harmony(harmonyId).Unpatch(typeof(EntityBehaviorHealth).GetMethod("OnEntityReceiveDamage", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
         new Harmony(harmonyId).Unpatch(typeof(EntityBehaviorHunger).GetProperty("MaxSaturation", AccessTools.all)?.GetMethod, HarmonyPatchType.Postfix, harmonyId);
+        new Harmony(harmonyId).Unpatch(typeof(EntityBehaviorTemporalStabilityAffected).GetMethod("OnGameTick", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
         new Harmony(harmonyId).Unpatch(typeof(EntityBehaviorHunger).GetMethod("ReduceSaturation", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
+        new Harmony(harmonyId).Unpatch(typeof(EntityBehaviorBreathe).GetMethod("Check", AccessTools.all), HarmonyPatchType.Postfix, harmonyId);
+        new Harmony(harmonyId).Unpatch(typeof(PModuleGravity).GetMethod("DoApply", AccessTools.all), HarmonyPatchType.Postfix, harmonyId);
+        new Harmony(harmonyId).Unpatch(typeof(EntityBehaviorPlayerPhysics).GetMethod("SetPlayerControls", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
 
         _applied = false;
     }
@@ -155,7 +165,22 @@ public static class StatsPatches
     private static readonly FieldInfo? _entityBehaviorHunger_hungerTree = typeof(EntityBehaviorHunger).GetField("hungerTree", BindingFlags.NonPublic | BindingFlags.Instance);
     private static bool _applied = false;
     private const int _standardHoursPerDay = 24;
+    private static bool _handleSwimming = true;
 
+    private static bool HandleSwimming(PModulePlayerInLiquid __instance, float dt, Entity entity, EntityPos pos, EntityControls controls)
+    {
+        if (!_handleSwimming) return true;
+
+        float factor = Math.Clamp((entity as EntityPlayer).Stats.GetBlended(SwimSpeedStat), 0, 10);
+
+        Vintagestory.API.MathTools.Vec3d prev = pos.Motion.Clone();
+        _handleSwimming = false;
+        __instance.HandleSwimming(dt, entity, pos, controls);
+        _handleSwimming = true;
+        pos.Motion.Add((pos.Motion - prev) * factor);
+
+        return false;
+    }
     private static void ApplyMovementSpeedStats(EntityPlayer __instance, ref double __result)
     {
         float baseWalkSpeedStat = __instance.Stats.GetBlended("walkspeed");
@@ -199,10 +224,6 @@ public static class StatsPatches
         else if (__instance.Controls.Sprint)
         {
             __result *= Math.Clamp(__instance.Stats.GetBlended(SprintSpeedStat), 0, 1000);
-        }
-        else if (__instance.Swimming)
-        {
-            __result *= Math.Clamp(__instance.Stats.GetBlended(SwimSpeedStat), 0, 1000);
         }
         if (__instance.Controls.Backward)
         {
@@ -350,7 +371,7 @@ public static class StatsPatches
         }
         else
         {
-            // preserver vanilla behavior
+            // preserve vanilla behavior
         }
 
         float caveCanBreath = __instance.entity.Stats.GetBlended(CaveCanBreathStat) - 1;
