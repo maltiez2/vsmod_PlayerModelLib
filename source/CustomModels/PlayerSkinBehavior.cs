@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using System.Reflection;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
@@ -199,14 +200,6 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
             PreviousHeadBobbingAmplitudeFactor = factor;
         }
 
-        EntityBehaviorPlayerPhysics? physicsBehavior = entity.GetBehavior<EntityBehaviorPlayerPhysics>();
-        if (physicsBehavior != null)
-        {
-            physicsBehavior.StepHeight /= PreviousStepHeight;
-            PreviousStepHeight = CurrentModel.StepHeight / DefaultStepHeight;
-            physicsBehavior.StepHeight *= PreviousStepHeight;
-        }
-
         EntityBehaviorBreathe? breathBehavior = entity.GetBehavior<EntityBehaviorBreathe>();
         if (breathBehavior != null)
         {
@@ -241,6 +234,19 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         entity.Properties.Client.Size = DefaultSize * CurrentSize * CurrentModel.ModelSizeFactor;
         entity.LocalEyePos.Y = GameMath.Clamp(CurrentModel.EyeHeight * CurrentSize * CurrentModel.ModelSizeFactor, CurrentModel.MinEyeHeight, CurrentModel.MaxEyeHeight);
 
+        EntityBehaviorPlayerPhysics? physicsBehavior = entity.GetBehavior<EntityBehaviorPlayerPhysics>();
+        if (physicsBehavior != null)
+        {
+            physicsBehavior.StepHeight /= PreviousStepHeight;
+            PreviousStepHeight = CurrentModel.StepHeight / DefaultStepHeight;
+            physicsBehavior.StepHeight *= PreviousStepHeight;
+
+
+            Cuboidf sneakTestCollisionbox = new Cuboidf(new(-entity.Properties.CollisionBoxSize.X / 2, 0, -entity.Properties.CollisionBoxSize.X / 2), new(entity.Properties.CollisionBoxSize.X / 2, entity.Properties.CollisionBoxSize.Y, entity.Properties.CollisionBoxSize.X / 2)).OmniNotDownGrowBy(-entity.Properties.CollisionBoxSize.X / 10f);
+            sneakTestCollisionbox.Y2 /= 2;
+            EntityBehaviorControlledPhysics_sneakTestCollisionbox?.SetValue(physicsBehavior, sneakTestCollisionbox);
+        }
+
         ChangeTags();
 
         SetZNear();
@@ -260,6 +266,8 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
     protected float PreviousMaxOxygen = 1;
     protected float DefaultEyeHeight = 1.7f;
     protected string DefaultModelCode => ModelSystem?.DefaultModelCode ?? "seraph";
+
+    protected FieldInfo? EntityBehaviorControlledPhysics_sneakTestCollisionbox = typeof(EntityBehaviorControlledPhysics).GetField("sneakTestCollisionbox", BindingFlags.NonPublic | BindingFlags.Instance);
 
 
     protected void OnSkinConfigChanged()
