@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using System.Diagnostics;
 using System.Reflection;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
@@ -177,7 +178,7 @@ public static class StatsPatches
         _handleSwimming = false;
         __instance.HandleSwimming(dt, entity, pos, controls);
         _handleSwimming = true;
-        pos.Motion.Add((pos.Motion - prev) * factor);
+        pos.Motion.Set(prev + (pos.Motion - prev) * factor);
 
         return false;
     }

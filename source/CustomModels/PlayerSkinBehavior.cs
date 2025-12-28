@@ -241,7 +241,6 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
             PreviousStepHeight = CurrentModel.StepHeight / DefaultStepHeight;
             physicsBehavior.StepHeight *= PreviousStepHeight;
 
-
             Cuboidf sneakTestCollisionbox = new Cuboidf(new(-entity.Properties.CollisionBoxSize.X / 2, 0, -entity.Properties.CollisionBoxSize.X / 2), new(entity.Properties.CollisionBoxSize.X / 2, entity.Properties.CollisionBoxSize.Y, entity.Properties.CollisionBoxSize.X / 2)).OmniNotDownGrowBy(-entity.Properties.CollisionBoxSize.X / 10f);
             sneakTestCollisionbox.Y2 /= 2;
             EntityBehaviorControlledPhysics_sneakTestCollisionbox?.SetValue(physicsBehavior, sneakTestCollisionbox);
