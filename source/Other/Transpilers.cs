@@ -1,11 +1,9 @@
 ﻿using HarmonyLib;
-using Newtonsoft.Json;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Text.RegularExpressions;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
-using Vintagestory.API.Config;
+using Vintagestory.API.Datastructures;
 using Vintagestory.GameContent;
 
 namespace PlayerModelLib;
@@ -121,7 +119,7 @@ internal static class TranspilerPatches
                 else
                 {
                     return skinBehavior.CurrentModel.WalkEyeHeightMultiplier;
-                }  
+                }
             }
 
             return 1;
@@ -148,6 +146,30 @@ internal static class TranspilerPatches
                         new CodeInstruction(OpCodes.Call, callMethod)
                     });
                     break;
+                }
+            }
+
+            return codes;
+        }
+    }
+
+    [HarmonyPatch(typeof(Entity), "FromBytes", [typeof(BinaryReader), typeof(bool)])]
+    public static class PatchEntityFromBytesRemoveMaxSaturationPatch
+    {
+        static readonly MethodInfo SetFloatMethod = AccessTools.Method(typeof(ITreeAttribute), nameof(ITreeAttribute.SetFloat));
+
+        public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var codes = new List<CodeInstruction>(instructions);
+
+            for (int i = 0; i < codes.Count; i++)
+            {
+                if (codes[i].opcode == OpCodes.Callvirt &&
+                    codes[i].operand is MethodInfo mi &&
+                    mi == SetFloatMethod)
+                {
+                    codes.RemoveRange(i - 3, 4);
+                    i -= 4;
                 }
             }
 

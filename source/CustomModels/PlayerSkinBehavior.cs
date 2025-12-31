@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using System.Diagnostics;
 using System.Reflection;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -182,6 +183,12 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
     public override void OnEntityDespawn(EntityDespawnData despawn)
     {
         // nothing to do here
+    }
+
+    public override void OnGameTick(float deltaTime)
+    {
+        ITreeAttribute? hungerTree = entity.WatchedAttributes.GetTreeAttribute("hunger");
+        Debug.WriteLine($"{entity.Api.Side}\t{hungerTree?.GetFloat("maxsaturation")}\t{hungerTree?.GetFloat("currentsaturation")}");
     }
 
     public override string PropertyName() => "skinnableplayercustommodel";
