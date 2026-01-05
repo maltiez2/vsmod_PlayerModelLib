@@ -23,9 +23,15 @@ public sealed class PlayerModelModSystem : ModSystem
     {
         api.RegisterEntityBehaviorClass("PlayerModelLib:ExtraSkinnable", typeof(PlayerSkinBehavior));
 
-        new Harmony("PlayerModelLibTranspiler").PatchAll();
-        OtherPatches.Patch("PlayerModelLib", api);
-        StatsPatches.Patch("PlayerModelLib", api);
+        OtherPatches.SetApi(api);
+
+        if (!_patched)
+        {
+            new Harmony("PlayerModelLibTranspiler").PatchAll();
+            OtherPatches.Patch("PlayerModelLib", api);
+            StatsPatches.Patch("PlayerModelLib", api);
+            _patched = true;
+        }
 
         if (api is ICoreClientAPI clientApi)
         {
@@ -47,12 +53,19 @@ public sealed class PlayerModelModSystem : ModSystem
 
     public override void Dispose()
     {
-        new Harmony("PlayerModelLib").UnpatchAll("PlayerModelLibTranspiler");
-        OtherPatches.Unpatch("PlayerModelLib");
-        StatsPatches.Unpatch("PlayerModelLib");
+        if (_patched)
+        {
+            new Harmony("PlayerModelLib").UnpatchAll("PlayerModelLibTranspiler");
+            OtherPatches.Unpatch("PlayerModelLib");
+            StatsPatches.Unpatch("PlayerModelLib");
+            _patched = false;
+        }
+        
         RescaledShapesCache?.Dispose();
         ReplacedShapesCache?.Dispose();
     }
+
+    private static bool _patched = false;
 
     private void SubscribeToConfigChange(ICoreAPI api)
     {

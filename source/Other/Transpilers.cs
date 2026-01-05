@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using System.Diagnostics;
 using System.Reflection;
 using System.Reflection.Emit;
 using Vintagestory.API.Common;
@@ -60,6 +61,7 @@ internal static class TranspilerPatches
         }
     }
 
+    [HarmonyPatchCategory("PlayerModelLibTranspiler")]
     [HarmonyPatch(typeof(EntityPlayer), "updateEyeHeight")]
     public static class PatchEntityPlayerUpdateEyeHeight
     {
@@ -91,6 +93,7 @@ internal static class TranspilerPatches
         }
     }
 
+    [HarmonyPatchCategory("PlayerModelLibTranspiler")]
     [HarmonyPatch(typeof(EntityPlayer), "updateEyeHeight")]
     public static class PatchEntityPlayerUpdateEyeHeightInsertBeforeFloorSitting
     {
@@ -153,14 +156,15 @@ internal static class TranspilerPatches
         }
     }
 
+    [HarmonyPatchCategory("PlayerModelLibTranspiler")]
     [HarmonyPatch(typeof(Entity), "FromBytes", [typeof(BinaryReader), typeof(bool)])]
-    public static class PatchEntityFromBytesRemoveMaxSaturationPatch
+    public static class PatchEntityFromBytesRemoveMaxSaturation
     {
         static readonly MethodInfo SetFloatMethod = AccessTools.Method(typeof(ITreeAttribute), nameof(ITreeAttribute.SetFloat));
 
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
-            var codes = new List<CodeInstruction>(instructions);
+            List<CodeInstruction> codes = new(instructions);
 
             for (int i = 0; i < codes.Count; i++)
             {
@@ -174,6 +178,64 @@ internal static class TranspilerPatches
             }
 
             return codes;
+        }
+    }
+
+    [HarmonyPatchCategory("PlayerModelLibTranspiler")]
+    [HarmonyPatch(typeof(EntityBehaviorBodyTemperature), "updateWearableConditions")]
+    public static class Patch_UpdateWearableConditions
+    {
+        private static void ApplyWarmthStats(ref float clothingBonus, EntityAgent agent)
+        {
+            float value = clothingBonus;
+            Debug.WriteLine($"({agent.Api.Side}) Before: {value}");
+            value += Math.Clamp(agent.Stats.GetBlended(StatsPatches.WarmthBonusStat), -100, 100);
+            Debug.WriteLine($"({agent.Api.Side}) After: {value}");
+            clothingBonus = value;
+        }
+
+        static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            List<CodeInstruction> code = new(instructions);
+
+            Debug.WriteLine($"\n\n\n\nTranspiler: {code.Count}\n\n\n\n");
+
+            FieldInfo clothingBonusField = AccessTools.Field(
+                typeof(EntityBehaviorBodyTemperature),
+                "clothingBonus");
+
+            FieldInfo entityField = AccessTools.Field(
+                typeof(EntityBehavior),
+                "entity");
+
+            MethodInfo hookMethod = AccessTools.Method(
+                typeof(Patch_UpdateWearableConditions),
+                nameof(ApplyWarmthStats));
+
+            for (int i = code.Count - 1; i >= 0; i--)
+            {
+                if (code[i].opcode == OpCodes.Ret)
+                {
+                    Debug.WriteLine($"\n\n\n\n{i}/{code.Count}\n\n\n\n");
+                    
+                    List<CodeInstruction> insert =
+                    [
+                        new CodeInstruction(OpCodes.Ldarg_0),
+                        new CodeInstruction(OpCodes.Ldflda, clothingBonusField),
+
+                        new CodeInstruction(OpCodes.Ldarg_0),
+                        new CodeInstruction(OpCodes.Ldfld, entityField),
+                        new CodeInstruction(OpCodes.Isinst, typeof(EntityAgent)),
+
+                        new CodeInstruction(OpCodes.Call, hookMethod)
+                    ];
+
+                    code.InsertRange(i, insert);
+                    break;
+                }
+            }
+
+            return code;
         }
     }
 }

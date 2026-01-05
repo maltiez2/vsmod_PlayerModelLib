@@ -191,6 +191,8 @@ public sealed class CustomModelsSystem : ModSystem
 
         FixColBreak(parts, _defaultModelCode);
 
+        _ = _api.ModLoader.GetModSystem<ModSystemSkinnableAdditions>().AppendAdditions(parts);
+
         CustomModelData defaultModelData = new(_defaultModelCode, defaultShape)
         {
             SkinParts = partsByCode,
@@ -583,7 +585,7 @@ public sealed class CustomModelsSystem : ModSystem
             {
                 customShape.Animations = [];
             }
-            
+
             HashSet<string> existingAnimations = [.. customShape.Animations.Select(GetAnimationCode)];
 
             foreach ((uint crc32, Animation animation) in CustomModels[_defaultModelCode].Shape.AnimationsByCrc32)
@@ -1158,7 +1160,7 @@ public sealed class CustomModelsSystem : ModSystem
 
                     _clientApi.EntityTextureAtlas.GetOrInsertTexture(texturePath, out _, out TextureAtlasPosition texPos, () => textureAsset2.ToBitmap(_clientApi));
 
-                    CompositeTexture mainTexture = new CompositeTexture()
+                    CompositeTexture mainTexture = new()
                     {
                         Base = texturePath
                     };

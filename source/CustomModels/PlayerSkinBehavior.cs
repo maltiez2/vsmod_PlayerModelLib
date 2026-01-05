@@ -188,7 +188,6 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
     public override void OnGameTick(float deltaTime)
     {
         ITreeAttribute? hungerTree = entity.WatchedAttributes.GetTreeAttribute("hunger");
-        Debug.WriteLine($"{entity.Api.Side}\t{hungerTree?.GetFloat("maxsaturation")}\t{hungerTree?.GetFloat("currentsaturation")}");
     }
 
     public override string PropertyName() => "skinnableplayercustommodel";

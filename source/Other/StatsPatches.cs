@@ -97,11 +97,6 @@ public static class StatsPatches
             );
 
         new Harmony(harmonyId).Patch(
-                typeof(EntityBehaviorBodyTemperature).GetMethod("updateWearableConditions", AccessTools.all),
-                postfix: new HarmonyMethod(AccessTools.Method(typeof(StatsPatches), nameof(ApplyWarmthStats)))
-            );
-
-        new Harmony(harmonyId).Patch(
                 typeof(EntityBehaviorHunger).GetMethod("OnEntityReceiveSaturation", AccessTools.all),
                 prefix: new HarmonyMethod(AccessTools.Method(typeof(StatsPatches), nameof(ApplySaturationStats)))
             );
@@ -149,7 +144,6 @@ public static class StatsPatches
 
         new Harmony(harmonyId).Unpatch(typeof(EntityPlayer).GetMethod("GetWalkSpeedMultiplier", AccessTools.all), HarmonyPatchType.Postfix, harmonyId);
         new Harmony(harmonyId).Unpatch(typeof(PModulePlayerInLiquid).GetMethod("HandleSwimming", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
-        new Harmony(harmonyId).Unpatch(typeof(EntityBehaviorBodyTemperature).GetMethod("updateWearableConditions", AccessTools.all), HarmonyPatchType.Postfix, harmonyId);
         new Harmony(harmonyId).Unpatch(typeof(EntityBehaviorHunger).GetMethod("OnEntityReceiveSaturation", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
         new Harmony(harmonyId).Unpatch(typeof(EntityBehaviorHealth).GetMethod("OnEntityReceiveDamage", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
         new Harmony(harmonyId).Unpatch(typeof(EntityBehaviorHunger).GetProperty("MaxSaturation", AccessTools.all)?.GetMethod, HarmonyPatchType.Postfix, harmonyId);
@@ -162,7 +156,6 @@ public static class StatsPatches
         _applied = false;
     }
 
-    private static readonly FieldInfo? _entityBehaviorBodyTemperature_clothingBonus = typeof(EntityBehaviorBodyTemperature).GetField("clothingBonus", BindingFlags.NonPublic | BindingFlags.Instance);
     private static readonly FieldInfo? _entityBehaviorHunger_hungerTree = typeof(EntityBehaviorHunger).GetField("hungerTree", BindingFlags.NonPublic | BindingFlags.Instance);
     private static bool _applied = false;
     private const int _standardHoursPerDay = 24;
@@ -230,12 +223,6 @@ public static class StatsPatches
         {
             __result *= Math.Max(__instance.Stats.GetBlended(BackwardSpeedStat), 0);
         }
-    }
-    private static void ApplyWarmthStats(EntityBehaviorBodyTemperature __instance)
-    {
-        float value = (float?)_entityBehaviorBodyTemperature_clothingBonus?.GetValue(__instance) ?? 0;
-        value += Math.Clamp(__instance.entity.Stats.GetBlended(WarmthBonusStat), -100, 100);
-        _entityBehaviorBodyTemperature_clothingBonus?.SetValue(__instance, value);
     }
     private static void ApplySaturationStats(EntityBehaviorHunger __instance, ref float saturation, EnumFoodCategory foodCat)
     {

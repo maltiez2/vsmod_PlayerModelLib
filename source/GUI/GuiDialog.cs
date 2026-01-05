@@ -700,16 +700,18 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
             AppliedSkinnablePartVariant? appliedVar = skinMod.AppliedSkinParts.FirstOrDefault(sp => sp.PartCode == code);
 
+            SkinnablePartVariant[] variants = skinpart.Variants.Where(variant => variant.Category == "standard" || variant.Category == null || variant.Category == "").ToArray();
+
             if (skinpart.Type == EnumSkinnableType.Texture && !skinpart.UseDropDown)
             {
                 int selectedIndex = 0;
-                int[] colors = new int[skinpart.Variants.Length];
+                int[] colors = new int[variants.Length];
 
-                for (int i = 0; i < skinpart.Variants.Length; i++)
+                for (int i = 0; i < variants.Length; i++)
                 {
-                    colors[i] = skinpart.Variants[i].Color;
+                    colors[i] = variants[i].Color;
 
-                    if (appliedVar?.Code == skinpart.Variants[i].Code) selectedIndex = i;
+                    if (appliedVar?.Code == variants[i].Code) selectedIndex = i;
                 }
 
 
@@ -723,13 +725,13 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
                 {
                     GuiElementColorListPicker picker = composer.GetColorListPicker("picker-" + code + "-" + i);
                     picker.ShowToolTip = true;
-                    if (Lang.HasTranslation("skinpart-" + code + "-" + skinpart.Variants[i].Code))
+                    if (Lang.HasTranslation("skinpart-" + code + "-" + variants[i].Code))
                     {
-                        picker.TooltipText = Lang.Get("skinpart-" + code + "-" + skinpart.Variants[i].Code);
+                        picker.TooltipText = Lang.Get("skinpart-" + code + "-" + variants[i].Code);
                     }
                     else
                     {
-                        picker.TooltipText = Lang.Get("color-" + skinpart.Variants[i].Code);
+                        picker.TooltipText = Lang.Get("color-" + variants[i].Code);
                     }
                 }
 
@@ -739,13 +741,13 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             {
                 int selectedIndex = 0;
 
-                string[] names = new string[skinpart.Variants.Length];
-                string[] values = new string[skinpart.Variants.Length];
+                string[] names = new string[variants.Length];
+                string[] values = new string[variants.Length];
 
-                for (int i = 0; i < skinpart.Variants.Length; i++)
+                for (int i = 0; i < variants.Length; i++)
                 {
-                    names[i] = Lang.Get("skinpart-" + code + "-" + skinpart.Variants[i].Code);
-                    values[i] = skinpart.Variants[i].Code;
+                    names[i] = Lang.Get("skinpart-" + code + "-" + variants[i].Code);
+                    values[i] = variants[i].Code;
 
                     if (appliedVar?.Code == values[i]) selectedIndex = i;
                 }
@@ -915,7 +917,10 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
             SkinnablePart? skinPart = skinMod.AvailableSkinParts.FirstOrDefault(part => part.Code == partcode);
             if (skinPart == null) continue;
-            int index = skinPart.Variants.IndexOf(part => part.Code == appliedPart.Code);
+
+            SkinnablePartVariant[] variants = skinPart.Variants.Where(variant => variant.Category == "standard" || variant.Category == null || variant.Category == "").ToArray();
+
+            int index = variants.IndexOf(part => part.Code == appliedPart.Code);
 
             if (skinPart.Type == EnumSkinnableType.Texture && !skinPart.UseDropDown)
             {

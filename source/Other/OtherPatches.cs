@@ -49,6 +49,14 @@ internal static class OtherPatches
                 typeof(ShapeElement).GetMethod("TrimTextureNamesAndResolveFaces", AccessTools.all),
                 prefix: new HarmonyMethod(AccessTools.Method(typeof(OtherPatches), nameof(ShapeElement_TrimTextureNamesAndResolveFaces)))
             );
+        new Harmony(harmonyId).Patch(
+                typeof(GuiDialogHairStyling).GetMethod("getCost", AccessTools.all),
+                prefix: new HarmonyMethod(AccessTools.Method(typeof(OtherPatches), nameof(GuiDialogHairStyling_getCost)))
+            );
+        new Harmony(harmonyId).Patch(
+                typeof(GuiDialogHairStyling).GetMethod("AllowedSkinPartSelection", AccessTools.all),
+                prefix: new HarmonyMethod(AccessTools.Method(typeof(OtherPatches), nameof(GuiDialogHairStyling_AllowedSkinPartSelection)))
+            );
     }
 
     public static void Unpatch(string harmonyId)
@@ -59,8 +67,18 @@ internal static class OtherPatches
         new Harmony(harmonyId).Unpatch(typeof(CharacterSystem).GetMethod("getClassTraitText", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
         new Harmony(harmonyId).Unpatch(typeof(EntityShapeRenderer).GetMethod("loadModelMatrixForGui", AccessTools.all), HarmonyPatchType.Postfix, harmonyId);
         new Harmony(harmonyId).Unpatch(typeof(ShapeElement).GetMethod("TrimTextureNamesAndResolveFaces", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
+        new Harmony(harmonyId).Unpatch(typeof(GuiDialogHairStyling).GetMethod("getCost", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
+        new Harmony(harmonyId).Unpatch(typeof(GuiDialogHairStyling).GetMethod("AllowedSkinPartSelection", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
 
         _clientApi = null;
+    }
+
+    public static void SetApi(ICoreAPI api)
+    {
+        if (api is ICoreClientAPI)
+        {
+            _clientApi = api as ICoreClientAPI;
+        }
     }
 
     private static bool ReloadSkin() => false;
@@ -70,6 +88,7 @@ internal static class OtherPatches
     private static readonly FieldInfo? _characterSystem_didSelect = typeof(CharacterSystem).GetField("didSelect", BindingFlags.NonPublic | BindingFlags.Instance);
     private static readonly FieldInfo? _characterSystem_createCharDlg = typeof(CharacterSystem).GetField("createCharDlg", BindingFlags.NonPublic | BindingFlags.Instance);
     private static readonly FieldInfo? _characterSystem_capi = typeof(CharacterSystem).GetField("capi", BindingFlags.NonPublic | BindingFlags.Instance);
+    private static readonly FieldInfo? _guiDialogHairStyling_currentSkin = typeof(GuiDialogHairStyling).GetField("currentSkin", BindingFlags.NonPublic | BindingFlags.Instance);
 
     private static bool Event_PlayerJoin(CharacterSystem __instance, IClientPlayer byPlayer)
     {
@@ -325,4 +344,48 @@ internal static class OtherPatches
     }
 #pragma warning restore S3241 // Methods should not return values that are never used
 #pragma warning restore CS0618 // Type or member is obsolete
+
+    private static bool GuiDialogHairStyling_getCost(GuiDialogHairStyling __instance, ref int __result)
+    {
+        int cost = 0;
+        EntityBehaviorExtraSkinnable skinMod = _clientApi.World.Player.Entity.GetBehavior<EntityBehaviorExtraSkinnable>();
+        SkinnablePart[] availableSkinParts = skinMod.AvailableSkinParts;
+        Dictionary<string, string> currentSkin = (Dictionary<string, string>?)_guiDialogHairStyling_currentSkin.GetValue(__instance) ?? [];
+
+        foreach (SkinnablePart skinpart in availableSkinParts)
+        {
+            string code = skinpart.Code;
+            AppliedSkinnablePartVariant? appliedVar = skinMod.AppliedSkinParts.FirstOrDefault((AppliedSkinnablePartVariant sp) => sp.PartCode == code);
+
+            if (appliedVar == null)
+            {
+                continue;
+            }
+
+            if (!currentSkin.ContainsKey(code))
+            {
+                continue;
+            }
+
+            if (!__instance.hairStylingCost.ContainsKey(code))
+            {
+                continue;
+            }
+
+            if (currentSkin[code] != appliedVar.Code)
+            {
+                cost += __instance.hairStylingCost[code];
+            }
+        }
+        
+        __result = cost;
+
+        return false;
+    }
+
+    private static bool GuiDialogHairStyling_AllowedSkinPartSelection(GuiDialogHairStyling __instance, ref bool __result)
+    {
+        __result = false;
+        return false;
+    }
 }
