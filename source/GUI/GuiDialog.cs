@@ -321,6 +321,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     private float _clipHeightModel = 200;
     internal static bool _applyScrollPatch = false;
     private ICoreClientAPI _api;
+    private const string _previousSelectionFile = "playermodellib-previous-selections.json";
 
     private new void ComposeGuis()
     {
@@ -783,7 +784,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         composer.AddToggleButton(Lang.Get("Show dressed"), smallfont, OnToggleDressOnOff, toggleButtonBounds, "showdressedtoggle");
         composer.AddButton(Lang.Get("Randomize"), () => { return OnRandomizeSkin(new Dictionary<string, string>()); }, ElementBounds.Fixed(0, _dlgHeight - 25).WithAlignment(EnumDialogArea.LeftFixed).WithFixedPadding(8, 6), CairoFont.WhiteSmallText(), EnumButtonStyle.Small);
         composer.AddIf(capi.Settings.String.Exists("lastSkinSelection"))
-            .AddButton(Lang.Get("Last selection"), () => { return OnRandomizeSkin(_characterSystem.getPreviousSelection()); }, ElementBounds.Fixed(130, _dlgHeight - 25).WithAlignment(EnumDialogArea.LeftFixed).WithFixedPadding(8, 6), CairoFont.WhiteSmallText(), EnumButtonStyle.Small)
+            .AddButton(Lang.Get("Last selection"), () => { return OnRandomizeSkin(GetPreviousSelection()); }, ElementBounds.Fixed(130, _dlgHeight - 25).WithAlignment(EnumDialogArea.LeftFixed).WithFixedPadding(8, 6), CairoFont.WhiteSmallText(), EnumButtonStyle.Small)
             .EndIf();
 
         composer.AddSmallButton(Lang.Get("Confirm Skin"), OnNextImpl, ElementBounds.Fixed(11, _dlgHeight - 24).WithAlignment(EnumDialogArea.RightFixed).WithFixedPadding(12, 6), EnumButtonStyle.Normal);
@@ -858,6 +859,44 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         {
             onToggleModel(modelValues[0]);
         }
+    }
+
+    private Dictionary<string, string> GetPreviousSelection()
+    {
+        string currentModel = GetCurrentModel();
+
+        Dictionary<string, Dictionary<string, string>> allSelections = _api.LoadModConfig<Dictionary<string, Dictionary<string, string>>>(_previousSelectionFile) ?? [];
+
+        if (allSelections.TryGetValue(currentModel, out Dictionary<string, string>? result))
+        {
+            return result;
+        }
+
+        return [];
+    }
+    private void SavePreviousSelection(Dictionary<string, string> selection)
+    {
+        string currentModel = GetCurrentModel();
+
+        Dictionary<string, Dictionary<string, string>> allSelections = _api.LoadModConfig<Dictionary<string, Dictionary<string, string>>>(_previousSelectionFile) ?? [];
+
+        allSelections[currentModel] = selection;
+
+        _api.StoreModConfig(allSelections, _previousSelectionFile);
+    }
+
+    private string GetCurrentModel()
+    {
+        PlayerSkinBehavior? skinBehavior = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
+        CustomModelsSystem system = capi.ModLoader.GetModSystem<CustomModelsSystem>();
+
+        if (skinBehavior == null) return system.DefaultModelCode;
+
+        _ = GetCurrentModelAndGroup(system, skinBehavior, out int modelIndex, out int groupIndex);
+        GetCustomGroups(system, out string[] groupValues, out _);
+        GetCustomModels(system, groupValues[groupIndex], out string[] modelValues, out _, out _, out _);
+
+        return modelValues[modelIndex];
     }
 
     private bool ChangeModel(int dir)
@@ -975,7 +1014,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         ComposeGuis();
 
-        OnRandomizeSkin(new Dictionary<string, string>());
+        OnRandomizeSkin(GetPreviousSelection());
     }
     private bool OnNextImpl()
     {
@@ -990,6 +1029,14 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     }
     private bool OnConfirm()
     {
+        PlayerSkinBehavior? skinMod = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
+        if (skinMod != null)
+        {
+            Dictionary<string, string> selection = skinMod.AppliedSkinParts.ToDictionary(part => part.PartCode, part => part.Code);
+
+            SavePreviousSelection(selection);
+        }
+
         _didSelect = true;
         TryClose();
         return true;
