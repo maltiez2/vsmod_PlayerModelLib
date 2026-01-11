@@ -14,6 +14,8 @@ namespace PlayerModelLib;
 
 public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSource
 {
+    public delegate void OnWearableItemProcessingDelegate(Entity player, PlayerSkinBehavior behavior, ref ItemSlot slot, ref string[]? disableElements, ref string[]? keepElements);
+    
     public PlayerSkinBehavior(Entity entity) : base(entity)
     {
     }
@@ -44,6 +46,8 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
     public event Action<string>? OnModelChanged;
 
     public event Action<Shape>? OnShapeTesselated;
+
+    public static event OnWearableItemProcessingDelegate? OnWearableItemProcessing;
 
 
     public Size2i? AtlasSize => ModelSystem?.GetAtlasSize(CurrentModelCode, entity);
@@ -564,11 +568,14 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
     protected virtual void GetWearableElements(ItemSlot slot, out string[]? disableElements, out string[]? keepElements)
     {
+        disableElements = [];
+        keepElements = [];
+
+        OnWearableItemProcessing?.Invoke(entity, this, ref slot, ref disableElements, ref keepElements);
+
         ItemStack? stack = slot.Itemstack;
         if (stack == null)
         {
-            disableElements = [];
-            keepElements = [];
             return;
         }
 
