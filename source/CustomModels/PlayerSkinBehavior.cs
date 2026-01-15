@@ -41,6 +41,8 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         }
     }
 
+    public bool Initialized { get; protected set; }
+
     public event Action? OnActuallyInitialize;
 
     public event Action<string>? OnModelChanged;
@@ -78,6 +80,8 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
     public virtual void ActuallyInitialize()
     {
+        if (Initialized) return;
+        
         if (ModelSystem == null) return;
 
         skintree = entity.WatchedAttributes.GetTreeAttribute("skinConfig");
@@ -87,6 +91,45 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         }
 
         string skinModel = GetPlayerModelAttributeValue();
+        if (!ModelSystem.CustomModels.ContainsKey(skinModel) && entity.Api.ModLoader.IsModEnabled("customplayermodel"))
+        {
+            TempModelCode = skinModel;
+            TempSkinConfig = skintree.Clone();
+
+            CurrentModelCode = ModelSystem.DefaultModelCode;
+            AvailableSkinPartsByCode = CurrentModel.SkinParts;
+            AvailableSkinParts = CurrentModel.SkinPartsArray;
+            OnVoiceConfigChanged();
+            OnSkinModelChanged();
+            
+            if (entity.Api.Side == EnumAppSide.Server && AppliedSkinParts.Count == 0)
+            {
+                entity.Api.ModLoader.GetModSystem<CharacterSystem>().randomizeSkin(entity, null, false);
+            }
+            
+            ModelSystem.OnCustomModelHotLoaded += ActuallyInitialize;
+            return;
+        }
+
+        if (TempModelCode != null)
+        {
+            if (!ModelSystem.CustomModels.ContainsKey(TempModelCode))
+            {
+                return;
+            }
+            
+            CurrentModelCode = TempModelCode;
+            entity.WatchedAttributes.SetString("skinModel", TempModelCode);
+            skinModel = TempModelCode;
+            TempModelCode = null;
+        }
+
+        if (TempSkinConfig != null)
+        {
+            skintree = TempSkinConfig;
+            TempSkinConfig = null;
+        }
+
         if (skinModel == null || !ModelSystem.CustomModels.ContainsKey(skinModel))
         {
             entity.WatchedAttributes.SetString("skinModel", ModelSystem.DefaultModelCode);
@@ -109,6 +152,8 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         {
             entity.Api.ModLoader.GetModSystem<CharacterSystem>().randomizeSkin(entity, null, false);
         }
+
+        Initialized = true;
 
         OnActuallyInitialize?.Invoke();
     }
@@ -275,6 +320,8 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
     protected float PreviousMaxOxygen = 1;
     protected float DefaultEyeHeight = 1.7f;
     protected string DefaultModelCode => ModelSystem?.DefaultModelCode ?? "seraph";
+    protected ITreeAttribute? TempSkinConfig;
+    protected string? TempModelCode;
 
     protected FieldInfo? EntityBehaviorControlledPhysics_sneakTestCollisionbox = typeof(EntityBehaviorControlledPhysics).GetField("sneakTestCollisionbox", BindingFlags.NonPublic | BindingFlags.Instance);
 

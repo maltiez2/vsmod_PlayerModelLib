@@ -8,6 +8,7 @@ using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Util;
+using Vintagestory.Client.NoObf;
 using Vintagestory.GameContent;
 
 namespace PlayerModelLib;
@@ -57,6 +58,10 @@ internal static class OtherPatches
                 typeof(GuiDialogHairStyling).GetMethod("AllowedSkinPartSelection", AccessTools.all),
                 prefix: new HarmonyMethod(AccessTools.Method(typeof(OtherPatches), nameof(GuiDialogHairStyling_AllowedSkinPartSelection)))
             );
+        new Harmony(harmonyId).Patch(
+                typeof(TextureAtlasManager).GetMethod("RegenMipMaps", AccessTools.all),
+                prefix: new HarmonyMethod(AccessTools.Method(typeof(OtherPatches), nameof(TextureAtlasManager_RegenMipMaps)))
+            );
     }
 
     public static void Unpatch(string harmonyId)
@@ -69,6 +74,7 @@ internal static class OtherPatches
         new Harmony(harmonyId).Unpatch(typeof(ShapeElement).GetMethod("TrimTextureNamesAndResolveFaces", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
         new Harmony(harmonyId).Unpatch(typeof(GuiDialogHairStyling).GetMethod("getCost", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
         new Harmony(harmonyId).Unpatch(typeof(GuiDialogHairStyling).GetMethod("AllowedSkinPartSelection", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
+        new Harmony(harmonyId).Unpatch(typeof(TextureAtlasManager).GetMethod("RegenMipMaps", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
 
         _clientApi = null;
     }
@@ -89,6 +95,16 @@ internal static class OtherPatches
     private static readonly FieldInfo? _characterSystem_createCharDlg = typeof(CharacterSystem).GetField("createCharDlg", BindingFlags.NonPublic | BindingFlags.Instance);
     private static readonly FieldInfo? _characterSystem_capi = typeof(CharacterSystem).GetField("capi", BindingFlags.NonPublic | BindingFlags.Instance);
     private static readonly FieldInfo? _guiDialogHairStyling_currentSkin = typeof(GuiDialogHairStyling).GetField("currentSkin", BindingFlags.NonPublic | BindingFlags.Instance);
+
+    private static bool TextureAtlasManager_RegenMipMaps(TextureAtlasManager __instance, int atlasNumber)
+    {
+        if (__instance.AtlasTextures.Count() <= atlasNumber)
+        {
+            return false;
+        }
+
+        return true;
+    }
 
     private static bool Event_PlayerJoin(CharacterSystem __instance, IClientPlayer byPlayer)
     {

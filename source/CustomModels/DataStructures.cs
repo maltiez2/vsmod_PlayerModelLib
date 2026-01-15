@@ -21,6 +21,7 @@ public class SkinnablePartExtended : SkinnablePart
 public class CustomModelConfig
 {
     public bool Enabled { set; get; } = true;
+    public string? Name { get; set; }
     public string Domain { get; set; } = "game";
     public string Group { get; set; } = "";
     public string Icon { get; set; } = "";
@@ -60,6 +61,7 @@ public class CustomModelData
 {
     public bool Enabled { set; get; } = true;
     public string Code { get; set; }
+    public string? Name { get; set; }
     public string Group { get; set; } = "";
     public AssetLocation? Icon { get; set; } = null;
     public AssetLocation? GroupIcon { get; set; } = null;

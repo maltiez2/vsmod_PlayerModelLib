@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using HarmonyLib;
+using System.Diagnostics;
 using System.Reflection;
 using System.Text;
 using Vintagestory.API.Client;
@@ -1130,7 +1131,11 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             modelSplit = ["game", model];
         }
 
-        fullDescription.AppendLine(Lang.Get($"{modelSplit[0]}:modeldesc-{modelSplit[1]}"));
+        string descEntry = $"{modelSplit[0]}:modeldesc-{modelSplit[1]}";
+        if (Lang.HasTranslation(descEntry))
+        {
+            fullDescription.AppendLine(Lang.Get(descEntry));
+        }
 
         IEnumerable<string> missingTraits = modelConfig.ExtraTraits.Where(code => !_characterSystem.TraitsByCode.ContainsKey(code));
         if (missingTraits.Any())
@@ -1244,7 +1249,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     private void GetCustomModels(CustomModelsSystem system, string group, out string[] modelValues, out string[] modelNames, out AssetLocation?[] modelIcons, out AssetLocation? groupIcon)
     {
         modelValues = GetAvailableModels(system).Where(code => system.CustomModels[code].Group == group).ToArray();
-        modelNames = modelValues.Select(key => new AssetLocation(key)).Select(GetCustomModelLangEntry).ToArray();
+        modelNames = modelValues.Select(key => GetCustomModelLangEntry(new AssetLocation(key), system.CustomModels[key].Name)).ToArray();
         modelIcons = modelValues.Select(code => system.CustomModels[code].Icon).ToArray();
         groupIcon = system.CustomModels
             .Where(entry => entry.Value.Group == group)
@@ -1254,7 +1259,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         if (modelValues.Length == 0)
         {
             modelValues = [system.DefaultModelCode];
-            modelNames = [GetCustomModelLangEntry(system.DefaultModelCode)];
+            modelNames = [GetCustomModelLangEntry(system.DefaultModelCode, null)];
         }
     }
     private string[] GetAvailableModels(CustomModelsSystem system)
@@ -1262,7 +1267,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         string[] extraCustomModels = capi?.World?.Player?.Entity?.WatchedAttributes?.GetStringArray("extraCustomModels", []) ?? [];
         return system.CustomModels.Where(entry => entry.Value.Enabled || extraCustomModels.Contains(entry.Value.Code)).Select(entry => entry.Key).ToArray();
     }
-    private string GetCustomModelLangEntry(AssetLocation code) => Lang.Get($"{code.Domain}:playermodel-{code.Path}");
+    private string GetCustomModelLangEntry(AssetLocation code, string? name) => name ?? Lang.Get($"{code.Domain}:playermodel-{code.Path}");
     private string GetCustomGroupLangEntry(AssetLocation code) => Lang.GetIfExists($"game:playermodelgroup-{code.Path}") ?? Lang.Get($"{code.Domain}:playermodel-{code.Path}");
     private bool GetCurrentModelAndGroup(CustomModelsSystem system, PlayerSkinBehavior skinBehavior, out int modelIndex, out int groupIndex)
     {
