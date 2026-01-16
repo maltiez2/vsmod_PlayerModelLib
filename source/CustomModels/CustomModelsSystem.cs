@@ -85,35 +85,35 @@ public sealed class CustomModelsSystem : ModSystem
     {
         string fullCode = PrefixTextureCode(modelCode, textureCode);
 
-        if (true)//!_textures.ContainsKey(fullCode))
+        if (_textures.ContainsKey(fullCode))
         {
-            int textureIndex = entity.WatchedAttributes.GetInt("textureIndex");
             try
             {
-                var source = _clientApi?.Tesselator.GetTextureSource(entity, null, textureIndex);
-
-                return source?[textureCode];
+                return TextureSource?[fullCode];
             }
             catch (Exception)
             {
-                // if failed will just try again elsewhere
+                try
+                {
+                    return TextureSource?[textureCode];
+                }
+                catch (Exception)
+                {
+                    return null;
+                }
             }
         }
 
+        int textureIndex = entity.WatchedAttributes.GetInt("textureIndex");
         try
         {
-            return TextureSource?[fullCode];
+            ITexPositionSource? source = _clientApi?.Tesselator.GetTextureSource(entity, null, textureIndex);
+
+            return source?[textureCode];
         }
         catch (Exception)
         {
-            try
-            {
-                return TextureSource?[textureCode];
-            }
-            catch (Exception)
-            {
-                return null;
-            }
+            return null;
         }
     }
     public Size2i? GetAtlasSize(string modelCode, Entity entity)
@@ -142,7 +142,7 @@ public sealed class CustomModelsSystem : ModSystem
         {
             throw new InvalidOperationException("[Player Model lib] To early for HotLoadCustomModel");
         }
-        
+
         if (_api == null) return;
 
         if (CustomModels.ContainsKey(code))
