@@ -20,6 +20,7 @@ public sealed class CustomModelsSystem : ModSystem
     public Dictionary<string, CustomModelData> CustomModels { get; } = [];
     public ContainedTextureSource? TextureSource { get; private set; }
     public string DefaultModelCode => CustomModels.Where(entry => entry.Value.Enabled).Select(entry => entry.Key).FirstOrDefault(_defaultModelCode);
+    public string DefaultGroupCode => CustomModels.Where(entry => entry.Value.Enabled).Select(entry => entry.Value.Group).FirstOrDefault(_defaultGroupCode);
     public Shape DefaultModel => CustomModels[_defaultModelCode].Shape;
     public CustomModelData DefaultModelData => CustomModels[_defaultModelCode];
     public bool ModelsLoaded { get; private set; } = false;
@@ -188,6 +189,7 @@ public sealed class CustomModelsSystem : ModSystem
     private const string _defaultMainTextureCode = "seraph";
     private const string _playerEntityCode = "game:player";
     private const string _defaultModelCode = "seraph";
+    private const string _defaultGroupCode = "temporal";
     private const string _extraCustomModelsAttribute = "extraCustomModels";
     private const string _modelReplacementsByCodePath = "config/model-replacements-bycode";
     private const string _modelReplacementsByShapePath = "config/model-replacements-byshape";
@@ -264,7 +266,7 @@ public sealed class CustomModelsSystem : ModSystem
             HeadBobbingScale = defaultConfig.HeadBobbingScale,
             GuiModelScale = defaultConfig.GuiModelScale,
             Enabled = defaultConfig.Enabled,
-            Group = "temporal",
+            Group = _defaultGroupCode,
             Icon = new("playermodellib:textures/icons/seraph.png"),
             GroupIcon = new("playermodellib:textures/icons/temporal.png"),
             WalkEyeHeightMultiplier = defaultConfig.WalkEyeHeightMultiplier,

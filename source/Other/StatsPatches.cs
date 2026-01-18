@@ -294,7 +294,7 @@ public static class StatsPatches
     private static void ApplyStabilityStats(EntityBehaviorTemporalStabilityAffected __instance, float deltaTime)
     {
         __instance.TempStabChangeVelocity *= Math.Sign(__instance.entity.Stats.GetBlended(TemporalStabilityEffectDirectionStat));
-        if (__instance.TempStabChangeVelocity > 0)
+        if (__instance.TempStabChangeVelocity < 0)
         {
             __instance.TempStabChangeVelocity *= Math.Max(__instance.entity.Stats.GetBlended(TemporalStabilityDropRateStat), 0);
         }

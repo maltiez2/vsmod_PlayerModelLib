@@ -1245,6 +1245,12 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         }
         groupValues = groups.ToArray();
         groupNames = groups.Select(key => new AssetLocation(key)).Select(GetCustomGroupLangEntry).ToArray();
+
+        if (groupValues.Length == 0)
+        {
+            groupValues = [system.DefaultGroupCode];
+            groupNames = [GetCustomGroupLangEntry(system.DefaultGroupCode)];
+        }
     }
     private void GetCustomModels(CustomModelsSystem system, string group, out string[] modelValues, out string[] modelNames, out AssetLocation?[] modelIcons, out AssetLocation? groupIcon)
     {
