@@ -159,9 +159,9 @@ public sealed class CustomModelsSystem : ModSystem
             CustomModelData modelData = CustomModels[code];
 
             ProcessCustomModelMainTextures(code, modelData);
-            ProcessCustomModelAnimations(modelData.Shape, _api);
+            ProcessCustomModelAnimations(modelData.Shape, code, _api);
             CollectDefaultAddAttachmentPoints(out Dictionary<string, (AttachmentPoint[] points, ShapeElement element, string parent)> attachmentPointsByElement);
-            AddAttachmentPointsToCustomModel(modelData.Shape, attachmentPointsByElement);
+            AddAttachmentPointsToCustomModel(modelData.Shape, attachmentPointsByElement, code);
             CollectTexturesForCustomModel(code, modelData);
 
             if (_wearableModelReplacers.TryGetValue(code, out Dictionary<string, string>? paths))
@@ -239,6 +239,8 @@ public sealed class CustomModelsSystem : ModSystem
         FixColBreak(parts, _defaultModelCode);
 
         _ = _api.ModLoader.GetModSystem<ModSystemSkinnableAdditions>().AppendAdditions(parts);
+
+        CheckTexturePartTextureCodes(partsByCode.Values, defaultShape, _defaultModelCode);
 
         CustomModelData defaultModelData = new(_defaultModelCode, defaultShape)
         {
@@ -352,6 +354,8 @@ public sealed class CustomModelsSystem : ModSystem
         Dictionary<string, SkinnablePart> partsByCode = LoadParts(api, modelConfig.SkinnableParts, code);
 
         FixColBreak(modelConfig.SkinnableParts, code);
+
+        CheckTexturePartTextureCodes(partsByCode.Values, shape, code);
 
         CustomModelData modelData = new(code, shape)
         {
@@ -635,12 +639,12 @@ public sealed class CustomModelsSystem : ModSystem
     private AssetLocation GetShapeLocation(string path) => new AssetLocation(path).WithPathPrefixOnce("shapes/").WithPathAppendixOnce(".json");
     private void ProcessAnimations(ICoreAPI api)
     {
-        foreach (Shape customShape in CustomModels.Where(entry => entry.Key != _defaultModelCode).Select(entry => entry.Value.Shape))
+        foreach ((Shape customShape, string code) in CustomModels.Where(entry => entry.Key != _defaultModelCode).Select(entry => (entry.Value.Shape, entry.Value.Code)))
         {
-            ProcessCustomModelAnimations(customShape, api);
+            ProcessCustomModelAnimations(customShape, code, api);
         }
     }
-    private void ProcessCustomModelAnimations(Shape customShape, ICoreAPI api)
+    private void ProcessCustomModelAnimations(Shape customShape, string modelCode, ICoreAPI api)
     {
         if (customShape.Animations == null)
         {
@@ -659,15 +663,82 @@ public sealed class CustomModelsSystem : ModSystem
             customShape.Animations = [.. customShape.Animations, animation.Clone()];
         }
 
+        HashSet<string> removedElements = [];
+        CollectExistingShapeElementNames(customShape, out HashSet<string> existingElements);
+        foreach (Animation? animation in customShape.Animations)
+        {
+            if (animation == null) continue;
+
+            RemoveNotExistingShapeElements(animation, existingElements, out HashSet<string> removed);
+
+            removedElements.AddRange(removed);
+        }
+
+        if (removedElements.Count > 0)
+        {
+            string removedList = removedElements.Aggregate((f, s) => $"{f}, {s}");
+            LoggerUtil.Verbose(_api, this, $"For model '{modelCode}' removed {removedElements.Count} not existing elements from animations: {removedList}");
+        }
+
         customShape.ResolveReferences(api.Logger, "PlayerModelLib:CustomModel-ProcessAnimations");
     }
     private void ProcessAttachmentPoints()
     {
         CollectDefaultAddAttachmentPoints(out Dictionary<string, (AttachmentPoint[] points, ShapeElement element, string parent)> attachmentPointsByElement);
 
-        foreach (Shape customShape in CustomModels.Where(entry => entry.Key != _defaultModelCode).Select(entry => entry.Value.Shape))
+        foreach ((Shape customShape, string code) in CustomModels.Where(entry => entry.Key != _defaultModelCode).Select(entry => (entry.Value.Shape, entry.Value.Code)))
         {
-            AddAttachmentPointsToCustomModel(customShape, attachmentPointsByElement);
+            AddAttachmentPointsToCustomModel(customShape, attachmentPointsByElement, code);
+        }
+    }
+    private void RemoveNotExistingShapeElements(Animation animation, HashSet<string> existing, out HashSet<string> removed)
+    {
+        removed = [];
+
+        foreach (AnimationKeyFrame? frame in animation.KeyFrames)
+        {
+            if (frame == null || frame.Elements == null) continue;
+
+            IEnumerable<string> extraElements = frame.Elements.Select(entry => entry.Key).Where(key => !existing.Contains(key));
+
+            removed.AddRange(extraElements);
+
+            foreach (string element in extraElements)
+            {
+                frame.Elements.Remove(element);
+            }
+        }
+    }
+    private void CollectExistingShapeElementNames(Shape customShape, out HashSet<string> names)
+    {
+        names = [];
+        if (customShape.Elements != null)
+        {
+            foreach (ShapeElement? element in customShape.Elements)
+            {
+                if (element != null)
+                {
+                    CollectExistingShapeElementNamesRecursive(element, ref names);
+                }
+            }
+        }
+    }
+    private void CollectExistingShapeElementNamesRecursive(ShapeElement element, ref HashSet<string> names)
+    {
+        if (element.Name != null)
+        {
+            names.Add(element.Name);
+        }
+
+        if (element.Children != null)
+        {
+            foreach (ShapeElement? child in element.Children)
+            {
+                if (child != null)
+                {
+                    CollectExistingShapeElementNamesRecursive(child, ref names);
+                }
+            }
         }
     }
     private void CollectDefaultAddAttachmentPoints(out Dictionary<string, (AttachmentPoint[] points, ShapeElement element, string parent)> attachmentPointsByElement)
@@ -678,11 +749,11 @@ public sealed class CustomModelsSystem : ModSystem
             CollectAttachmentPoints(element, element, attachmentPointsByElement);
         }
     }
-    private void AddAttachmentPointsToCustomModel(Shape customShape, Dictionary<string, (AttachmentPoint[] points, ShapeElement element, string parent)> attachmentPointsByElement)
+    private void AddAttachmentPointsToCustomModel(Shape customShape, Dictionary<string, (AttachmentPoint[] points, ShapeElement element, string parent)> attachmentPointsByElement, string modelCode)
     {
         foreach (ShapeElement element in customShape.Elements)
         {
-            AddAttachmentPoints(element, attachmentPointsByElement);
+            AddAttachmentPoints(element, attachmentPointsByElement, modelCode);
         }
     }
     private void FixDefaultSkinParts(SkinnablePartExtended[] parts)
@@ -732,7 +803,7 @@ public sealed class CustomModelsSystem : ModSystem
             parts[index].Colbreak = (index == middleIndex);
         }
     }
-    private static void CollectAttachmentPoints(ShapeElement element, ShapeElement parent, Dictionary<string, (AttachmentPoint[] points, ShapeElement element, string parent)> attachmentPointsByElement)
+    private void CollectAttachmentPoints(ShapeElement element, ShapeElement parent, Dictionary<string, (AttachmentPoint[] points, ShapeElement element, string parent)> attachmentPointsByElement)
     {
         if (element.AttachmentPoints != null && element.AttachmentPoints.Length > 0)
         {
@@ -747,7 +818,7 @@ public sealed class CustomModelsSystem : ModSystem
             }
         }
     }
-    private static void AddAttachmentPoints(ShapeElement element, Dictionary<string, (AttachmentPoint[] points, ShapeElement element, string parent)> attachmentPointsByElement)
+    private void AddAttachmentPoints(ShapeElement element, Dictionary<string, (AttachmentPoint[] points, ShapeElement element, string parent)> attachmentPointsByElement, string modelCode)
     {
         foreach ((string elementName, (AttachmentPoint[] pointsData, ShapeElement elementData, string parentName)) in attachmentPointsByElement)
         {
@@ -757,10 +828,24 @@ public sealed class CustomModelsSystem : ModSystem
                 {
                     IEnumerable<string> existing = element.AttachmentPoints.Select(point => point.Code);
 
+                    IEnumerable<string> newPoints = pointsData.Where(point => !existing.Contains(point.Code)).Select(point => point.Code);
+                    if (newPoints.Any())
+                    {
+                        string pointsList = newPoints.Aggregate((f, s) => $"{f}, {s}");
+                        LoggerUtil.Verbose(_api, this, $"Adding attachment points to model '{modelCode}' into element '{elementName}': {pointsList}");
+                    }
+
                     element.AttachmentPoints = [.. element.AttachmentPoints, .. pointsData.Where(point => !existing.Contains(point.Code))];
                 }
                 else
                 {
+                    IEnumerable<string> newPoints = pointsData.Select(point => point.Code);
+                    if (newPoints.Any())
+                    {
+                        string pointsList = newPoints.Aggregate((f, s) => $"{f}, {s}");
+                        LoggerUtil.Verbose(_api, this, $"Adding attachment points to model '{modelCode}' into element '{elementName}': {pointsList}");
+                    }
+
                     element.AttachmentPoints = pointsData;
                 }
             }
@@ -772,6 +857,14 @@ public sealed class CustomModelsSystem : ModSystem
                     element.Children = [];
                 }
 
+                IEnumerable<string> newPoints = pointsData.Select(point => point.Code);
+                if (newPoints.Any())
+                {
+                    string pointsList = newPoints.Aggregate((f, s) => $"{f}, {s}");
+                    LoggerUtil.Verbose(_api, this, $"Adding missing shape element '{elementName}' to model '{modelCode}' into element '{parentName}' for adding attachments point");
+                    LoggerUtil.Verbose(_api, this, $"Adding attachment points to model '{modelCode}' into element '{elementName}': {pointsList}");
+                }
+
                 element.Children = element.Children.Append(elementData.Clone());
             }
         }
@@ -780,7 +873,7 @@ public sealed class CustomModelsSystem : ModSystem
         {
             foreach (ShapeElement child in element.Children)
             {
-                AddAttachmentPoints(child, attachmentPointsByElement);
+                AddAttachmentPoints(child, attachmentPointsByElement, modelCode);
             }
         }
     }
@@ -1089,6 +1182,30 @@ public sealed class CustomModelsSystem : ModSystem
         return TextCommandResult.Success($"Player '{targetPlayer.Name}' now does not have access to '{playerModelCode}' player model");
     }
 
+    private void CheckTexturePartTextureCodes(IEnumerable<SkinnablePart> allParts, Shape modelShape, string modelCode)
+    {
+        return; // Cannot do such check, because have to load shape skin parts to be able to check
+        
+        foreach (SkinnablePart part in allParts.Where(part => part.Type == EnumSkinnableType.Texture))
+        {
+            string? target = part.TextureTarget;
+            if (target == null)
+            {
+                LoggerUtil.Warn(_api, this, $"({modelCode}) Texture skin part '{part.Code}' has no 'TextureTarget' specified");
+                continue;
+            }
+
+            if (modelShape.Textures != null && !modelShape.Textures.ContainsKey(target))
+            {
+                string existingCodes = "";
+                if (modelShape.Textures.Count > 0)
+                {
+                    existingCodes = modelShape.Textures.Keys.Aggregate((f, s) => $"{f}, {s}");
+                }
+                LoggerUtil.Warn(_api, this, $"({modelCode}) Texture skin part '{part.Code}' has texture target '{target}' but model shape does not contain textures with such code, existing textures: {existingCodes}");
+            }
+        }
+    }
     private void ProcessTexturePart(ICoreClientAPI clientApi, SkinnablePart part, string model)
     {
         foreach (SkinnablePartVariant? variant in part.Variants)
