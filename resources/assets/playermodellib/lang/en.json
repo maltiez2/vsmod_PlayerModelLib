@@ -23,6 +23,7 @@
   "setting-scale_collider_vertically": "Scale collider with size (vertical)",
   "setting-enable_default_model": "Enable seraph model",
   "setting-export_shape_files": "(DEBUG) Export clothes/armor shapes",
+  "setting-disable_model_classes_and_traits": "Disable models classes and traits",
 
   "setting-comment-min_size_range": "Min model size player can choose when cerating character.",
   "setting-comment-max_size_range": "Max model size player can choose when creating character.",

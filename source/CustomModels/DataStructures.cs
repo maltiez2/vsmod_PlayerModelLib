@@ -76,10 +76,6 @@ public class CustomModelData
     public Dictionary<int, string> WearableShapeReplacers { get; set; } = [];
     public Dictionary<int, CompositeShape> WearableCompositeShapeReplacers { get; set; } = [];
     public Dictionary<string, string> WearableShapeReplacersByShape { get; set; } = [];
-    public HashSet<string> AvailableClasses { get; set; } = [];
-    public HashSet<string> SkipClasses { get; set; } = [];
-    public HashSet<string> ExclusiveClasses { get; set; } = [];
-    public string[] ExtraTraits { get; set; } = [];
     public Vector2 CollisionBox { get; set; }
     public float EyeHeight { get; set; }
     public Vector2 SizeRange { get; set; }
@@ -100,12 +96,23 @@ public class CustomModelData
     public float StepHeight { get; set; } = 0.6f;
     public float MaxOxygenFactor { get; set; } = 1;
 
+    public HashSet<string> AvailableClasses { get => PlayerModelModSystem.Settings.DisableModelClassesAndTraits ? [] : _availableClasses; set => _availableClasses = value; }
+    public HashSet<string> SkipClasses { get => PlayerModelModSystem.Settings.DisableModelClassesAndTraits ? [] : _skipClasses; set => _skipClasses = value; }
+    public HashSet<string> ExclusiveClasses { get => PlayerModelModSystem.Settings.DisableModelClassesAndTraits ? [] : _exclusiveClasses; set => _exclusiveClasses = value; }
+    public string[] ExtraTraits { get => PlayerModelModSystem.Settings.DisableModelClassesAndTraits ? [] : _extraTraits; set => _extraTraits = value; }
+
 
     public CustomModelData(string code, Shape shape)
     {
         Code = code;
         Shape = shape;
     }
+
+
+    private HashSet<string> _availableClasses = [];
+    private HashSet<string> _skipClasses = [];
+    private HashSet<string> _exclusiveClasses = [];
+    private string[] _extraTraits = [];
 }
 
 public class BaseShapeDataJson

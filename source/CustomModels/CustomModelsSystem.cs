@@ -248,6 +248,8 @@ public sealed class CustomModelsSystem : ModSystem
 
         CheckTexturePartTextureCodes(partsByCode.Values, defaultShape, _defaultModelCode);
 
+
+
         CustomModelData defaultModelData = new(_defaultModelCode, defaultShape)
         {
             SkinParts = partsByCode,

@@ -32,6 +32,12 @@
       "default": true
     },
     {
+      "code": "disable_model_classes_and_traits",
+      "type": "boolean",
+      "ingui": "playermodellib:setting-disable_model_classes_and_traits",
+      "default": false
+    },
+    {
       "code": "min_size_range",
       "type": "float",
       "ingui": "playermodellib:setting-min_size_range",
