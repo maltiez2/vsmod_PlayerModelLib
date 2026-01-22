@@ -397,6 +397,11 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         AvailableSkinParts = CurrentModel.SkinPartsArray;
         ReplaceEntityShape();
         ApplyTraitAttributes(CurrentModelCode);
+
+        if (entity is EntityPlayer player)
+        {
+            ModelSystem.CustomModelChanged(CurrentModelCode, player.Player, this);
+        }
     }
 
     protected void ReplaceEntityShape()

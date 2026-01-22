@@ -50,16 +50,22 @@ public static class ShapeReplacementUtil
 
         if (system.BaseShapesData.TryGetValue(customModel.BaseShapeCode, out BaseShapeData? baseShapeData))
         {
-            string cacheKey = $"{customModel}_{shapePath}_{itemId}";
+            string cacheKey = $"{customModel.Code}_{shapePath}_{itemId}";
             if (!PlayerModelModSystem.Settings.ExportShapeFiles && RescaledShapesCache != null && RescaledShapesCache.Get(cacheKey, out Shape? cachedShape))
             {
                 defaultShape = cachedShape.Clone();
                 return;
             }
 
-            defaultShape = ShapeAdjustmentUtil.AdjustClothesShape(entity.Api, shapePath, baseShapeData, customModel);
+            defaultShape = ShapeAdjustmentUtil.AdjustClothesShape(entity.Api, oldCompositeShape, baseShapeData, customModel);
             defaultShape?.SubclassForStepParenting(prefixCode, damageEffect);
             defaultShape?.ResolveReferences(entity.World.Logger, currentModel);
+
+            compositeShape = compositeShape?.Clone();
+            if (compositeShape != null)
+            {
+                compositeShape.Overlays = [];
+            }
 
             if (defaultShape != null) RescaledShapesCache?.Add(cacheKey, defaultShape);
 

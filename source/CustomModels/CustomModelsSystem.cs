@@ -30,6 +30,7 @@ public sealed class CustomModelsSystem : ModSystem
 
     public event Action? OnCustomModelsLoaded;
     public event Action? OnCustomModelHotLoaded;
+    public event Action<string, IPlayer, PlayerSkinBehavior>? OnCustomModelChanged;
 
     public override double ExecuteOrder() => 0.21;
 
@@ -176,6 +177,11 @@ public sealed class CustomModelsSystem : ModSystem
         }
 
         OnCustomModelHotLoaded?.Invoke();
+    }
+
+    public void CustomModelChanged(string code, IPlayer player, PlayerSkinBehavior behavior)
+    {
+        OnCustomModelChanged?.Invoke(code, player, behavior);
     }
 
     public static string PrefixTextureCode(string modelCode, string textureCode) => GetTextureCodePrefix(modelCode) + textureCode;
@@ -865,7 +871,11 @@ public sealed class CustomModelsSystem : ModSystem
                     LoggerUtil.Verbose(_api, this, $"Adding attachment points to model '{modelCode}' into element '{elementName}': {pointsList}");
                 }
 
-                element.Children = element.Children.Append(elementData.Clone());
+                ShapeElement newShapeElement = elementData.Clone();
+                newShapeElement.Children = [];
+                newShapeElement.ParentElement = element;
+
+                element.Children = element.Children.Append(newShapeElement);
             }
         }
 
@@ -1185,7 +1195,7 @@ public sealed class CustomModelsSystem : ModSystem
     private void CheckTexturePartTextureCodes(IEnumerable<SkinnablePart> allParts, Shape modelShape, string modelCode)
     {
         return; // Cannot do such check, because have to load shape skin parts to be able to check
-        
+
         foreach (SkinnablePart part in allParts.Where(part => part.Type == EnumSkinnableType.Texture))
         {
             string? target = part.TextureTarget;

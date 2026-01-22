@@ -7,10 +7,56 @@ namespace PlayerModelLib;
 
 public static class ShapeAdjustmentUtil
 {
+    public static Shape? AdjustClothesShape(ICoreAPI api, CompositeShape compositeShape, BaseShapeData baseShape, CustomModelData modelData)
+    {
+        AssetLocation shapePath = compositeShape.Base ?? "";
+        IEnumerable<AssetLocation> overlays = compositeShape.Overlays?.OfType<CompositeShape>().Select(element => element.Base ?? "") ?? [];
+
+        Shape? result = LoadShape(api, shapePath)?.Clone();
+        if (result == null)
+        {
+            return null;
+        }
+
+        foreach (AssetLocation overlayPath in overlays)
+        {
+            Shape? overlayShape = LoadShape(api, overlayPath)?.Clone();
+            if (overlayShape == null || overlayShape.Elements == null)
+            {
+                continue;
+            }
+
+            result.StepParentShape(overlayShape, "", "", api.Logger, (_, _) => { });
+
+            foreach (ShapeElement? element in overlayShape.Elements)
+            {
+                if (element == null)
+                {
+                    continue;
+                }
+
+                string? parent = element.StepParentName;
+                if (parent == null)
+                {
+                    continue;
+                }
+
+                if (baseShape.ElementSizes.ContainsKey(parent))
+                {
+                    result.Elements = result.Elements.Append(element).ToArray();
+                }
+            }
+        }
+
+        AdjustClothesShape(api, result, baseShape, modelData);
+
+        return result;
+    }
+
+
     public static Shape? AdjustClothesShape(ICoreAPI api, AssetLocation shapePath, BaseShapeData baseShape, CustomModelData modelData)
     {
         string key = shapePath.ToString();
-
 
         if (baseShape.WearableModelReplacersByShape.ContainsKey(key))
         {

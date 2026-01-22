@@ -1,6 +1,7 @@
 ﻿using HarmonyLib;
 using System.Diagnostics;
 using System.Reflection;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -67,7 +68,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             _characterInventory?.Open(capi.World.Player);
         }
 
-        ChangeModel(0);
+        _ = ChangeModel(0);
     }
     public override void OnGuiClosed()
     {
@@ -470,7 +471,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             groupValues,
             groupNames,
             groupIndex,
-            (variantCode, selected) => onToggleModelGroup(variantCode),
+            (variantCode, selected) => onToggleModelGroup(variantCode, composer),
             groupTextBounds,
             dropDownFont.Clone().WithOrientation(EnumTextOrientation.Left),
             multiSelect: false);
@@ -620,8 +621,8 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             "currentModelName");
 
         // Model selector with arrows
-        composer.AddIconButton("left", (on) => ChangeModel(-1), prevButtonBounds.FlatCopy());
-        composer.AddIconButton("right", (on) => ChangeModel(1), nextButtonBounds.FlatCopy());
+        composer.AddIconButton("left", (on) => ChangeModel(-1, composer), prevButtonBounds.FlatCopy());
+        composer.AddIconButton("right", (on) => ChangeModel(1, composer), nextButtonBounds.FlatCopy());
 
         // Size slider
         float minSize = skinBehavior.CurrentModel.SizeRange.X;
@@ -851,14 +852,14 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     }
 
 
-    private void onToggleModelGroup(string groupCode)
+    private void onToggleModelGroup(string groupCode, GuiComposer? composer = null)
     {
         CustomModelsSystem system = capi.ModLoader.GetModSystem<CustomModelsSystem>();
         GetCustomModels(system, groupCode, out string[] modelValues, out _, out _, out _);
 
         if (modelValues.Length > 0)
         {
-            onToggleModel(modelValues[0]);
+            onToggleModel(modelValues[0], composer);
         }
     }
 
@@ -900,7 +901,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         return modelValues[modelIndex];
     }
 
-    private bool ChangeModel(int dir)
+    private bool ChangeModel(int dir, GuiComposer? composer = null)
     {
         PlayerSkinBehavior? skinBehavior = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
         CustomModelsSystem system = capi.ModLoader.GetModSystem<CustomModelsSystem>();
@@ -913,7 +914,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         modelIndex = GameMath.Mod(modelIndex + dir, modelValues.Length);
 
-        onToggleModel(modelValues[modelIndex]);
+        onToggleModel(modelValues[modelIndex], composer);
 
         return true;
     }
@@ -999,7 +1000,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         skinMod.selectSkinPart(partCode, variantCode);
     }
-    private void onToggleModel(string modelCode)
+    private void onToggleModel(string modelCode, GuiComposer? composer = null)
     {
         EntityBehaviorPlayerInventory? bh = capi.World.Player.Entity.GetBehavior<EntityBehaviorPlayerInventory>();
         PlayerSkinBehavior? skinMod = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
@@ -1012,6 +1013,19 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         List<CharacterClass> availableClasses = GetAvailableClasses(system, skinMod.CurrentModelCode);
         _characterSystem.setCharacterClass(capi.World.Player.Entity, availableClasses[0].Code, true);
+
+        try
+        {
+            float minSize = system.CustomModels[modelCode].SizeRange.X;
+            float maxSize = system.CustomModels[modelCode].SizeRange.Y;
+            _currentModelSize = GameMath.Clamp(_currentModelSize, minSize, maxSize);
+            composer?.GetSlider("modelSizeSlider").SetValues((int)(_currentModelSize * 100), (int)(minSize * 100), (int)(maxSize * 100), 1, unit: "%");
+            OnModelSizeChanged();
+        }
+        catch
+        {
+            Debug.WriteLine("Failed to reset model size");
+        }
 
         ComposeGuis();
 
