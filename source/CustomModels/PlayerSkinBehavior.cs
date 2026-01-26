@@ -15,7 +15,7 @@ namespace PlayerModelLib;
 public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSource
 {
     public delegate void OnWearableItemProcessingDelegate(Entity player, PlayerSkinBehavior behavior, ref ItemSlot slot, ref string[]? disableElements, ref string[]? keepElements);
-    
+
     public PlayerSkinBehavior(Entity entity) : base(entity)
     {
     }
@@ -53,6 +53,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
 
     public Size2i? AtlasSize => ModelSystem?.GetAtlasSize(CurrentModelCode, entity);
+
     public TextureAtlasPosition? this[string textureCode] => GetAtlasPosition(textureCode, entity);
 
     public override void Initialize(EntityProperties properties, JsonObject attributes)
@@ -81,7 +82,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
     public virtual void ActuallyInitialize()
     {
         if (Initialized) return;
-        
+
         if (ModelSystem == null) return;
 
         skintree = entity.WatchedAttributes.GetTreeAttribute("skinConfig");
@@ -91,51 +92,72 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         }
 
         string skinModel = GetPlayerModelAttributeValue();
+
+        if (entity.Api.Side == EnumAppSide.Client)
+        {
+            Debug.WriteLine($"Client: {skinModel}");
+        }
+
         if (!ModelSystem.CustomModels.ContainsKey(skinModel) && entity.Api.ModLoader.IsModEnabled("customplayermodel"))
         {
+            LoggerUtil.Notify(entity.Api, this, $"(player: {(entity as EntityPlayer)?.GetName()}) Custom model with code '{skinModel}' was not found. Probably was not yet received from player. Will reset model to default until the model is received.");
+            
             TempModelCode = skinModel;
             TempSkinConfig = skintree.Clone();
 
             CurrentModelCode = ModelSystem.DefaultModelCode;
             AvailableSkinPartsByCode = CurrentModel.SkinParts;
             AvailableSkinParts = CurrentModel.SkinPartsArray;
+            SetModelAttribute(CurrentModelCode);
             OnVoiceConfigChanged();
             OnSkinModelChanged();
-            
+
             if (entity.Api.Side == EnumAppSide.Server && AppliedSkinParts.Count == 0)
             {
                 entity.Api.ModLoader.GetModSystem<CharacterSystem>().randomizeSkin(entity, null, false);
             }
-            
-            ModelSystem.OnCustomModelHotLoaded += ActuallyInitialize;
+
+            ModelSystem.OnCustomModelHotLoaded += (code) =>
+            {
+                if (!Initialized && TempModelCode == code)
+                {
+                    LoggerUtil.Notify(entity.Api, this, $"(player: {(entity as EntityPlayer)?.GetName()}) A custom model '{code}' was hot loaded, trying to restore original model.");
+                    ActuallyInitialize();
+                }
+            };
             return;
         }
 
-        if (TempModelCode != null)
+        if (entity.Api.Side == EnumAppSide.Server && TempModelCode != null)
         {
             if (!ModelSystem.CustomModels.ContainsKey(TempModelCode))
             {
                 return;
             }
-            
+
             CurrentModelCode = TempModelCode;
-            entity.WatchedAttributes.SetString("skinModel", TempModelCode);
+            SetModelAttribute(TempModelCode);
             skinModel = TempModelCode;
             TempModelCode = null;
         }
 
-        if (TempSkinConfig != null)
+        if (entity.Api.Side == EnumAppSide.Server && TempSkinConfig != null)
         {
-            skintree = TempSkinConfig;
+            entity.WatchedAttributes.SetAttribute("skinConfig", TempSkinConfig);
+            entity.WatchedAttributes.MarkPathDirty("skinConfig");
             TempSkinConfig = null;
         }
 
         if (skinModel == null || !ModelSystem.CustomModels.ContainsKey(skinModel))
         {
-            entity.WatchedAttributes.SetString("skinModel", ModelSystem.DefaultModelCode);
+            SetModelAttribute(ModelSystem.DefaultModelCode);
             CurrentModelCode = ModelSystem.DefaultModelCode;
             AvailableSkinPartsByCode = CurrentModel.SkinParts;
             AvailableSkinParts = CurrentModel.SkinPartsArray;
+        }
+        else
+        {
+            CurrentModelCode = skinModel;
         }
 
         entity.WatchedAttributes.RegisterModifiedListener("skinModel", OnSkinModelAttrChanged);
@@ -164,28 +186,29 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
         Shape backup = entityShape;
 
-        try
+        int hash = GetShapeHash();
+
+        if (ShapeCache == null || ShapeCacheHash != hash)
         {
-            entityShape = ModelSystem.CustomModels[CurrentModelCode].Shape.Clone();
-            shapeIsCloned = true;
+            ShapeCacheHash = hash;
+            Shape? newShape = Tesselate(shapePathForLogging, ref willDeleteElements);
+            if (newShape == null)
+            {
+                entityShape = backup;
+                return;
+            }
 
-            AddMainTextures();
-
-            AddSkinParts(ref entityShape, shapePathForLogging, ref willDeleteElements);
-
-            AddSkinPartsTextures(ClientApi, entityShape, shapePathForLogging);
-
+            entityShape = newShape;
+            ShapeCache = newShape;
+        }
+        else
+        {
+            entityShape = ShapeCache.Clone();
+            CollectDisabledElements(ref willDeleteElements);
             RemoveHiddenElements(entityShape, ref willDeleteElements);
-
-            entityShape.CollectAndResolveReferences(entity.Api.Logger, shapePathForLogging);
-
-            OnShapeTesselated?.Invoke(entityShape);
         }
-        catch (Exception exception)
-        {
-            entityShape = backup;
-            LoggerUtil.Error(ClientApi, this, $"({CurrentModelCode}) Error when tesselating custom player model:\n{exception}");
-        }
+
+        OnShapeTesselated?.Invoke(entityShape);
     }
 
     public void SetCurrentModel(string code, float size)
@@ -236,7 +259,9 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
     public override void OnGameTick(float deltaTime)
     {
-        ITreeAttribute? hungerTree = entity.WatchedAttributes.GetTreeAttribute("hunger");
+        string skinModel = GetPlayerModelAttributeValue();
+
+        //Debug.WriteLine($"({entity.Api.Side}) OnGameTick: {CurrentModelCode} / {skinModel}");
     }
 
     public override string PropertyName() => "skinnableplayercustommodel";
@@ -306,6 +331,19 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         SetZNear();
     }
 
+    public int GetShapeHash()
+    {
+        string key = AppliedSkinParts.Select(entry => $"{entry.PartCode}_{entry.Code}_").Aggregate((f, s) => f + s) + '_' + CurrentModelCode;
+        return key.GetHashCode();
+    }
+
+    public int GetLastShapeHash()
+    {
+        return ShapeCacheHash;
+    }
+
+
+    protected static readonly FieldInfo? EntityBehaviorControlledPhysics_sneakTestCollisionbox = typeof(EntityBehaviorControlledPhysics).GetField("sneakTestCollisionbox", BindingFlags.NonPublic | BindingFlags.Instance);
     protected CustomModelsSystem? ModelSystem;
     protected ICoreClientAPI? ClientApi;
     protected Dictionary<string, TextureAtlasPosition> OverlaysTexturePositions = [];
@@ -319,12 +357,45 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
     protected float PreviousStepHeight = 1;
     protected float PreviousMaxOxygen = 1;
     protected float DefaultEyeHeight = 1.7f;
-    protected string DefaultModelCode => ModelSystem?.DefaultModelCode ?? "seraph";
     protected ITreeAttribute? TempSkinConfig;
     protected string? TempModelCode;
+    protected int ShapeCacheHash = 0;
+    protected Shape? ShapeCache = null;
 
-    protected FieldInfo? EntityBehaviorControlledPhysics_sneakTestCollisionbox = typeof(EntityBehaviorControlledPhysics).GetField("sneakTestCollisionbox", BindingFlags.NonPublic | BindingFlags.Instance);
 
+    protected void SetModelAttribute(string code)
+    {
+        if (entity.Api.Side == EnumAppSide.Server)
+        {
+            entity.WatchedAttributes.SetString("skinModel", code);
+            entity.WatchedAttributes.MarkPathDirty("skinModel");
+        }
+    }
+
+    protected Shape? Tesselate(string shapePathForLogging, ref string[]? willDeleteElements)
+    {
+        if (ModelSystem == null || ClientApi == null || !ModelSystem.ModelsLoaded) return null;
+
+        try
+        {
+            Shape entityShape = ModelSystem.CustomModels[CurrentModelCode].Shape.Clone();
+
+            AddMainTextures();
+            AddSkinParts(ref entityShape, shapePathForLogging, ref willDeleteElements);
+            AddSkinPartsTextures(ClientApi, entityShape, shapePathForLogging);
+            RemoveHiddenElements(entityShape, ref willDeleteElements);
+
+            entityShape.CollectAndResolveReferences(entity.Api.Logger, shapePathForLogging);
+
+            return entityShape;
+        }
+        catch (Exception exception)
+        {
+            LoggerUtil.Error(ClientApi, this, $"({CurrentModelCode}) Error when tesselating custom player model:\n{exception}");
+        }
+
+        return null;
+    }
 
     protected void OnSkinConfigChanged()
     {
@@ -390,7 +461,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         if (!ModelSystem.CustomModels.ContainsKey(CurrentModelCode))
         {
             CurrentModelCode = ModelSystem.DefaultModelCode;
-            entity.WatchedAttributes.SetString("skinModel", CurrentModelCode);
+            SetModelAttribute(CurrentModelCode);
             return;
         }
         AvailableSkinPartsByCode = CurrentModel.SkinParts;
@@ -495,6 +566,27 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
                 }
 
                 entityShape = AddSkinPart(skinPart, entityShape, disabledElements, shapePathForLogging);
+            }
+        }
+    }
+
+    protected virtual void CollectDisabledElements(ref string[]? willDeleteElements)
+    {
+        foreach (AppliedSkinnablePartVariant? skinPart in AppliedSkinParts)
+        {
+            AvailableSkinPartsByCode.TryGetValue(skinPart.PartCode, out SkinnablePart? part);
+
+            if (part?.Type == EnumSkinnableType.Shape)
+            {
+                string[]? disabledElements = null;
+                (part as SkinnablePartExtended)?.DisableElementsByVariantCode.TryGetValue(skinPart.Code, out disabledElements);
+                disabledElements = disabledElements?.Concat(part.DisableElements ?? []).ToArray() ?? [];
+
+                if (disabledElements.Length > 0)
+                {
+                    willDeleteElements ??= [];
+                    willDeleteElements = willDeleteElements.Concat(disabledElements).ToArray();
+                }
             }
         }
     }

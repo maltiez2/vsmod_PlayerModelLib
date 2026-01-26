@@ -29,7 +29,7 @@ public sealed class CustomModelsSystem : ModSystem
     public bool CanHotLoad => ModelsLoaded;
 
     public event Action? OnCustomModelsLoaded;
-    public event Action? OnCustomModelHotLoaded;
+    public event Action<string>? OnCustomModelHotLoaded;
     public event Action<string, IPlayer, PlayerSkinBehavior>? OnCustomModelChanged;
 
     public override double ExecuteOrder() => 0.21;
@@ -176,7 +176,7 @@ public sealed class CustomModelsSystem : ModSystem
             }
         }
 
-        OnCustomModelHotLoaded?.Invoke();
+        OnCustomModelHotLoaded?.Invoke(code);
     }
 
     public void CustomModelChanged(string code, IPlayer player, PlayerSkinBehavior behavior)
@@ -672,7 +672,7 @@ public sealed class CustomModelsSystem : ModSystem
         }
 
         HashSet<string> removedElements = [];
-        CollectExistingShapeElementNames(customShape, out HashSet<string> existingElements);
+        CollectExistingShapeElementNames(customShape, out HashSet<string> existingElements, modelCode, api);
         foreach (Animation? animation in customShape.Animations)
         {
             if (animation == null) continue;
@@ -717,7 +717,7 @@ public sealed class CustomModelsSystem : ModSystem
             }
         }
     }
-    private void CollectExistingShapeElementNames(Shape customShape, out HashSet<string> names)
+    private void CollectExistingShapeElementNames(Shape customShape, out HashSet<string> names, string modelCode, ICoreAPI api)
     {
         names = [];
         if (customShape.Elements != null)
@@ -726,15 +726,19 @@ public sealed class CustomModelsSystem : ModSystem
             {
                 if (element != null)
                 {
-                    CollectExistingShapeElementNamesRecursive(element, ref names);
+                    CollectExistingShapeElementNamesRecursive(element, ref names, modelCode, api);
                 }
             }
         }
     }
-    private void CollectExistingShapeElementNamesRecursive(ShapeElement element, ref HashSet<string> names)
+    private void CollectExistingShapeElementNamesRecursive(ShapeElement element, ref HashSet<string> names, string modelCode, ICoreAPI api)
     {
         if (element.Name != null)
         {
+            if (names.Contains(element.Name))
+            {
+                LoggerUtil.Warn(api, this, $"({modelCode}) Model shape has element with duplicated name: '{element.Name}'. This will cause issues, make sure model shape does not contain elements with same name.");
+            }
             names.Add(element.Name);
         }
 
@@ -744,7 +748,7 @@ public sealed class CustomModelsSystem : ModSystem
             {
                 if (child != null)
                 {
-                    CollectExistingShapeElementNamesRecursive(child, ref names);
+                    CollectExistingShapeElementNamesRecursive(child, ref names, modelCode, api);
                 }
             }
         }

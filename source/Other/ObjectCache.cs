@@ -12,16 +12,14 @@ public sealed class ObjectCache<TKey, TValue> : IDisposable
     private ICoreAPI? _api;
     private readonly int _cleanUpPeriodMs;
     private readonly long _cleanUpTimer = 0;
-    private readonly int _cleanUpThreshold;
     private readonly string _loggedCacheName;
     private readonly bool _threadSafe;
     private long _addCountBetweenCleanUps = 0;
     private long _getCountBetweenCleanUps = 0;
 
-    public ObjectCache(ICoreAPI api, string loggedCacheName, int cleanUpThreshold = 100, int cleanUpPeriod = 10 * 60 * 1000, bool threadSafe = true)
+    public ObjectCache(ICoreAPI api, string loggedCacheName, int cleanUpPeriod = 10 * 60 * 1000, bool threadSafe = true)
     {
         _api = api;
-        _cleanUpThreshold = cleanUpThreshold;
         _cleanUpPeriodMs = cleanUpPeriod;
         _loggedCacheName = loggedCacheName;
         _threadSafe = threadSafe;
@@ -30,20 +28,12 @@ public sealed class ObjectCache<TKey, TValue> : IDisposable
 
     public void Add(TKey key, TValue value)
     {
-        //bool requiresCleanUp = false;
         bool threadSafe = _threadSafe;
-
         if (threadSafe) _lock.AcquireWriterLock(5000);
         _addCountBetweenCleanUps++;
         _mapping[key] = value;
         _lastAccess[key] = CurrentTime();
-        //requiresCleanUp = _mapping.Count > _cleanUpThreshold;
         if (threadSafe) _lock.ReleaseWriterLock();
-
-        //if (requiresCleanUp)
-        //{
-        //    Clean();
-        //}
     }
 
     public bool Get(TKey key, [NotNullWhen(true)] out TValue? value)

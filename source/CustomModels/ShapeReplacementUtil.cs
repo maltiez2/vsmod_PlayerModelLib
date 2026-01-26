@@ -1,4 +1,6 @@
 ﻿using Newtonsoft.Json;
+using System.Diagnostics;
+using System.Text;
 using System.Text.RegularExpressions;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
@@ -9,9 +11,16 @@ namespace PlayerModelLib;
 
 public static class ShapeReplacementUtil
 {
+    public class FullShapeCacheEntry
+    {
+        public Shape? Shape { get; set; }
+        public CompositeShape? CompositeShape { get; set; }
+    }
+    
     public static bool ExportingShape { get; set; } = false;
     public static ObjectCache<string, Shape>? RescaledShapesCache { get; set; }
     public static ObjectCache<string, Shape>? ReplacedShapesCache { get; set; }
+    public static ObjectCache<string, FullShapeCacheEntry>? FullShapeCache { get; set; }
 
     public static void GetModelReplacement(ItemStack? stack, Entity entity, ref Shape? defaultShape, ref CompositeShape? compositeShape, IAttachableToEntity yadayada, float damageEffect, string slotCode, ref string[] willDeleteElements)
     {
@@ -19,18 +28,64 @@ public static class ShapeReplacementUtil
 
         int itemId = stack?.Item?.Id ?? 0;
 
-        CustomModelsSystem system = entity.Api.ModLoader.GetModSystem<CustomModelsSystem>();
+        _system ??= entity.Api.ModLoader.GetModSystem<CustomModelsSystem>();
+
         PlayerSkinBehavior? skinBehavior = entity.GetBehavior<PlayerSkinBehavior>();
 
         string? currentModel = skinBehavior?.CurrentModelCode;
 
-        if (currentModel == null || itemId == 0 || system == null || !system.ModelsLoaded || currentModel == "seraph") return;
+        if (skinBehavior == null || currentModel == null || itemId == 0 || _system == null || !_system.ModelsLoaded || currentModel == "seraph") return;
 
-        CustomModelData customModel = system.CustomModels[currentModel];
+        CustomModelData customModel = _system.CustomModels[currentModel];
 
         string? yadaPrefixCode = yadayada.GetTexturePrefixCode(stack);
-        string prefixCode = yadaPrefixCode == null ? "" : yadaPrefixCode;
+        string prefixCode = yadaPrefixCode ?? "";
+        int shapeHash = skinBehavior.GetLastShapeHash();
 
+        string cacheKey = GenerateFullShapeCacheLey(itemId, currentModel, entity, prefixCode, slotCode, willDeleteElements, shapeHash);
+
+        if (FullShapeCache?.Get(cacheKey, out FullShapeCacheEntry? entry) == true)
+        {
+            defaultShape = entry.Shape?.Clone();
+            compositeShape = entry.CompositeShape?.Clone();
+        }
+        else
+        {
+            GenerateShapes(prefixCode, customModel, itemId, _system, currentModel, stack, entity, ref defaultShape, ref compositeShape, yadayada, damageEffect, ref willDeleteElements);
+
+            FullShapeCacheEntry newEntry = new()
+            {
+                Shape = defaultShape?.Clone(),
+                CompositeShape = compositeShape?.Clone()
+            };
+
+            FullShapeCache?.Add(cacheKey, newEntry);
+        }
+    }
+
+    public static void StaticDispose()
+    {
+        _system = null;
+    }
+
+
+    private static CustomModelsSystem? _system;
+
+
+    private static void GenerateShapes(
+        string prefixCode,
+        CustomModelData customModel,
+        int itemId,
+        CustomModelsSystem system,
+        string currentModel,
+        ItemStack? stack,
+        Entity entity,
+        ref Shape? defaultShape,
+        ref CompositeShape? compositeShape,
+        IAttachableToEntity yadayada,
+        float damageEffect,
+        ref string[] willDeleteElements)
+    {
         willDeleteElements = ReplaceWildcardPrefixes(willDeleteElements, prefixCode);
 
         if (ReplaceShapeByItem(prefixCode, entity, ref defaultShape, ref compositeShape, damageEffect, itemId, customModel))
@@ -75,7 +130,23 @@ public static class ShapeReplacementUtil
             }
         }
     }
+    
+    private static string GenerateFullShapeCacheLey(int itemId, string currentModel, Entity entity, string prefixCode, string slotCode, string[] willDeleteElements, int shapeHash)
+    {
+        StringBuilder builder = new();
+        builder.Append(itemId.ToString());
+        builder.Append(entity.EntityId.ToString());
+        builder.Append(currentModel);
+        builder.Append(slotCode);
+        builder.Append(prefixCode);
+        builder.Append(shapeHash);
+        foreach (string element in willDeleteElements ?? [])
+        {
+            builder.Append(element);
+        }
 
+        return builder.ToString();
+    }
     private static string[] ReplaceWildcardPrefixes(string[] elements, string prefix)
     {
         return elements

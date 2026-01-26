@@ -53,7 +53,6 @@ public static class ShapeAdjustmentUtil
         return result;
     }
 
-
     public static Shape? AdjustClothesShape(ICoreAPI api, AssetLocation shapePath, BaseShapeData baseShape, CustomModelData modelData)
     {
         string key = shapePath.ToString();
@@ -97,25 +96,22 @@ public static class ShapeAdjustmentUtil
         return currentShape;
     }
 
+    public static void RescaleShapeElement(ShapeElement element, Vector3d scale)
+    {
+        RescaleShapeElementRecursive(element, scale);
+    }
+
+
+
     private static Vector3d GetScaleVector(Vector3d baseSize, Vector3d customSize)
     {
         Vector3d scale = new(customSize.X / baseSize.X, customSize.Y / baseSize.Y, customSize.Z / baseSize.Z);
         return scale;
     }
 
-    public static void RescaleShapeElement(ShapeElement element, Vector3d scale)
-    {
-        RescaleShapeElementRecursive(element, scale);
-    }
-
     private static void RescaleShapeElementRecursive(ShapeElement element, Vector3d scale)
     {
         if (element == null) return;
-
-        if (element.Name == "LowertorsoD")
-        {
-            Debug.WriteLine(element.Name);
-        }
 
         if (element.RotationOrigin == null)
         {

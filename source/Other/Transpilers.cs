@@ -188,17 +188,13 @@ internal static class TranspilerPatches
         private static void ApplyWarmthStats(ref float clothingBonus, EntityAgent agent)
         {
             float value = clothingBonus;
-            Debug.WriteLine($"({agent.Api.Side}) Before: {value}");
             value += Math.Clamp(agent.Stats.GetBlended(StatsPatches.WarmthBonusStat), -100, 100);
-            Debug.WriteLine($"({agent.Api.Side}) After: {value}");
             clothingBonus = value;
         }
 
         static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
             List<CodeInstruction> code = new(instructions);
-
-            Debug.WriteLine($"\n\n\n\nTranspiler: {code.Count}\n\n\n\n");
 
             FieldInfo clothingBonusField = AccessTools.Field(
                 typeof(EntityBehaviorBodyTemperature),
@@ -216,8 +212,6 @@ internal static class TranspilerPatches
             {
                 if (code[i].opcode == OpCodes.Ret)
                 {
-                    Debug.WriteLine($"\n\n\n\n{i}/{code.Count}\n\n\n\n");
-                    
                     List<CodeInstruction> insert =
                     [
                         new CodeInstruction(OpCodes.Ldarg_0),
