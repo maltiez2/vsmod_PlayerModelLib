@@ -11,10 +11,16 @@ namespace PlayerModelLib;
 
 public static class ShapeReplacementUtil
 {
-    public class FullShapeCacheEntry
+    public readonly struct FullShapeCacheEntry
     {
-        public Shape? Shape { get; set; }
-        public CompositeShape? CompositeShape { get; set; }
+        public readonly Shape? Shape;
+        public readonly CompositeShape? CompositeShape;
+
+        public FullShapeCacheEntry(Shape? shape, CompositeShape? compositeShape)
+        {
+            Shape = shape;
+            CompositeShape = compositeShape;
+        }
     }
     
     public static bool ExportingShape { get; set; } = false;
@@ -40,24 +46,22 @@ public static class ShapeReplacementUtil
 
         string? yadaPrefixCode = yadayada.GetTexturePrefixCode(stack);
         string prefixCode = yadaPrefixCode ?? "";
-        int shapeHash = skinBehavior.GetLastShapeHash();
+        int shapeHash = skinBehavior.GetShapeHash();
 
         string cacheKey = GenerateFullShapeCacheLey(itemId, currentModel, entity, prefixCode, slotCode, willDeleteElements, shapeHash);
 
-        if (FullShapeCache?.Get(cacheKey, out FullShapeCacheEntry? entry) == true)
+        if (FullShapeCache?.Get(cacheKey, out FullShapeCacheEntry entry) == true)
         {
             defaultShape = entry.Shape?.Clone();
             compositeShape = entry.CompositeShape?.Clone();
+
+            willDeleteElements = ReplaceWildcardPrefixes(willDeleteElements, prefixCode);
         }
         else
         {
             GenerateShapes(prefixCode, customModel, itemId, _system, currentModel, stack, entity, ref defaultShape, ref compositeShape, yadayada, damageEffect, ref willDeleteElements);
 
-            FullShapeCacheEntry newEntry = new()
-            {
-                Shape = defaultShape?.Clone(),
-                CompositeShape = compositeShape?.Clone()
-            };
+            FullShapeCacheEntry newEntry = new(defaultShape?.Clone(), compositeShape?.Clone());
 
             FullShapeCache?.Add(cacheKey, newEntry);
         }
@@ -360,7 +364,10 @@ public static class ShapeReplacementUtil
             defaultShape?.SubclassForStepParenting(prefixCode, damageEffect);
             defaultShape?.ResolveReferences(entity.World.Logger, "");
 
-            if (defaultShape != null) ReplacedShapesCache?.Add(cacheKey, defaultShape);
+            if (defaultShape != null)
+            {
+                ReplacedShapesCache?.Add(cacheKey, defaultShape.Clone());
+            }
         }
 
         if (oldCompositeShape.Overlays != null)

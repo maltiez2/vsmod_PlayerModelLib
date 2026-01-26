@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json.Linq;
 using OpenTK.Mathematics;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 using SkiaSharp;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -10,6 +11,7 @@ using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
 using Vintagestory.API.Util;
+using Vintagestory.Common;
 using Vintagestory.GameContent;
 using Vintagestory.Server;
 
@@ -161,7 +163,7 @@ public sealed class CustomModelsSystem : ModSystem
 
             ProcessCustomModelMainTextures(code, modelData);
             ProcessCustomModelAnimations(modelData.Shape, code, _api);
-            CollectDefaultAddAttachmentPoints(out Dictionary<string, (AttachmentPoint[] points, ShapeElement element, string parent)> attachmentPointsByElement);
+            CollectDefaultAttachmentPoints(out Dictionary<string, (AttachmentPoint[] points, ShapeElement element, string parent)> attachmentPointsByElement);
             AddAttachmentPointsToCustomModel(modelData.Shape, attachmentPointsByElement, code);
             CollectTexturesForCustomModel(code, modelData);
 
@@ -236,7 +238,10 @@ public sealed class CustomModelsSystem : ModSystem
 
         EntityProperties playerProperties = _api.World.GetEntityType(_playerEntityCode) ?? throw new ArgumentException("[Player Model lib] Unable to get player entity properties.");
 
-        SkinnablePartExtended[] parts = [.. playerProperties.Attributes["skinnableParts"].AsObject<SkinnablePartExtended[]>().Where(part => part.Enabled)];
+        SkinnablePartExtended[] parts = playerProperties.Attributes["skinnableParts"]
+            .AsObject<SkinnablePartExtended[]>()
+            .Where(part => part.Enabled)
+            .ToArray();
 
         FixDefaultSkinParts(parts);
 
@@ -692,7 +697,7 @@ public sealed class CustomModelsSystem : ModSystem
     }
     private void ProcessAttachmentPoints()
     {
-        CollectDefaultAddAttachmentPoints(out Dictionary<string, (AttachmentPoint[] points, ShapeElement element, string parent)> attachmentPointsByElement);
+        CollectDefaultAttachmentPoints(out Dictionary<string, (AttachmentPoint[] points, ShapeElement element, string parent)> attachmentPointsByElement);
 
         foreach ((Shape customShape, string code) in CustomModels.Where(entry => entry.Key != _defaultModelCode).Select(entry => (entry.Value.Shape, entry.Value.Code)))
         {
@@ -753,12 +758,12 @@ public sealed class CustomModelsSystem : ModSystem
             }
         }
     }
-    private void CollectDefaultAddAttachmentPoints(out Dictionary<string, (AttachmentPoint[] points, ShapeElement element, string parent)> attachmentPointsByElement)
+    private void CollectDefaultAttachmentPoints(out Dictionary<string, (AttachmentPoint[] points, ShapeElement element, string parent)> attachmentPointsByElement)
     {
         attachmentPointsByElement = [];
         foreach (ShapeElement element in CustomModels[_defaultModelCode].Shape.Elements)
         {
-            CollectAttachmentPoints(element, element, attachmentPointsByElement);
+            CollectAttachmentPointsRecursively(element, element, attachmentPointsByElement);
         }
     }
     private void AddAttachmentPointsToCustomModel(Shape customShape, Dictionary<string, (AttachmentPoint[] points, ShapeElement element, string parent)> attachmentPointsByElement, string modelCode)
@@ -815,7 +820,7 @@ public sealed class CustomModelsSystem : ModSystem
             parts[index].Colbreak = (index == middleIndex);
         }
     }
-    private void CollectAttachmentPoints(ShapeElement element, ShapeElement parent, Dictionary<string, (AttachmentPoint[] points, ShapeElement element, string parent)> attachmentPointsByElement)
+    private void CollectAttachmentPointsRecursively(ShapeElement element, ShapeElement parent, Dictionary<string, (AttachmentPoint[] points, ShapeElement element, string parent)> attachmentPointsByElement)
     {
         if (element.AttachmentPoints != null && element.AttachmentPoints.Length > 0)
         {
@@ -826,7 +831,7 @@ public sealed class CustomModelsSystem : ModSystem
         {
             foreach (ShapeElement child in element.Children)
             {
-                CollectAttachmentPoints(child, element, attachmentPointsByElement);
+                CollectAttachmentPointsRecursively(child, element, attachmentPointsByElement);
             }
         }
     }
@@ -1259,29 +1264,7 @@ public sealed class CustomModelsSystem : ModSystem
             }
             else
             {
-                int r = 0;
-                int g = 0;
-                int b = 0;
-                float c = 0;
-
-                BitmapRef bmp = asset.ToBitmap(clientApi);
-                for (int i = 0; i < 8; i++)
-                {
-                    Vec2d vec = GameMath.R2Sequence2D(i);
-                    SKColor col2 = bmp.GetPixelRel((float)vec.X, (float)vec.Y);
-                    if (col2.Alpha > 0.5)
-                    {
-                        r += col2.Red;
-                        g += col2.Green;
-                        b += col2.Blue;
-                        c++;
-                    }
-                }
-
-                bmp.Dispose();
-
-                c = Math.Max(1, c);
-                variant.Color = ColorUtil.ColorFromRgba((int)(b / c), (int)(g / c), (int)(r / c), 255);
+                variant.Color = GenerateTextureSkinPartColor(asset, clientApi);
             }
 
             part.VariantsByCode[variant.Code] = variant;
@@ -1428,7 +1411,7 @@ public sealed class CustomModelsSystem : ModSystem
             ExclusiveClasses.AddRange(classes);
         }
     }
-    private void CollectBaseShapeElements(ShapeElement[] elements, string[] elementsToCollect, Dictionary<string, (Vector3d, Vector3d)> collectedElements)
+    private static void CollectBaseShapeElements(ShapeElement[] elements, string[] elementsToCollect, Dictionary<string, (Vector3d, Vector3d)> collectedElements)
     {
         foreach (ShapeElement? element in elements)
         {
@@ -1455,5 +1438,32 @@ public sealed class CustomModelsSystem : ModSystem
                 CollectBaseShapeElements(element.Children, elementsToCollect, collectedElements);
             }
         }
+    }
+    private static int GenerateTextureSkinPartColor(IAsset asset, ICoreClientAPI clientApi)
+    {
+        // Copy of vanilla code
+        int r = 0;
+        int g = 0;
+        int b = 0;
+        float c = 0;
+
+        BitmapRef bmp = asset.ToBitmap(clientApi);
+        for (int i = 0; i < 8; i++)
+        {
+            Vec2d vec = GameMath.R2Sequence2D(i);
+            SKColor col2 = bmp.GetPixelRel((float)vec.X, (float)vec.Y);
+            if (col2.Alpha > 0.5)
+            {
+                r += col2.Red;
+                g += col2.Green;
+                b += col2.Blue;
+                c++;
+            }
+        }
+
+        bmp.Dispose();
+
+        c = Math.Max(1, c);
+        return ColorUtil.ColorFromRgba((int)(b / c), (int)(g / c), (int)(r / c), 255);
     }
 }

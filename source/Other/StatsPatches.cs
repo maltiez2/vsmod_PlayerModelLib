@@ -1,5 +1,4 @@
 ﻿using HarmonyLib;
-using System.Diagnostics;
 using System.Reflection;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
@@ -293,47 +292,52 @@ public static class StatsPatches
     }
     private static void ApplyStabilityStats(EntityBehaviorTemporalStabilityAffected __instance, float deltaTime)
     {
-        __instance.TempStabChangeVelocity *= Math.Sign(__instance.entity.Stats.GetBlended(TemporalStabilityEffectDirectionStat));
-        if (__instance.TempStabChangeVelocity < 0)
+        EntityStats stats = __instance.entity.Stats;
+        double stabilityChange = __instance.TempStabChangeVelocity;
+
+        stabilityChange *= Math.Sign(stats.GetBlended(TemporalStabilityEffectDirectionStat));
+        if (stabilityChange < 0)
         {
-            __instance.TempStabChangeVelocity *= Math.Max(__instance.entity.Stats.GetBlended(TemporalStabilityDropRateStat), 0);
+            stabilityChange *= Math.Max(stats.GetBlended(TemporalStabilityDropRateStat), 0);
         }
         else
         {
-            __instance.TempStabChangeVelocity *= Math.Max(__instance.entity.Stats.GetBlended(TemporalStabilityRecoveryRateStat), 0);
+            stabilityChange *= Math.Max(stats.GetBlended(TemporalStabilityRecoveryRateStat), 0);
         }
 
-        float caveStabilityFactor = Math.Max(__instance.entity.Stats.GetBlended(TemporalStabilityCaveDropRateStat), 0);
-        float surfaceStabilityFactor = Math.Max(__instance.entity.Stats.GetBlended(TemporalStabilitySurfaceDropRateStat), 0);
-        if (__instance.TempStabChangeVelocity < 0 && (caveStabilityFactor != 1 || surfaceStabilityFactor != 1))
+        float caveStabilityFactor = Math.Max(stats.GetBlended(TemporalStabilityCaveDropRateStat), 0);
+        float surfaceStabilityFactor = Math.Max(stats.GetBlended(TemporalStabilitySurfaceDropRateStat), 0);
+        if (stabilityChange < 0 && (caveStabilityFactor != 1 || surfaceStabilityFactor != 1))
         {
             int lightLevel = GetLightLevel(__instance.entity, EnumLightLevelType.OnlySunLight);
             if (lightLevel < SurfaceCaveLightThreshold)
             {
-                __instance.TempStabChangeVelocity *= caveStabilityFactor;
+                stabilityChange *= caveStabilityFactor;
             }
             else
             {
-                __instance.TempStabChangeVelocity *= surfaceStabilityFactor;
+                stabilityChange *= surfaceStabilityFactor;
             }
         }
 
-        __instance.TempStabChangeVelocity += CorrectStabilityOffset(__instance.entity.Stats.GetBlended(TemporalStabilityOffsetStat) - 1) * deltaTime;
+        stabilityChange += CorrectStabilityOffset(stats.GetBlended(TemporalStabilityOffsetStat) - 1) * deltaTime;
 
-        float caveStabilityOffset = CorrectStabilityOffset(__instance.entity.Stats.GetBlended(TemporalStabilityCaveOffsetStat) - 1);
-        float surfaceStabilityOffset = CorrectStabilityOffset(__instance.entity.Stats.GetBlended(TemporalStabilitySurfaceOffsetStat) - 1);
+        float caveStabilityOffset = CorrectStabilityOffset(stats.GetBlended(TemporalStabilityCaveOffsetStat) - 1);
+        float surfaceStabilityOffset = CorrectStabilityOffset(stats.GetBlended(TemporalStabilitySurfaceOffsetStat) - 1);
         if (caveStabilityOffset != 0 || surfaceStabilityOffset != 0)
         {
             int lightLevel = GetLightLevel(__instance.entity, EnumLightLevelType.OnlySunLight);
             if (lightLevel < SurfaceCaveLightThreshold)
             {
-                __instance.TempStabChangeVelocity += caveStabilityOffset * deltaTime;
+                stabilityChange += caveStabilityOffset * deltaTime;
             }
             else
             {
-                __instance.TempStabChangeVelocity += surfaceStabilityOffset * deltaTime;
+                stabilityChange += surfaceStabilityOffset * deltaTime;
             }
         }
+
+        __instance.TempStabChangeVelocity = stabilityChange;
     }
     private static void ApplySaturationLossStats(EntityBehaviorHunger __instance, ref float satLossMultiplier)
     {
