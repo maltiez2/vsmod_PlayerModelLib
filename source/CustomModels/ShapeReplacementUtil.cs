@@ -11,22 +11,7 @@ namespace PlayerModelLib;
 
 public static class ShapeReplacementUtil
 {
-    public readonly struct FullShapeCacheEntry
-    {
-        public readonly Shape? Shape;
-        public readonly CompositeShape? CompositeShape;
-
-        public FullShapeCacheEntry(Shape? shape, CompositeShape? compositeShape)
-        {
-            Shape = shape;
-            CompositeShape = compositeShape;
-        }
-    }
-    
     public static bool ExportingShape { get; set; } = false;
-    public static ObjectCache<string, Shape>? RescaledShapesCache { get; set; }
-    public static ObjectCache<string, Shape>? ReplacedShapesCache { get; set; }
-    public static ObjectCache<string, FullShapeCacheEntry>? FullShapeCache { get; set; }
 
     public static void GetModelReplacement(ItemStack? stack, Entity entity, ref Shape? defaultShape, ref CompositeShape? compositeShape, IAttachableToEntity yadayada, float damageEffect, string slotCode, ref string[] willDeleteElements)
     {
@@ -46,25 +31,8 @@ public static class ShapeReplacementUtil
 
         string? yadaPrefixCode = yadayada.GetTexturePrefixCode(stack);
         string prefixCode = yadaPrefixCode ?? "";
-        int shapeHash = skinBehavior.GetShapeHash();
 
-        string cacheKey = GenerateFullShapeCacheLey(itemId, currentModel, entity, prefixCode, slotCode, willDeleteElements, shapeHash);
-
-        if (FullShapeCache?.Get(cacheKey, out FullShapeCacheEntry entry) == true)
-        {
-            defaultShape = entry.Shape?.Clone();
-            compositeShape = entry.CompositeShape?.Clone();
-
-            willDeleteElements = ReplaceWildcardPrefixes(willDeleteElements, prefixCode);
-        }
-        else
-        {
-            GenerateShapes(prefixCode, customModel, itemId, _system, currentModel, stack, entity, ref defaultShape, ref compositeShape, yadayada, damageEffect, ref willDeleteElements);
-
-            FullShapeCacheEntry newEntry = new(defaultShape?.Clone(), compositeShape?.Clone());
-
-            FullShapeCache?.Add(cacheKey, newEntry);
-        }
+        GenerateShapes(prefixCode, customModel, itemId, _system, currentModel, stack, entity, ref defaultShape, ref compositeShape, yadayada, damageEffect, ref willDeleteElements);
     }
 
     public static void StaticDispose()
@@ -72,9 +40,8 @@ public static class ShapeReplacementUtil
         _system = null;
     }
 
-
+    
     private static CustomModelsSystem? _system;
-
 
     private static void GenerateShapes(
         string prefixCode,
@@ -109,13 +76,6 @@ public static class ShapeReplacementUtil
 
         if (system.BaseShapesData.TryGetValue(customModel.BaseShapeCode, out BaseShapeData? baseShapeData))
         {
-            string cacheKey = $"{customModel.Code}_{shapePath}_{itemId}";
-            if (!PlayerModelModSystem.Settings.ExportShapeFiles && RescaledShapesCache != null && RescaledShapesCache.Get(cacheKey, out Shape? cachedShape))
-            {
-                defaultShape = cachedShape.Clone();
-                return;
-            }
-
             defaultShape = ShapeAdjustmentUtil.AdjustClothesShape(entity.Api, oldCompositeShape, baseShapeData, customModel);
             defaultShape?.SubclassForStepParenting(prefixCode, damageEffect);
             defaultShape?.ResolveReferences(entity.World.Logger, currentModel);
@@ -126,8 +86,6 @@ public static class ShapeReplacementUtil
                 compositeShape.Overlays = [];
             }
 
-            if (defaultShape != null) RescaledShapesCache?.Add(cacheKey, defaultShape);
-
             if (PlayerModelModSystem.Settings.ExportShapeFiles)
             {
                 ExportShape(entity.Api, shapePath, shapePath.Replace(':', '-').Replace('/', '-').Replace('\\', '-'), baseShapeData, customModel);
@@ -135,22 +93,7 @@ public static class ShapeReplacementUtil
         }
     }
     
-    private static string GenerateFullShapeCacheLey(int itemId, string currentModel, Entity entity, string prefixCode, string slotCode, string[] willDeleteElements, int shapeHash)
-    {
-        StringBuilder builder = new();
-        builder.Append(itemId.ToString());
-        builder.Append(entity.EntityId.ToString());
-        builder.Append(currentModel);
-        builder.Append(slotCode);
-        builder.Append(prefixCode);
-        builder.Append(shapeHash);
-        foreach (string element in willDeleteElements ?? [])
-        {
-            builder.Append(element);
-        }
 
-        return builder.ToString();
-    }
     private static string[] ReplaceWildcardPrefixes(string[] elements, string prefix)
     {
         return elements
@@ -160,19 +103,12 @@ public static class ShapeReplacementUtil
             .Distinct()
             .ToArray();
     }
-    private static Shape? LoadShape(ICoreAPI api, string path)
-    {
-        AssetLocation shapeLocation = new(path);
-        shapeLocation = shapeLocation.WithPathAppendixOnce(".json").WithPathPrefixOnce("shapes/");
-        Shape? currentShape = Shape.TryGet(api, shapeLocation);
-        return currentShape;
-    }
     private static void ExportShape(ICoreAPI api, string shapePath, string fileName, BaseShapeData baseShape, CustomModelData modelData)
     {
         try
         {
             ExportingShape = true;
-            Shape? shape = LoadShape(api, shapePath);
+            Shape? shape = ShapeAdjustmentUtil.LoadShape(api, shapePath);
             if (shape == null) return;
             shape = ShapeAdjustmentUtil.AdjustClothesShape(api, shape, baseShape, modelData);
             if (shape == null) return;
@@ -304,27 +240,15 @@ public static class ShapeReplacementUtil
     {
         if (customModel.WearableShapeReplacers.TryGetValue(itemId, out string? shape))
         {
-            string cacheKey = $"{customModel.Code}_{itemId}";
-            if (ReplacedShapesCache != null && ReplacedShapesCache.Get(cacheKey, out Shape? cachedShape))
-            {
-                defaultShape = cachedShape.Clone();
-            }
-            else
-            {
-                defaultShape = LoadShape(entity.Api, shape);
-                defaultShape?.SubclassForStepParenting(prefixCode, damageEffect);
-                defaultShape?.ResolveReferences(entity.World.Logger, "");
-
-                if (defaultShape != null) ReplacedShapesCache?.Add(cacheKey, defaultShape);
-            }
+            defaultShape = ShapeAdjustmentUtil.LoadShape(entity.Api, shape);
+            defaultShape?.SubclassForStepParenting(prefixCode, damageEffect);
+            defaultShape?.ResolveReferences(entity.World.Logger, "");
 
             if (compositeShape != null)
             {
                 compositeShape = compositeShape.Clone();
                 compositeShape.Base = shape;
             }
-
-
 
             return true;
         }
@@ -335,7 +259,7 @@ public static class ShapeReplacementUtil
 
             compositeShape.Base = compositeShape.Base.WithPathAppendixOnce(".json").WithPathPrefixOnce("shapes/");
 
-            defaultShape = LoadShape(entity.Api, newCompositeShape.Base);
+            defaultShape = ShapeAdjustmentUtil.LoadShape(entity.Api, newCompositeShape.Base);
 
             defaultShape?.SubclassForStepParenting(prefixCode, damageEffect);
             defaultShape?.ResolveReferences(entity.World.Logger, "");
@@ -353,22 +277,9 @@ public static class ShapeReplacementUtil
 
         if (!customModel.WearableShapeReplacersByShape.TryGetValue(shapePath, out string? shape)) return false;
 
-        string cacheKey = $"{customModel.Code}_{shapePath}_{stack?.Collectible.Id}";
-        if (ReplacedShapesCache != null && ReplacedShapesCache.Get(cacheKey, out Shape? cachedShape))
-        {
-            defaultShape = cachedShape.Clone();
-        }
-        else
-        {
-            defaultShape = LoadShape(entity.Api, shape);
-            defaultShape?.SubclassForStepParenting(prefixCode, damageEffect);
-            defaultShape?.ResolveReferences(entity.World.Logger, "");
-
-            if (defaultShape != null)
-            {
-                ReplacedShapesCache?.Add(cacheKey, defaultShape.Clone());
-            }
-        }
+        defaultShape = ShapeAdjustmentUtil.LoadShape(entity.Api, shape);
+        defaultShape?.SubclassForStepParenting(prefixCode, damageEffect);
+        defaultShape?.ResolveReferences(entity.World.Logger, "");
 
         if (oldCompositeShape.Overlays != null)
         {

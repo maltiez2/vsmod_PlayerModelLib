@@ -17,9 +17,7 @@ public sealed class PlayerModelModSystem : ModSystem
     public static Settings Settings { get; set; } = new();
     public static event Action<ICoreAPI, Settings>? OnSettingsLoaded;
 
-    public ObjectCache<string, Shape>? RescaledShapesCache { get; private set; }
-    public ObjectCache<string, Shape>? ReplacedShapesCache { get; private set; }
-    public ObjectCache<string, ShapeReplacementUtil.FullShapeCacheEntry>? FullShapeCache { get; set; }
+    public static ObjectCache<string, Shape>? ShapesCache { get; set; }
 
     public override void Start(ICoreAPI api)
     {
@@ -47,12 +45,8 @@ public sealed class PlayerModelModSystem : ModSystem
 
         OnSettingsLoaded?.Invoke(api, Settings);
 
-        RescaledShapesCache = new(api, "rescaled shapes", 5 * 60 * 1000 + 7 * 1000, threadSafe: false);
-        ReplacedShapesCache = new(api, "replaced shapes", 5 * 60 * 1000 + 13 * 1000, threadSafe: false);
-        FullShapeCache = new(api, "full replaced shapes", 5 * 60 * 1000 + 13 * 1000, threadSafe: false);
-        ShapeReplacementUtil.RescaledShapesCache = RescaledShapesCache;
-        ShapeReplacementUtil.ReplacedShapesCache = ReplacedShapesCache;
-        ShapeReplacementUtil.FullShapeCache = FullShapeCache;
+        ShapesCache = new(api, "[PML] shapes", TimeSpan.FromMinutes(10), threadSafe: false);
+        ShapeLoadingUtil.ShapesCache = ShapesCache;
     }
 
     public override void Dispose()
@@ -65,9 +59,7 @@ public sealed class PlayerModelModSystem : ModSystem
             _patched = false;
         }
         
-        RescaledShapesCache?.Dispose();
-        ReplacedShapesCache?.Dispose();
-        FullShapeCache?.Dispose();
+        ShapesCache?.Dispose();
         ShapeReplacementUtil.StaticDispose();
     }
 

@@ -184,28 +184,12 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
     {
         if (ModelSystem == null || ClientApi == null || !ModelSystem.ModelsLoaded) return;
 
-        Shape backup = entityShape;
-
-        int hash = GetShapeHash();
-
-        if (ShapeCache == null || ShapeCacheHash != hash)
+        Shape? newShape = Tesselate(shapePathForLogging, ref willDeleteElements);
+        if (newShape != null)
         {
-            ShapeCacheHash = hash;
-            Shape? newShape = Tesselate(shapePathForLogging, ref willDeleteElements);
-            if (newShape == null)
-            {
-                entityShape = backup;
-                return;
-            }
-
             entityShape = newShape;
-            ShapeCache = newShape;
-        }
-        else
-        {
-            entityShape = ShapeCache.Clone();
-            CollectDisabledElements(ref willDeleteElements);
-            RemoveHiddenElements(entityShape, ref willDeleteElements);
+            shapeIsCloned = true;
+            return;
         }
 
         OnShapeTesselated?.Invoke(entityShape);
@@ -331,17 +315,6 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         SetZNear();
     }
 
-    public int GetShapeHash()
-    {
-        string key = AppliedSkinParts.Select(entry => $"{entry.PartCode}_{entry.Code}_").Aggregate((f, s) => f + s) + '_' + CurrentModelCode;
-        return key.GetHashCode();
-    }
-
-    public int GetLastShapeHash()
-    {
-        return ShapeCacheHash;
-    }
-
 
     protected static readonly FieldInfo? EntityBehaviorControlledPhysics_sneakTestCollisionbox = typeof(EntityBehaviorControlledPhysics).GetField("sneakTestCollisionbox", BindingFlags.NonPublic | BindingFlags.Instance);
     protected CustomModelsSystem? ModelSystem;
@@ -359,8 +332,6 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
     protected float DefaultEyeHeight = 1.7f;
     protected ITreeAttribute? TempSkinConfig;
     protected string? TempModelCode;
-    protected int ShapeCacheHash = 0;
-    protected Shape? ShapeCache = null;
 
 
     protected void SetModelAttribute(string code)
@@ -378,7 +349,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
 
         try
         {
-            Shape entityShape = ModelSystem.CustomModels[CurrentModelCode].Shape.Clone();
+            Shape entityShape = ShapeLoadingUtil.CloneShape(ModelSystem.CustomModels[CurrentModelCode].Shape);
 
             AddMainTextures();
             AddSkinParts(ref entityShape, shapePathForLogging, ref willDeleteElements);
@@ -757,7 +728,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
             return entityShape;
         }
 
-        Shape partShape = Shape.TryGet(ClientApi, shapePath);
+        Shape? partShape = ShapeLoadingUtil.LoadShape(ClientApi, shapePath);
         if (partShape == null)
         {
             ClientApi.World.Logger.Warning("Entity skin shape {0} defined in entity config {1} not found or errored, was supposed to be at {2}. Skin part will be invisible.", shapePath, entity.Properties.Code, shapePath);

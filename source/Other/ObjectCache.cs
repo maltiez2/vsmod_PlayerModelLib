@@ -26,6 +26,15 @@ public sealed class ObjectCache<TKey, TValue> : IDisposable
         _cleanUpTimer = api.World.RegisterGameTickListener(_ => Clean(), _cleanUpPeriodMs, _cleanUpPeriodMs);
     }
 
+    public ObjectCache(ICoreAPI api, string loggedCacheName, TimeSpan cleanUpPeriod, bool threadSafe = true)
+    {
+        _api = api;
+        _cleanUpPeriodMs = (int)cleanUpPeriod.TotalMilliseconds;
+        _loggedCacheName = loggedCacheName;
+        _threadSafe = threadSafe;
+        _cleanUpTimer = api.World.RegisterGameTickListener(_ => Clean(), _cleanUpPeriodMs, _cleanUpPeriodMs);
+    }
+
     public void Add(TKey key, TValue value)
     {
         bool threadSafe = _threadSafe;

@@ -1,6 +1,5 @@
 ﻿using Newtonsoft.Json.Linq;
 using OpenTK.Mathematics;
-using OpenTK.Windowing.GraphicsLibraryFramework;
 using SkiaSharp;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -11,7 +10,6 @@ using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
 using Vintagestory.API.Util;
-using Vintagestory.Common;
 using Vintagestory.GameContent;
 using Vintagestory.Server;
 
@@ -72,12 +70,12 @@ public sealed class CustomModelsSystem : ModSystem
         LoadDefault();
         Load(api);
         CollectExclusiveClasses();
+        ProcessAnimations(api);
+        ProcessAttachmentPoints();
 
         if (api.Side == EnumAppSide.Client)
         {
             ProcessMainTextures();
-            ProcessAnimations(api);
-            ProcessAttachmentPoints();
             CollectTextures();
             LoadModelReplacements(api);
         }
@@ -156,15 +154,14 @@ public sealed class CustomModelsSystem : ModSystem
 
         LoadCustomModel(_api, code, modelConfig);
         CollectExclusiveClasses();
+        CustomModelData modelData = CustomModels[code];
+        ProcessCustomModelMainTextures(code, modelData);
+        CollectDefaultAttachmentPoints(out Dictionary<string, (AttachmentPoint[] points, ShapeElement element, string parent)> attachmentPointsByElement);
+        AddAttachmentPointsToCustomModel(modelData.Shape, attachmentPointsByElement, code);
 
         if (_api.Side == EnumAppSide.Client)
         {
-            CustomModelData modelData = CustomModels[code];
-
-            ProcessCustomModelMainTextures(code, modelData);
             ProcessCustomModelAnimations(modelData.Shape, code, _api);
-            CollectDefaultAttachmentPoints(out Dictionary<string, (AttachmentPoint[] points, ShapeElement element, string parent)> attachmentPointsByElement);
-            AddAttachmentPointsToCustomModel(modelData.Shape, attachmentPointsByElement, code);
             CollectTexturesForCustomModel(code, modelData);
 
             if (_wearableModelReplacers.TryGetValue(code, out Dictionary<string, string>? paths))
@@ -298,7 +295,7 @@ public sealed class CustomModelsSystem : ModSystem
     {
         AssetLocation shapeLocation = new(path);
         shapeLocation = shapeLocation.WithPathAppendixOnce(".json").WithPathPrefixOnce("shapes/");
-        Shape? currentShape = Shape.TryGet(api, shapeLocation);
+        Shape? currentShape = ShapeLoadingUtil.LoadShape(api, shapeLocation);
         return currentShape;
     }
     private void Load(ICoreAPI api)

@@ -1,5 +1,4 @@
 ﻿using OpenTK.Mathematics;
-using System.Diagnostics;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 
@@ -92,7 +91,7 @@ public static class ShapeAdjustmentUtil
     public static Shape? LoadShape(ICoreAPI api, AssetLocation path)
     {
         path = path.WithPathAppendixOnce(".json").WithPathPrefixOnce("shapes/");
-        Shape? currentShape = Shape.TryGet(api, path);
+        Shape? currentShape = ShapeLoadingUtil.LoadShape(api, path);
         return currentShape;
     }
 
