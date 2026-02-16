@@ -759,8 +759,15 @@ public sealed class CustomModelsSystem : ModSystem
     private void CollectDefaultAttachmentPoints(out Dictionary<string, (AttachmentPoint[] points, ShapeElement element, string parent)> attachmentPointsByElement)
     {
         attachmentPointsByElement = [];
+
+        if (CustomModels[_defaultModelCode].Shape?.Elements == null)
+        {
+            return;
+        }
+
         foreach (ShapeElement element in CustomModels[_defaultModelCode].Shape.Elements)
         {
+            
             CollectAttachmentPointsRecursively(element, element, attachmentPointsByElement);
         }
     }
