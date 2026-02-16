@@ -1,7 +1,7 @@
 ﻿using HarmonyLib;
+using System.Diagnostics;
 using System.Reflection;
 using System.Reflection.Emit;
-using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Datastructures;
@@ -19,16 +19,12 @@ internal static class TranspilerPatches
         {
             return AccessTools.Method(typeof(EntityBehaviorContainer), "addGearToShape",
             [
-                typeof(ICoreAPI),
-                typeof(Vintagestory.API.Common.Entities.Entity),
-                typeof(ITextureAtlasAPI),
                 typeof(Shape),
                 typeof(ItemStack),
                 typeof(IAttachableToEntity),
                 typeof(string),
                 typeof(string),
                 typeof(string[]).MakeByRefType(),
-                typeof(IDictionary<string, CompositeTexture>),
                 typeof(Dictionary<string, StepParentElementTo>)
             ]);
         }
@@ -36,62 +32,32 @@ internal static class TranspilerPatches
         [HarmonyTranspiler]
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
-            List<CodeInstruction> code = new(instructions);
+            CodeInstruction[] newInstructions =
+            [
+                new(OpCodes.Ldarg_2),
+                new(OpCodes.Ldarg_0),
+                new(OpCodes.Ldfld, AccessTools.Field(typeof(EntityBehaviorContainer), "entity")),
+                new(OpCodes.Ldloca_S, 3),
+                new(OpCodes.Ldloca_S, 5),
+                new(OpCodes.Ldarg_3),
+                new(OpCodes.Ldloc_1),
+                new(OpCodes.Ldarg_S, 4),
+                new(OpCodes.Ldarg_S, (byte)6),
+                new(OpCodes.Call, AccessTools.Method(typeof(ShapeReplacementUtil), nameof(ShapeReplacementUtil.GetModelReplacement))),
+            ];
+            List<CodeInstruction> codes = [.. instructions];
 
-            FieldInfo capiField = AccessTools.Field(
-                typeof(EntityBehaviorContainer).GetNestedType("<>c__DisplayClass23_0", BindingFlags.NonPublic),
-                "capi"
-            );
-
-            MethodInfo replacementMethod = AccessTools.Method(
-                typeof(ShapeReplacementUtil),
-                nameof(ShapeReplacementUtil.GetModelReplacement)
-            );
-
-            for (int i = 0; i < code.Count; i++)
+            for (int i = 0; i < codes.Count; i++)
             {
-                // Match: ldloc.0 -> ldfld capi
-                if (code[i].opcode == OpCodes.Ldloc_0 &&
-                    i + 1 < code.Count &&
-                    code[i + 1].LoadsField(capiField))
+                if (codes[i].opcode == OpCodes.Isinst && (Type)codes[i].operand == typeof(Vintagestory.API.Client.ICoreClientAPI))
                 {
-                    // Inject BEFORE this point
-                    List<CodeInstruction> injected = new()
-                    {
-                    // stack (ItemStack)
-                    new CodeInstruction(OpCodes.Ldarg_S, 4),
+                    codes.InsertRange(i + 2, newInstructions);
 
-                    // entity
-                    new CodeInstruction(OpCodes.Ldarg_1),
-
-                    // ref shape (local 3)
-                    new CodeInstruction(OpCodes.Ldloca_S, (byte)3),
-
-                    // ref compositeShape (local 5)
-                    new CodeInstruction(OpCodes.Ldloca_S, (byte)5),
-
-                    // iatta
-                    new CodeInstruction(OpCodes.Ldarg_S, 5),
-
-                    // damageEffect (local 1)
-                    new CodeInstruction(OpCodes.Ldloc_1),
-
-                    // slotCode
-                    new CodeInstruction(OpCodes.Ldarg_S, 6),
-
-                    // ref willDeleteElements (arg 8 already byref)
-                    new CodeInstruction(OpCodes.Ldarg_S, 8),
-
-                    // call
-                    new CodeInstruction(OpCodes.Call, replacementMethod)
-                };
-
-                    code.InsertRange(i, injected);
-                    break;
+                    return codes;
                 }
             }
 
-            return code;
+            return codes;
         }
     }
 

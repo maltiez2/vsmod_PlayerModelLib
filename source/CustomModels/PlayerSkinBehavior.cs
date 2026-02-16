@@ -321,8 +321,8 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
     protected ICoreClientAPI? ClientApi;
     protected Dictionary<string, TextureAtlasPosition> OverlaysTexturePositions = [];
     protected Dictionary<string, BlendedOverlayTexture[]> OverlaysByTextures = [];
-    /*protected EntityTagArray PreviousAddedTags = EntityTagArray.Empty;
-    protected EntityTagArray PreviousRemovedTags = EntityTagArray.Empty;*/
+    protected EntityTagArray PreviousAddedTags = EntityTagArray.Empty;
+    protected EntityTagArray PreviousRemovedTags = EntityTagArray.Empty;
     protected const float DefaultStepHeight = 0.6f;
     protected float DefaultSize = 1;
     protected float PreviousHeadBobbingAmplitudeFactor = 1;
@@ -465,10 +465,13 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
     {
         if (entity.Api.Side == EnumAppSide.Client) return;
 
-        /*EntityTagArray currentTags = entity.Tags;
+        EntityTagArray currentTags = entity.Tags;
+
+
 
         currentTags &= ~PreviousAddedTags;
         currentTags |= PreviousRemovedTags;
+
 
 
         PreviousAddedTags = CurrentModel.AddTags & ~currentTags;
@@ -478,7 +481,9 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         currentTags |= PreviousAddedTags;
 
         entity.Tags = currentTags;
-        entity.MarkTagsDirty();*/
+        entity.MarkTagsDirty();
+
+
     }
 
     protected virtual void RemoveNotExistingTraits()
@@ -508,10 +513,7 @@ public class PlayerSkinBehavior : EntityBehaviorExtraSkinnable, ITexPositionSour
         {
             foreach (string code in data.MainTextureCodes)
             {
-                if (data.MainTextures.ContainsKey(code))
-                {
-                    entity.Properties.Client.Textures[code] = data.MainTextures[code];
-                }
+                entity.Properties.Client.Textures[code] = data.MainTextures[code];
             }
         }
     }

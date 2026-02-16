@@ -1,9 +1,0 @@
-[
-  {
-    "side": "Universal", 
-    "file": "game:shapes/entity/humanoid/seraph-faceless.json",
-    "op": "addmerge",
-    "path": "/textures",
-    "value": {"seraph": "entity/humanoid/seraph-naked"}
-  }
-]

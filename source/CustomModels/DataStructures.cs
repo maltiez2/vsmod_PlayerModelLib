@@ -85,8 +85,8 @@ public class CustomModelData
     public Vector2 MinCollisionBox { get; set; }
     public float MaxEyeHeight { get; set; } = float.MaxValue;
     public float MinEyeHeight { get; set; } = 0;
-    /*public EntityTagArray AddTags { get; set; } = EntityTagArray.Empty;
-    public EntityTagArray RemoveTags { get; set; } = EntityTagArray.Empty;*/
+    public EntityTagArray AddTags { get; set; } = EntityTagArray.Empty;
+    public EntityTagArray RemoveTags { get; set; } = EntityTagArray.Empty;
     public float ModelSizeFactor { get; set; } = 1;
     public float HeadBobbingScale { get; set; } = 1;
     public float GuiModelScale { get; set; } = 1;
