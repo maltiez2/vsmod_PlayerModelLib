@@ -35,7 +35,7 @@
       "code": "multi_thread_payer_shape_generation",
       "type": "boolean",
       "ingui": "playermodellib:setting-multi_thread_payer_shape_generation",
-      "comment": "playermodellib:comment-multi_thread_payer_shape_generation",
+      "comment": "playermodellib:setting-comment-multi_thread_payer_shape_generation",
       "clientSide": true,
       "default": true
     },

@@ -1,6 +1,8 @@
 ﻿using HarmonyLib;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.Config;
 using Vintagestory.GameContent;
 
 namespace PlayerModelLib;
@@ -19,7 +21,7 @@ public static class OffThreadRenderingPatches
 
     public static void Unpatch(string harmonyId)
     {
-        new Harmony(harmonyId).Unpatch(typeof(OffThreadRenderingPatches).GetMethod("addTexture", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
+        new Harmony(harmonyId).Unpatch(typeof(EntityBehaviorContainer).GetMethod("addTexture", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
         _clientApi = null;
     }
 
@@ -69,7 +71,14 @@ public static class OffThreadRenderingPatches
 
         skinBehavior?.TexturesAwaitingToBeAddedToAtlas.Increment();
 
-        _clientApi.Event.EnqueueMainThreadTask(() => InsertReplacedTextureIntoAtlas(compositeTexture, _clientApi, skinBehavior), "PlayerSkinBehavior.AddSkinPart");
+        if (Environment.CurrentManagedThreadId != RuntimeEnv.MainThreadId)
+        {
+            _clientApi.Event.EnqueueMainThreadTask(() => InsertReplacedTextureIntoAtlas(compositeTexture, _clientApi, skinBehavior), "PlayerSkinBehavior.AddSkinPart");
+        }
+        else
+        {
+            InsertReplacedTextureIntoAtlas(compositeTexture, _clientApi, skinBehavior);
+        }
 
         return false;
     }
