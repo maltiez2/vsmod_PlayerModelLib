@@ -48,9 +48,15 @@ public static class OffThreadRenderingPatches
 
         PlayerSkinBehavior? skinBehavior = __instance.entity.GetBehavior<PlayerSkinBehavior>();
 
-        skinBehavior?.TexturesAwaitingToBeAddedToAtlas.Increment();
-
-        _clientApi.Event.EnqueueMainThreadTask(() => InsertReplacedTextureIntoAtlas(compositeTexture, _clientApi, skinBehavior, targetAtlas), "PlayerSkinBehavior.AddSkinPart");
+        if (Environment.CurrentManagedThreadId != RuntimeEnv.MainThreadId)
+        {
+            skinBehavior?.TexturesAwaitingToBeAddedToAtlas.Increment();
+            _clientApi.Event.EnqueueMainThreadTask(() => InsertReplacedTextureIntoAtlas(compositeTexture, _clientApi, skinBehavior, targetAtlas), "PlayerSkinBehavior.AddSkinPart");
+        }
+        else
+        {
+            InsertReplacedTextureIntoAtlas(compositeTexture, _clientApi, skinBehavior);
+        }
 
         return false;
     }
@@ -69,10 +75,9 @@ public static class OffThreadRenderingPatches
 
         PlayerSkinBehavior? skinBehavior = __instance.entity.GetBehavior<PlayerSkinBehavior>();
 
-        skinBehavior?.TexturesAwaitingToBeAddedToAtlas.Increment();
-
         if (Environment.CurrentManagedThreadId != RuntimeEnv.MainThreadId)
         {
+            skinBehavior?.TexturesAwaitingToBeAddedToAtlas.Increment();
             _clientApi.Event.EnqueueMainThreadTask(() => InsertReplacedTextureIntoAtlas(compositeTexture, _clientApi, skinBehavior), "PlayerSkinBehavior.AddSkinPart");
         }
         else
