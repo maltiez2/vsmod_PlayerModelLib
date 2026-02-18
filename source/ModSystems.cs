@@ -10,7 +10,7 @@ public sealed class Settings
     public bool ExportShapeFiles { get; set; } = false;
     public string DefaultModelCode { get; set; } = "seraph";
     public bool DisableModelClassesAndTraits { get; set; } = false;
-    public bool TesselatePlayerShapeOffThread { get; set; } = false;
+    public bool MultiThreadPayerShapeGeneration { get; set; } = false;
     public bool LogOffThreadTesselationErrors { get; set; } = true;
 }
 

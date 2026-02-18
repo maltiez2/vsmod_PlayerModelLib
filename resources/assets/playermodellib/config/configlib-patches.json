@@ -32,11 +32,12 @@
       "default": true
     },
     {
-      "code": "tesselate_player_shape_off_thread",
+      "code": "multi_thread_payer_shape_generation",
       "type": "boolean",
-      "ingui": "playermodellib:setting-tesselate_player_shape_off_thread",
+      "ingui": "playermodellib:setting-multi_thread_payer_shape_generation",
+      "comment": "playermodellib:comment-multi_thread_payer_shape_generation",
       "clientSide": true,
-      "default": false
+      "default": true
     },
     {
       "code": "log_off_thread_tesselation_errors",
