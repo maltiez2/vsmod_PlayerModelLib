@@ -364,14 +364,14 @@ internal static class OtherPatches
     private static bool GuiDialogHairStyling_getCost(GuiDialogHairStyling __instance, ref int __result)
     {
         int cost = 0;
-        EntityBehaviorExtraSkinnable skinMod = _clientApi.World.Player.Entity.GetBehavior<EntityBehaviorExtraSkinnable>();
-        SkinnablePart[] availableSkinParts = skinMod.AvailableSkinParts;
+        PlayerSkinBehavior skinMod = _clientApi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
+        var availableSkinParts = skinMod.AvailableSkinParts.Get();
         Dictionary<string, string> currentSkin = (Dictionary<string, string>?)_guiDialogHairStyling_currentSkin.GetValue(__instance) ?? [];
 
         foreach (SkinnablePart skinpart in availableSkinParts)
         {
             string code = skinpart.Code;
-            AppliedSkinnablePartVariant? appliedVar = skinMod.AppliedSkinParts.FirstOrDefault((AppliedSkinnablePartVariant sp) => sp.PartCode == code);
+            AppliedSkinnablePartVariant? appliedVar = skinMod.AppliedSkinParts.Get().FirstOrDefault((AppliedSkinnablePartVariant sp) => sp.PartCode == code);
 
             if (appliedVar == null)
             {

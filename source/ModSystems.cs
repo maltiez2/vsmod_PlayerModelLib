@@ -48,6 +48,7 @@ public sealed class PlayerModelModSystem : ModSystem
         if (api is ICoreClientAPI clientApi)
         {
             ScrollPatches.Init(clientApi);
+            OffThreadRenderingPatches.Patch("PlayerModelLib", clientApi);
         }
 
         if (api.ModLoader.IsModEnabled("configlib"))
@@ -70,6 +71,8 @@ public sealed class PlayerModelModSystem : ModSystem
             StatsPatches.Unpatch("PlayerModelLib");
             _patched = false;
         }
+
+        OffThreadRenderingPatches.Unpatch("PlayerModelLib");
 
         ShapesCache?.Dispose();
         ShapeReplacementUtil.StaticDispose();

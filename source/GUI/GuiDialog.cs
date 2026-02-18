@@ -90,10 +90,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         CharacterClass characterClass = availableClasses[_currentClassIndex];
 
-        if (_clientSelectionDone != null)
-        {
-            _clientSelectionDone.Invoke(_characterSystem, [_characterInventory, characterClass.Code, _didSelect]);
-        }
+        ClientSelectionDone(_characterInventory, characterClass.Code, _didSelect);
 
         system.SynchronizePlayerModel(skinMod.CurrentModelCode);
         system.SynchronizePlayerModelSize(_currentModelSize);
@@ -691,9 +688,9 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         double leftX = 0;
 
-        ScrollPatches.PreLoop(composer, skinMod.AvailableSkinParts, backgroundBounds, leftColBounds, _insetSlotBounds, toggleButtonBounds, ref leftX);
+        ScrollPatches.PreLoop(composer, skinMod.AvailableSkinParts.Get().ToArray(), backgroundBounds, leftColBounds, _insetSlotBounds, toggleButtonBounds, ref leftX);
 
-        foreach (SkinnablePart? skinpart in skinMod.AvailableSkinParts)
+        foreach (SkinnablePart? skinpart in skinMod.AvailableSkinParts.Get())
         {
             bounds = ElementBounds.Fixed(leftX, (prevbounds == null || prevbounds.fixedY == 0) ? -10 : prevbounds.fixedY + 8, colorIconSize, colorIconSize);
 
@@ -701,7 +698,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
             string code = skinpart.Code;
 
-            AppliedSkinnablePartVariant? appliedVar = skinMod.AppliedSkinParts.FirstOrDefault(sp => sp.PartCode == code);
+            AppliedSkinnablePartVariant? appliedVar = skinMod.AppliedSkinParts.Get().FirstOrDefault(sp => sp.PartCode == code);
 
             SkinnablePartVariant[] variants = skinpart.Variants.Where(variant => variant.Category == "standard" || variant.Category == null || variant.Category == "").ToArray();
 
@@ -947,16 +944,16 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         if (bh == null) return false;
         bh.doReloadShapeAndSkin = false;
 
-        _characterSystem.randomizeSkin(entity, preselection);
-        EntityBehaviorExtraSkinnable? skinMod = entity.GetBehavior<EntityBehaviorExtraSkinnable>();
+        PlayerSkinBehavior? skinMod = entity.GetBehavior<PlayerSkinBehavior>();
+        skinMod?.RandomizeSkin(entity, preselection);
 
         if (skinMod == null) return false;
 
-        foreach (AppliedSkinnablePartVariant? appliedPart in skinMod.AppliedSkinParts)
+        foreach (AppliedSkinnablePartVariant? appliedPart in skinMod.AppliedSkinParts.Get())
         {
             string partcode = appliedPart.PartCode;
 
-            SkinnablePart? skinPart = skinMod.AvailableSkinParts.FirstOrDefault(part => part.Code == partcode);
+            SkinnablePart? skinPart = skinMod.AvailableSkinParts.Get().FirstOrDefault(part => part.Code == partcode);
             if (skinPart == null) continue;
 
             SkinnablePartVariant[] variants = skinPart.Variants.Where(variant => variant.Category == "standard" || variant.Category == null || variant.Category == "").ToArray();
@@ -987,18 +984,18 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     }
     private void onToggleSkinPartColor(string partCode, string variantCode)
     {
-        EntityBehaviorExtraSkinnable? skinMod = capi.World.Player.Entity.GetBehavior<EntityBehaviorExtraSkinnable>();
-        skinMod?.selectSkinPart(partCode, variantCode);
+        PlayerSkinBehavior? skinMod = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
+        skinMod?.SelectSkinPart(partCode, variantCode);
     }
     private void onToggleSkinPartColor(string partCode, int index)
     {
-        EntityBehaviorExtraSkinnable? skinMod = capi.World.Player.Entity.GetBehavior<EntityBehaviorExtraSkinnable>();
+        PlayerSkinBehavior? skinMod = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
 
         if (skinMod == null) return;
 
-        string variantCode = skinMod.AvailableSkinPartsByCode[partCode].Variants[index].Code;
+        string variantCode = skinMod.AvailableSkinPartsByCode.GetValue(partCode).Variants[index].Code;
 
-        skinMod.selectSkinPart(partCode, variantCode);
+        skinMod.SelectSkinPart(partCode, variantCode);
     }
     private void onToggleModel(string modelCode, GuiComposer? composer = null)
     {
@@ -1047,7 +1044,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         PlayerSkinBehavior? skinMod = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
         if (skinMod != null)
         {
-            Dictionary<string, string> selection = skinMod.AppliedSkinParts.ToDictionary(part => part.PartCode, part => part.Code);
+            Dictionary<string, string> selection = skinMod.AppliedSkinParts.Get().ToDictionary(part => part.PartCode, part => part.Code);
 
             SavePreviousSelection(selection);
         }
@@ -1309,5 +1306,45 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         groupIndex = 0;
         modelIndex = 0;
         return false;
+    }
+    private void ClientSelectionDone(IInventory characterInv, string characterClass, bool didSelect)
+    {
+        List<ClothStack> clothesPacket = new List<ClothStack>();
+        for (int i = 0; i < characterInv.Count; i++)
+        {
+            ItemSlot slot = characterInv[i];
+            if (slot.Itemstack == null) continue;
+
+            clothesPacket.Add(new ClothStack()
+            {
+                Code = slot.Itemstack.Collectible.Code.ToShortString(),
+                SlotNum = i,
+                Class = slot.Itemstack.Class
+            });
+        }
+
+        Dictionary<string, string> skinParts = new Dictionary<string, string>();
+        var bh = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
+
+        var applied = bh.AppliedSkinParts.Get().ToList();
+        foreach (var val in applied)
+        {
+            skinParts[val.PartCode] = val.Code;
+        }
+        bh.AppliedSkinParts.Set(applied);
+
+        capi.Network.GetChannel("charselection").SendPacket(new CharacterSelectionPacket()
+        {
+            Clothes = clothesPacket.ToArray(),
+            DidSelect = didSelect,
+            SkinParts = skinParts,
+            CharacterClass = characterClass,
+            VoicePitch = bh.VoicePitch,
+            VoiceType = bh.VoiceType
+        });
+
+        capi.Network.SendPlayerNowReady();
+
+        capi.Event.PushEvent("finishcharacterselection");
     }
 }
