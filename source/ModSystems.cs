@@ -58,7 +58,7 @@ public sealed class PlayerModelModSystem : ModSystem
 
         OnSettingsLoaded?.Invoke(api, Settings);
 
-        ShapesCache = new(api, "[PML] shapes", TimeSpan.FromMinutes(10), threadSafe: false);
+        ShapesCache = new(api, "[PML] shapes", TimeSpan.FromMinutes(10), threadSafe: true);
         ShapeLoadingUtil.ShapesCache = ShapesCache;
     }
 

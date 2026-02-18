@@ -125,3 +125,95 @@ public class ThreadSafeString
 
     private string _value;
 }
+
+public class ThreadSafeInt
+{
+    public ThreadSafeInt(int value)
+    {
+        _value = value;
+    }
+
+    public int Value
+    {
+        get => Volatile.Read(ref _value);
+        set => Interlocked.Exchange(ref _value, value);
+    }
+
+    public int Increment() => Interlocked.Increment(ref _value);
+
+    public int Decrement() => Interlocked.Decrement(ref _value);
+
+    public int Add(int amount) => Interlocked.Add(ref _value, amount);
+
+    private int _value;
+}
+
+public class ThreadSafeUInt
+{
+    private int _value;
+
+    public ThreadSafeUInt(uint value)
+    {
+        _value = unchecked((int)value);
+    }
+
+    public uint Value
+    {
+        get => unchecked((uint)Volatile.Read(ref _value));
+        set => Interlocked.Exchange(ref _value, unchecked((int)value));
+    }
+
+    public uint Increment() => unchecked((uint)Interlocked.Increment(ref _value));
+
+    public uint Add(uint amount) => unchecked((uint)Interlocked.Add(ref _value, unchecked((int)amount)));
+
+    public uint Decrement()
+    {
+        while (true)
+        {
+            int snapshot = Volatile.Read(ref _value);
+            uint current = unchecked((uint)snapshot);
+
+            if (current == 0)
+            {
+                return 0;
+            }
+
+            uint updated = current - 1;
+            int updatedInt = unchecked((int)updated);
+
+            if (Interlocked.CompareExchange(ref _value, updatedInt, snapshot) == snapshot)
+            {
+                return updated;
+            }
+        }
+    }
+}
+
+public class ThreadSafeBool
+{
+    public ThreadSafeBool(bool value)
+    {
+        _value = value ? 1 : 0;
+    }
+
+    public bool Value
+    {
+        get => Volatile.Read(ref _value) != 0;
+        set => Interlocked.Exchange(ref _value, value ? 1 : 0);
+    }
+
+    public bool SetTrue() => Interlocked.Exchange(ref _value, 1) != 0;
+
+    public bool SetFalse() => Interlocked.Exchange(ref _value, 0) != 0;
+
+    public bool TrySet(bool expected, bool newValue)
+    {
+        int expectedInt = expected ? 1 : 0;
+        int newValueInt = newValue ? 1 : 0;
+
+        return Interlocked.CompareExchange(ref _value, newValueInt, expectedInt) == expectedInt;
+    }
+
+    private int _value; // 0 = false, 1 = true
+}

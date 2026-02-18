@@ -1,9 +1,7 @@
 ﻿using HarmonyLib;
-using System.Diagnostics;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.GameContent;
-using static OpenTK.Graphics.OpenGL.GL;
 
 namespace PlayerModelLib;
 
@@ -46,7 +44,11 @@ public static class OffThreadRenderingPatches
         }
         compositeTexture.Bake(capi.Assets);
 
-        _clientApi.Event.EnqueueMainThreadTask(() => InsertReplacedTextureIntoAtlas(compositeTexture, _clientApi, targetAtlas), "PlayerSkinBehavior.AddSkinPart");
+        PlayerSkinBehavior? skinBehavior = __instance.entity.GetBehavior<PlayerSkinBehavior>();
+
+        skinBehavior?.TexturesAwaitingToBeAddedToAtlas.Increment();
+
+        _clientApi.Event.EnqueueMainThreadTask(() => InsertReplacedTextureIntoAtlas(compositeTexture, _clientApi, skinBehavior, targetAtlas), "PlayerSkinBehavior.AddSkinPart");
 
         return false;
     }
@@ -63,19 +65,16 @@ public static class OffThreadRenderingPatches
             textures[textureCode] = compositeTexture;
         }
 
-        _clientApi.Event.EnqueueMainThreadTask(() => InsertReplacedTextureIntoAtlas(compositeTexture, _clientApi), "PlayerSkinBehavior.AddSkinPart");
+        PlayerSkinBehavior? skinBehavior = __instance.entity.GetBehavior<PlayerSkinBehavior>();
+
+        skinBehavior?.TexturesAwaitingToBeAddedToAtlas.Increment();
+
+        _clientApi.Event.EnqueueMainThreadTask(() => InsertReplacedTextureIntoAtlas(compositeTexture, _clientApi, skinBehavior), "PlayerSkinBehavior.AddSkinPart");
 
         return false;
-
-
-        /*var cmpt = new CompositeTexture(tloc);
-        textures[texturePrefixCode + texcode] = cmpt;
-        cmpt.Bake(Api.Assets);
-        capi.EntityTextureAtlas.GetOrInsertTexture(cmpt.Baked.TextureFilenames[0], out int textureSubid, out _);
-        cmpt.Baked.TextureSubId = textureSubid;*/
     }
 
-    private static void InsertReplacedTextureIntoAtlas(CompositeTexture compositeTexture, ICoreClientAPI api, ITextureAtlasAPI? targetAtlas = null)
+    private static void InsertReplacedTextureIntoAtlas(CompositeTexture compositeTexture, ICoreClientAPI api, PlayerSkinBehavior? skinBehavior, ITextureAtlasAPI? targetAtlas = null)
     {
         compositeTexture.Bake(_clientApi.Assets);
         if (!(targetAtlas ?? api.EntityTextureAtlas).GetOrInsertTexture(compositeTexture.Baked.TextureFilenames[0], out int textureSubId, out _))
@@ -83,5 +82,6 @@ public static class OffThreadRenderingPatches
             return;
         }
         compositeTexture.Baked.TextureSubId = textureSubId;
+        skinBehavior?.TexturesAwaitingToBeAddedToAtlas.Decrement();
     }
 }

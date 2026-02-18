@@ -9,7 +9,6 @@ using Vintagestory.API.MathTools;
 using Vintagestory.API.Util;
 using Vintagestory.Client.NoObf;
 using Vintagestory.GameContent;
-using static OpenTK.Graphics.OpenGL.GL;
 
 namespace PlayerModelLib;
 
@@ -59,6 +58,10 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
     public event Action<Shape>? OnShapeTesselated;
 
     public static event OnWearableItemProcessingDelegate? OnWearableItemProcessing;
+
+    public readonly ThreadSafeUInt TexturesAwaitingToBeAddedToAtlas = new(0);
+
+    public readonly ThreadSafeUInt TextureOverlaysAwaitingToBeAddedToAtlas = new(0);
 
 
     public Size2i? AtlasSize => ModelSystem?.GetAtlasSize(CurrentModelCode, entity);
@@ -112,7 +115,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         if (!ModelSystem.CustomModels.ContainsKey(skinModel) && entity.Api.ModLoader.IsModEnabled("customplayermodel"))
         {
             LoggerUtil.Notify(entity.Api, this, $"(player: {(entity as EntityPlayer)?.GetName()}) Custom model with code '{skinModel}' was not found. Probably was not yet received from player. Will reset model to default until the model is received.");
-            
+
             TempModelCode = skinModel;
             TempSkinConfig = SkinTree.Clone();
 
@@ -123,7 +126,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
             OnVoiceConfigChanged();
             OnSkinModelChanged();
 
-            if (entity.Api.Side == EnumAppSide.Server && AppliedSkinParts.Count() == 0)
+            if (entity.Api.Side == EnumAppSide.Server && GetAppliedSkinParts().Count() == 0)
             {
                 RandomizeSkin(entity, null, false);
             }
@@ -181,7 +184,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
 
         OnSkinModelChanged();
 
-        if (entity.Api.Side == EnumAppSide.Server && AppliedSkinParts.Count() == 0)
+        if (entity.Api.Side == EnumAppSide.Server && GetAppliedSkinParts().Count() == 0)
         {
             RandomizeSkin(entity, null, false);
         }
@@ -433,11 +436,11 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
 
         bool mustached = entity.Api.World.Rand.NextDouble() < 0.3;
 
-        Dictionary<string, RandomizerConstraint> currentConstraints = new Dictionary<string, RandomizerConstraint>();
+        Dictionary<string, RandomizerConstraint> currentConstraints = new();
 
-        foreach (var skinpart in AvailableSkinParts.Get())
+        foreach (SkinnablePart skinpart in AvailableSkinParts.Get())
         {
-            var variants = skinpart.Variants.Where(v => v.Category == "standard").ToArray();
+            SkinnablePartVariant[] variants = skinpart.Variants.Where(v => v.Category == "standard").ToArray();
 
             int index = entity.Api.World.Rand.Next(variants.Length);
 
@@ -447,7 +450,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
             }
             else
             {
-                if (currentConstraints.TryGetValue(skinpart.Code, out var partConstraints))
+                if (currentConstraints.TryGetValue(skinpart.Code, out RandomizerConstraint? partConstraints))
                 {
                     variantCode = partConstraints.SelectRandom(entity.Api.World.Rand, variants);
                     index = variants.IndexOf(val => val.Code == variantCode);
@@ -469,11 +472,11 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
                 SkinRandomizerConstraints = entity.Api.Assets.Get("config/seraphrandomizer.json").ToObject<SeraphRandomizerConstraints>();
             }
 
-            if (SkinRandomizerConstraints.Constraints.TryGetValue(skinpart.Code, out var partConstraintsGroup))
+            if (SkinRandomizerConstraints.Constraints.TryGetValue(skinpart.Code, out Dictionary<string, Dictionary<string, RandomizerConstraint>>? partConstraintsGroup))
             {
-                if (partConstraintsGroup.TryGetValue(variantCode, out var constraints))
+                if (partConstraintsGroup.TryGetValue(variantCode, out Dictionary<string, RandomizerConstraint>? constraints))
                 {
-                    foreach (var val in constraints)
+                    foreach (KeyValuePair<string, RandomizerConstraint> val in constraints)
                     {
                         currentConstraints[val.Key] = val.Value;
                     }
@@ -490,8 +493,8 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
     protected static readonly FieldInfo? EntityBehaviorControlledPhysics_sneakTestCollisionbox = typeof(EntityBehaviorControlledPhysics).GetField("sneakTestCollisionbox", BindingFlags.NonPublic | BindingFlags.Instance);
     protected CustomModelsSystem? ModelSystem;
     protected ICoreClientAPI? ClientApi;
-    protected Dictionary<string, TextureAtlasPosition?> OverlaysTexturePositions = [];
-    protected Dictionary<string, BlendedOverlayTexture[]> OverlaysByTextures = [];
+    protected readonly ThreadSafeDictionary<string, TextureAtlasPosition?> OverlaysTexturePositions = new([]);
+    protected readonly ThreadSafeDictionary<string, BlendedOverlayTexture[]> OverlaysByTextures = new([]);
     protected EntityTagArray PreviousAddedTags = EntityTagArray.Empty;
     protected EntityTagArray PreviousRemovedTags = EntityTagArray.Empty;
     protected const float DefaultStepHeight = 0.6f;
@@ -693,7 +696,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
 
     protected virtual void AddSkinParts(ref Shape entityShape, string shapePathForLogging, ref string[]? willDeleteElements)
     {
-        foreach (AppliedSkinnablePartVariant? skinPart in AppliedSkinParts.Get())
+        foreach (AppliedSkinnablePartVariant? skinPart in GetAppliedSkinParts())
         {
             AvailableSkinPartsByCode.TryGetValue(skinPart.PartCode, out SkinnablePart? part);
 
@@ -716,7 +719,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
 
     protected virtual void CollectDisabledElements(ref string[]? willDeleteElements)
     {
-        foreach (AppliedSkinnablePartVariant? skinPart in AppliedSkinParts.Get())
+        foreach (AppliedSkinnablePartVariant? skinPart in GetAppliedSkinParts())
         {
             AvailableSkinPartsByCode.TryGetValue(skinPart.PartCode, out SkinnablePart? part);
 
@@ -737,7 +740,9 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
 
     protected virtual void AddSkinPartsTextures(ICoreClientAPI api, Shape entityShape, string shapePathForLogging)
     {
-        foreach (AppliedSkinnablePartVariant? skinPart in AppliedSkinParts.Get())
+        OverlaysByTextures.Set([]);
+
+        foreach (AppliedSkinnablePartVariant? skinPart in GetAppliedSkinParts())
         {
             AvailableSkinPartsByCode.TryGetValue(skinPart.PartCode, out SkinnablePart? part);
 
@@ -802,11 +807,10 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
             }
         }
 
-        foreach (string code in OverlaysByTextures.Keys)
+        foreach (string code in OverlaysByTextures.Get().Keys)
         {
             ApplyOverlayTexture(api, entityShape, code);
         }
-        OverlaysByTextures.Clear();
     }
 
     protected virtual void RemoveHiddenElements(Shape entityShape, ref string[]? willDeleteElements)
@@ -925,6 +929,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
                 textures[prefixCode + code] = compositeTexture;
                 compositeTexture.Bake(ClientApi.Assets);
 
+                TexturesAwaitingToBeAddedToAtlas.Increment();
                 ClientApi.Event.EnqueueMainThreadTask(() => InsertReplacedTextureIntoAtlas(compositeTexture, ClientApi, compositeTexture.Baked.TextureFilenames[0], shapePathForLogging), "PlayerSkinBehavior.AddSkinPart");
             }
         });
@@ -943,16 +948,18 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         entityShape.TextureSizes[code] = [textureWidth, textureHeight];
         textures[code] = compositeTexture;
 
-        api.Event.EnqueueMainThreadTask(() => InsertReplacedTextureIntoAtlas(compositeTexture, api, location, shapePathForLogging), "PlayerSkinBehavior.ReplaceTexture");        
+        TexturesAwaitingToBeAddedToAtlas.Increment();
+        api.Event.EnqueueMainThreadTask(() => InsertReplacedTextureIntoAtlas(compositeTexture, api, location, shapePathForLogging), "PlayerSkinBehavior.ReplaceTexture");
     }
 
-    protected static void InsertReplacedTextureIntoAtlas(CompositeTexture compositeTexture, ICoreClientAPI api, AssetLocation location, string shapePathForLogging)
+    protected void InsertReplacedTextureIntoAtlas(CompositeTexture compositeTexture, ICoreClientAPI api, AssetLocation location, string shapePathForLogging)
     {
         if (!api.EntityTextureAtlas.GetOrInsertTexture(compositeTexture.Baked.TextureFilenames[0], out int textureSubId, out _, null, -1))
         {
             LoggerUtil.Warn(api, typeof(PlayerSkinBehavior), $"Skin part shape {shapePathForLogging} defined texture {location}, no such texture found.");
         }
         compositeTexture.Baked.TextureSubId = textureSubId;
+        TexturesAwaitingToBeAddedToAtlas.Decrement();
     }
 
     protected virtual void AddOverlayTexture(string code, AssetLocation overlayTextureLocation, EnumColorBlendMode overlayMode)
@@ -961,18 +968,21 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
 
         if (OverlaysByTextures.TryGetValue(code, out BlendedOverlayTexture[]? overlayTextures))
         {
-            OverlaysByTextures[code] = overlayTextures.Append(new BlendedOverlayTexture() { Base = overlayTexture.Base, BlendMode = overlayMode });
+            OverlaysByTextures.SetValue(code, overlayTextures.Append(new BlendedOverlayTexture() { Base = overlayTexture.Base, BlendMode = overlayMode }));
             return;
         }
 
-        OverlaysByTextures[code] = [new BlendedOverlayTexture() { Base = overlayTexture.Base, BlendMode = overlayMode }];
+        OverlaysByTextures.SetValue(code, [new BlendedOverlayTexture() { Base = overlayTexture.Base, BlendMode = overlayMode }]);
     }
 
     protected virtual void ApplyOverlayTexture(ICoreClientAPI api, Shape entityShape, string code)
     {
         IDictionary<string, CompositeTexture?> textures = entity.Properties.Client.Textures;
 
-        if (!textures.TryGetValue(code, out CompositeTexture? baseTexture)) return;
+        if (!textures.TryGetValue(code, out CompositeTexture? baseTexture))
+        {
+            return;
+        }
 
         CompositeTexture? clonedBaseTexture = baseTexture?.Clone();
 
@@ -982,18 +992,19 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
             return;
         }
 
-        clonedBaseTexture.BlendedOverlays = OverlaysByTextures[code];
+        clonedBaseTexture.BlendedOverlays = OverlaysByTextures.GetValue(code);
 
-        OverlaysTexturePositions[code] = null;
-
-        api.Event.EnqueueMainThreadTask(() => InsertOverlayTextureIntoAtlas(code, clonedBaseTexture, api, OverlaysTexturePositions), "PlayerSkinBehavior.ReplaceTexture");
+        TexturesAwaitingToBeAddedToAtlas.Increment();
+        api.Event.EnqueueMainThreadTask(() => InsertOverlayTextureIntoAtlas(code, clonedBaseTexture, api), "PlayerSkinBehavior.ReplaceTexture");
     }
 
-    protected static void InsertOverlayTextureIntoAtlas(string code, CompositeTexture compositeTexture, ICoreClientAPI api, Dictionary<string, TextureAtlasPosition?> positions)
+    protected void InsertOverlayTextureIntoAtlas(string code, CompositeTexture compositeTexture, ICoreClientAPI api)
     {
         api.EntityTextureAtlas.GetOrInsertTexture(compositeTexture, out _, out TextureAtlasPosition texturePosition, -1);
 
-        positions[code] = texturePosition;
+        OverlaysTexturePositions.SetValue(code, texturePosition);
+
+        TexturesAwaitingToBeAddedToAtlas.Decrement();
     }
 
     protected virtual void SetZNear()

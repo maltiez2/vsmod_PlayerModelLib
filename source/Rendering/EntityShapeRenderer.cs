@@ -3,7 +3,6 @@ using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.MathTools;
-using Vintagestory.API.Util;
 using Vintagestory.GameContent;
 
 namespace PlayerModelLib;
@@ -16,9 +15,13 @@ public class CustomPlayerShapeRenderer : EntityPlayerShapeRenderer
 
     public override void TesselateShape()
     {
-        if (false && PlayerModelModSystem.Settings.TesselatePlayerShapeOffThread)
+        if (PlayerModelModSystem.Settings.TesselatePlayerShapeOffThread)
         {
-            TyronThreadPool.QueueTask(TesselateShapeOffThread, "CustomPlayerShapeRenderer");
+            if (!_tesselating.Value)
+            {
+                _tesselating.SetTrue();
+                TyronThreadPool.QueueTask(TesselateShapeOffThread, "CustomPlayerShapeRenderer");
+            }
         }
         else
         {
@@ -38,6 +41,8 @@ public class CustomPlayerShapeRenderer : EntityPlayerShapeRenderer
     private static readonly MethodInfo? _EntityPlayerShapeRenderer_determineRenderMode = typeof(EntityPlayerShapeRenderer).GetMethod("determineRenderMode", BindingFlags.NonPublic | BindingFlags.Instance);
     private static readonly MethodInfo? _EntityPlayerShapeRenderer_loadJointIdsRecursive = typeof(EntityPlayerShapeRenderer).GetMethod("loadJointIdsRecursive", BindingFlags.NonPublic | BindingFlags.Instance);
 
+    private readonly ThreadSafeBool _tesselating = new(false);
+
     public virtual void TesselateShapeOffThread()
     {
         try
@@ -52,7 +57,7 @@ public class CustomPlayerShapeRenderer : EntityPlayerShapeRenderer
             }
 
             defaultTexSource = GetTextureSource();
-            CustomTesselate();
+            CustomTesselateOffThread();
             if (watcherRegistered)
             {
                 return;
@@ -83,7 +88,7 @@ public class CustomPlayerShapeRenderer : EntityPlayerShapeRenderer
         }
     }
 
-    public void CustomTesselate()
+    public void CustomTesselateOffThread()
     {
         if (!IsSelf)
         {
@@ -91,7 +96,7 @@ public class CustomPlayerShapeRenderer : EntityPlayerShapeRenderer
 
             _EntityPlayerShapeRenderer_ims.SetValue(this, entity.GetInterface<IMountable>());
 
-            CustomEntityTesselateShape(onMeshReady);
+            CustomEntityTesselateShapeOffThread(onMeshReady);
         }
         else
         {
@@ -100,7 +105,7 @@ public class CustomPlayerShapeRenderer : EntityPlayerShapeRenderer
                 return;
             }
 
-            CustomEntityTesselateShape(delegate (MeshData meshData)
+            CustomEntityTesselateShapeOffThread(delegate (MeshData meshData)
             {
                 _EntityPlayerShapeRenderer_disposeMeshes.Invoke(this, []);
                 if (!capi.IsShuttingDown && meshData.VerticesCount > 0)
@@ -131,76 +136,90 @@ public class CustomPlayerShapeRenderer : EntityPlayerShapeRenderer
         }
     }
 
-    public virtual void CustomEntityTesselateShape(Action<MeshData> onMeshDataReady, string[] overrideSelectiveElements = null)
+    public virtual void CustomEntityTesselateShapeOffThread(Action<MeshData> onMeshDataReady, string[] overrideSelectiveElements = null)
     {
         if (!loaded)
         {
+            _tesselating.SetFalse();
             return;
         }
+
+        PlayerSkinBehavior? skinBehavior = entity.GetBehavior<PlayerSkinBehavior>();
+        if (skinBehavior == null)
+        {
+            _tesselating.SetFalse();
+            return;
+        }
+        
+        
 
         CompositeShape compositeShape = ((OverrideCompositeShape != null) ? OverrideCompositeShape : entity.Properties.Client.Shape);
         Shape entityShape = ((OverrideEntityShape != null) ? OverrideEntityShape : entity.Properties.Client.LoadedShapeForEntity);
         if (entityShape == null)
         {
+            _tesselating.SetFalse();
             return;
         }
 
         entity.OnTesselation(ref entityShape, compositeShape.Base.ToString());
+
+        while (skinBehavior.TexturesAwaitingToBeAddedToAtlas.Value > 0)
+        {
+            Thread.Sleep(30);
+        }
+
         defaultTexSource = GetTextureSource();
         string[] ovse = overrideSelectiveElements ?? OverrideSelectiveElements;
 
-        TyronThreadPool.QueueTask(delegate
+        MeshData meshdata;
+        if (entity.Properties.Client.Shape.VoxelizeTexture)
         {
-            Thread.Sleep(2000);
-
-            MeshData meshdata;
-            if (entity.Properties.Client.Shape.VoxelizeTexture)
+            int @int = entity.WatchedAttributes.GetInt("textureIndex");
+            TextureAtlasPosition atlasPos = defaultTexSource["all"];
+            CompositeTexture firstTexture = entity.Properties.Client.FirstTexture;
+            CompositeTexture[] alternates = firstTexture.Alternates;
+            CompositeTexture texture = ((@int == 0) ? firstTexture : alternates[@int % alternates.Length]);
+            meshdata = capi.Tesselator.VoxelizeTexture(texture, capi.EntityTextureAtlas.Size, atlasPos);
+            for (int i = 0; i < meshdata.xyz.Length; i += 3)
             {
-                int @int = entity.WatchedAttributes.GetInt("textureIndex");
-                TextureAtlasPosition atlasPos = defaultTexSource["all"];
-                CompositeTexture firstTexture = entity.Properties.Client.FirstTexture;
-                CompositeTexture[] alternates = firstTexture.Alternates;
-                CompositeTexture texture = ((@int == 0) ? firstTexture : alternates[@int % alternates.Length]);
-                meshdata = capi.Tesselator.VoxelizeTexture(texture, capi.EntityTextureAtlas.Size, atlasPos);
-                for (int i = 0; i < meshdata.xyz.Length; i += 3)
-                {
-                    meshdata.xyz[i] -= 0.125f;
-                    meshdata.xyz[i + 1] -= 0.5f;
-                    meshdata.xyz[i + 2] += 0.0625f;
-                }
+                meshdata.xyz[i] -= 0.125f;
+                meshdata.xyz[i + 1] -= 0.5f;
+                meshdata.xyz[i + 2] += 0.0625f;
             }
-            else
+        }
+        else
+        {
+            try
             {
-                try
+                TesselationMetaData meta = new TesselationMetaData
                 {
-                    TesselationMetaData meta = new TesselationMetaData
-                    {
-                        QuantityElements = compositeShape.QuantityElements,
-                        SelectiveElements = (ovse ?? compositeShape.SelectiveElements),
-                        IgnoreElements = compositeShape.IgnoreElements,
-                        TexSource = this,
-                        WithJointIds = true,
-                        WithDamageEffect = true,
-                        TypeForLogging = "entity",
-                        Rotation = new Vec3f(compositeShape.rotateX, compositeShape.rotateY, compositeShape.rotateZ)
-                    };
-                    capi.Tesselator.TesselateShape(meta, entityShape, out meshdata);
-                    meshdata.Translate(compositeShape.offsetX, compositeShape.offsetY, compositeShape.offsetZ);
-                }
-                catch (Exception e)
-                {
-                    capi.World.Logger.Fatal("Failed tesselating entity {0} with id {1}. Entity will probably be invisible!.", entity.Code, entity.EntityId);
-                    capi.World.Logger.Fatal(e);
-                    return;
-                }
+                    QuantityElements = compositeShape.QuantityElements,
+                    SelectiveElements = (ovse ?? compositeShape.SelectiveElements),
+                    IgnoreElements = compositeShape.IgnoreElements,
+                    TexSource = this,
+                    WithJointIds = true,
+                    WithDamageEffect = true,
+                    TypeForLogging = "entity",
+                    Rotation = new Vec3f(compositeShape.rotateX, compositeShape.rotateY, compositeShape.rotateZ)
+                };
+                capi.Tesselator.TesselateShape(meta, entityShape, out meshdata);
+                meshdata.Translate(compositeShape.offsetX, compositeShape.offsetY, compositeShape.offsetZ);
             }
-
-            capi.Event.EnqueueMainThreadTask(delegate
+            catch (Exception e)
             {
-                onMeshDataReady(meshdata);
-                entity.OnTesselated();
-            }, "uploadentitymesh");
-            capi.TesselatorManager.ThreadDispose();
-        });
+                capi.World.Logger.Fatal("Failed tesselating entity {0} with id {1}. Entity will probably be invisible!.", entity.Code, entity.EntityId);
+                capi.World.Logger.Fatal(e);
+                _tesselating.SetFalse();
+                return;
+            }
+        }
+
+        capi.Event.EnqueueMainThreadTask(delegate
+        {
+            onMeshDataReady(meshdata);
+            entity.OnTesselated();
+        }, "uploadentitymesh");
+        capi.TesselatorManager.ThreadDispose();
+        _tesselating.SetFalse();
     }
 }
