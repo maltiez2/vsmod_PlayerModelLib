@@ -32,7 +32,7 @@ public static class ThreadSafeUtils
                 compositeTexture.Bake(api.Assets);
             }
 
-            if ((targetAtlas ?? api.EntityTextureAtlas).GetOrInsertTexture(compositeTexture.Baked.TextureFilenames[0], out int textureSubId, out _))
+            if ((targetAtlas ?? api.EntityTextureAtlas).GetOrInsertTexture(compositeTexture.Baked?.TextureFilenames[0], out int textureSubId, out _) && compositeTexture.Baked != null)
             {
                 compositeTexture.Baked.TextureSubId = textureSubId;
             }
@@ -83,6 +83,7 @@ public class ThreadSafeList<TElement>
 }
 
 public class ThreadSafeDictionary<TKey, TValue>
+    where TKey : notnull
 {
     public ThreadSafeDictionary(Dictionary<TKey, TValue> value)
     {

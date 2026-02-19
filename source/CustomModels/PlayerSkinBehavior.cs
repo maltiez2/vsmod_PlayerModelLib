@@ -126,9 +126,9 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
             OnVoiceConfigChanged();
             OnSkinModelChanged();
 
-            if (entity.Api.Side == EnumAppSide.Server && GetAppliedSkinParts().Count() == 0)
+            if (entity.Api.Side == EnumAppSide.Server && !GetAppliedSkinParts().Any())
             {
-                RandomizeSkin(entity, null, false);
+                RandomizeSkin(entity, [], false);
             }
 
             ModelSystem.OnCustomModelHotLoaded += (code) =>
@@ -184,9 +184,9 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
 
         OnSkinModelChanged();
 
-        if (entity.Api.Side == EnumAppSide.Server && GetAppliedSkinParts().Count() == 0)
+        if (entity.Api.Side == EnumAppSide.Server && !GetAppliedSkinParts().Any())
         {
-            RandomizeSkin(entity, null, false);
+            RandomizeSkin(entity, [], false);
         }
 
         Initialized = true;
@@ -253,13 +253,6 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
     public override void OnEntityDespawn(EntityDespawnData despawn)
     {
         // nothing to do here
-    }
-
-    public override void OnGameTick(float deltaTime)
-    {
-        string skinModel = GetPlayerModelAttributeValue();
-
-        //Debug.WriteLine($"({entity.Api.Side}) OnGameTick: {CurrentModelCode} / {skinModel}");
     }
 
     public override string PropertyName() => "skinnableplayercustommodel";
@@ -357,7 +350,12 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
     {
         AvailableSkinPartsByCode.TryGetValue(partCode, out SkinnablePart? part);
 
-        ITreeAttribute? appliedTree = SkinTree?.GetTreeAttribute("appliedParts");
+        if (SkinTree == null)
+        {
+            return;
+        }
+
+        ITreeAttribute? appliedTree = SkinTree.GetTreeAttribute("appliedParts");
         if (appliedTree == null)
         {
             appliedTree = new TreeAttribute();
@@ -432,8 +430,6 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
 
     public bool RandomizeSkin(Entity entity, Dictionary<string, string> preSelection, bool playVoice = true)
     {
-        if (preSelection == null) preSelection = new Dictionary<string, string>();
-
         bool mustached = entity.Api.World.Rand.NextDouble() < 0.3;
 
         Dictionary<string, RandomizerConstraint> currentConstraints = new();
@@ -444,7 +440,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
 
             int index = entity.Api.World.Rand.Next(variants.Length);
 
-            if (preSelection.TryGetValue(skinpart.Code, out string variantCode))
+            if (preSelection.TryGetValue(skinpart.Code, out string? variantCode))
             {
                 index = variants.IndexOf(val => val.Code == variantCode);
             }
@@ -472,14 +468,12 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
                 SkinRandomizerConstraints = entity.Api.Assets.Get("config/seraphrandomizer.json").ToObject<SeraphRandomizerConstraints>();
             }
 
-            if (SkinRandomizerConstraints.Constraints.TryGetValue(skinpart.Code, out Dictionary<string, Dictionary<string, RandomizerConstraint>>? partConstraintsGroup))
+            if (SkinRandomizerConstraints.Constraints.TryGetValue(skinpart.Code, out Dictionary<string, Dictionary<string, RandomizerConstraint>>? partConstraintsGroup) &&
+                partConstraintsGroup.TryGetValue(variantCode, out Dictionary<string, RandomizerConstraint>? constraints))
             {
-                if (partConstraintsGroup.TryGetValue(variantCode, out Dictionary<string, RandomizerConstraint>? constraints))
+                foreach (KeyValuePair<string, RandomizerConstraint> val in constraints)
                 {
-                    foreach (KeyValuePair<string, RandomizerConstraint> val in constraints)
-                    {
-                        currentConstraints[val.Key] = val.Value;
-                    }
+                    currentConstraints[val.Key] = val.Value;
                 }
             }
 

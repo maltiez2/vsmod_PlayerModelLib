@@ -93,7 +93,9 @@ internal static class OtherPatches
         }
     }
 
+#pragma warning disable S3400 // Methods should not return constants // This is required by how harmony path works
     private static bool ReloadSkin() => false;
+#pragma warning restore S3400 // Methods should not return constants
 
     private static ICoreClientAPI? _clientApi;
 
@@ -104,7 +106,7 @@ internal static class OtherPatches
 
     private static bool TextureAtlasManager_RegenMipMaps(TextureAtlasManager __instance, int atlasNumber)
     {
-        if (__instance.AtlasTextures.Count() <= atlasNumber)
+        if (__instance.AtlasTextures.Count <= atlasNumber)
         {
             return false;
         }
@@ -370,13 +372,17 @@ internal static class OtherPatches
     private static bool GuiDialogHairStyling_getCost(GuiDialogHairStyling __instance, ref int __result)
     {
         int cost = 0;
-        PlayerSkinBehavior skinMod = _clientApi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
-        var availableSkinParts = skinMod.AvailableSkinParts.Get();
-        Dictionary<string, string> currentSkin = (Dictionary<string, string>?)_guiDialogHairStyling_currentSkin.GetValue(__instance) ?? [];
-
-        foreach (SkinnablePart skinpart in availableSkinParts)
+        PlayerSkinBehavior? skinMod = _clientApi?.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
+        var availableSkinParts = skinMod?.AvailableSkinParts.Get();
+        if (skinMod == null || availableSkinParts == null)
         {
-            string code = skinpart.Code;
+            return false;
+        }
+        
+        Dictionary<string, string> currentSkin = (Dictionary<string, string>?)_guiDialogHairStyling_currentSkin?.GetValue(__instance) ?? [];
+
+        foreach (string code in availableSkinParts.Select(skinpart => skinpart.Code))
+        {
             AppliedSkinnablePartVariant? appliedVar = skinMod.AppliedSkinParts.Get().FirstOrDefault((AppliedSkinnablePartVariant sp) => sp.PartCode == code);
 
             if (appliedVar == null)
@@ -405,7 +411,7 @@ internal static class OtherPatches
         return false;
     }
 
-    private static bool GuiDialogHairStyling_AllowedSkinPartSelection(GuiDialogHairStyling __instance, ref bool __result)
+    private static bool GuiDialogHairStyling_AllowedSkinPartSelection(ref bool __result)
     {
         __result = false;
         return false;
@@ -430,11 +436,11 @@ internal static class OtherPatches
             __instance.setCharacterClass(fromPlayer.Entity, p.CharacterClass, !didSelectBefore || fromPlayer.WorldData.CurrentGameMode == EnumGameMode.Creative);
 
             var bh = fromPlayer.Entity.GetBehavior<PlayerSkinBehavior>();
-            bh.ApplyVoice(p.VoiceType, p.VoicePitch, false);
+            bh?.ApplyVoice(p.VoiceType, p.VoicePitch, false);
 
             foreach (var skinpart in p.SkinParts)
             {
-                bh.SelectSkinPart(skinpart.Key, skinpart.Value, false);
+                bh?.SelectSkinPart(skinpart.Key, skinpart.Value, false);
             }
 
             var date = DateTime.UtcNow;

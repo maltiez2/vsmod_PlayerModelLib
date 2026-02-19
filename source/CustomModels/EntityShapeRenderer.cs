@@ -47,11 +47,10 @@ public class CustomPlayerShapeRenderer : EntityPlayerShapeRenderer
     {
         try
         {
-            EntityPlayer entityPlayer = (EntityPlayer)_EntityPlayerShapeRenderer_entityPlayer.GetValue(this);
-            bool watcherRegistered = (bool)_EntityPlayerShapeRenderer_watcherRegistered.GetValue(this);
+            EntityPlayer? entityPlayer = (EntityPlayer?)_EntityPlayerShapeRenderer_entityPlayer?.GetValue(this);
+            bool watcherRegistered = (bool)(_EntityPlayerShapeRenderer_watcherRegistered?.GetValue(this) ?? false);
 
-
-            if (entityPlayer.GetBehavior<EntityBehaviorPlayerInventory>().Inventory == null)
+            if (entityPlayer?.GetBehavior<EntityBehaviorPlayerInventory>()?.Inventory == null)
             {
                 return;
             }
@@ -63,19 +62,19 @@ public class CustomPlayerShapeRenderer : EntityPlayerShapeRenderer
                 return;
             }
 
-            _EntityPlayerShapeRenderer_previfpMode.SetValue(this, capi.Settings.Bool["immersiveFpMode"]);
-            bool previfpMode = (bool)_EntityPlayerShapeRenderer_previfpMode.GetValue(this);
+            _EntityPlayerShapeRenderer_previfpMode?.SetValue(this, capi.Settings.Bool["immersiveFpMode"]);
+            bool previfpMode = (bool)(_EntityPlayerShapeRenderer_previfpMode?.GetValue(this) ?? false);
 
             if (IsSelf)
             {
                 capi.Settings.Bool.AddWatcher("immersiveFpMode", delegate (bool on)
                 {
                     entity.MarkShapeModified();
-                    (entityPlayer.AnimManager as PlayerAnimationManager).OnIfpModeChanged(previfpMode, on);
+                    (entityPlayer.AnimManager as PlayerAnimationManager)?.OnIfpModeChanged(previfpMode, on);
                 });
             }
 
-            _EntityPlayerShapeRenderer_watcherRegistered.SetValue(this, true);
+            _EntityPlayerShapeRenderer_watcherRegistered?.SetValue(this, true);
         }
         catch (Exception exception)
         {
@@ -94,7 +93,7 @@ public class CustomPlayerShapeRenderer : EntityPlayerShapeRenderer
         {
             if (!loaded) return;
 
-            _EntityPlayerShapeRenderer_ims.SetValue(this, entity.GetInterface<IMountable>());
+            _EntityPlayerShapeRenderer_ims?.SetValue(this, entity.GetInterface<IMountable>());
 
             CustomEntityTesselateShapeOffThread(onMeshReady);
         }
@@ -107,36 +106,36 @@ public class CustomPlayerShapeRenderer : EntityPlayerShapeRenderer
 
             CustomEntityTesselateShapeOffThread(delegate (MeshData meshData)
             {
-                _EntityPlayerShapeRenderer_disposeMeshes.Invoke(this, []);
+                _EntityPlayerShapeRenderer_disposeMeshes?.Invoke(this, []);
                 if (!capi.IsShuttingDown && meshData.VerticesCount > 0)
                 {
                     MeshData meshData2 = meshData.EmptyClone();
-                    _EntityPlayerShapeRenderer_thirdPersonMeshRef.SetValue(this, capi.Render.UploadMultiTextureMesh(meshData));
-                    _EntityPlayerShapeRenderer_determineRenderMode.Invoke(this, []);
+                    _EntityPlayerShapeRenderer_thirdPersonMeshRef?.SetValue(this, capi.Render.UploadMultiTextureMesh(meshData));
+                    _EntityPlayerShapeRenderer_determineRenderMode?.Invoke(this, []);
 
-                    RenderMode renderMode = (RenderMode)_EntityPlayerShapeRenderer_renderMode.GetValue(this);
+                    RenderMode renderMode = (RenderMode)(_EntityPlayerShapeRenderer_renderMode?.GetValue(this) ?? RenderMode.ThirdPerson);
 
                     if (renderMode == RenderMode.ImmersiveFirstPerson)
                     {
                         HashSet<int> skipJointIds = new HashSet<int>();
-                        _EntityPlayerShapeRenderer_loadJointIdsRecursive.Invoke(this, [entity.AnimManager.Animator.GetPosebyName("Neck"), skipJointIds]);
+                        _EntityPlayerShapeRenderer_loadJointIdsRecursive?.Invoke(this, [entity.AnimManager.Animator.GetPosebyName("Neck"), skipJointIds]);
                         meshData2.AddMeshData(meshData, (int i) => !skipJointIds.Contains(meshData.CustomInts.Values[i * 4]));
                     }
                     else
                     {
                         HashSet<int> includeJointIds = new HashSet<int>();
-                        _EntityPlayerShapeRenderer_loadJointIdsRecursive.Invoke(this, [entity.AnimManager.Animator.GetPosebyName("UpperArmL"), includeJointIds]);
-                        _EntityPlayerShapeRenderer_loadJointIdsRecursive.Invoke(this, [entity.AnimManager.Animator.GetPosebyName("UpperArmR"), includeJointIds]);
+                        _EntityPlayerShapeRenderer_loadJointIdsRecursive?.Invoke(this, [entity.AnimManager.Animator.GetPosebyName("UpperArmL"), includeJointIds]);
+                        _EntityPlayerShapeRenderer_loadJointIdsRecursive?.Invoke(this, [entity.AnimManager.Animator.GetPosebyName("UpperArmR"), includeJointIds]);
                         meshData2.AddMeshData(meshData, (int i) => includeJointIds.Contains(meshData.CustomInts.Values[i * 4]));
                     }
 
-                    _EntityPlayerShapeRenderer_firstPersonMeshRef.SetValue(this, capi.Render.UploadMultiTextureMesh(meshData2));
+                    _EntityPlayerShapeRenderer_firstPersonMeshRef?.SetValue(this, capi.Render.UploadMultiTextureMesh(meshData2));
                 }
             });
         }
     }
 
-    public virtual void CustomEntityTesselateShapeOffThread(Action<MeshData> onMeshDataReady, string[] overrideSelectiveElements = null)
+    public virtual void CustomEntityTesselateShapeOffThread(Action<MeshData> onMeshDataReady, string[]? overrideSelectiveElements = null)
     {
         if (!loaded)
         {

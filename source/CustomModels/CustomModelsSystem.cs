@@ -249,9 +249,6 @@ public sealed class CustomModelsSystem : ModSystem
 
         _ = _api.ModLoader.GetModSystem<ModSystemSkinnableAdditions>().AppendAdditions(parts);
 
-        CheckTexturePartTextureCodes(partsByCode.Values, defaultShape, _defaultModelCode);
-
-
 
         CustomModelData defaultModelData = new(_defaultModelCode, defaultShape)
         {
@@ -365,8 +362,6 @@ public sealed class CustomModelsSystem : ModSystem
         Dictionary<string, SkinnablePart> partsByCode = LoadParts(api, modelConfig.SkinnableParts, code);
 
         FixColBreak(modelConfig.SkinnableParts, code);
-
-        CheckTexturePartTextureCodes(partsByCode.Values, shape, code);
 
         CustomModelData modelData = new(code, shape)
         {
@@ -1208,30 +1203,6 @@ public sealed class CustomModelsSystem : ModSystem
         return TextCommandResult.Success($"Player '{targetPlayer.Name}' now does not have access to '{playerModelCode}' player model");
     }
 
-    private void CheckTexturePartTextureCodes(IEnumerable<SkinnablePart> allParts, Shape modelShape, string modelCode)
-    {
-        return; // Cannot do such check, because have to load shape skin parts to be able to check
-
-        foreach (SkinnablePart part in allParts.Where(part => part.Type == EnumSkinnableType.Texture))
-        {
-            string? target = part.TextureTarget;
-            if (target == null)
-            {
-                LoggerUtil.Warn(_api, this, $"({modelCode}) Texture skin part '{part.Code}' has no 'TextureTarget' specified");
-                continue;
-            }
-
-            if (modelShape.Textures != null && !modelShape.Textures.ContainsKey(target))
-            {
-                string existingCodes = "";
-                if (modelShape.Textures.Count > 0)
-                {
-                    existingCodes = modelShape.Textures.Keys.Aggregate((f, s) => $"{f}, {s}");
-                }
-                LoggerUtil.Warn(_api, this, $"({modelCode}) Texture skin part '{part.Code}' has texture target '{target}' but model shape does not contain textures with such code, existing textures: {existingCodes}");
-            }
-        }
-    }
     private void ProcessTexturePart(ICoreClientAPI clientApi, SkinnablePart part, string model)
     {
         foreach (SkinnablePartVariant? variant in part.Variants)
@@ -1347,51 +1318,46 @@ public sealed class CustomModelsSystem : ModSystem
         {
             if (data.MainTextureCodes.Contains(textureCode))
             {
+                
+                string newCode = PrefixTextureCode(modelCode, textureCode);
+
+                if (_textures.ContainsKey(newCode)) continue;
+
+                _textures.Add(newCode, texturePath);
+                _ = TextureSource?[newCode];
+
+                IAsset? textureAsset2 = _clientApi.Assets.TryGet(texturePath.Clone().WithPathPrefixOnce("textures/").WithPathAppendixOnce(".png"));
+                if (textureAsset2 == null) continue;
+
+                CompositeTexture mainTexture = new()
                 {
-                    string newCode = PrefixTextureCode(modelCode, textureCode);
+                    Base = texturePath
+                };
 
-                    if (_textures.ContainsKey(newCode)) continue;
+                mainTexture.Bake(_clientApi.Assets);
 
-                    _textures.Add(newCode, texturePath);
-                    _ = TextureSource?[newCode];
+                data.MainTextures[newCode] = mainTexture;
+                
 
-                    IAsset? textureAsset2 = _clientApi.Assets.TryGet(texturePath.Clone().WithPathPrefixOnce("textures/").WithPathAppendixOnce(".png"));
-                    if (textureAsset2 == null) continue;
+                
+                string newCode2 = textureCode;
 
-                    //_clientApi.EntityTextureAtlas.GetOrInsertTexture(texturePath, out _, out TextureAtlasPosition texPos, () => textureAsset2.ToBitmap(_clientApi));
+                if (_textures.ContainsKey(newCode2)) continue;
 
-                    CompositeTexture mainTexture = new()
-                    {
-                        Base = texturePath
-                    };
+                _textures.Add(newCode2, texturePath);
+                _ = TextureSource?[newCode2];
 
-                    mainTexture.Bake(_clientApi.Assets);
+                IAsset? textureAsset3 = _clientApi.Assets.TryGet(texturePath.Clone().WithPathPrefixOnce("textures/").WithPathAppendixOnce(".png"));
+                if (textureAsset3 == null) continue;
 
-                    data.MainTextures[newCode] = mainTexture;
-                }
-
+                CompositeTexture mainTexture2 = new()
                 {
-                    string newCode = textureCode;
+                    Base = texturePath
+                };
 
-                    if (_textures.ContainsKey(newCode)) continue;
+                mainTexture2.Bake(_clientApi.Assets);
 
-                    _textures.Add(newCode, texturePath);
-                    _ = TextureSource?[newCode];
-
-                    IAsset? textureAsset2 = _clientApi.Assets.TryGet(texturePath.Clone().WithPathPrefixOnce("textures/").WithPathAppendixOnce(".png"));
-                    if (textureAsset2 == null) continue;
-
-                    //_clientApi.EntityTextureAtlas.GetOrInsertTexture(texturePath, out _, out TextureAtlasPosition texPos, () => textureAsset2.ToBitmap(_clientApi));
-
-                    CompositeTexture mainTexture = new()
-                    {
-                        Base = texturePath
-                    };
-
-                    mainTexture.Bake(_clientApi.Assets);
-
-                    data.MainTextures[newCode] = mainTexture;
-                }
+                data.MainTextures[newCode2] = mainTexture2;
 
                 continue;
             }
