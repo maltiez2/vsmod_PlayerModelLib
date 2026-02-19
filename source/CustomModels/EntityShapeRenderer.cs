@@ -87,7 +87,7 @@ public class CustomPlayerShapeRenderer : EntityPlayerShapeRenderer
         }
     }
 
-    public void CustomTesselateOffThread()
+    public virtual void CustomTesselateOffThread()
     {
         if (!IsSelf)
         {
