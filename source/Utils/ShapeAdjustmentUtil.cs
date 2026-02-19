@@ -9,7 +9,6 @@ public static class ShapeAdjustmentUtil
     public static Shape? AdjustClothesShape(ICoreAPI api, CompositeShape compositeShape, BaseShapeData baseShape, CustomModelData modelData)
     {
         AssetLocation shapePath = compositeShape.Base ?? "";
-        IEnumerable<AssetLocation> overlays = compositeShape.Overlays?.OfType<CompositeShape>().Select(element => element.Base ?? "") ?? [];
 
         Shape? result = LoadShape(api, shapePath)?.Clone();
         if (result == null)
@@ -17,35 +16,7 @@ public static class ShapeAdjustmentUtil
             return null;
         }
 
-        foreach (AssetLocation overlayPath in overlays)
-        {
-            Shape? overlayShape = LoadShape(api, overlayPath)?.Clone();
-            if (overlayShape == null || overlayShape.Elements == null)
-            {
-                continue;
-            }
-
-            result.StepParentShape(overlayShape, "", "", api.Logger, (_, _) => { });
-
-            foreach (ShapeElement? element in overlayShape.Elements)
-            {
-                if (element == null)
-                {
-                    continue;
-                }
-
-                string? parent = element.StepParentName;
-                if (parent == null)
-                {
-                    continue;
-                }
-
-                if (baseShape.ElementSizes.ContainsKey(parent))
-                {
-                    result.Elements = result.Elements.Append(element).ToArray();
-                }
-            }
-        }
+        StepParentShapeOverlays(result, api, compositeShape, baseShape);
 
         AdjustClothesShape(api, result, baseShape, modelData);
 
@@ -100,7 +71,7 @@ public static class ShapeAdjustmentUtil
         RescaleShapeElementRecursive(element, scale);
     }
 
-
+    
 
     private static Vector3d GetScaleVector(Vector3d baseSize, Vector3d customSize)
     {
@@ -208,6 +179,41 @@ public static class ShapeAdjustmentUtil
         {
             double uniform = GameMath.Clamp((max - angle) / halfMax, 0, 1);
             return (uniform, 0, 1 - uniform);
+        }
+    }
+
+    private static void StepParentShapeOverlays(Shape result, ICoreAPI api, CompositeShape compositeShape, BaseShapeData baseShape)
+    {
+        IEnumerable<AssetLocation> overlays = compositeShape.Overlays?.OfType<CompositeShape>().Select(element => element.Base ?? "") ?? [];
+
+        foreach (AssetLocation overlayPath in overlays)
+        {
+            Shape? overlayShape = LoadShape(api, overlayPath)?.Clone();
+            if (overlayShape == null || overlayShape.Elements == null)
+            {
+                continue;
+            }
+
+            result.StepParentShape(overlayShape, "", "", api.Logger, (_, _) => { });
+
+            foreach (ShapeElement? element in overlayShape.Elements)
+            {
+                if (element == null)
+                {
+                    continue;
+                }
+
+                string? parent = element.StepParentName;
+                if (parent == null)
+                {
+                    continue;
+                }
+
+                if (baseShape.ElementSizes.ContainsKey(parent))
+                {
+                    result.Elements = result.Elements.Append(element).ToArray();
+                }
+            }
         }
     }
 }

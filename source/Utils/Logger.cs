@@ -16,6 +16,9 @@ public static class LoggerUtil
     public static void Error(ICoreAPI? api, object caller, string format) => api?.Logger?.Error(Format(caller, format));
     public static void Error(ICoreAPI? api, Type type, string format) => api?.Logger?.Error(Format(type, format));
 
+    public static void Fatal(ICoreAPI? api, object caller, string format) => api?.Logger?.Fatal(Format(caller, format));
+    public static void Fatal(ICoreAPI? api, Type type, string format) => api?.Logger?.Fatal(Format(type, format));
+
     public static void Debug(ICoreAPI? api, object caller, string format) => api?.Logger?.Debug(Format(caller, format));
     public static void Debug(ICoreAPI? api, Type type, string format) => api?.Logger?.Debug(Format(type, format));
 

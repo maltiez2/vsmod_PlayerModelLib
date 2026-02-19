@@ -7,6 +7,7 @@ using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
+using Vintagestory.API.Server;
 using Vintagestory.API.Util;
 using Vintagestory.Client.NoObf;
 using Vintagestory.GameContent;
@@ -62,6 +63,10 @@ internal static class OtherPatches
                 typeof(TextureAtlasManager).GetMethod("RegenMipMaps", AccessTools.all),
                 prefix: new HarmonyMethod(AccessTools.Method(typeof(OtherPatches), nameof(TextureAtlasManager_RegenMipMaps)))
             );
+        new Harmony(harmonyId).Patch(
+                typeof(CharacterSystem).GetMethod("onCharacterSelection", AccessTools.all),
+                prefix: new HarmonyMethod(AccessTools.Method(typeof(OtherPatches), nameof(onCharacterSelection)))
+            );
     }
 
     public static void Unpatch(string harmonyId)
@@ -75,6 +80,7 @@ internal static class OtherPatches
         new Harmony(harmonyId).Unpatch(typeof(GuiDialogHairStyling).GetMethod("getCost", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
         new Harmony(harmonyId).Unpatch(typeof(GuiDialogHairStyling).GetMethod("AllowedSkinPartSelection", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
         new Harmony(harmonyId).Unpatch(typeof(TextureAtlasManager).GetMethod("RegenMipMaps", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
+        new Harmony(harmonyId).Unpatch(typeof(CharacterSystem).GetMethod("onCharacterSelection", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
 
         _clientApi = null;
     }
@@ -87,7 +93,9 @@ internal static class OtherPatches
         }
     }
 
+#pragma warning disable S3400 // Methods should not return constants // This is required by how harmony path works
     private static bool ReloadSkin() => false;
+#pragma warning restore S3400 // Methods should not return constants
 
     private static ICoreClientAPI? _clientApi;
 
@@ -98,7 +106,7 @@ internal static class OtherPatches
 
     private static bool TextureAtlasManager_RegenMipMaps(TextureAtlasManager __instance, int atlasNumber)
     {
-        if (__instance.AtlasTextures.Count() <= atlasNumber)
+        if (__instance.AtlasTextures.Count <= atlasNumber)
         {
             return false;
         }
@@ -364,14 +372,18 @@ internal static class OtherPatches
     private static bool GuiDialogHairStyling_getCost(GuiDialogHairStyling __instance, ref int __result)
     {
         int cost = 0;
-        EntityBehaviorExtraSkinnable skinMod = _clientApi.World.Player.Entity.GetBehavior<EntityBehaviorExtraSkinnable>();
-        SkinnablePart[] availableSkinParts = skinMod.AvailableSkinParts;
-        Dictionary<string, string> currentSkin = (Dictionary<string, string>?)_guiDialogHairStyling_currentSkin.GetValue(__instance) ?? [];
-
-        foreach (SkinnablePart skinpart in availableSkinParts)
+        PlayerSkinBehavior? skinMod = _clientApi?.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
+        var availableSkinParts = skinMod?.AvailableSkinParts.Get();
+        if (skinMod == null || availableSkinParts == null)
         {
-            string code = skinpart.Code;
-            AppliedSkinnablePartVariant? appliedVar = skinMod.AppliedSkinParts.FirstOrDefault((AppliedSkinnablePartVariant sp) => sp.PartCode == code);
+            return false;
+        }
+        
+        Dictionary<string, string> currentSkin = (Dictionary<string, string>?)_guiDialogHairStyling_currentSkin?.GetValue(__instance) ?? [];
+
+        foreach (string code in availableSkinParts.Select(skinpart => skinpart.Code))
+        {
+            AppliedSkinnablePartVariant? appliedVar = skinMod.AppliedSkinParts.Get().FirstOrDefault((AppliedSkinnablePartVariant sp) => sp.PartCode == code);
 
             if (appliedVar == null)
             {
@@ -399,9 +411,54 @@ internal static class OtherPatches
         return false;
     }
 
-    private static bool GuiDialogHairStyling_AllowedSkinPartSelection(GuiDialogHairStyling __instance, ref bool __result)
+    private static bool GuiDialogHairStyling_AllowedSkinPartSelection(ref bool __result)
     {
         __result = false;
+        return false;
+    }
+
+    private static bool onCharacterSelection(CharacterSystem __instance, IServerPlayer fromPlayer, CharacterSelectionPacket p)
+    {
+        bool didSelectBefore = fromPlayer.GetModData<bool>("createCharacter", false);
+        bool allowSelect = !didSelectBefore || fromPlayer.Entity.WatchedAttributes.GetBool("allowcharselonce") || fromPlayer.WorldData.CurrentGameMode == EnumGameMode.Creative;
+
+        if (!allowSelect)
+        {
+            fromPlayer.Entity.WatchedAttributes.MarkPathDirty("skinConfig");
+            fromPlayer.BroadcastPlayerData(true);
+            return false;
+        }
+
+        if (p.DidSelect)
+        {
+            fromPlayer.SetModData<bool>("createCharacter", true);
+
+            __instance.setCharacterClass(fromPlayer.Entity, p.CharacterClass, !didSelectBefore || fromPlayer.WorldData.CurrentGameMode == EnumGameMode.Creative);
+
+            var bh = fromPlayer.Entity.GetBehavior<PlayerSkinBehavior>();
+            bh?.ApplyVoice(p.VoiceType, p.VoicePitch, false);
+
+            foreach (var skinpart in p.SkinParts)
+            {
+                bh?.SelectSkinPart(skinpart.Key, skinpart.Value, false);
+            }
+
+            var date = DateTime.UtcNow;
+            fromPlayer.ServerData.LastCharacterSelectionDate = date.ToShortDateString() + " " + date.ToShortTimeString();
+
+            // allow players that just joined to immediately re select the class
+            var allowOneFreeClassChange = fromPlayer.Entity.Api.World.Config.GetBool("allowOneFreeClassChange");
+            if (!didSelectBefore && allowOneFreeClassChange)
+            {
+                fromPlayer.ServerData.LastCharacterSelectionDate = null;
+            }
+            else
+            {
+                fromPlayer.Entity.WatchedAttributes.RemoveAttribute("allowcharselonce");
+            }
+        }
+        fromPlayer.Entity.WatchedAttributes.MarkPathDirty("skinConfig");
+        fromPlayer.BroadcastPlayerData(true);
         return false;
     }
 }

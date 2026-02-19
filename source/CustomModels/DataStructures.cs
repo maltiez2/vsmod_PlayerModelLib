@@ -1,5 +1,4 @@
-﻿using HarmonyLib;
-using OpenTK.Mathematics;
+﻿using OpenTK.Mathematics;
 using ProtoBuf;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -21,6 +20,7 @@ public class SkinnablePartExtended : SkinnablePart
 public class CustomModelConfig
 {
     public bool Enabled { set; get; } = true;
+    [CanBeNull]
     public string? Name { get; set; }
     public string Domain { get; set; } = "game";
     public string Group { get; set; } = "";
@@ -85,8 +85,8 @@ public class CustomModelData
     public Vector2 MinCollisionBox { get; set; }
     public float MaxEyeHeight { get; set; } = float.MaxValue;
     public float MinEyeHeight { get; set; } = 0;
-    /*public EntityTagArray AddTags { get; set; } = EntityTagArray.Empty;
-    public EntityTagArray RemoveTags { get; set; } = EntityTagArray.Empty;*/
+    public EntityTagArray AddTags { get; set; } = EntityTagArray.Empty;
+    public EntityTagArray RemoveTags { get; set; } = EntityTagArray.Empty;
     public float ModelSizeFactor { get; set; } = 1;
     public float HeadBobbingScale { get; set; } = 1;
     public float GuiModelScale { get; set; } = 1;
@@ -136,13 +136,13 @@ public class BaseShapeData
 }
 
 [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
-public class ChangePlayerModelPacket
+public sealed class ChangePlayerModelPacket
 {
     public string ModelCode { get; set; } = "";
 }
 
 [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
-public class ChangePlayerModelSizePacket
+public sealed class ChangePlayerModelSizePacket
 {
     public float EntitySize { get; set; } = 1;
 }

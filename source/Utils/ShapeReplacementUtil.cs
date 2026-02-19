@@ -38,11 +38,11 @@ public static class ShapeReplacementUtil
         _system = null;
     }
 
-    
+
     private static CustomModelsSystem? _system;
 
     private static void GenerateShapes(
-        string prefixCode,
+        string prefix,
         CustomModelData customModel,
         int itemId,
         CustomModelsSystem system,
@@ -55,14 +55,14 @@ public static class ShapeReplacementUtil
         float damageEffect,
         ref string[] willDeleteElements)
     {
-        willDeleteElements = ReplaceWildcardPrefixes(willDeleteElements, prefixCode);
+        willDeleteElements = ReplaceWildcardPrefixes(willDeleteElements, prefix);
 
-        if (ReplaceShapeByItem(prefixCode, entity, ref defaultShape, ref compositeShape, damageEffect, itemId, customModel))
+        if (ReplaceShapeByItem(prefix, entity, ref defaultShape, ref compositeShape, damageEffect, itemId, customModel))
         {
             return;
         }
 
-        if (ReplaceShapeByShape(prefixCode, stack, entity, ref defaultShape, ref compositeShape, damageEffect, customModel, yadayada))
+        if (ReplaceShapeByShape(prefix, stack, entity, ref defaultShape, ref compositeShape, damageEffect, customModel, yadayada))
         {
             return;
         }
@@ -75,8 +75,14 @@ public static class ShapeReplacementUtil
         if (system.BaseShapesData.TryGetValue(customModel.BaseShapeCode, out BaseShapeData? baseShapeData))
         {
             defaultShape = ShapeAdjustmentUtil.AdjustClothesShape(entity.Api, oldCompositeShape, baseShapeData, customModel);
-            defaultShape?.SubclassForStepParenting(prefixCode, damageEffect);
-            defaultShape?.ResolveReferences(entity.World.Logger, currentModel);
+            if (defaultShape == null)
+            {
+                return;
+            }
+
+            ShapeLoadingUtil.PrefixTextures(defaultShape, prefix, damageEffect);
+            ShapeLoadingUtil.PrefixAnimations(defaultShape, prefix);
+            defaultShape.ResolveReferences(entity.World.Logger, currentModel);
 
             compositeShape = compositeShape?.Clone();
             if (compositeShape != null)
@@ -90,7 +96,6 @@ public static class ShapeReplacementUtil
             }
         }
     }
-    
 
     private static string[] ReplaceWildcardPrefixes(string[] elements, string prefix)
     {
@@ -121,15 +126,15 @@ public static class ShapeReplacementUtil
 
             File.WriteAllText(fifo.FullName, json);
 
-            LoggerUtil.Verbose(api, typeof(TranspilerPatches), $"('{modelData.Code}') Exported '{shapePath}' to '{fullFilePath}'");
-            LoggerUtil.Dev(api, typeof(TranspilerPatches), $"('{modelData.Code}') Exported '{shapePath}' to '{fullFilePath}'");
+            LoggerUtil.Verbose(api, typeof(ShapeReplacementUtil), $"('{modelData.Code}') Exported '{shapePath}' to '{fullFilePath}'");
+            LoggerUtil.Dev(api, typeof(ShapeReplacementUtil), $"('{modelData.Code}') Exported '{shapePath}' to '{fullFilePath}'");
 
             ExportingShape = false;
         }
         catch (Exception exception)
         {
             ExportingShape = false;
-            LoggerUtil.Error(api, typeof(TranspilerPatches), $"Error on exporting shape '{fileName}':\n{exception}\n");
+            LoggerUtil.Error(api, typeof(ShapeReplacementUtil), $"Error on exporting shape '{fileName}':\n{exception}\n");
         }
     }
     private static void FixShapeJson(ref string json)

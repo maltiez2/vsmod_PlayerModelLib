@@ -68,22 +68,33 @@ public sealed class CustomModelsSystem : ModSystem
     public override void AssetsFinalize(ICoreAPI api)
     {
         LoadBaseShapes(api);
-        LoadDefault();
+
+        try
+        {
+            LoadDefault();
+        }
+        catch (Exception exception)
+        {
+            LoggerUtil.Fatal(api, this, $"Failed to load default player model, error:\n{exception}");
+            return;
+        }
+
         Load(api);
         CollectExclusiveClasses();
         ProcessAnimations(api);
-        ProcessAttachmentPoints();
+        ProcessAttachmentPoints(api);
 
         if (api.Side == EnumAppSide.Client)
         {
-            ProcessMainTextures();
-            CollectTextures();
+            ProcessMainTextures(api);
+            CollectTextures(api);
             LoadModelReplacements(api);
         }
 
         ModelsLoaded = true;
         OnCustomModelsLoaded?.Invoke();
     }
+
     public TextureAtlasPosition? GetAtlasPosition(string modelCode, string textureCode, Entity entity)
     {
         string fullCode = PrefixTextureCode(modelCode, textureCode);
@@ -153,27 +164,36 @@ public sealed class CustomModelsSystem : ModSystem
             return;
         }
 
-        LoadCustomModel(_api, code, modelConfig);
-        CollectExclusiveClasses();
-        CustomModelData modelData = CustomModels[code];
-        ProcessCustomModelMainTextures(code, modelData);
-        CollectDefaultAttachmentPoints(out Dictionary<string, (AttachmentPoint[] points, ShapeElement element, string parent)> attachmentPointsByElement);
-        AddAttachmentPointsToCustomModel(modelData.Shape, attachmentPointsByElement, code);
-
-        if (_api.Side == EnumAppSide.Client)
+        try
         {
-            ProcessCustomModelAnimations(modelData.Shape, code, _api);
-            CollectTexturesForCustomModel(code, modelData);
+            LoadCustomModel(_api, code, modelConfig);
+            CollectExclusiveClasses();
+            CustomModelData modelData = CustomModels[code];
+            ProcessCustomModelMainTextures(code, modelData);
+            CollectDefaultAttachmentPoints(out Dictionary<string, (AttachmentPoint[] points, ShapeElement element, string parent)> attachmentPointsByElement);
+            AddAttachmentPointsToCustomModel(modelData.Shape, attachmentPointsByElement, code);
 
-            if (_wearableModelReplacers.TryGetValue(code, out Dictionary<string, string>? paths))
+            if (_api.Side == EnumAppSide.Client)
             {
-                LoadCustomModelWearableModelReplacers(_api, code, paths);
-            }
+                ProcessCustomModelAnimations(modelData.Shape, code, _api);
+                CollectTexturesForCustomModel(code, modelData);
 
-            if (_wearableCompositeModelReplacers.TryGetValue(code, out Dictionary<string, CompositeShape>? otherPaths))
-            {
-                LoadCustomModelWearableCompositeModelReplacers(_api, code, otherPaths);
+                if (_wearableModelReplacers.TryGetValue(code, out Dictionary<string, string>? paths))
+                {
+                    LoadCustomModelWearableModelReplacers(_api, code, paths);
+                }
+
+                if (_wearableCompositeModelReplacers.TryGetValue(code, out Dictionary<string, CompositeShape>? otherPaths))
+                {
+                    LoadCustomModelWearableCompositeModelReplacers(_api, code, otherPaths);
+                }
             }
+        }
+        catch (Exception exception)
+        {
+            LoggerUtil.Error(_api, this, $"({code}) Error on hot-loading custom player model:\n{exception}");
+            CustomModels.Remove(code);
+            return;
         }
 
         OnCustomModelHotLoaded?.Invoke(code);
@@ -181,7 +201,14 @@ public sealed class CustomModelsSystem : ModSystem
 
     public void CustomModelChanged(string code, IPlayer player, PlayerSkinBehavior behavior)
     {
-        OnCustomModelChanged?.Invoke(code, player, behavior);
+        try
+        {
+            OnCustomModelChanged?.Invoke(code, player, behavior);
+        }
+        catch (Exception exception)
+        {
+            LoggerUtil.Error(_api, this, $"({player.PlayerName}|{code}) Error on invoking 'OnCustomModelChanged' event:\n{exception}");
+        }
     }
 
     public static string PrefixTextureCode(string modelCode, string textureCode) => GetTextureCodePrefix(modelCode) + textureCode;
@@ -216,8 +243,16 @@ public sealed class CustomModelsSystem : ModSystem
         if (_defaultLoaded) return;
         _defaultLoaded = true;
 
-        Shape defaultShape = LoadShape(_api, _defaultModelPath) ?? throw new ArgumentException("[Player Model lib] Unable to load default player shape.");
-        defaultShape.ResolveReferences(_api.Logger, "PlayerModelLib:CustomModel-default");
+        Shape defaultShape;
+        if (_clientApi != null)
+        {
+            defaultShape = LoadShape(_clientApi, _defaultModelPath) ?? throw new ArgumentException("[Player Model lib] Unable to load default player shape.");
+            defaultShape.ResolveReferences(_clientApi.Logger, "PlayerModelLib:CustomModel-default");
+        }
+        else
+        {
+            defaultShape = new();
+        }
 
         IAsset defaultConfigAsset = _api.Assets.Get("playermodellib:config/default-model-config.json");
         Dictionary<string, CustomModelConfig> defaultConfigList = FromAsset(defaultConfigAsset);
@@ -241,9 +276,6 @@ public sealed class CustomModelsSystem : ModSystem
 
         _ = _api.ModLoader.GetModSystem<ModSystemSkinnableAdditions>().AppendAdditions(parts);
 
-        CheckTexturePartTextureCodes(partsByCode.Values, defaultShape, _defaultModelCode);
-
-
 
         CustomModelData defaultModelData = new(_defaultModelCode, defaultShape)
         {
@@ -265,8 +297,8 @@ public sealed class CustomModelsSystem : ModSystem
             ScaleColliderWithSizeVertically = defaultConfig.ScaleColliderWithSizeVertically,
             MaxEyeHeight = defaultConfig.MaxEyeHeight,
             MinEyeHeight = defaultConfig.MinEyeHeight,
-            /*AddTags = _api.TagRegistry.EntityTagsToTagArray(defaultConfig.AddTags),
-            RemoveTags = _api.TagRegistry.EntityTagsToTagArray(defaultConfig.RemoveTags),*/
+            AddTags = _api.TagRegistry.EntityTagsToTagArray(defaultConfig.AddTags),
+            RemoveTags = _api.TagRegistry.EntityTagsToTagArray(defaultConfig.RemoveTags),
             ModelSizeFactor = defaultConfig.ModelSizeFactor,
             HeadBobbingScale = defaultConfig.HeadBobbingScale,
             GuiModelScale = defaultConfig.GuiModelScale,
@@ -312,6 +344,12 @@ public sealed class CustomModelsSystem : ModSystem
     }
     private void LoadCustomModel(ICoreAPI api, string code, CustomModelConfig modelConfig)
     {
+        if (!CanBeNullAttribute.Validate(modelConfig, api, $"config for '{code}'"))
+        {
+            LoggerUtil.Error(api, this, $"({code}) Custom model config contains properties that were set to null, that should not be equal to null.");
+            return;
+        }
+
         Shape? shape = LoadShape(api, modelConfig.ShapePath);
 
         if (shape == null)
@@ -358,8 +396,6 @@ public sealed class CustomModelsSystem : ModSystem
 
         FixColBreak(modelConfig.SkinnableParts, code);
 
-        CheckTexturePartTextureCodes(partsByCode.Values, shape, code);
-
         CustomModelData modelData = new(code, shape)
         {
             Enabled = modelConfig.Enabled,
@@ -381,8 +417,8 @@ public sealed class CustomModelsSystem : ModSystem
             ScaleColliderWithSizeVertically = modelConfig.ScaleColliderWithSizeVertically,
             MaxEyeHeight = modelConfig.MaxEyeHeight,
             MinEyeHeight = modelConfig.MinEyeHeight,
-            /*AddTags = api.TagRegistry.EntityTagsToTagArray(modelConfig.AddTags),
-            RemoveTags = api.TagRegistry.EntityTagsToTagArray(modelConfig.RemoveTags),*/
+            AddTags = api.TagRegistry.EntityTagsToTagArray(modelConfig.AddTags),
+            RemoveTags = api.TagRegistry.EntityTagsToTagArray(modelConfig.RemoveTags),
             ModelSizeFactor = modelConfig.ModelSizeFactor,
             HeadBobbingScale = modelConfig.HeadBobbingScale,
             GuiModelScale = modelConfig.GuiModelScale,
@@ -440,116 +476,64 @@ public sealed class CustomModelsSystem : ModSystem
     {
         foreach ((string modelCode, Dictionary<string, string> paths) in _wearableModelReplacers)
         {
-            LoadCustomModelWearableModelReplacers(api, modelCode, paths);
+            try
+            {
+                LoadCustomModelWearableModelReplacers(api, modelCode, paths);
+            }
+            catch (Exception exception)
+            {
+                LoggerUtil.Error(api, this, $"({modelCode}) Error on loading wearable model replacers for custom model:\n{exception}");
+            }
         }
 
         foreach ((string modelCode, Dictionary<string, CompositeShape> paths) in _wearableCompositeModelReplacers)
         {
-            LoadCustomModelWearableCompositeModelReplacers(api, modelCode, paths);
+            try
+            {
+                LoadCustomModelWearableCompositeModelReplacers(api, modelCode, paths);
+            }
+            catch (Exception exception)
+            {
+                LoggerUtil.Error(api, this, $"({modelCode}) Error on loading wearable composite model replacers for custom model:\n{exception}");
+            }
         }
 
         List<IAsset> modelsConfigs = api.Assets.GetMany(_compositeModelReplacementsByCodePath);
         foreach (IAsset asset in modelsConfigs)
         {
-            Dictionary<string, Dictionary<string, CompositeShape>> replacements = CompositeReplacementsFromAsset(asset);
-
-            foreach ((string modelCodeExpression, Dictionary<string, CompositeShape> paths) in replacements)
+            try
             {
-                string[] modelCodes = modelCodeExpression.Split('|');
-                foreach (string modelCode in modelCodes)
-                {
-                    if (!CustomModels.ContainsKey(modelCode))
-                    {
-                        LoggerUtil.Error(_api, this, $"Error while loading wearable composite model replacements by code: custom model with code '{modelCode}' does not exists.");
-                        continue;
-                    }
-
-                    foreach ((string itemCodeWildcard, CompositeShape path) in paths)
-                    {
-                        foreach (Item item in api.World.Items)
-                        {
-                            if (!WildcardUtil.Match(itemCodeWildcard, item.Code?.ToString() ?? "")) continue;
-
-                            ReplaceVariants(path, item);
-
-                            CustomModels[modelCode].WearableCompositeShapeReplacers[item.Id] = path;
-                        }
-                    }
-                }
+                LoadCompositeReplacementsFromAsset(api, asset);
+            }
+            catch (Exception exception)
+            {
+                LoggerUtil.Error(api, this, $"({asset.Location}) Error on loading composite model replacements by code:\n{exception}");
             }
         }
 
         modelsConfigs = api.Assets.GetMany(_modelReplacementsByCodePath);
         foreach (IAsset asset in modelsConfigs)
         {
-            Dictionary<string, Dictionary<string, string>> replacements = ReplacementsFromAsset(asset);
-
-            foreach ((string modelCodeExpression, Dictionary<string, string> paths) in replacements)
+            try
             {
-                string[] modelCodes = modelCodeExpression.Split('|');
-                foreach (string modelCode in modelCodes)
-                {
-                    if (!CustomModels.ContainsKey(modelCode))
-                    {
-                        LoggerUtil.Error(_api, this, $"Error while loading wearable model replacements by code: custom model with code '{modelCode}' does not exists.");
-                        continue;
-                    }
-
-                    foreach ((string itemCodeWildcard, string path) in paths)
-                    {
-                        foreach (Item item in api.World.Items)
-                        {
-                            if (!WildcardUtil.Match(itemCodeWildcard, item.Code?.ToString() ?? "")) continue;
-
-                            string processedPath = path;
-
-                            foreach ((string variantCode, string variantValue) in item.Variant)
-                            {
-                                processedPath = processedPath.Replace($"{{{variantCode}}}", variantValue);
-                            }
-
-                            if (api.Assets.Exists(GetShapeLocation(processedPath)))
-                            {
-                                CustomModels[modelCode].WearableShapeReplacers.TryAdd(item.Id, processedPath);
-                            }
-                            else
-                            {
-                                LoggerUtil.Error(_api, this, $"Shape '{processedPath}' that replaces shape for item '{item.Code}' for model '{modelCode}' was not found, skipping.");
-                            }
-                        }
-                    }
-                }
+                LoadReplacementsByCodeFromAsset(api, asset);
+            }
+            catch (Exception exception)
+            {
+                LoggerUtil.Error(api, this, $"({asset.Location}) Error on loading model replacements by code:\n{exception}");
             }
         }
 
         modelsConfigs = api.Assets.GetMany(_modelReplacementsByShapePath);
         foreach (IAsset asset in modelsConfigs)
         {
-            Dictionary<string, Dictionary<string, string>> replacements = ReplacementsFromAsset(asset);
-
-            foreach ((string modelCodeExpression, Dictionary<string, string> paths) in replacements)
+            try
             {
-                string[] modelCodes = modelCodeExpression.Split('|');
-                foreach (string modelCode in modelCodes)
-                {
-                    if (!CustomModels.ContainsKey(modelCode))
-                    {
-                        LoggerUtil.Error(_api, this, $"Error while loading wearable model replacements by shape: custom model with code '{modelCode}' does not exists.");
-                        continue;
-                    }
-
-                    foreach ((string fromPath, string toPath) in paths)
-                    {
-                        if (api.Assets.Exists(GetShapeLocation(toPath)))
-                        {
-                            CustomModels[modelCode].WearableShapeReplacersByShape[fromPath] = toPath;
-                        }
-                        else
-                        {
-                            LoggerUtil.Error(_api, this, $"Shape '{toPath}' that replaces shape '{fromPath}' for model '{modelCode}' was not found, skipping.");
-                        }
-                    }
-                }
+                LoadReplacementsByShapeFromAsset(api, asset);
+            }
+            catch (Exception exception)
+            {
+                LoggerUtil.Error(api, this, $"({asset.Location}) Error on loading model replacements by shape:\n{exception}");
             }
         }
     }
@@ -607,6 +591,105 @@ public sealed class CustomModelsSystem : ModSystem
             }
         }
     }
+    private void LoadCompositeReplacementsFromAsset(ICoreAPI api, IAsset asset)
+    {
+        Dictionary<string, Dictionary<string, CompositeShape>> replacements = CompositeReplacementsFromAsset(asset);
+
+        foreach ((string modelCodeExpression, Dictionary<string, CompositeShape> paths) in replacements)
+        {
+            string[] modelCodes = modelCodeExpression.Split('|');
+            foreach (string modelCode in modelCodes)
+            {
+                if (!CustomModels.ContainsKey(modelCode))
+                {
+                    LoggerUtil.Error(_api, this, $"Error while loading wearable composite model replacements by code: custom model with code '{modelCode}' does not exists.");
+                    continue;
+                }
+
+                foreach ((string itemCodeWildcard, CompositeShape path) in paths)
+                {
+                    foreach (Item item in api.World.Items)
+                    {
+                        if (!WildcardUtil.Match(itemCodeWildcard, item.Code?.ToString() ?? "")) continue;
+
+                        ReplaceVariants(path, item);
+
+                        CustomModels[modelCode].WearableCompositeShapeReplacers[item.Id] = path;
+                    }
+                }
+            }
+        }
+    }
+    private void LoadReplacementsByCodeFromAsset(ICoreAPI api, IAsset asset)
+    {
+        Dictionary<string, Dictionary<string, string>> replacements = ReplacementsFromAsset(asset);
+
+        foreach ((string modelCodeExpression, Dictionary<string, string> paths) in replacements)
+        {
+            string[] modelCodes = modelCodeExpression.Split('|');
+            foreach (string modelCode in modelCodes)
+            {
+                if (!CustomModels.ContainsKey(modelCode))
+                {
+                    LoggerUtil.Error(_api, this, $"Error while loading wearable model replacements by code: custom model with code '{modelCode}' does not exists.");
+                    continue;
+                }
+
+                foreach ((string itemCodeWildcard, string path) in paths)
+                {
+                    foreach (Item item in api.World.Items)
+                    {
+                        if (!WildcardUtil.Match(itemCodeWildcard, item.Code?.ToString() ?? "")) continue;
+
+                        string processedPath = path;
+
+                        foreach ((string variantCode, string variantValue) in item.Variant)
+                        {
+                            processedPath = processedPath.Replace($"{{{variantCode}}}", variantValue);
+                        }
+
+                        if (api.Assets.Exists(GetShapeLocation(processedPath)))
+                        {
+                            CustomModels[modelCode].WearableShapeReplacers.TryAdd(item.Id, processedPath);
+                        }
+                        else
+                        {
+                            LoggerUtil.Error(_api, this, $"Shape '{processedPath}' that replaces shape for item '{item.Code}' for model '{modelCode}' was not found, skipping.");
+                        }
+                    }
+                }
+            }
+        }
+    }
+    private void LoadReplacementsByShapeFromAsset(ICoreAPI api, IAsset asset)
+    {
+        Dictionary<string, Dictionary<string, string>> replacements = ReplacementsFromAsset(asset);
+
+        foreach ((string modelCodeExpression, Dictionary<string, string> paths) in replacements)
+        {
+            string[] modelCodes = modelCodeExpression.Split('|');
+            foreach (string modelCode in modelCodes)
+            {
+                if (!CustomModels.ContainsKey(modelCode))
+                {
+                    LoggerUtil.Error(_api, this, $"Error while loading wearable model replacements by shape: custom model with code '{modelCode}' does not exists.");
+                    continue;
+                }
+
+                foreach ((string fromPath, string toPath) in paths)
+                {
+                    if (api.Assets.Exists(GetShapeLocation(toPath)))
+                    {
+                        CustomModels[modelCode].WearableShapeReplacersByShape[fromPath] = toPath;
+                    }
+                    else
+                    {
+                        LoggerUtil.Error(_api, this, $"Shape '{toPath}' that replaces shape '{fromPath}' for model '{modelCode}' was not found, skipping.");
+                    }
+                }
+            }
+        }
+    }
     private void LoadBaseShapes(ICoreAPI api)
     {
         List<IAsset> modelsConfigs = api.Assets.GetManyInCategory("config", "baseshapes");
@@ -634,7 +717,7 @@ public sealed class CustomModelsSystem : ModSystem
         {
             foreach ((_, CustomModelConfig modelConfig) in customModelConfigs)
             {
-                //api.TagRegistry.RegisterEntityTags(modelConfig.AddTags);
+                api.TagRegistry.RegisterEntityTags(modelConfig.AddTags);
             }
         }
     }
@@ -644,7 +727,14 @@ public sealed class CustomModelsSystem : ModSystem
     {
         foreach ((Shape customShape, string code) in CustomModels.Where(entry => entry.Key != _defaultModelCode).Select(entry => (entry.Value.Shape, entry.Value.Code)))
         {
-            ProcessCustomModelAnimations(customShape, code, api);
+            try
+            {
+                ProcessCustomModelAnimations(customShape, code, api);
+            }
+            catch (Exception exception)
+            {
+                LoggerUtil.Error(api, this, $"({code}) Error on processing animations for custom model:\n{exception}");
+            }
         }
     }
     private void ProcessCustomModelAnimations(Shape customShape, string modelCode, ICoreAPI api)
@@ -685,13 +775,29 @@ public sealed class CustomModelsSystem : ModSystem
 
         customShape.ResolveReferences(api.Logger, "PlayerModelLib:CustomModel-ProcessAnimations");
     }
-    private void ProcessAttachmentPoints()
+    private void ProcessAttachmentPoints(ICoreAPI api)
     {
-        CollectDefaultAttachmentPoints(out Dictionary<string, (AttachmentPoint[] points, ShapeElement element, string parent)> attachmentPointsByElement);
+        Dictionary<string, (AttachmentPoint[] points, ShapeElement element, string parent)> attachmentPointsByElement;
+        try
+        {
+            CollectDefaultAttachmentPoints(out attachmentPointsByElement);
+        }
+        catch (Exception exception)
+        {
+            LoggerUtil.Error(api, this, $"Error on collectible attachment points from default player model:\n{exception}");
+            return;
+        }
 
         foreach ((Shape customShape, string code) in CustomModels.Where(entry => entry.Key != _defaultModelCode).Select(entry => (entry.Value.Shape, entry.Value.Code)))
         {
-            AddAttachmentPointsToCustomModel(customShape, attachmentPointsByElement, code);
+            try
+            {
+                AddAttachmentPointsToCustomModel(customShape, attachmentPointsByElement, code);
+            }
+            catch (Exception exception)
+            {
+                LoggerUtil.Error(api, this, $"({code}) Error on adding missing attachment points to custom model:\n{exception}");
+            }
         }
     }
     private void RemoveNotExistingShapeElements(Animation animation, HashSet<string> existing, out HashSet<string> removed)
@@ -751,6 +857,12 @@ public sealed class CustomModelsSystem : ModSystem
     private void CollectDefaultAttachmentPoints(out Dictionary<string, (AttachmentPoint[] points, ShapeElement element, string parent)> attachmentPointsByElement)
     {
         attachmentPointsByElement = [];
+
+        if (CustomModels[_defaultModelCode].Shape?.Elements == null)
+        {
+            return;
+        }
+
         foreach (ShapeElement element in CustomModels[_defaultModelCode].Shape.Elements)
         {
             CollectAttachmentPointsRecursively(element, element, attachmentPointsByElement);
@@ -802,7 +914,7 @@ public sealed class CustomModelsSystem : ModSystem
     {
         if (parts.Count(skinPart => skinPart.Colbreak) == 1) return;
 
-        LoggerUtil.Warn(_api, this, $"Model '{modelCodeForLogging}' has no 'calBreak: true' specified, or has specified it more than once. Will automatically reassign 'calBreak' values.");
+        LoggerUtil.Warn(_api, this, $"Model '{modelCodeForLogging}' has no 'calBreak: true' specified, or has specified it more than once. Will automatically reassign 'calBreak' values.\nColumn break is used so split skin parts into left and right columns in character creation gui dialog.");
 
         int middleIndex = (parts.Length - 1) / 2;
         for (int index = 0; index < parts.Length; index++)
@@ -1193,30 +1305,6 @@ public sealed class CustomModelsSystem : ModSystem
         return TextCommandResult.Success($"Player '{targetPlayer.Name}' now does not have access to '{playerModelCode}' player model");
     }
 
-    private void CheckTexturePartTextureCodes(IEnumerable<SkinnablePart> allParts, Shape modelShape, string modelCode)
-    {
-        return; // Cannot do such check, because have to load shape skin parts to be able to check
-
-        foreach (SkinnablePart part in allParts.Where(part => part.Type == EnumSkinnableType.Texture))
-        {
-            string? target = part.TextureTarget;
-            if (target == null)
-            {
-                LoggerUtil.Warn(_api, this, $"({modelCode}) Texture skin part '{part.Code}' has no 'TextureTarget' specified");
-                continue;
-            }
-
-            if (modelShape.Textures != null && !modelShape.Textures.ContainsKey(target))
-            {
-                string existingCodes = "";
-                if (modelShape.Textures.Count > 0)
-                {
-                    existingCodes = modelShape.Textures.Keys.Aggregate((f, s) => $"{f}, {s}");
-                }
-                LoggerUtil.Warn(_api, this, $"({modelCode}) Texture skin part '{part.Code}' has texture target '{target}' but model shape does not contain textures with such code, existing textures: {existingCodes}");
-            }
-        }
-    }
     private void ProcessTexturePart(ICoreClientAPI clientApi, SkinnablePart part, string model)
     {
         foreach (SkinnablePartVariant? variant in part.Variants)
@@ -1260,11 +1348,18 @@ public sealed class CustomModelsSystem : ModSystem
             part.VariantsByCode[variant.Code] = variant;
         }
     }
-    private void ProcessMainTextures()
+    private void ProcessMainTextures(ICoreAPI api)
     {
         foreach ((string modelCode, CustomModelData data) in CustomModels)
         {
-            ProcessCustomModelMainTextures(modelCode, data);
+            try
+            {
+                ProcessCustomModelMainTextures(modelCode, data);
+            }
+            catch (Exception exception)
+            {
+                LoggerUtil.Error(api, this, $"({modelCode}) Error on processing custom model main textures:\n{exception}");
+            }
         }
     }
     private void ProcessCustomModelMainTextures(string modelCode, CustomModelData data)
@@ -1317,11 +1412,18 @@ public sealed class CustomModelsSystem : ModSystem
             }
         }
     }
-    private void CollectTextures()
+    private void CollectTextures(ICoreAPI api)
     {
         foreach ((string modelCode, CustomModelData data) in CustomModels)
         {
-            CollectTexturesForCustomModel(modelCode, data);
+            try
+            {
+                CollectTexturesForCustomModel(modelCode, data);
+            }
+            catch (Exception exception)
+            {
+                LoggerUtil.Error(api, this, $"({modelCode}) Error on collecting textures from custom model:\n{exception}");
+            }
         }
     }
     private void CollectTexturesForCustomModel(string modelCode, CustomModelData data)
@@ -1332,51 +1434,46 @@ public sealed class CustomModelsSystem : ModSystem
         {
             if (data.MainTextureCodes.Contains(textureCode))
             {
+
+                string newCode = PrefixTextureCode(modelCode, textureCode);
+
+                if (_textures.ContainsKey(newCode)) continue;
+
+                _textures.Add(newCode, texturePath);
+                _ = TextureSource?[newCode];
+
+                IAsset? textureAsset2 = _clientApi.Assets.TryGet(texturePath.Clone().WithPathPrefixOnce("textures/").WithPathAppendixOnce(".png"));
+                if (textureAsset2 == null) continue;
+
+                CompositeTexture mainTexture = new()
                 {
-                    string newCode = PrefixTextureCode(modelCode, textureCode);
+                    Base = texturePath
+                };
 
-                    if (_textures.ContainsKey(newCode)) continue;
+                mainTexture.Bake(_clientApi.Assets);
 
-                    _textures.Add(newCode, texturePath);
-                    _ = TextureSource?[newCode];
+                data.MainTextures[newCode] = mainTexture;
 
-                    IAsset? textureAsset2 = _clientApi.Assets.TryGet(texturePath.Clone().WithPathPrefixOnce("textures/").WithPathAppendixOnce(".png"));
-                    if (textureAsset2 == null) continue;
 
-                    //_clientApi.EntityTextureAtlas.GetOrInsertTexture(texturePath, out _, out TextureAtlasPosition texPos, () => textureAsset2.ToBitmap(_clientApi));
 
-                    CompositeTexture mainTexture = new()
-                    {
-                        Base = texturePath
-                    };
+                string newCode2 = textureCode;
 
-                    mainTexture.Bake(_clientApi.Assets);
+                if (_textures.ContainsKey(newCode2)) continue;
 
-                    data.MainTextures[newCode] = mainTexture;
-                }
+                _textures.Add(newCode2, texturePath);
+                _ = TextureSource?[newCode2];
 
+                IAsset? textureAsset3 = _clientApi.Assets.TryGet(texturePath.Clone().WithPathPrefixOnce("textures/").WithPathAppendixOnce(".png"));
+                if (textureAsset3 == null) continue;
+
+                CompositeTexture mainTexture2 = new()
                 {
-                    string newCode = textureCode;
+                    Base = texturePath
+                };
 
-                    if (_textures.ContainsKey(newCode)) continue;
+                mainTexture2.Bake(_clientApi.Assets);
 
-                    _textures.Add(newCode, texturePath);
-                    _ = TextureSource?[newCode];
-
-                    IAsset? textureAsset2 = _clientApi.Assets.TryGet(texturePath.Clone().WithPathPrefixOnce("textures/").WithPathAppendixOnce(".png"));
-                    if (textureAsset2 == null) continue;
-
-                    //_clientApi.EntityTextureAtlas.GetOrInsertTexture(texturePath, out _, out TextureAtlasPosition texPos, () => textureAsset2.ToBitmap(_clientApi));
-
-                    CompositeTexture mainTexture = new()
-                    {
-                        Base = texturePath
-                    };
-
-                    mainTexture.Bake(_clientApi.Assets);
-
-                    data.MainTextures[newCode] = mainTexture;
-                }
+                data.MainTextures[newCode2] = mainTexture2;
 
                 continue;
             }

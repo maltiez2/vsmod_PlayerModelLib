@@ -1,5 +1,4 @@
 ﻿using ConfigLib;
-using HarmonyLib;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 
@@ -10,7 +9,7 @@ public sealed class Settings
     public bool ExportShapeFiles { get; set; } = false;
     public string DefaultModelCode { get; set; } = "seraph";
     public bool DisableModelClassesAndTraits { get; set; } = false;
-    public bool TesselatePlayerShapeOffThread { get; set; } = false;
+    public bool MultiThreadPayerShapeGeneration { get; set; } = true;
     public bool LogOffThreadTesselationErrors { get; set; } = true;
 }
 
@@ -35,20 +34,7 @@ public sealed class PlayerModelModSystem : ModSystem
     {
         api.RegisterEntityBehaviorClass("PlayerModelLib:ExtraSkinnable", typeof(PlayerSkinBehavior));
 
-        OtherPatches.SetApi(api);
-
-        if (!_patched)
-        {
-            new Harmony("PlayerModelLibTranspiler").PatchAll();
-            OtherPatches.Patch("PlayerModelLib", api);
-            StatsPatches.Patch("PlayerModelLib", api);
-            _patched = true;
-        }
-
-        if (api is ICoreClientAPI clientApi)
-        {
-            ScrollPatches.Init(clientApi);
-        }
+        PatchesManager.Patch(api);
 
         if (api.ModLoader.IsModEnabled("configlib"))
         {
@@ -57,27 +43,19 @@ public sealed class PlayerModelModSystem : ModSystem
 
         OnSettingsLoaded?.Invoke(api, Settings);
 
-        ShapesCache = new(api, "[PML] shapes", TimeSpan.FromMinutes(10), threadSafe: false);
+        ShapesCache = new(api, "[PML] shapes", TimeSpan.FromMinutes(10), threadSafe: true);
         ShapeLoadingUtil.ShapesCache = ShapesCache;
     }
 
     public override void Dispose()
     {
-        if (_patched)
-        {
-            new Harmony("PlayerModelLib").UnpatchAll("PlayerModelLibTranspiler");
-            OtherPatches.Unpatch("PlayerModelLib");
-            StatsPatches.Unpatch("PlayerModelLib");
-            _patched = false;
-        }
+        PatchesManager.Unpatch();
 
         ShapesCache?.Dispose();
         ShapeReplacementUtil.StaticDispose();
     }
 
-    private static bool _patched = false;
-
-    private void SubscribeToConfigChange(ICoreAPI api)
+    private static void SubscribeToConfigChange(ICoreAPI api)
     {
         ConfigLibModSystem system = api.ModLoader.GetModSystem<ConfigLibModSystem>();
 

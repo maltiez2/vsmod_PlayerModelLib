@@ -164,7 +164,7 @@ public static class StatsPatches
     {
         if (!_handleSwimming) return true;
 
-        float factor = Math.Clamp((entity as EntityPlayer).Stats.GetBlended(SwimSpeedStat), 0, 10);
+        float factor = Math.Clamp((entity as EntityPlayer)?.Stats.GetBlended(SwimSpeedStat) ?? 1, 0, 10);
 
         Vintagestory.API.MathTools.Vec3d prev = pos.Motion.Clone();
         _handleSwimming = false;
@@ -466,7 +466,7 @@ public static class StatsPatches
     {
         if (entity is EntityPlayer player)
         {
-            EnumGameMode mode = entity.World?.PlayerByUid(player?.PlayerUID ?? "")?.WorldData?.CurrentGameMode ?? EnumGameMode.Survival;
+            EnumGameMode mode = entity.World?.PlayerByUid(player.PlayerUID ?? "")?.WorldData?.CurrentGameMode ?? EnumGameMode.Survival;
             if (mode == EnumGameMode.Creative || mode == EnumGameMode.Spectator)
             {
                 return true;
