@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Reflection;
 using System.Reflection.Emit;
+using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Datastructures;
@@ -12,7 +13,7 @@ namespace PlayerModelLib;
 internal static class TranspilerPatches
 {
     [HarmonyPatchCategory("PlayerModelLibTranspiler")]
-    public static class PatchEntityBehaviorContainerCommand
+    public static class PatchEntityBehaviorContainerModelReplacement
     {
         [HarmonyTargetMethod]
         static MethodBase TargetMethod()
@@ -53,13 +54,58 @@ internal static class TranspilerPatches
                 {
                     codes.InsertRange(i + 2, newInstructions);
 
+                    return Transpiler2(codes);
+                }
+            }
+
+            return codes;
+        }
+
+        private static IEnumerable<CodeInstruction> Transpiler2(IEnumerable<CodeInstruction> instructions)
+        {
+            List<CodeInstruction> codes = [.. instructions];
+
+            for (int i = 2; i < codes.Count; i++)
+            {
+                Debug.WriteLine($"{codes[i].opcode}");
+                if (codes[i].opcode == OpCodes.Ldloc_0 && codes[i - 1].opcode == OpCodes.Blt && codes[i - 2].opcode == OpCodes.Conv_I4)
+                {
+                    List<CodeInstruction> copyCodes = codes[i..(i + 3)];
+                    copyCodes[2].opcode = OpCodes.Brtrue_S;
+                    codes.InsertRange(i + 3, copyCodes);
+                    codes.InsertRange(i - 2,
+                    [
+                        new CodeInstruction(OpCodes.Ldloc_S, 7),
+                        new CodeInstruction(OpCodes.Ldarg_0),
+                        new CodeInstruction(OpCodes.Ldfld, _entityField),
+                        new CodeInstruction(OpCodes.Call, _insertMethod)
+                    ]);
+
                     return codes;
                 }
             }
 
             return codes;
         }
+
+        private static void InsertTextureIntoAtlas(Dictionary<string, CompositeTexture> textures, Entity entity)
+        {
+            foreach ((string code, CompositeTexture compositeTexture) in textures)
+            {
+                textures[code] = compositeTexture.Clone();
+                ThreadSafeUtils.InsertTextureIntoAtlas(compositeTexture, entity.Api as ICoreClientAPI, entity);
+            }
+        }
+
+
+        private static readonly MethodInfo _insertMethod = AccessTools.Method(
+            typeof(PatchEntityBehaviorContainerModelReplacement),
+            nameof(InsertTextureIntoAtlas)
+        );
+
+        private static readonly FieldInfo _entityField = AccessTools.Field(typeof(EntityBehavior), "entity");
     }
+
 
     [HarmonyPatchCategory("PlayerModelLibTranspiler")]
     [HarmonyPatch(typeof(EntityPlayer), "updateEyeHeight")]

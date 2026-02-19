@@ -7,32 +7,34 @@ namespace PlayerModelLib;
 
 public static class ThreadSafeUtils
 {
-    public static bool InsertTextureIntoAtlas(CompositeTexture compositeTexture, ICoreClientAPI api, Entity entity, ITextureAtlasAPI? targetAtlas = null)
+    public static void InsertTextureIntoAtlas(CompositeTexture compositeTexture, ICoreClientAPI api, Entity entity, ITextureAtlasAPI? targetAtlas = null, PlayerSkinBehavior? skinBehavior = null)
     {
-        PlayerSkinBehavior? skinBehavior = entity.GetBehavior<PlayerSkinBehavior>();
+        skinBehavior ??= entity.GetBehavior<PlayerSkinBehavior>();
+        skinBehavior?.TexturesAwaitingToBeAddedToAtlas.Increment();
 
         if (Environment.CurrentManagedThreadId != RuntimeEnv.MainThreadId)
         {
-            skinBehavior?.TexturesAwaitingToBeAddedToAtlas.Increment();
             api.Event.EnqueueMainThreadTask(() => InsertTextureIntoAtlasTask(compositeTexture, api, skinBehavior, targetAtlas), "PlayerSkinBehavior.AddSkinPart");
         }
         else
         {
             InsertTextureIntoAtlasTask(compositeTexture, api, skinBehavior, targetAtlas);
         }
-
-        return false;
     }
 
     private static void InsertTextureIntoAtlasTask(CompositeTexture compositeTexture, ICoreClientAPI api, PlayerSkinBehavior? skinBehavior, ITextureAtlasAPI? targetAtlas = null)
     {
-        compositeTexture.Bake(api.Assets);
-        if (!(targetAtlas ?? api.EntityTextureAtlas).GetOrInsertTexture(compositeTexture.Baked.TextureFilenames[0], out int textureSubId, out _))
+        try
         {
-            return;
+            if ((targetAtlas ?? api.EntityTextureAtlas).GetOrInsertTexture(compositeTexture.Baked.TextureFilenames[0], out int textureSubId, out _))
+            {
+                compositeTexture.Baked.TextureSubId = textureSubId;
+            }
         }
-        compositeTexture.Baked.TextureSubId = textureSubId;
-        skinBehavior?.TexturesAwaitingToBeAddedToAtlas.Decrement();
+        finally
+        {
+            skinBehavior?.TexturesAwaitingToBeAddedToAtlas.Decrement();
+        }
     }
 }
 

@@ -121,15 +121,15 @@ public static class ShapeReplacementUtil
 
             File.WriteAllText(fifo.FullName, json);
 
-            LoggerUtil.Verbose(api, typeof(TranspilerPatches), $"('{modelData.Code}') Exported '{shapePath}' to '{fullFilePath}'");
-            LoggerUtil.Dev(api, typeof(TranspilerPatches), $"('{modelData.Code}') Exported '{shapePath}' to '{fullFilePath}'");
+            LoggerUtil.Verbose(api, typeof(ShapeReplacementUtil), $"('{modelData.Code}') Exported '{shapePath}' to '{fullFilePath}'");
+            LoggerUtil.Dev(api, typeof(ShapeReplacementUtil), $"('{modelData.Code}') Exported '{shapePath}' to '{fullFilePath}'");
 
             ExportingShape = false;
         }
         catch (Exception exception)
         {
             ExportingShape = false;
-            LoggerUtil.Error(api, typeof(TranspilerPatches), $"Error on exporting shape '{fileName}':\n{exception}\n");
+            LoggerUtil.Error(api, typeof(ShapeReplacementUtil), $"Error on exporting shape '{fileName}':\n{exception}\n");
         }
     }
     private static void FixShapeJson(ref string json)
