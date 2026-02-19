@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Diagnostics;
+using System.Reflection;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
@@ -26,6 +27,18 @@ public class CustomPlayerShapeRenderer : EntityPlayerShapeRenderer
         else
         {
             base.TesselateShape();
+        }
+    }
+
+    public override void RenderToGui(float dt, double posX, double posY, double posZ, float yawDelta, float size)
+    {
+        try
+        {
+            base.RenderToGui(dt, posX, posY, posZ, yawDelta, size);
+        }
+        catch (Exception exception)
+        {
+            Debug.WriteLine(exception);
         }
     }
 

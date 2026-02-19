@@ -1439,7 +1439,7 @@ public sealed class CustomModelsSystem : ModSystem
 
                 if (_textures.ContainsKey(newCode)) continue;
 
-                _textures.Add(newCode, texturePath);
+                _textures[newCode] = texturePath;
                 _ = TextureSource?[newCode];
 
                 IAsset? textureAsset2 = _clientApi.Assets.TryGet(texturePath.Clone().WithPathPrefixOnce("textures/").WithPathAppendixOnce(".png"));
@@ -1460,7 +1460,7 @@ public sealed class CustomModelsSystem : ModSystem
 
                 if (_textures.ContainsKey(newCode2)) continue;
 
-                _textures.Add(newCode2, texturePath);
+                _textures[newCode2] = texturePath;
                 _ = TextureSource?[newCode2];
 
                 IAsset? textureAsset3 = _clientApi.Assets.TryGet(texturePath.Clone().WithPathPrefixOnce("textures/").WithPathAppendixOnce(".png"));
