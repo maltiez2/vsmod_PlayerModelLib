@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Config;
@@ -26,10 +27,19 @@ public static class ThreadSafeUtils
     {
         try
         {
+            if (compositeTexture.Baked == null)
+            {
+                compositeTexture.Bake(api.Assets);
+            }
+
             if ((targetAtlas ?? api.EntityTextureAtlas).GetOrInsertTexture(compositeTexture.Baked.TextureFilenames[0], out int textureSubId, out _))
             {
                 compositeTexture.Baked.TextureSubId = textureSubId;
             }
+        }
+        catch (Exception exception)
+        {
+            Debug.WriteLine($"InsertTextureIntoAtlasTask error:\n{exception}");
         }
         finally
         {

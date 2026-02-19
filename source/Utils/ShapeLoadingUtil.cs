@@ -1,8 +1,7 @@
-﻿using System.Diagnostics;
-using Vintagestory.API.Common;
+﻿using Vintagestory.API.Common;
+using Vintagestory.ServerMods;
 
 namespace PlayerModelLib;
-
 
 public static class ShapeLoadingUtil
 {
@@ -59,7 +58,7 @@ public static class ShapeLoadingUtil
         {
             return;
         }
-        
+
         List<ShapeElementFace?> newFaces = [];
         foreach (ShapeElementFace? face in element.FacesResolved)
         {
@@ -95,6 +94,73 @@ public static class ShapeLoadingUtil
                 {
                     WalkShapeElements(child, action);
                 }
+            }
+        }
+    }
+
+    public static void PrefixTextures(Shape shape, string prefix, float damageEffect = 0f)
+    {
+        HashSet<string> replacedCodes = [];
+        foreach (ShapeElement shapeElement in shape.Elements)
+        {
+            WalkShapeElements(shapeElement, element => PrefixFacesTextures(element, prefix, replacedCodes, damageEffect));
+        }
+
+        if (shape.Textures != null)
+        {
+            Dictionary<string, int[]> textureSizesCopy = shape.TextureSizes.ShallowClone();
+            shape.TextureSizes.Clear();
+
+            foreach ((string code, int[] size) in textureSizesCopy)
+            {
+                shape.TextureSizes[prefix + code] = size;
+                replacedCodes.Remove(code);
+            }
+
+            foreach (string item in replacedCodes)
+            {
+                shape.TextureSizes[prefix + item] = [shape.TextureWidth, shape.TextureHeight];
+            }
+        }
+    }
+
+    public static void PrefixAnimations(Shape shape, string prefix)
+    {
+        if (shape.Animations == null)
+        {
+            return;
+        }
+
+        foreach (Animation animation in shape.Animations)
+        {
+            foreach (AnimationKeyFrame animationKeyFrame in animation.KeyFrames)
+            {
+                Dictionary<string, AnimationKeyFrameElement> dictionary = new();
+                foreach ((string code, AnimationKeyFrameElement element) in animationKeyFrame.Elements)
+                {
+                    dictionary[prefix + code] = element;
+                }
+
+                animationKeyFrame.Elements = dictionary;
+            }
+        }
+    }
+
+    public static void PrefixFacesTextures(ShapeElement element, string prefix, HashSet<string> replacedCodes, float damageEffect)
+    {
+        element.Name = prefix + element.Name;
+        if (damageEffect >= 0f)
+        {
+            element.DamageEffect = damageEffect;
+        }
+
+        ShapeElementFace[] facesResolved = element.FacesResolved;
+        foreach (ShapeElementFace shapeElementFace in facesResolved)
+        {
+            if (shapeElementFace != null && shapeElementFace.Enabled && !shapeElementFace.Texture.StartsWith(prefix))
+            {
+                replacedCodes.Add(shapeElementFace.Texture);
+                shapeElementFace.Texture = prefix + shapeElementFace.Texture;
             }
         }
     }

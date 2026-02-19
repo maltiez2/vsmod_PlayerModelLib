@@ -1,10 +1,7 @@
 ﻿using HarmonyLib;
-using OpenTK.Windowing.GraphicsLibraryFramework;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
-using Vintagestory.API.Config;
 using Vintagestory.GameContent;
-using static OpenTK.Graphics.OpenGL.GL;
 
 namespace PlayerModelLib;
 
@@ -36,9 +33,10 @@ public static class OffThreadRenderingPatches
 
     private static ICoreClientAPI? _clientApi;
 
+    // will be used in 1.22
     private static bool EntityBehaviorContainer_addTexture(EntityBehaviorContainer __instance, ICoreClientAPI capi, string texcode, AssetLocation tloc, IDictionary<string, CompositeTexture> textures, string texturePrefixCode, ITextureAtlasAPI targetAtlas)
     {
-        if (_clientApi == null) return true;
+        if (capi == null) return true;
 
         CompositeTexture compositeTexture = new(tloc);
         if (textures != null)
@@ -54,7 +52,7 @@ public static class OffThreadRenderingPatches
 
     private static bool EntityBehaviorContainer_addTexture_121(EntityBehaviorContainer __instance, ICoreClientAPI capi, string texcode, AssetLocation tloc, IDictionary<string, CompositeTexture> textures, string texturePrefixCode)
     {
-        if (_clientApi == null) return true;
+        if (capi == null) return true;
 
         CompositeTexture compositeTexture = new(tloc);
         if (textures != null)

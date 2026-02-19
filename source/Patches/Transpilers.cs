@@ -12,7 +12,7 @@ namespace PlayerModelLib;
 
 internal static class TranspilerPatches
 {
-    [HarmonyPatchCategory("PlayerModelLibTranspiler")]
+    [HarmonyPatchCategory("PlayerModelLibTranspiler")] // addGearToShape
     public static class PatchEntityBehaviorContainerModelReplacement
     {
         [HarmonyTargetMethod]
@@ -44,7 +44,7 @@ internal static class TranspilerPatches
                 new(OpCodes.Ldloc_1),
                 new(OpCodes.Ldarg_S, 4),
                 new(OpCodes.Ldarg_S, (byte)6),
-                new(OpCodes.Call, AccessTools.Method(typeof(ShapeReplacementUtil), nameof(ShapeReplacementUtil.GetModelReplacement))),
+                new(OpCodes.Call, AccessTools.Method(typeof(PatchEntityBehaviorContainerModelReplacement), nameof(GetModelReplacement))),
             ];
             List<CodeInstruction> codes = [.. instructions];
 
@@ -67,10 +67,10 @@ internal static class TranspilerPatches
 
             for (int i = 2; i < codes.Count; i++)
             {
-                Debug.WriteLine($"{codes[i].opcode}");
                 if (codes[i].opcode == OpCodes.Ldloc_0 && codes[i - 1].opcode == OpCodes.Blt && codes[i - 2].opcode == OpCodes.Conv_I4)
                 {
                     List<CodeInstruction> copyCodes = codes[i..(i + 3)];
+                    copyCodes[2] = copyCodes[2].Clone();
                     copyCodes[2].opcode = OpCodes.Brtrue_S;
                     codes.InsertRange(i + 3, copyCodes);
                     codes.InsertRange(i - 2,
@@ -88,19 +88,32 @@ internal static class TranspilerPatches
             return codes;
         }
 
-        private static void InsertTextureIntoAtlas(Dictionary<string, CompositeTexture> textures, Entity entity)
+        private static void GetModelReplacement(ItemStack? stack, Entity entity, ref Shape? defaultShape, ref CompositeShape? compositeShape, IAttachableToEntity yadayada, float damageEffect, string slotCode, ref string[] willDeleteElements)
         {
+            if (entity?.Api?.Side != EnumAppSide.Client)
+            {
+                return;
+            }
+            ShapeReplacementUtil.GetModelReplacement(stack, entity, ref defaultShape, ref compositeShape, yadayada, damageEffect, slotCode, ref willDeleteElements);
+        }
+
+        private static void InsertTexturesIntoAtlas(Dictionary<string, CompositeTexture> textures, Entity entity)
+        {
+            if (entity?.Api is not ICoreClientAPI clientApi || textures is null)
+            {
+                return;
+            }
+            
             foreach ((string code, CompositeTexture compositeTexture) in textures)
             {
                 textures[code] = compositeTexture.Clone();
-                ThreadSafeUtils.InsertTextureIntoAtlas(compositeTexture, entity.Api as ICoreClientAPI, entity);
+                ThreadSafeUtils.InsertTextureIntoAtlas(textures[code], clientApi, entity);
             }
         }
 
-
         private static readonly MethodInfo _insertMethod = AccessTools.Method(
             typeof(PatchEntityBehaviorContainerModelReplacement),
-            nameof(InsertTextureIntoAtlas)
+            nameof(InsertTexturesIntoAtlas)
         );
 
         private static readonly FieldInfo _entityField = AccessTools.Field(typeof(EntityBehavior), "entity");

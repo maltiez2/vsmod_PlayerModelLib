@@ -1,5 +1,4 @@
 ﻿using ConfigLib;
-using HarmonyLib;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 
@@ -35,21 +34,7 @@ public sealed class PlayerModelModSystem : ModSystem
     {
         api.RegisterEntityBehaviorClass("PlayerModelLib:ExtraSkinnable", typeof(PlayerSkinBehavior));
 
-        OtherPatches.SetApi(api);
-
-        if (!_patched)
-        {
-            new Harmony("PlayerModelLibTranspiler").PatchAll();
-            OtherPatches.Patch("PlayerModelLib", api);
-            StatsPatches.Patch("PlayerModelLib", api);
-            _patched = true;
-        }
-
-        if (api is ICoreClientAPI clientApi)
-        {
-            ScrollPatches.Init(clientApi);
-            OffThreadRenderingPatches.Patch("PlayerModelLib", clientApi);
-        }
+        PatchesManager.Patch(api);
 
         if (api.ModLoader.IsModEnabled("configlib"))
         {
@@ -64,23 +49,13 @@ public sealed class PlayerModelModSystem : ModSystem
 
     public override void Dispose()
     {
-        if (_patched)
-        {
-            new Harmony("PlayerModelLib").UnpatchAll("PlayerModelLibTranspiler");
-            OtherPatches.Unpatch("PlayerModelLib");
-            StatsPatches.Unpatch("PlayerModelLib");
-            _patched = false;
-        }
-
-        OffThreadRenderingPatches.Unpatch("PlayerModelLib");
+        PatchesManager.Unpatch();
 
         ShapesCache?.Dispose();
         ShapeReplacementUtil.StaticDispose();
     }
 
-    private static bool _patched = false;
-
-    private void SubscribeToConfigChange(ICoreAPI api)
+    private static void SubscribeToConfigChange(ICoreAPI api)
     {
         ConfigLibModSystem system = api.ModLoader.GetModSystem<ConfigLibModSystem>();
 

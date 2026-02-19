@@ -1,7 +1,5 @@
-﻿using HarmonyLib;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Reflection;
-using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -1309,7 +1307,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     }
     private void ClientSelectionDone(IInventory characterInv, string characterClass, bool didSelect)
     {
-        List<ClothStack> clothesPacket = new List<ClothStack>();
+        List<ClothStack> clothesPacket = new();
         for (int i = 0; i < characterInv.Count; i++)
         {
             ItemSlot slot = characterInv[i];
@@ -1323,11 +1321,11 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             });
         }
 
-        Dictionary<string, string> skinParts = new Dictionary<string, string>();
-        var bh = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
+        Dictionary<string, string> skinParts = new();
+        PlayerSkinBehavior? bh = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
 
-        var applied = bh.AppliedSkinParts.Get().ToList();
-        foreach (var val in applied)
+        List<AppliedSkinnablePartVariant> applied = bh.AppliedSkinParts.Get().ToList();
+        foreach (AppliedSkinnablePartVariant? val in applied)
         {
             skinParts[val.PartCode] = val.Code;
         }

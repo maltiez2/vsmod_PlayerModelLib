@@ -1,0 +1,96 @@
+﻿using HarmonyLib;
+using Vintagestory.API.Client;
+using Vintagestory.API.Common;
+using Vintagestory.API.Server;
+
+namespace PlayerModelLib;
+
+public static class PatchesManager
+{
+    public static bool PatchedClientSide { get; private set; } = false;
+    public static bool PatchedServerSide { get; private set; } = false;
+    public static bool PatchedUniversalSide { get; private set; } = false;
+
+    public const string HarmonyIdPrefix = "PlayerModelLib";
+    public const string TranspilerPatchesId = HarmonyIdPrefix + "Transpilers";
+    public const string GeneralPatchesId = HarmonyIdPrefix + "General";
+    public const string StatsPatchesId = HarmonyIdPrefix + "Stats";
+    public const string OffThreadPatchesId = HarmonyIdPrefix + "OffThread";
+
+
+    public static void Patch(ICoreAPI api)
+    {
+        OtherPatches.SetApi(api);
+
+        if (!PatchedUniversalSide)
+        {
+            PatchedUniversalSide = true;
+            PatchUniversal(api);
+        }
+
+        if (api is ICoreServerAPI serverApi && !PatchedServerSide)
+        {
+            PatchedServerSide = true;
+            PatchServer(serverApi);
+        }
+
+        if (api is ICoreClientAPI clientApi && !PatchedClientSide)
+        {
+            PatchedClientSide = true;
+            PatchClient(clientApi);
+        }
+    }
+    public static void Unpatch()
+    {
+        if (PatchedUniversalSide)
+        {
+            PatchedUniversalSide = false;
+            UnpatchUniversal();
+        }
+
+        if (PatchedServerSide)
+        {
+            PatchedServerSide = false;
+            UnpatchServer();
+        }
+
+        if (PatchedClientSide)
+        {
+            PatchedClientSide = false;
+            UnpatchClient();
+        }
+    }
+
+
+
+    private static void PatchUniversal(ICoreAPI api)
+    {
+        new Harmony(TranspilerPatchesId).PatchAll();
+        OtherPatches.Patch(GeneralPatchesId, api);
+        StatsPatches.Patch(StatsPatchesId, api);
+    }
+    private static void PatchClient(ICoreClientAPI api)
+    {
+        ScrollPatches.Init(api);
+        OffThreadRenderingPatches.Patch(OffThreadPatchesId, api);
+    }
+    private static void PatchServer(ICoreServerAPI api)
+    {
+        // no server patches
+    }
+
+    private static void UnpatchUniversal()
+    {
+        new Harmony(TranspilerPatchesId).UnpatchAll(TranspilerPatchesId);
+        OtherPatches.Unpatch(GeneralPatchesId);
+        StatsPatches.Unpatch(StatsPatchesId);
+    }
+    private static void UnpatchClient()
+    {
+        OffThreadRenderingPatches.Unpatch(OffThreadPatchesId);
+    }
+    private static void UnpatchServer()
+    {
+        // no server patches
+    }
+}
