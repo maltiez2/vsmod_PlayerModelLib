@@ -1,6 +1,40 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using Vintagestory.API.Client;
+using Vintagestory.API.Common.Entities;
+using Vintagestory.API.Config;
 
 namespace PlayerModelLib;
+
+public static class ThreadSafeUtils
+{
+    public static bool InsertTextureIntoAtlas(CompositeTexture compositeTexture, ICoreClientAPI api, Entity entity, ITextureAtlasAPI? targetAtlas = null)
+    {
+        PlayerSkinBehavior? skinBehavior = entity.GetBehavior<PlayerSkinBehavior>();
+
+        if (Environment.CurrentManagedThreadId != RuntimeEnv.MainThreadId)
+        {
+            skinBehavior?.TexturesAwaitingToBeAddedToAtlas.Increment();
+            api.Event.EnqueueMainThreadTask(() => InsertTextureIntoAtlasTask(compositeTexture, api, skinBehavior, targetAtlas), "PlayerSkinBehavior.AddSkinPart");
+        }
+        else
+        {
+            InsertTextureIntoAtlasTask(compositeTexture, api, skinBehavior, targetAtlas);
+        }
+
+        return false;
+    }
+
+    private static void InsertTextureIntoAtlasTask(CompositeTexture compositeTexture, ICoreClientAPI api, PlayerSkinBehavior? skinBehavior, ITextureAtlasAPI? targetAtlas = null)
+    {
+        compositeTexture.Bake(api.Assets);
+        if (!(targetAtlas ?? api.EntityTextureAtlas).GetOrInsertTexture(compositeTexture.Baked.TextureFilenames[0], out int textureSubId, out _))
+        {
+            return;
+        }
+        compositeTexture.Baked.TextureSubId = textureSubId;
+        skinBehavior?.TexturesAwaitingToBeAddedToAtlas.Decrement();
+    }
+}
 
 public class ThreadSafeList<TElement>
 {

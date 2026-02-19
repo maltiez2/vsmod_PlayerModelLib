@@ -90,7 +90,7 @@ public static class OffThreadRenderingPatches
 
     private static void InsertReplacedTextureIntoAtlas(CompositeTexture compositeTexture, ICoreClientAPI api, PlayerSkinBehavior? skinBehavior, ITextureAtlasAPI? targetAtlas = null)
     {
-        compositeTexture.Bake(_clientApi.Assets);
+        compositeTexture.Bake(api.Assets);
         if (!(targetAtlas ?? api.EntityTextureAtlas).GetOrInsertTexture(compositeTexture.Baked.TextureFilenames[0], out int textureSubId, out _))
         {
             return;
