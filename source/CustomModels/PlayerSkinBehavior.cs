@@ -489,8 +489,8 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
     protected ICoreClientAPI? ClientApi;
     protected readonly ThreadSafeDictionary<string, TextureAtlasPosition?> OverlaysTexturePositions = new([]);
     protected readonly ThreadSafeDictionary<string, BlendedOverlayTexture[]> OverlaysByTextures = new([]);
-    protected EntityTagArray PreviousAddedTags = EntityTagArray.Empty;
-    protected EntityTagArray PreviousRemovedTags = EntityTagArray.Empty;
+    protected TagSetFast PreviousAddedTags = TagSetFast.Empty;
+    protected TagSetFast PreviousRemovedTags = TagSetFast.Empty;
     protected const float DefaultStepHeight = 0.6f;
     protected float DefaultSize = 1;
     protected float PreviousHeadBobbingAmplitudeFactor = 1;
@@ -635,14 +635,10 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
     {
         if (entity.Api.Side == EnumAppSide.Client) return;
 
-        EntityTagArray currentTags = entity.Tags;
-
-
+        TagSetFast currentTags = entity.Tags;
 
         currentTags &= ~PreviousAddedTags;
         currentTags |= PreviousRemovedTags;
-
-
 
         PreviousAddedTags = CurrentModel.AddTags & ~currentTags;
         PreviousRemovedTags = CurrentModel.RemoveTags & currentTags;
@@ -652,8 +648,6 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
 
         entity.Tags = currentTags;
         entity.MarkTagsDirty();
-
-
     }
 
     protected virtual void RemoveNotExistingTraits()

@@ -1,5 +1,4 @@
 ﻿using HarmonyLib;
-using System.Diagnostics;
 using System.Reflection;
 using System.Reflection.Emit;
 using Vintagestory.API.Client;
@@ -20,45 +19,56 @@ internal static class TranspilerPatches
         {
             return AccessTools.Method(typeof(EntityBehaviorContainer), "addGearToShape",
             [
+                typeof(ICoreAPI),
+                typeof(Entity),
+                typeof(ITextureAtlasAPI),
                 typeof(Shape),
                 typeof(ItemStack),
                 typeof(IAttachableToEntity),
                 typeof(string),
                 typeof(string),
                 typeof(string[]).MakeByRefType(),
+                typeof(IDictionary<string, CompositeTexture>),
                 typeof(Dictionary<string, StepParentElementTo>)
             ]);
         }
 
+        static MethodInfo _applyStepParentOverridesMI = AccessTools.Method(typeof(EntityBehaviorContainer), "applyStepParentOverrides");
+
+        static MethodInfo _getModelReplacementMI = AccessTools.Method(typeof(PatchEntityBehaviorContainerModelReplacement), nameof(GetModelReplacement));
+
         [HarmonyTranspiler]
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
-            CodeInstruction[] newInstructions =
-            [
-                new(OpCodes.Ldarg_2),
-                new(OpCodes.Ldarg_0),
-                new(OpCodes.Ldfld, AccessTools.Field(typeof(EntityBehaviorContainer), "entity")),
-                new(OpCodes.Ldloca_S, 3),
-                new(OpCodes.Ldloca_S, 5),
-                new(OpCodes.Ldarg_3),
-                new(OpCodes.Ldloc_1),
-                new(OpCodes.Ldarg_S, 4),
-                new(OpCodes.Ldarg_S, (byte)6),
-                new(OpCodes.Call, AccessTools.Method(typeof(PatchEntityBehaviorContainerModelReplacement), nameof(GetModelReplacement))),
-            ];
-            List<CodeInstruction> codes = [.. instructions];
+            List<CodeInstruction> codes = new(instructions);
 
             for (int i = 0; i < codes.Count; i++)
             {
-                if (codes[i].opcode == OpCodes.Isinst && (Type)codes[i].operand == typeof(Vintagestory.API.Client.ICoreClientAPI))
+                if (codes[i].Calls(_applyStepParentOverridesMI))
                 {
-                    codes.InsertRange(i + 2, newInstructions);
+                    // Insert BEFORE first applyStepParentOverrides call
+                    codes.InsertRange(i,
+                    [
+                        // stack
+                        new CodeInstruction(OpCodes.Ldarg_S, 4),   // ItemStack stack
+                        new CodeInstruction(OpCodes.Ldarg_1),      // Entity optionalTargetEntity
 
-                    return Transpiler2(codes);
+                        new CodeInstruction(OpCodes.Ldloca_S, 3),  // ref Shape shape
+                        new CodeInstruction(OpCodes.Ldloca_S, 5),  // ref CompositeShape compositeShape
+
+                        new CodeInstruction(OpCodes.Ldarg_S, 5),   // IAttachableToEntity iatta
+                        new CodeInstruction(OpCodes.Ldloc_1),      // float damageEffect
+                        new CodeInstruction(OpCodes.Ldarg_S, 6),   // string slotCode
+                        new CodeInstruction(OpCodes.Ldarg_S, 8),   // ref string[] willDeleteElements
+
+                        new CodeInstruction(OpCodes.Call, _getModelReplacementMI)
+                    ]);
+
+                    break; // only first occurrence
                 }
             }
 
-            return codes;
+            return Transpiler2(codes);
         }
 
         private static IEnumerable<CodeInstruction> Transpiler2(IEnumerable<CodeInstruction> instructions)
@@ -103,7 +113,7 @@ internal static class TranspilerPatches
             {
                 return;
             }
-            
+
             foreach ((string code, CompositeTexture compositeTexture) in textures)
             {
                 textures[code] = compositeTexture.Clone();

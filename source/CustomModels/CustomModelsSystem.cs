@@ -297,8 +297,8 @@ public sealed class CustomModelsSystem : ModSystem
             ScaleColliderWithSizeVertically = defaultConfig.ScaleColliderWithSizeVertically,
             MaxEyeHeight = defaultConfig.MaxEyeHeight,
             MinEyeHeight = defaultConfig.MinEyeHeight,
-            AddTags = _api.TagRegistry.EntityTagsToTagArray(defaultConfig.AddTags),
-            RemoveTags = _api.TagRegistry.EntityTagsToTagArray(defaultConfig.RemoveTags),
+            AddTags = _api.EntityTagRegistry.CreateTagSet(defaultConfig.AddTags as IEnumerable<string>),
+            RemoveTags = _api.EntityTagRegistry.CreateTagSet(defaultConfig.RemoveTags as IEnumerable<string>),
             ModelSizeFactor = defaultConfig.ModelSizeFactor,
             HeadBobbingScale = defaultConfig.HeadBobbingScale,
             GuiModelScale = defaultConfig.GuiModelScale,
@@ -417,8 +417,8 @@ public sealed class CustomModelsSystem : ModSystem
             ScaleColliderWithSizeVertically = modelConfig.ScaleColliderWithSizeVertically,
             MaxEyeHeight = modelConfig.MaxEyeHeight,
             MinEyeHeight = modelConfig.MinEyeHeight,
-            AddTags = api.TagRegistry.EntityTagsToTagArray(modelConfig.AddTags),
-            RemoveTags = api.TagRegistry.EntityTagsToTagArray(modelConfig.RemoveTags),
+            AddTags = api.EntityTagRegistry.CreateTagSet(modelConfig.AddTags as IEnumerable<string>),
+            RemoveTags = api.EntityTagRegistry.CreateTagSet(modelConfig.RemoveTags as IEnumerable<string>),
             ModelSizeFactor = modelConfig.ModelSizeFactor,
             HeadBobbingScale = modelConfig.HeadBobbingScale,
             GuiModelScale = modelConfig.GuiModelScale,
@@ -717,7 +717,7 @@ public sealed class CustomModelsSystem : ModSystem
         {
             foreach ((_, CustomModelConfig modelConfig) in customModelConfigs)
             {
-                api.TagRegistry.RegisterEntityTags(modelConfig.AddTags);
+                api.EntityTagRegistry.Register(modelConfig.AddTags as IEnumerable<string>);
             }
         }
     }

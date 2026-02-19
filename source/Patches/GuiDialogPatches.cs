@@ -17,7 +17,7 @@ public static class GuiDialogPatches
         [HarmonyTranspiler]
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
-            List<CodeInstruction> codes = new(instructions);
+            List<CodeInstruction> codes = [.. instructions];
             for (int i = 0; i < codes.Count; i++)
             {
                 if (codes[i].opcode == OpCodes.Newobj)
@@ -40,7 +40,7 @@ public static class GuiDialogPatches
         [HarmonyTranspiler]
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
-            List<CodeInstruction> codes = new(instructions);
+            List<CodeInstruction> codes = [.. instructions];
             for (int i = 0; i < codes.Count; i++)
             {
                 if (codes[i].opcode == OpCodes.Newobj)
