@@ -48,6 +48,8 @@ public sealed class CustomModelsSystem : ModSystem
             .RegisterMessageType<ChangePlayerModelSizePacket>();
 
         TextureSource = new(api, api.EntityTextureAtlas, _textures, "PlayerModelLib:CustomModelsSystem");
+
+        WearablesTesselatorBehavior.BeforeWearableShapeAttached += ShapeReplacementUtil.ReplaceWearableShape;
     }
     public override void StartServerSide(ICoreServerAPI api)
     {
@@ -209,6 +211,11 @@ public sealed class CustomModelsSystem : ModSystem
         {
             LoggerUtil.Error(_api, this, $"({player.PlayerName}|{code}) Error on invoking 'OnCustomModelChanged' event:\n{exception}");
         }
+    }
+
+    public override void Dispose()
+    {
+        WearablesTesselatorBehavior.BeforeWearableShapeAttached -= ShapeReplacementUtil.ReplaceWearableShape;
     }
 
     public static string PrefixTextureCode(string modelCode, string textureCode) => GetTextureCodePrefix(modelCode) + textureCode;

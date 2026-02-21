@@ -3,27 +3,28 @@ using System.Diagnostics.CodeAnalysis;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Config;
+using YamlDotNet.Core.Tokens;
 
 namespace PlayerModelLib;
 
 public static class ThreadSafeUtils
 {
-    public static void InsertTextureIntoAtlas(CompositeTexture compositeTexture, ICoreClientAPI api, Entity entity, ITextureAtlasAPI? targetAtlas = null, PlayerSkinBehavior? skinBehavior = null)
+    public static void InsertTextureIntoAtlas(CompositeTexture compositeTexture, ICoreClientAPI api, Entity entity, ITextureAtlasAPI? targetAtlas = null, CustomPlayerShapeRenderer? renderer = null, Action<int, TextureAtlasPosition>? onInsert = null)
     {
-        skinBehavior ??= entity.GetBehavior<PlayerSkinBehavior>();
-        skinBehavior?.TexturesAwaitingToBeAddedToAtlas.Increment();
+        renderer ??= entity.Properties.Client.Renderer as CustomPlayerShapeRenderer;
+        renderer?.TexturesAwaitingToBeAddedToAtlas.Increment();
 
         if (Environment.CurrentManagedThreadId != RuntimeEnv.MainThreadId)
         {
-            api.Event.EnqueueMainThreadTask(() => InsertTextureIntoAtlasTask(compositeTexture, api, skinBehavior, targetAtlas), "PlayerSkinBehavior.AddSkinPart");
+            api.Event.EnqueueMainThreadTask(() => InsertTextureIntoAtlasTask(compositeTexture, api, renderer, targetAtlas, onInsert), "ThreadSafeUtils.InsertTextureIntoAtlas");
         }
         else
         {
-            InsertTextureIntoAtlasTask(compositeTexture, api, skinBehavior, targetAtlas);
+            InsertTextureIntoAtlasTask(compositeTexture, api, renderer, targetAtlas, onInsert);
         }
     }
 
-    private static void InsertTextureIntoAtlasTask(CompositeTexture compositeTexture, ICoreClientAPI api, PlayerSkinBehavior? skinBehavior, ITextureAtlasAPI? targetAtlas = null)
+    private static void InsertTextureIntoAtlasTask(CompositeTexture compositeTexture, ICoreClientAPI api, CustomPlayerShapeRenderer? renderer, ITextureAtlasAPI? targetAtlas = null, Action<int, TextureAtlasPosition>? onInsert = null)
     {
         try
         {
@@ -32,9 +33,10 @@ public static class ThreadSafeUtils
                 compositeTexture.Bake(api.Assets);
             }
 
-            if ((targetAtlas ?? api.EntityTextureAtlas).GetOrInsertTexture(compositeTexture.Baked?.TextureFilenames[0], out int textureSubId, out _) && compositeTexture.Baked != null)
+            if ((targetAtlas ?? api.EntityTextureAtlas).GetOrInsertTexture(compositeTexture, out int textureSubId, out TextureAtlasPosition? position) && compositeTexture.Baked != null)
             {
                 compositeTexture.Baked.TextureSubId = textureSubId;
+                onInsert?.Invoke(textureSubId, position);
             }
         }
         catch (Exception exception)
@@ -43,7 +45,7 @@ public static class ThreadSafeUtils
         }
         finally
         {
-            skinBehavior?.TexturesAwaitingToBeAddedToAtlas.Decrement();
+            renderer?.TexturesAwaitingToBeAddedToAtlas.Decrement();
         }
     }
 }
@@ -73,8 +75,9 @@ public class ThreadSafeList<TElement>
 
     public void Set(IEnumerable<TElement> value)
     {
+        List<TElement> newValue = value.ToList();
         _lock.EnterWriteLock();
-        _value = value.ToList();
+        _value = newValue;
         _lock.ExitWriteLock();
     }
 
@@ -121,10 +124,10 @@ public class ThreadSafeDictionary<TKey, TValue>
         return result;
     }
 
-    public TValue GetValue(TKey key)
+    public TValue? GetValue(TKey key)
     {
         _lock.EnterReadLock();
-        TValue result = _value[key];
+        _value.TryGetValue(key, out TValue? result);
         _lock.ExitReadLock();
         return result;
     }
@@ -134,6 +137,14 @@ public class ThreadSafeDictionary<TKey, TValue>
         _lock.EnterWriteLock();
         _value[key] = value;
         _lock.ExitWriteLock();
+    }
+
+    public bool RemoveValue(TKey key)
+    {
+        _lock.EnterWriteLock();
+        bool result = _value.Remove(key);
+        _lock.ExitWriteLock();
+        return result;
     }
 
     private Dictionary<TKey, TValue> _value;

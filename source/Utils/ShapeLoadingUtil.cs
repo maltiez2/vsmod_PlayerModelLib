@@ -1,4 +1,5 @@
 ﻿using Vintagestory.API.Common;
+using Vintagestory.API.Util;
 using Vintagestory.ServerMods;
 
 namespace PlayerModelLib;
@@ -30,13 +31,13 @@ public static class ShapeLoadingUtil
         Shape output = input.Clone();
 
         output.Textures = [];
-        foreach ((string key, AssetLocation? value) in input.Textures)
+        foreach ((string key, AssetLocation? value) in input.Textures ?? [])
         {
             output.Textures[key] = new(value.Domain, value.Path);
         }
 
         output.TextureSizes = [];
-        foreach ((string key, int[]? value) in input.TextureSizes)
+        foreach ((string key, int[]? value) in input.TextureSizes ?? [])
         {
             output.TextureSizes[key] = (int[]?)value.Clone();
         }
@@ -51,7 +52,6 @@ public static class ShapeLoadingUtil
 
         return output;
     }
-
     public static void CloneFaces(ShapeElement element)
     {
         if (element.FacesResolved == null)
@@ -82,7 +82,6 @@ public static class ShapeLoadingUtil
         }
         element.FacesResolved = newFaces.ToArray();
     }
-
     public static void WalkShapeElements(ShapeElement element, Action<ShapeElement> action)
     {
         action.Invoke(element);
@@ -97,10 +96,14 @@ public static class ShapeLoadingUtil
             }
         }
     }
-
     public static void PrefixTextures(Shape shape, string prefix, float damageEffect = 0f)
     {
-        HashSet<string> replacedCodes = [];
+        if (shape.Elements == null)
+        {
+            return;
+        }
+        
+        Dictionary<string, string> replacedCodes = [];
         foreach (ShapeElement shapeElement in shape.Elements)
         {
             WalkShapeElements(shapeElement, element => PrefixFacesTextures(element, prefix, replacedCodes, damageEffect));
@@ -113,17 +116,21 @@ public static class ShapeLoadingUtil
 
             foreach ((string code, int[] size) in textureSizesCopy)
             {
-                shape.TextureSizes[prefix + code] = size;
-                replacedCodes.Remove(code);
+                if (replacedCodes.ContainsKey(code))
+                {
+                    shape.TextureSizes[replacedCodes[code]] = size;
+                    replacedCodes.Remove(replacedCodes[code]);
+                }
             }
 
-            foreach (string item in replacedCodes)
+            foreach ((string from, string to) in replacedCodes)
             {
-                shape.TextureSizes[prefix + item] = [shape.TextureWidth, shape.TextureHeight];
+                shape.TextureSizes[to] = [shape.TextureWidth, shape.TextureHeight];
+                shape.Textures[to] = shape.Textures[from];
+                shape.Textures.Remove(from);
             }
         }
     }
-
     public static void PrefixAnimations(Shape shape, string prefix)
     {
         if (shape.Animations == null)
@@ -145,9 +152,13 @@ public static class ShapeLoadingUtil
             }
         }
     }
-
-    public static void PrefixFacesTextures(ShapeElement element, string prefix, HashSet<string> replacedCodes, float damageEffect)
+    public static void PrefixFacesTextures(ShapeElement element, string prefix, Dictionary<string, string> replacedCodes, float damageEffect)
     {
+        if (element.Name == null || element.FacesResolved == null)
+        {
+            return;
+        }
+        
         element.Name = prefix + element.Name;
         if (damageEffect >= 0f)
         {
@@ -155,13 +166,165 @@ public static class ShapeLoadingUtil
         }
 
         ShapeElementFace[] facesResolved = element.FacesResolved;
-        foreach (ShapeElementFace shapeElementFace in facesResolved)
+        foreach (ShapeElementFace? shapeElementFace in facesResolved)
         {
-            if (shapeElementFace != null && shapeElementFace.Enabled && !shapeElementFace.Texture.StartsWith(prefix))
+            string? textureCode = shapeElementFace?.Texture;
+            if (shapeElementFace != null && shapeElementFace.Texture != null && textureCode != null && shapeElementFace.Enabled && !shapeElementFace.Texture.StartsWith(prefix))
             {
-                replacedCodes.Add(shapeElementFace.Texture);
                 shapeElementFace.Texture = prefix + shapeElementFace.Texture;
+                replacedCodes.Add(textureCode, prefix + textureCode);
             }
         }
+    }
+
+    public static bool StepParentShape(Shape parentShape, Shape childShape)
+    {
+        if (childShape.Elements == null || childShape.Elements.Length == 0)
+        {
+            return false;
+        }
+
+        bool anyElementsAdded = false;
+        foreach (ShapeElement element in childShape.Elements)
+        {
+            anyElementsAdded |= StepParentElement(parentShape, element, null);
+        }
+
+        if (!anyElementsAdded)
+        {
+            return false;
+        }
+
+        AddChildTextureSizes(parentShape, childShape);
+        StepParentAnimations(parentShape, childShape);
+
+        return true;
+    }
+
+    public static bool StepParentElement(Shape parentShape, ShapeElement element, ShapeElement? parentElement)
+    {
+        bool elementAdded = ProcessShapeElement(parentShape, element, parentElement);
+
+        if (element.Children != null)
+        {
+            foreach (ShapeElement childElem in element.Children)
+            {
+                elementAdded |= StepParentElement(parentShape, childElem, element);
+            }
+        }
+
+        return elementAdded;
+    }
+    public static bool ProcessShapeElement(Shape parentShape, ShapeElement childElement, ShapeElement? parentElement)
+    {
+        ShapeElement stepparentElem;
+
+        if (childElement.StepParentName != null)
+        {
+            stepparentElem = parentShape.GetElementByName(childElement.StepParentName, StringComparison.InvariantCultureIgnoreCase);
+            if (stepparentElem == null)
+            {
+                parentShape.Elements = parentShape.Elements?.Append(childElement) ?? [childElement];
+                return true;
+            }
+        }
+        else
+        {
+            if (parentElement == null)
+            {
+                throw new InvalidOperationException($"Tried to attach '{childElement.Name}' root element, but it had no step parent element specified");
+            }
+            return false;
+        }
+
+        if (parentElement != null)
+        {
+            parentElement.Children = parentElement.Children.Remove(childElement);
+        }
+
+        if (stepparentElem.Children == null)
+        {
+            stepparentElem.Children = [childElement];
+        }
+        else
+        {
+            stepparentElem.Children = stepparentElem.Children.Append(childElement);
+        }
+
+        childElement.ParentElement = stepparentElem;
+
+        childElement.SetJointIdRecursive(stepparentElem.JointId);
+
+        return true;
+    }
+    public static void AddChildTextureSizes(Shape parentShape, Shape childShape)
+    {
+        if (childShape.Textures == null || childShape.TextureSizes == null || parentShape.Textures == null || parentShape.TextureSizes == null)
+        {
+            return;
+        }
+
+        foreach ((string textureCode, int[] size) in childShape.TextureSizes)
+        {
+            parentShape.TextureSizes[textureCode] = size;
+        }
+
+        foreach ((string texutreCode, AssetLocation path) in childShape.Textures)
+        {
+            if (parentShape.TextureSizes.ContainsKey(texutreCode)) continue;
+
+            parentShape.TextureSizes[texutreCode] = [childShape.TextureWidth, childShape.TextureHeight];
+            parentShape.Textures[texutreCode] = path;
+        }
+    }
+    public static void StepParentAnimations(Shape parentShape, Shape childShape)
+    {
+        if (childShape.Animations == null || parentShape.Animations == null)
+        {
+            return;
+        }
+
+        foreach (Animation? childAnimation in childShape.Animations)
+        {
+            Animation? entityAnim = parentShape.Animations.FirstOrDefault(anim => anim.Code == childAnimation.Code);
+            if (entityAnim == null)
+            {
+                continue;
+            }
+
+            foreach (AnimationKeyFrame childKeyFrame in childAnimation.KeyFrames)
+            {
+                AnimationKeyFrame entityKeyFrame = GetOrCreateKeyFrame(entityAnim, childKeyFrame.Frame);
+
+                foreach ((string elementCode, AnimationKeyFrameElement element) in childKeyFrame.Elements)
+                {
+                    entityKeyFrame.Elements[elementCode] = element;
+                }
+            }
+        }
+    }
+    public static AnimationKeyFrame GetOrCreateKeyFrame(Animation parentAnimation, int frame)
+    {
+        foreach (AnimationKeyFrame parentKeyFrame in parentAnimation.KeyFrames)
+        {
+            if (parentKeyFrame.Frame == frame)
+            {
+                return parentKeyFrame;
+            }
+        }
+
+        for (int parentFrameIndex = 0; parentFrameIndex < parentAnimation.KeyFrames.Length; parentFrameIndex++)
+        {
+            if (parentAnimation.KeyFrames[parentFrameIndex].Frame > frame)
+            {
+                AnimationKeyFrame newKeyFrame = new() { Frame = frame, Elements = [] };
+                parentAnimation.KeyFrames = parentAnimation.KeyFrames.InsertAt(newKeyFrame, parentFrameIndex);
+                return newKeyFrame;
+            }
+        }
+
+        AnimationKeyFrame startKeyFrame = new() { Frame = frame, Elements = [] };
+        parentAnimation.KeyFrames = parentAnimation.KeyFrames.InsertAt(startKeyFrame, 0);
+        return startKeyFrame;
     }
 }

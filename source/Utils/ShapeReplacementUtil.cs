@@ -33,6 +33,31 @@ public static class ShapeReplacementUtil
         GenerateShapes(prefixCode, customModel, itemId, _system, currentModel, stack, entity, ref defaultShape, ref compositeShape, yadayada, damageEffect, ref willDeleteElements);
     }
 
+    public static void ReplaceWearableShape(WearablesTesselatorBehavior tesselatorBehavior, IInventory inventory, ItemSlot slot, ref Shape entityShape, ref string[] willDeleteElements, ref Shape attachableShape, ref CompositeShape? attachableCompisteShape)
+    {
+        if (tesselatorBehavior.entity.Api.Side != EnumAppSide.Client) return;
+
+        int itemId = slot.Itemstack?.Item?.Id ?? 0;
+
+        _system ??= tesselatorBehavior.entity.Api.ModLoader.GetModSystem<CustomModelsSystem>();
+
+        PlayerSkinBehavior? skinBehavior = tesselatorBehavior.entity.GetBehavior<PlayerSkinBehavior>();
+
+        string? currentModel = skinBehavior?.CurrentModelCode;
+
+        if (skinBehavior == null || currentModel == null || itemId == 0 || _system == null || !_system.ModelsLoaded || currentModel == _system.SeraphModelCode) return;
+
+        CustomModelData customModel = _system.CustomModels[currentModel];
+
+        IAttachableToEntity? attachable = IAttachableToEntity.FromCollectible(slot.Itemstack?.Collectible);
+        if (attachable == null)
+        {
+            return;
+        }
+
+        GenerateShapes("", customModel, itemId, _system, currentModel, slot.Itemstack, tesselatorBehavior.entity, ref attachableShape, ref attachableCompisteShape, attachable, 1, ref willDeleteElements);
+    }
+
     public static void StaticDispose()
     {
         _system = null;
@@ -100,7 +125,7 @@ public static class ShapeReplacementUtil
     private static string[] ReplaceWildcardPrefixes(string[] elements, string prefix)
     {
         return elements
-            .Where(name => name.StartsWith('*'))
+            .Where(name => name != null && name.StartsWith('*'))
             .Select(name => prefix + name[1..])
             .Concat(elements)
             .Distinct()
@@ -111,7 +136,7 @@ public static class ShapeReplacementUtil
         try
         {
             ExportingShape = true;
-            Shape? shape = ShapeAdjustmentUtil.LoadShape(api, shapePath);
+            Shape? shape = ShapeLoadingUtil.LoadShape(api, shapePath);
             if (shape == null) return;
             shape = ShapeAdjustmentUtil.AdjustClothesShape(api, shape, baseShape, modelData);
             if (shape == null) return;
@@ -243,7 +268,7 @@ public static class ShapeReplacementUtil
     {
         if (customModel.WearableShapeReplacers.TryGetValue(itemId, out string? shape))
         {
-            defaultShape = ShapeAdjustmentUtil.LoadShape(entity.Api, shape);
+            defaultShape = ShapeLoadingUtil.LoadShape(entity.Api, shape);
             defaultShape?.SubclassForStepParenting(prefixCode, damageEffect);
             defaultShape?.ResolveReferences(entity.World.Logger, "");
 
@@ -262,7 +287,7 @@ public static class ShapeReplacementUtil
 
             compositeShape.Base = compositeShape.Base.WithPathAppendixOnce(".json").WithPathPrefixOnce("shapes/");
 
-            defaultShape = ShapeAdjustmentUtil.LoadShape(entity.Api, newCompositeShape.Base);
+            defaultShape = ShapeLoadingUtil.LoadShape(entity.Api, newCompositeShape.Base);
 
             defaultShape?.SubclassForStepParenting(prefixCode, damageEffect);
             defaultShape?.ResolveReferences(entity.World.Logger, "");
@@ -280,7 +305,7 @@ public static class ShapeReplacementUtil
 
         if (!customModel.WearableShapeReplacersByShape.TryGetValue(shapePath, out string? shape)) return false;
 
-        defaultShape = ShapeAdjustmentUtil.LoadShape(entity.Api, shape);
+        defaultShape = ShapeLoadingUtil.LoadShape(entity.Api, shape);
         defaultShape?.SubclassForStepParenting(prefixCode, damageEffect);
         defaultShape?.ResolveReferences(entity.World.Logger, "");
 

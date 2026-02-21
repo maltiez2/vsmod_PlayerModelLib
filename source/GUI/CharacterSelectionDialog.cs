@@ -983,7 +983,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         if (skinMod == null) return;
 
-        string variantCode = skinMod.AvailableSkinPartsByCode.GetValue(partCode).Variants[index].Code;
+        string variantCode = skinMod.AvailableSkinPartsByCode.GetValue(partCode)?.Variants[index].Code ?? "";
 
         skinMod.SelectSkinPart(partCode, variantCode);
     }

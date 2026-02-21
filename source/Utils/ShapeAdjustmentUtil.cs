@@ -6,37 +6,17 @@ namespace PlayerModelLib;
 
 public static class ShapeAdjustmentUtil
 {
-    public static Shape? AdjustClothesShape(ICoreAPI api, CompositeShape compositeShape, BaseShapeData baseShape, CustomModelData modelData)
+    public static Shape? AdjustClothesShape(ICoreAPI api, CompositeShape compositeShapeToChange, BaseShapeData baseShape, CustomModelData modelData)
     {
-        AssetLocation shapePath = compositeShape.Base ?? "";
+        AssetLocation shapePath = compositeShapeToChange.Base ?? "";
 
-        Shape? result = LoadShape(api, shapePath)?.Clone();
+        Shape? result = ShapeLoadingUtil.LoadShape(api, shapePath)?.Clone();
         if (result == null)
         {
             return null;
         }
 
-        StepParentShapeOverlays(result, api, compositeShape, baseShape);
-
-        AdjustClothesShape(api, result, baseShape, modelData);
-
-        return result;
-    }
-
-    public static Shape? AdjustClothesShape(ICoreAPI api, AssetLocation shapePath, BaseShapeData baseShape, CustomModelData modelData)
-    {
-        string key = shapePath.ToString();
-
-        if (baseShape.WearableModelReplacersByShape.ContainsKey(key))
-        {
-            shapePath = baseShape.WearableModelReplacersByShape[shapePath];
-        }
-
-        Shape? result = LoadShape(api, shapePath)?.Clone();
-        if (result == null)
-        {
-            return null;
-        }
+        StepParentShapeOverlays(result, api, compositeShapeToChange, baseShape);
 
         AdjustClothesShape(api, result, baseShape, modelData);
 
@@ -57,13 +37,6 @@ public static class ShapeAdjustmentUtil
         }
 
         return shapeToChange;
-    }
-
-    public static Shape? LoadShape(ICoreAPI api, AssetLocation path)
-    {
-        path = path.WithPathAppendixOnce(".json").WithPathPrefixOnce("shapes/");
-        Shape? currentShape = ShapeLoadingUtil.LoadShape(api, path);
-        return currentShape;
     }
 
     public static void RescaleShapeElement(ShapeElement element, Vector3d scale)
@@ -188,7 +161,7 @@ public static class ShapeAdjustmentUtil
 
         foreach (AssetLocation overlayPath in overlays)
         {
-            Shape? overlayShape = LoadShape(api, overlayPath)?.Clone();
+            Shape? overlayShape = ShapeLoadingUtil.LoadShape(api, overlayPath)?.Clone();
             if (overlayShape == null || overlayShape.Elements == null)
             {
                 continue;

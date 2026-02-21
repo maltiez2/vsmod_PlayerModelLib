@@ -1,7 +1,6 @@
 ﻿using HarmonyLib;
 using System.Reflection;
 using System.Reflection.Emit;
-using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Datastructures;
@@ -11,125 +10,6 @@ namespace PlayerModelLib;
 
 internal static class TranspilerPatches
 {
-    [HarmonyPatchCategory("PlayerModelLibTranspiler")] // addGearToShape
-    public static class PatchEntityBehaviorContainerModelReplacement
-    {
-        [HarmonyTargetMethod]
-        static MethodBase TargetMethod()
-        {
-            return AccessTools.Method(typeof(EntityBehaviorContainer), "addGearToShape",
-            [
-                typeof(ICoreAPI),
-                typeof(Entity),
-                typeof(ITextureAtlasAPI),
-                typeof(Shape),
-                typeof(ItemStack),
-                typeof(IAttachableToEntity),
-                typeof(string),
-                typeof(string),
-                typeof(string[]).MakeByRefType(),
-                typeof(IDictionary<string, CompositeTexture>),
-                typeof(Dictionary<string, StepParentElementTo>)
-            ]);
-        }
-
-        static MethodInfo _applyStepParentOverridesMI = AccessTools.Method(typeof(EntityBehaviorContainer), "applyStepParentOverrides");
-
-        static MethodInfo _getModelReplacementMI = AccessTools.Method(typeof(PatchEntityBehaviorContainerModelReplacement), nameof(GetModelReplacement));
-
-        [HarmonyTranspiler]
-        public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
-        {
-            List<CodeInstruction> codes = new(instructions);
-
-            for (int i = 0; i < codes.Count; i++)
-            {
-                if (codes[i].Calls(_applyStepParentOverridesMI))
-                {
-                    // Insert BEFORE first applyStepParentOverrides call
-                    codes.InsertRange(i,
-                    [
-                        // stack
-                        new CodeInstruction(OpCodes.Ldarg_S, 4),   // ItemStack stack
-                        new CodeInstruction(OpCodes.Ldarg_1),      // Entity optionalTargetEntity
-
-                        new CodeInstruction(OpCodes.Ldloca_S, 3),  // ref Shape shape
-                        new CodeInstruction(OpCodes.Ldloca_S, 5),  // ref CompositeShape compositeShape
-
-                        new CodeInstruction(OpCodes.Ldarg_S, 5),   // IAttachableToEntity iatta
-                        new CodeInstruction(OpCodes.Ldloc_1),      // float damageEffect
-                        new CodeInstruction(OpCodes.Ldarg_S, 6),   // string slotCode
-                        new CodeInstruction(OpCodes.Ldarg_S, 8),   // ref string[] willDeleteElements
-
-                        new CodeInstruction(OpCodes.Call, _getModelReplacementMI)
-                    ]);
-
-                    break; // only first occurrence
-                }
-            }
-
-            return Transpiler2(codes);
-        }
-
-        private static IEnumerable<CodeInstruction> Transpiler2(IEnumerable<CodeInstruction> instructions)
-        {
-            List<CodeInstruction> codes = [.. instructions];
-
-            for (int i = 2; i < codes.Count; i++)
-            {
-                if (codes[i].opcode == OpCodes.Ldloc_0 && codes[i - 1].opcode == OpCodes.Blt && codes[i - 2].opcode == OpCodes.Conv_I4)
-                {
-                    List<CodeInstruction> copyCodes = codes[i..(i + 3)];
-                    copyCodes[2] = copyCodes[2].Clone();
-                    copyCodes[2].opcode = OpCodes.Brtrue_S;
-                    codes.InsertRange(i + 3, copyCodes);
-                    codes.InsertRange(i - 2,
-                    [
-                        new CodeInstruction(OpCodes.Ldloc_S, 7),
-                        new CodeInstruction(OpCodes.Ldarg_0),
-                        new CodeInstruction(OpCodes.Ldfld, _entityField),
-                        new CodeInstruction(OpCodes.Call, _insertMethod)
-                    ]);
-
-                    return codes;
-                }
-            }
-
-            return codes;
-        }
-
-        private static void GetModelReplacement(ItemStack? stack, Entity entity, ref Shape? defaultShape, ref CompositeShape? compositeShape, IAttachableToEntity yadayada, float damageEffect, string slotCode, ref string[] willDeleteElements)
-        {
-            if (entity?.Api?.Side != EnumAppSide.Client)
-            {
-                return;
-            }
-            ShapeReplacementUtil.GetModelReplacement(stack, entity, ref defaultShape, ref compositeShape, yadayada, damageEffect, slotCode, ref willDeleteElements);
-        }
-
-        private static void InsertTexturesIntoAtlas(Dictionary<string, CompositeTexture> textures, Entity entity)
-        {
-            if (entity?.Api is not ICoreClientAPI clientApi || textures is null)
-            {
-                return;
-            }
-
-            foreach ((string code, CompositeTexture compositeTexture) in textures)
-            {
-                textures[code] = compositeTexture.Clone();
-                ThreadSafeUtils.InsertTextureIntoAtlas(textures[code], clientApi, entity);
-            }
-        }
-
-        private static readonly MethodInfo _insertMethod = AccessTools.Method(
-            typeof(PatchEntityBehaviorContainerModelReplacement),
-            nameof(InsertTexturesIntoAtlas)
-        );
-
-        private static readonly FieldInfo _entityField = AccessTools.Field(typeof(EntityBehavior), "entity");
-    }
-
-
     [HarmonyPatchCategory("PlayerModelLibTranspiler")]
     [HarmonyPatch(typeof(EntityPlayer), "updateEyeHeight")]
     public static class PatchEntityPlayerUpdateEyeHeight

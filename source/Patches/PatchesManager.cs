@@ -72,7 +72,6 @@ public static class PatchesManager
     private static void PatchClient(ICoreClientAPI api)
     {
         ScrollPatches.Init(api);
-        OffThreadRenderingPatches.Patch(OffThreadPatchesId, api);
     }
     private static void PatchServer(ICoreServerAPI api)
     {
@@ -87,7 +86,7 @@ public static class PatchesManager
     }
     private static void UnpatchClient()
     {
-        OffThreadRenderingPatches.Unpatch(OffThreadPatchesId);
+        // no patches to unpatch
     }
     private static void UnpatchServer()
     {

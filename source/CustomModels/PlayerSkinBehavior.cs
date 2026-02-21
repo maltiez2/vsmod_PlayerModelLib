@@ -9,6 +9,7 @@ using Vintagestory.API.MathTools;
 using Vintagestory.API.Util;
 using Vintagestory.Client.NoObf;
 using Vintagestory.GameContent;
+using static OpenTK.Graphics.OpenGL.GL;
 
 namespace PlayerModelLib;
 
@@ -46,6 +47,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
     public readonly ThreadSafeDictionary<string, SkinnablePart> AvailableSkinPartsByCode = new([]);
     public readonly ThreadSafeList<SkinnablePart> AvailableSkinParts = new([]);
     public readonly ThreadSafeList<AppliedSkinnablePartVariant> AppliedSkinParts = new([]);
+    public readonly ThreadSafeDictionary<string, TextureAtlasPosition> OverlayTextures = new([]);
 
     public string VoiceType { get; set; } = "altoflute";
     public string VoicePitch { get; set; } = "medium";
@@ -58,10 +60,6 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
     public event Action<Shape>? OnShapeTesselated;
 
     public static event OnWearableItemProcessingDelegate? OnWearableItemProcessing;
-
-    public readonly ThreadSafeUInt TexturesAwaitingToBeAddedToAtlas = new(0);
-
-    public readonly ThreadSafeUInt TextureOverlaysAwaitingToBeAddedToAtlas = new(0);
 
 
     public Size2i? AtlasSize => ModelSystem?.GetAtlasSize(CurrentModelCode, entity);
@@ -91,6 +89,15 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         }
 
         SkinRandomizerConstraints = entity.Api.Assets.Get("config/seraphrandomizer.json").ToObject<SeraphRandomizerConstraints>();
+    }
+
+    public override void AfterInitialized(bool onFirstSpawn)
+    {
+        WearablesTesselator = entity.GetBehavior<WearablesTesselatorBehavior>();
+        if (WearablesTesselator != null)
+        {
+            WearablesTesselator.OnTryGetTexturePositionByInstance += ReplaceOverlay;
+        }
     }
 
     public virtual void ActuallyInitialize()
@@ -502,6 +509,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
     protected string? TempModelCode;
     protected ITreeAttribute? SkinTree;
     protected SeraphRandomizerConstraints? SkinRandomizerConstraints;
+    protected WearablesTesselatorBehavior? WearablesTesselator;
 
 
     protected void SetModelAttribute(string code)
@@ -903,24 +911,26 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         string prefixCode = CustomModelsSystem.GetSkinPartTexturePrefix(CurrentModelCode, skinPart.Code);
         partShape.SubclassForStepParenting(prefixCode);
 
+        //ShapeLoadingUtil.PrefixTextures(partShape, prefixCode);
+
         foreach ((string code, int[] size) in partShape.TextureSizes)
         {
             entityShape.TextureSizes[code] = size;
         }
-
-        IDictionary<string, CompositeTexture> textures = entity.Properties.Client.Textures;
-        entityShape.StepParentShape(partShape, shapePath.ToShortString(), shapePathForLogging, ClientApi.Logger, (code, path) =>
+        foreach ((string code, AssetLocation texturePath) in partShape.Textures)
         {
-            if (!textures.ContainsKey(prefixCode + code))
-            {
-                CompositeTexture compositeTexture = new(path);
-                textures[prefixCode + code] = compositeTexture;
-                compositeTexture.Bake(ClientApi.Assets);
+            entityShape.Textures[code] = texturePath;
+        }
+        foreach ((string textureCode, AssetLocation? texturePath) in partShape.Textures)
+        {
+            CompositeTexture compositeTexture = new(texturePath);
 
-                TexturesAwaitingToBeAddedToAtlas.Increment();
-                ClientApi.Event.EnqueueMainThreadTask(() => InsertReplacedTextureIntoAtlas(compositeTexture, ClientApi, compositeTexture.Baked.TextureFilenames[0], shapePathForLogging), "PlayerSkinBehavior.AddSkinPart");
-            }
-        });
+            ThreadSafeUtils.InsertTextureIntoAtlas(compositeTexture, ClientApi, entity, onInsert: (textureSubId, position) =>
+            {
+                WearablesTesselator?.WearableTextures.SetValue(textureCode, position);
+            });
+        }
+        ShapeLoadingUtil.StepParentShape(entityShape, partShape);
 
         return entityShape;
     }
@@ -936,18 +946,10 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         entityShape.TextureSizes[code] = [textureWidth, textureHeight];
         textures[code] = compositeTexture;
 
-        TexturesAwaitingToBeAddedToAtlas.Increment();
-        api.Event.EnqueueMainThreadTask(() => InsertReplacedTextureIntoAtlas(compositeTexture, api, location, shapePathForLogging), "PlayerSkinBehavior.ReplaceTexture");
-    }
-
-    protected void InsertReplacedTextureIntoAtlas(CompositeTexture compositeTexture, ICoreClientAPI api, AssetLocation location, string shapePathForLogging)
-    {
-        if (!api.EntityTextureAtlas.GetOrInsertTexture(compositeTexture.Baked.TextureFilenames[0], out int textureSubId, out _, null, -1))
+        ThreadSafeUtils.InsertTextureIntoAtlas(compositeTexture, api, entity, onInsert: (textureSubId, position) =>
         {
-            LoggerUtil.Warn(api, typeof(PlayerSkinBehavior), $"Skin part shape {shapePathForLogging} defined texture {location}, no such texture found.");
-        }
-        compositeTexture.Baked.TextureSubId = textureSubId;
-        TexturesAwaitingToBeAddedToAtlas.Decrement();
+            WearablesTesselator?.WearableTextures.SetValue(code, position);
+        });
     }
 
     protected virtual void AddOverlayTexture(string code, AssetLocation overlayTextureLocation, EnumColorBlendMode overlayMode)
@@ -982,17 +984,10 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
 
         clonedBaseTexture.BlendedOverlays = OverlaysByTextures.GetValue(code);
 
-        TexturesAwaitingToBeAddedToAtlas.Increment();
-        api.Event.EnqueueMainThreadTask(() => InsertOverlayTextureIntoAtlas(code, clonedBaseTexture, api), "PlayerSkinBehavior.ReplaceTexture");
-    }
-
-    protected void InsertOverlayTextureIntoAtlas(string code, CompositeTexture compositeTexture, ICoreClientAPI api)
-    {
-        api.EntityTextureAtlas.GetOrInsertTexture(compositeTexture, out _, out TextureAtlasPosition texturePosition, -1);
-
-        OverlaysTexturePositions.SetValue(code, texturePosition);
-
-        TexturesAwaitingToBeAddedToAtlas.Decrement();
+        ThreadSafeUtils.InsertTextureIntoAtlas(clonedBaseTexture, api, entity, onInsert: (textureSubId, position) =>
+        {
+            OverlayTextures.SetValue(code, position);
+        });
     }
 
     protected virtual void SetZNear()
@@ -1019,7 +1014,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
 
     protected virtual string GetPlayerModelAttributeValue() => entity.WatchedAttributes.GetString("skinModel", "seraph") ?? "seraph";
 
-    private void ApplyTraitAttributes(string modelCode)
+    protected void ApplyTraitAttributes(string modelCode)
     {
         EntityPlayer? eplr = entity as EntityPlayer;
         CharacterSystem? __instance = eplr?.Api.ModLoader.GetModSystem<CharacterSystem>();
@@ -1078,5 +1073,13 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         }
 
         eplr.GetBehavior<EntityBehaviorHealth>()?.MarkDirty();
+    }
+
+    protected virtual void ReplaceOverlay(WearablesTesselatorBehavior tesselatorBehavior, string code, ref TextureAtlasPosition position)
+    {
+        if (OverlayTextures.TryGetValue(code, out TextureAtlasPosition? overlayPosition))
+        {
+            position = overlayPosition;
+        }
     }
 }

@@ -14,6 +14,9 @@ public class CustomPlayerShapeRenderer : EntityPlayerShapeRenderer
     {
     }
 
+    public readonly ThreadSafeUInt TexturesAwaitingToBeAddedToAtlas = new(0);
+
+
     public override void TesselateShape()
     {
         if (PlayerModelModSystem.Settings.MultiThreadPayerShapeGeneration && entity.Api.Side == EnumAppSide.Client)
@@ -156,15 +159,6 @@ public class CustomPlayerShapeRenderer : EntityPlayerShapeRenderer
             return;
         }
 
-        PlayerSkinBehavior? skinBehavior = entity.GetBehavior<PlayerSkinBehavior>();
-        if (skinBehavior == null)
-        {
-            _tesselating.SetFalse();
-            return;
-        }
-        
-        
-
         CompositeShape compositeShape = ((OverrideCompositeShape != null) ? OverrideCompositeShape : entity.Properties.Client.Shape);
         Shape entityShape = ((OverrideEntityShape != null) ? OverrideEntityShape : entity.Properties.Client.LoadedShapeForEntity);
         if (entityShape == null)
@@ -175,7 +169,7 @@ public class CustomPlayerShapeRenderer : EntityPlayerShapeRenderer
 
         entity.OnTesselation(ref entityShape, compositeShape.Base.ToString());
 
-        while (skinBehavior.TexturesAwaitingToBeAddedToAtlas.Value > 0)
+        while (TexturesAwaitingToBeAddedToAtlas.Value > 0)
         {
             Thread.Sleep(30);
         }
@@ -208,7 +202,7 @@ public class CustomPlayerShapeRenderer : EntityPlayerShapeRenderer
                     QuantityElements = compositeShape.QuantityElements,
                     SelectiveElements = (ovse ?? compositeShape.SelectiveElements),
                     IgnoreElements = compositeShape.IgnoreElements,
-                    TexSource = this,
+                    TexSource = entity.GetBehavior<WearablesTesselatorBehavior>(),
                     WithJointIds = true,
                     WithDamageEffect = true,
                     TypeForLogging = "entity",

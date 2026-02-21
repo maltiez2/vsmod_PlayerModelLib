@@ -33,6 +33,9 @@ public sealed class PlayerModelModSystem : ModSystem
     public override void Start(ICoreAPI api)
     {
         api.RegisterEntityBehaviorClass("PlayerModelLib:ExtraSkinnable", typeof(PlayerSkinBehavior));
+        api.RegisterEntityBehaviorClass("PlayerModelLib:CustomPlayerInventory", typeof(CustomPlayerInventory));
+        api.RegisterEntityBehaviorClass("PlayerModelLib:WearablesTesselator", typeof(WearablesTesselatorBehavior));
+        api.RegisterEntityBehaviorClass("PlayerModelLib:WearableCollectibleLight", typeof(WearableCollectibleLightBehavior));
 
         PatchesManager.Patch(api);
 
