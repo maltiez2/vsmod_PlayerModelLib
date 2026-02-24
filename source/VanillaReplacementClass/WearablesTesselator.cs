@@ -34,6 +34,8 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
     public static event OnTryGetTexturePositionDelegate? OnTryGetTexturePosition;
     public readonly ThreadSafeDictionary<string, TextureAtlasPosition> WearableTextures = new([]);
 
+    public bool TesselateItems { get; set; } = true;
+
     public event OnTryGetTexturePositionDelegate? OnTryGetTexturePositionByInstance;
 
     public override void OnTesselation(ref Shape entityShape, string shapePathForLogging, ref bool shapeIsCloned, ref string[] willDeleteElements)
@@ -52,6 +54,11 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
 
                 AddTextureToAtlas(clientApi, code, texture);
             }
+        }
+
+        if (!TesselateItems)
+        {
+            return;
         }
 
         foreach (string inventoryId in InventoriesToProcess)

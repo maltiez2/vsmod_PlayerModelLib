@@ -968,8 +968,8 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     private void OnToggleDressOnOff(bool on)
     {
         _charNaked = !on;
-        EntityBehaviorPlayerInventory? bh = capi.World.Player.Entity.GetBehavior<EntityBehaviorPlayerInventory>();
-        if (bh != null) bh.hideClothing = _charNaked;
+        WearablesTesselatorBehavior? bh = capi.World.Player.Entity.GetBehavior<WearablesTesselatorBehavior>();
+        if (bh != null) bh.TesselateItems = !_charNaked;
         ReTesselate();
     }
     private void onToggleSkinPartColor(string partCode, string variantCode)

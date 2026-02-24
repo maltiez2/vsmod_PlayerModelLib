@@ -126,7 +126,10 @@ public static class ShapeLoadingUtil
             foreach ((string from, string to) in replacedCodes)
             {
                 shape.TextureSizes[to] = [shape.TextureWidth, shape.TextureHeight];
-                shape.Textures[to] = shape.Textures[from];
+                if (shape.Textures.ContainsKey(to))
+                {
+                    shape.Textures[to] = shape.Textures[from];
+                }
                 shape.Textures.Remove(from);
             }
         }
