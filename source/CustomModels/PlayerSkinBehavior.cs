@@ -9,7 +9,6 @@ using Vintagestory.API.MathTools;
 using Vintagestory.API.Util;
 using Vintagestory.Client.NoObf;
 using Vintagestory.GameContent;
-using static OpenTK.Graphics.OpenGL.GL;
 
 namespace PlayerModelLib;
 
@@ -909,9 +908,8 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         }
 
         string prefixCode = CustomModelsSystem.GetSkinPartTexturePrefix(CurrentModelCode, skinPart.Code);
-        partShape.SubclassForStepParenting(prefixCode);
 
-        //ShapeLoadingUtil.PrefixTextures(partShape, prefixCode);
+        ShapeLoadingUtil.PrefixTextures(partShape, prefixCode);
 
         foreach ((string code, int[] size) in partShape.TextureSizes)
         {
@@ -919,7 +917,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         }
         foreach ((string code, AssetLocation texturePath) in partShape.Textures)
         {
-            entityShape.Textures[code] = texturePath;
+            entityShape.Textures[prefixCode + code] = texturePath;
         }
         foreach ((string textureCode, AssetLocation? texturePath) in partShape.Textures)
         {

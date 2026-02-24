@@ -172,7 +172,7 @@ public static class ShapeLoadingUtil
             if (shapeElementFace != null && shapeElementFace.Texture != null && textureCode != null && shapeElementFace.Enabled && !shapeElementFace.Texture.StartsWith(prefix))
             {
                 shapeElementFace.Texture = prefix + shapeElementFace.Texture;
-                replacedCodes.Add(textureCode, prefix + textureCode);
+                replacedCodes[textureCode] = prefix + textureCode;
             }
         }
     }
