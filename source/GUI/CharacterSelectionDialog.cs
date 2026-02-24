@@ -101,6 +101,8 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         ReTesselate();
 
         RenderState = 0;
+
+        OnToggleDressOnOff(false);
     }
     public override bool CaptureAllInputs()
     {
@@ -302,7 +304,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     private int _currentClassIndex = 0;
     private EnumCreateCharacterTabs _currentTab = 0;
     private float _charZoom = 1f;
-    private bool _charNaked = true;
+    private bool _hideClothing = true;
     private readonly int _dlgHeight = 433 + 80 + 33;
     private float _yaw = -GameMath.PIHALF + 0.3f;
     private float _height = 0;
@@ -643,7 +645,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         string modelDescription = CreateModelDescription(system, skinBehavior.CurrentModelCode);
         composer.GetRichtext("modelDescription").SetNewText(modelDescription, CairoFont.WhiteDetailText());
 
-        ReTesselate();
+        OnToggleDressOnOff(false);
     }
     private void ComposeSkinTab(GuiComposer composer, EntityBehaviorPlayerInventory inventoryBehavior, double yPosition, double padding, ElementBounds backgroundBounds)
     {
@@ -651,7 +653,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         if (skinMod == null) return;
 
-        inventoryBehavior.hideClothing = _charNaked;
+        inventoryBehavior.hideClothing = _hideClothing;
 
         EntityShapeRenderer? essr = capi.World.Player.Entity.Properties.Client.Renderer as EntityShapeRenderer;
         essr?.TesselateShape();
@@ -770,7 +772,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         ScrollPatches.PostLoop(composer, toggleButtonBounds);
 
         composer.AddInset(_insetSlotBounds, 2);
-        composer.AddToggleButton(Lang.Get("Show dressed"), smallfont, OnToggleDressOnOff, toggleButtonBounds, "showdressedtoggle");
+        composer.AddToggleButton(Lang.Get("playermodellib:gui-button-hide-clothing"), smallfont, OnToggleDressOnOff, toggleButtonBounds, "showdressedtoggle");
         composer.AddButton(Lang.Get("Randomize"), () => { return OnRandomizeSkin(new Dictionary<string, string>()); }, ElementBounds.Fixed(0, _dlgHeight - 25).WithAlignment(EnumDialogArea.LeftFixed).WithFixedPadding(8, 6), CairoFont.WhiteSmallText(), EnumButtonStyle.Small);
         composer.AddIf(capi.Settings.String.Exists("lastSkinSelection"))
             .AddButton(Lang.Get("Last selection"), () => { return OnRandomizeSkin(GetPreviousSelection()); }, ElementBounds.Fixed(130, _dlgHeight - 25).WithAlignment(EnumDialogArea.LeftFixed).WithFixedPadding(8, 6), CairoFont.WhiteSmallText(), EnumButtonStyle.Small)
@@ -778,7 +780,8 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         composer.AddSmallButton(Lang.Get("Confirm Skin"), OnNextImpl, ElementBounds.Fixed(11, _dlgHeight - 24).WithAlignment(EnumDialogArea.RightFixed).WithFixedPadding(12, 6), EnumButtonStyle.Normal);
 
-        composer.GetToggleButton("showdressedtoggle").SetValue(!_charNaked);
+        composer.GetToggleButton("showdressedtoggle").SetValue(false);
+        OnToggleDressOnOff(false);
     }
     private void ComposeClassTab(GuiComposer composer, double yPosition, double padding, double slotSize)
     {
@@ -836,6 +839,8 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         composer.GetScrollbar("scrollbar").SetScrollbarPosition(0);
 
         ChangeClass(0);
+
+        OnToggleDressOnOff(false);
     }
 
 
@@ -967,9 +972,12 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     }
     private void OnToggleDressOnOff(bool on)
     {
-        _charNaked = !on;
-        WearablesTesselatorBehavior? bh = capi.World.Player.Entity.GetBehavior<WearablesTesselatorBehavior>();
-        if (bh != null) bh.TesselateItems = !_charNaked;
+        _hideClothing = on;
+        WearablesTesselatorBehavior? tesselator = capi.World.Player.Entity.GetBehavior<WearablesTesselatorBehavior>();
+        if (tesselator != null)
+        {
+            tesselator.TesselateItems = !_hideClothing;
+        }
         ReTesselate();
     }
     private void onToggleSkinPartColor(string partCode, string variantCode)

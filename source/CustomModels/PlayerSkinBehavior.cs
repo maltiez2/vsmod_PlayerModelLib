@@ -913,6 +913,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         string prefixCode = CustomModelsSystem.GetSkinPartTexturePrefix(CurrentModelCode, skinPart.Code);
 
         ShapeLoadingUtil.PrefixTextures(partShape, prefixCode);
+        ShapeLoadingUtil.PrefixAnimations(partShape, prefixCode);
 
         foreach ((string code, int[] size) in partShape.TextureSizes)
         {
@@ -920,7 +921,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         }
         foreach ((string code, AssetLocation texturePath) in partShape.Textures)
         {
-            entityShape.Textures[prefixCode + code] = texturePath;
+            entityShape.Textures[code] = texturePath;
         }
 
         IDictionary<string, CompositeTexture> entityTextures = entity.Properties.Client.Textures;

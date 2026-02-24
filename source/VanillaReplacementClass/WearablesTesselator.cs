@@ -34,7 +34,10 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
     public static event OnTryGetTexturePositionDelegate? OnTryGetTexturePosition;
     public readonly ThreadSafeDictionary<string, TextureAtlasPosition> WearableTextures = new([]);
 
-    public bool TesselateItems { get; set; } = true;
+    public bool TesselateItems {
+        get => TesselateItemsValue.Value;
+        set => TesselateItemsValue.Value = value;
+    }
 
     public event OnTryGetTexturePositionDelegate? OnTryGetTexturePositionByInstance;
 
@@ -61,6 +64,11 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
             return;
         }
 
+        if (PlayerEntity.Player?.InventoryManager == null)
+        {
+            return;
+        }
+
         foreach (string inventoryId in InventoriesToProcess)
         {
             IInventory? inventory = PlayerEntity.Player?.InventoryManager?.GetOwnInventory(inventoryId);
@@ -82,6 +90,7 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
 
 
     protected const string DefaultSlotCode = "default";
+    protected readonly ThreadSafeBool TesselateItemsValue = new(true);
 
     Size2i ITexPositionSource.AtlasSize => (entity.Api as ICoreClientAPI)?.EntityTextureAtlas.Size ?? new();
     TextureAtlasPosition ITexPositionSource.this[string textureCode]

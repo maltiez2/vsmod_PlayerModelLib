@@ -98,7 +98,7 @@ public static class ShapeLoadingUtil
     }
     public static void PrefixTextures(Shape shape, string prefix, float damageEffect = 0f)
     {
-        if (shape.Elements == null)
+        if (shape.Elements == null || shape.Textures == null)
         {
             return;
         }
@@ -108,30 +108,35 @@ public static class ShapeLoadingUtil
         {
             WalkShapeElements(shapeElement, element => PrefixFacesTextures(element, prefix, replacedCodes, damageEffect));
         }
+        
+        Dictionary<string, int[]> textureSizesCopy = shape.TextureSizes.ShallowClone();
+        shape.TextureSizes.Clear();
 
-        if (shape.Textures != null)
+        foreach ((string code, int[] size) in textureSizesCopy)
         {
-            Dictionary<string, int[]> textureSizesCopy = shape.TextureSizes.ShallowClone();
-            shape.TextureSizes.Clear();
-
-            foreach ((string code, int[] size) in textureSizesCopy)
+            if (replacedCodes.ContainsKey(code))
             {
-                if (replacedCodes.ContainsKey(code))
-                {
-                    shape.TextureSizes[replacedCodes[code]] = size;
-                    replacedCodes.Remove(replacedCodes[code]);
-                }
+                shape.TextureSizes[replacedCodes[code]] = size;
+                replacedCodes.Remove(code);
             }
+        }
 
-            foreach ((string from, string to) in replacedCodes)
+        foreach ((string from, string to) in replacedCodes)
+        {
+            if (shape.TextureSizes.ContainsKey(from))
+            {
+                shape.TextureSizes[to] = shape.TextureSizes[from];
+            }
+            else
             {
                 shape.TextureSizes[to] = [shape.TextureWidth, shape.TextureHeight];
-                if (shape.Textures.ContainsKey(from))
-                {
-                    shape.Textures[to] = shape.Textures[from];
-                }
-                shape.Textures.Remove(from);
             }
+                
+            if (shape.Textures.ContainsKey(from))
+            {
+                shape.Textures[to] = shape.Textures[from];
+            }
+            shape.Textures.Remove(from);
         }
     }
     public static void PrefixAnimations(Shape shape, string prefix)
@@ -274,9 +279,11 @@ public static class ShapeLoadingUtil
 
         foreach ((string texutreCode, AssetLocation path) in childShape.Textures)
         {
-            if (parentShape.TextureSizes.ContainsKey(texutreCode)) continue;
-
-            parentShape.TextureSizes[texutreCode] = [childShape.TextureWidth, childShape.TextureHeight];
+            if (!parentShape.TextureSizes.ContainsKey(texutreCode))
+            {
+                parentShape.TextureSizes[texutreCode] = [childShape.TextureWidth, childShape.TextureHeight];
+            }
+ 
             parentShape.Textures[texutreCode] = path;
         }
     }
