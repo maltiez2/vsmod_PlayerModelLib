@@ -60,10 +60,11 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
 
     public static event OnWearableItemProcessingDelegate? OnWearableItemProcessing;
 
-
+#pragma warning disable CS8766 // Vanilla has incorrect nullability
     public Size2i? AtlasSize => ModelSystem?.GetAtlasSize(CurrentModelCode, entity);
 
     public TextureAtlasPosition? this[string textureCode] => GetAtlasPosition(textureCode, entity);
+#pragma warning restore CS8766
 
     public override void Initialize(EntityProperties properties, JsonObject attributes)
     {
@@ -200,6 +201,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         OnActuallyInitialize?.Invoke();
     }
 
+#pragma warning disable CS8765 // Vanilla has incorect nullability of willDeleteElements
     public override void OnTesselation(ref Shape entityShape, string shapePathForLogging, ref bool shapeIsCloned, ref string[]? willDeleteElements)
     {
         if (ModelSystem == null || ClientApi == null || !ModelSystem.ModelsLoaded) return;
@@ -214,8 +216,9 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
 
         OnShapeTesselated?.Invoke(entityShape);
     }
+#pragma warning restore CS8765
 
-    public void SetCurrentModel(string code, float size)
+    public virtual void SetCurrentModel(string code, float size)
     {
         SkinTree = entity.WatchedAttributes["skinConfig"] as ITreeAttribute;
         CurrentModelCode = code;
@@ -226,7 +229,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         ApplyTraitAttributes(CurrentModelCode);
     }
 
-    public void ApplyTraitAttributesWithModelTraits(string modelCode) => ApplyTraitAttributes(modelCode);
+    public virtual void ApplyTraitAttributesWithModelTraits(string modelCode) => ApplyTraitAttributes(modelCode);
 
     public override ITexPositionSource? GetTextureSource(ref EnumHandling handling)
     {
@@ -234,7 +237,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         return this;
     }
 
-    public TextureAtlasPosition? GetAtlasPosition(string textureCode, Entity entity)
+    public virtual TextureAtlasPosition? GetAtlasPosition(string textureCode, Entity entity)
     {
         if (OverlaysTexturePositions.TryGetValue(textureCode, out TextureAtlasPosition? position))
         {
@@ -263,7 +266,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
 
     public override string PropertyName() => "skinnableplayercustommodel";
 
-    public void UpdateEntityProperties()
+    public virtual void UpdateEntityProperties()
     {
         if (CurrentSize <= 0)
         {
@@ -328,7 +331,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         SetZNear();
     }
 
-    public IReadOnlyList<AppliedSkinnablePartVariant> GetAppliedSkinParts()
+    public virtual IReadOnlyList<AppliedSkinnablePartVariant> GetAppliedSkinParts()
     {
         ITreeAttribute? appliedTree = SkinTree?.GetTreeAttribute("appliedParts");
         if (appliedTree == null)
@@ -434,7 +437,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         }
     }
 
-    public bool RandomizeSkin(Entity entity, Dictionary<string, string> preSelection, bool playVoice = true)
+    public virtual bool RandomizeSkin(Entity entity, Dictionary<string, string> preSelection, bool playVoice = true)
     {
         bool mustached = entity.Api.World.Rand.NextDouble() < 0.3;
 
@@ -511,7 +514,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
     protected WearablesTesselatorBehavior? WearablesTesselator;
 
 
-    protected void SetModelAttribute(string code)
+    protected virtual void SetModelAttribute(string code)
     {
         if (entity.Api.Side == EnumAppSide.Server)
         {
@@ -520,7 +523,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         }
     }
 
-    protected Shape? Tesselate(string shapePathForLogging, ref string[]? willDeleteElements)
+    protected virtual Shape? Tesselate(string shapePathForLogging, ref string[]? willDeleteElements)
     {
         if (ModelSystem == null || ClientApi == null || !ModelSystem.ModelsLoaded) return null;
 
@@ -545,7 +548,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         return null;
     }
 
-    protected void OnSkinConfigChanged()
+    protected virtual void OnSkinConfigChanged()
     {
         if (GuiDialogCreateCustomCharacter.DialogOpened) return;
 
@@ -563,7 +566,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         }
     }
 
-    protected void OnVoiceConfigChanged()
+    protected virtual void OnVoiceConfigChanged()
     {
         if (GuiDialogCreateCustomCharacter.DialogOpened) return;
 
@@ -577,7 +580,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         ApplyVoice(VoiceType, VoicePitch, false);
     }
 
-    protected void OnSkinModelAttrChanged()
+    protected virtual void OnSkinModelAttrChanged()
     {
         if (GuiDialogCreateCustomCharacter.DialogOpened) return;
 
@@ -588,7 +591,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         }
     }
 
-    protected void OnModelSizeAttrChanged()
+    protected virtual void OnModelSizeAttrChanged()
     {
         if (GuiDialogCreateCustomCharacter.DialogOpened) return;
 
@@ -599,7 +602,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         }
     }
 
-    protected void OnSkinModelChanged()
+    protected virtual void OnSkinModelChanged()
     {
         if (ModelSystem?.ModelsLoaded != true) return;
 
@@ -623,7 +626,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         }
     }
 
-    protected void ReplaceEntityShape()
+    protected virtual void ReplaceEntityShape()
     {
         if (ModelSystem?.ModelsLoaded != true) return;
         if (!ModelSystem.CustomModels.TryGetValue(CurrentModelCode, out _)) return;
@@ -638,7 +641,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         OnModelChanged?.Invoke(CurrentModelCode);
     }
 
-    protected void ChangeTags()
+    protected virtual void ChangeTags()
     {
         if (entity.Api.Side == EnumAppSide.Client) return;
 
@@ -875,7 +878,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         keepElements ??= stack.Collectible?.Attributes?["attachableToEntity"]?["keepElements"]?.AsArray<string>(null);
     }
 
-    protected Shape AddSkinPart(AppliedSkinnablePartVariant part, Shape entityShape, string[] disableElements, string shapePathForLogging)
+    protected virtual Shape AddSkinPart(AppliedSkinnablePartVariant part, Shape entityShape, string[] disableElements, string shapePathForLogging)
     {
         if (ClientApi == null) return entityShape;
 
@@ -919,9 +922,12 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         {
             entityShape.Textures[prefixCode + code] = texturePath;
         }
+
+        IDictionary<string, CompositeTexture> entityTextures = entity.Properties.Client.Textures;
         foreach ((string textureCode, AssetLocation? texturePath) in partShape.Textures)
         {
             CompositeTexture compositeTexture = new(texturePath);
+            entityTextures[textureCode] = compositeTexture;
 
             ThreadSafeUtils.InsertTextureIntoAtlas(compositeTexture, ClientApi, entity, onInsert: (textureSubId, position) =>
             {
@@ -1012,7 +1018,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
 
     protected virtual string GetPlayerModelAttributeValue() => entity.WatchedAttributes.GetString("skinModel", "seraph") ?? "seraph";
 
-    protected void ApplyTraitAttributes(string modelCode)
+    protected virtual void ApplyTraitAttributes(string modelCode)
     {
         EntityPlayer? eplr = entity as EntityPlayer;
         CharacterSystem? __instance = eplr?.Api.ModLoader.GetModSystem<CharacterSystem>();

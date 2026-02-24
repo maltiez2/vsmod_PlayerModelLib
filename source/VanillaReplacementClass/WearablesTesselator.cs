@@ -1,4 +1,5 @@
-﻿using System.Collections.Immutable;
+﻿using OpenTK.Windowing.GraphicsLibraryFramework;
+using System.Collections.Immutable;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
@@ -41,6 +42,16 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
         {
             entityShape = ShapeLoadingUtil.CloneShape(entityShape);
             shapeIsCloned = true;
+        }
+
+        if (entityShape.Textures != null && entity.Api is ICoreClientAPI clientApi)
+        {
+            foreach ((string code, AssetLocation? texturePath) in entityShape.Textures)
+            {
+                CompositeTexture texture = new(texturePath);
+
+                AddTextureToAtlas(clientApi, code, texture);
+            }
         }
 
         foreach (string inventoryId in InventoriesToProcess)

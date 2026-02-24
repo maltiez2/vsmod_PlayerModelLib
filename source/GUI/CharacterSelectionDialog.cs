@@ -559,7 +559,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         // *********** RIGHT ICON **************
 
         displayIndex = modelValues.Length == 1 ?
-                0 :
+                -1 :
                 GameMath.Mod(modelIndex - 1 + 2, modelValues.Length);
 
         ElementBounds rightIconInsetBounds = ElementBounds.Fixed(
