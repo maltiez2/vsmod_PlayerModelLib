@@ -1,5 +1,4 @@
-﻿using OpenTK.Windowing.GraphicsLibraryFramework;
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
@@ -20,10 +19,15 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
         PlayerEntity = entity as EntityPlayer ?? throw new InvalidOperationException("WearablesTesselator should be attached only to 'EntityPlayer'");
     }
 
-    public readonly HashSet<string> InventoriesToProcess = [
+    public HashSet<string> InventoriesToProcess { get; protected set; } = [
         GlobalConstants.characterInvClassName,
         GlobalConstants.backpackInvClassName
     ];
+
+    public Dictionary<string, HashSet<int>> SlotsToProcess { get; protected set; } = new()
+    {
+        [GlobalConstants.backpackInvClassName] = [0, 1, 2, 3]
+    };
 
     public override string PropertyName() => "";
 
@@ -34,7 +38,8 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
     public static event OnTryGetTexturePositionDelegate? OnTryGetTexturePosition;
     public readonly ThreadSafeDictionary<string, TextureAtlasPosition> WearableTextures = new([]);
 
-    public bool TesselateItems {
+    public bool TesselateItems
+    {
         get => TesselateItemsValue.Value;
         set => TesselateItemsValue.Value = value;
     }
@@ -78,7 +83,7 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
                 continue;
             }
 
-            ProcessInventory(inventory, ref entityShape, ref willDeleteElements);
+            ProcessInventory(inventoryId, inventory, ref entityShape, ref willDeleteElements);
         }
     }
 
@@ -109,12 +114,19 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
         }
     }
 
-    protected virtual void ProcessInventory(IInventory inventory, ref Shape entityShape, ref string[] willDeleteElements)
+    protected virtual void ProcessInventory(string inventoryId, IInventory inventory, ref Shape entityShape, ref string[] willDeleteElements)
     {
         ImmutableArray<ItemSlot> slots = [.. inventory];
 
+        SlotsToProcess.TryGetValue(inventoryId, out HashSet<int>? slotsToProcess);
+
         foreach (ItemSlot slot in slots)
         {
+            if (slotsToProcess != null && !slotsToProcess.Contains(inventory.GetSlotId(slot)))
+            {
+                continue;
+            }
+
             ItemSlot slotToProcess = slot; // as separate variable to pass as a ref
 
             bool skipSlot = false;

@@ -3,7 +3,6 @@ using System.Diagnostics.CodeAnalysis;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Config;
-using YamlDotNet.Core.Tokens;
 
 namespace PlayerModelLib;
 

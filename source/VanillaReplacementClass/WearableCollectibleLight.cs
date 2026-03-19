@@ -22,6 +22,10 @@ public class WearableCollectibleLightBehavior : EntityBehavior
         GlobalConstants.characterInvClassName,
         GlobalConstants.backpackInvClassName
     ];
+    public readonly Dictionary<string, List<int>> InventoriesSlotsToProcess = new()
+    {
+         [GlobalConstants.backpackInvClassName] = [0, 1, 2, 3]
+    };
 
     public override string PropertyName() => "";
 
@@ -42,6 +46,11 @@ public class WearableCollectibleLightBehavior : EntityBehavior
             foreach (ItemSlot? slot in inventory)
             {
                 if (slot?.Itemstack?.Collectible == null)
+                {
+                    continue;
+                }
+
+                if (InventoriesSlotsToProcess.ContainsKey(inventoryId) && !InventoriesSlotsToProcess[inventoryId].Contains(inventory.GetSlotId(slot)))
                 {
                     continue;
                 }
