@@ -19,12 +19,12 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
         PlayerEntity = entity as EntityPlayer ?? throw new InvalidOperationException("WearablesTesselator should be attached only to 'EntityPlayer'");
     }
 
-    public HashSet<string> InventoriesToProcess { get; protected set; } = [
+    public static HashSet<string> InventoriesToProcess { get; protected set; } = [
         GlobalConstants.characterInvClassName,
         GlobalConstants.backpackInvClassName
     ];
 
-    public Dictionary<string, HashSet<int>> SlotsToProcess { get; protected set; } = new()
+    public static Dictionary<string, HashSet<int>> SlotsToProcess { get; protected set; } = new()
     {
         [GlobalConstants.backpackInvClassName] = [0, 1, 2, 3]
     };
@@ -182,6 +182,8 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
             }
         }
 
+        BeforeWearableShapeAttached?.Invoke(this, inventory, slot, ref entityShape, ref willDeleteElements, ref attachableShape, ref compositeGearShape);
+
         if (stack.Item.Textures != null)
         {
             foreach ((string textureCode, CompositeTexture texture) in stack.Item.Textures)
@@ -190,7 +192,7 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
             }
         }
 
-        BeforeWearableShapeAttached?.Invoke(this, inventory, slot, ref entityShape, ref willDeleteElements, ref attachableShape, ref compositeGearShape);
+        
 
         float damageEffectValue = GetDamageEffectValue(stack);
         attachableShape.ResolveReferences(entity.Api.Logger, $"WearablesTesselator.ProcessSlot for '{stack.Collectible.Code}'");
