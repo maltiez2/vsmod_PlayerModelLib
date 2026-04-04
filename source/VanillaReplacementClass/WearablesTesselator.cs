@@ -182,12 +182,21 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
             }
         }
 
+        if (stack.Item.Textures != null)
+        {
+            foreach ((string textureCode, CompositeTexture texture) in stack.Item.Textures)
+            {
+                attachableShape.Textures[textureCode] = texture.Base;
+            }
+        }
+
         BeforeWearableShapeAttached?.Invoke(this, inventory, slot, ref entityShape, ref willDeleteElements, ref attachableShape, ref compositeGearShape);
 
         float damageEffectValue = GetDamageEffectValue(stack);
         attachableShape.ResolveReferences(entity.Api.Logger, $"WearablesTesselator.ProcessSlot for '{stack.Collectible.Code}'");
         ShapeLoadingUtil.PrefixTextures(attachableShape, prefix, damageEffectValue);
         ShapeLoadingUtil.PrefixAnimations(attachableShape, prefix);
+
 
         bool attached;
         try
@@ -203,6 +212,14 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
         if (attached && entity.Api is ICoreClientAPI clientApi)
         {
             Dictionary<string, CompositeTexture> attachableTextures = entity.Properties?.Client?.Textures?.ToDictionary() ?? [];
+
+            if (stack.Item.Textures != null)
+            {
+                foreach ((string textureCode, CompositeTexture texture) in stack.Item.Textures)
+                {
+                    attachableTextures[prefix + textureCode] = texture.Clone();
+                }
+            }
 
             attachable.CollectTextures(stack, attachableShape, prefix, attachableTextures);
 

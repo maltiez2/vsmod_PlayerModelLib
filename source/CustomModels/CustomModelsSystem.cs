@@ -173,7 +173,7 @@ public sealed class CustomModelsSystem : ModSystem
             CustomModelData modelData = CustomModels[code];
             ProcessCustomModelMainTextures(code, modelData);
             CollectDefaultAttachmentPoints(out Dictionary<string, (AttachmentPoint[] points, ShapeElement element, string parent)> attachmentPointsByElement);
-            AddAttachmentPointsToCustomModel(modelData.Shape, attachmentPointsByElement, code);
+            AddAttachmentPointsToCustomModel(modelData.Shape, attachmentPointsByElement, code, modelData.CreateCuboidsForAttachmentPoints);
 
             if (_api.Side == EnumAppSide.Client)
             {
@@ -317,7 +317,8 @@ public sealed class CustomModelsSystem : ModSystem
             SprintEyeHeightMultiplier = defaultConfig.SprintEyeHeightMultiplier,
             SneakEyeHeightMultiplier = defaultConfig.SneakEyeHeightMultiplier,
             StepHeight = defaultConfig.StepHeight,
-            MaxOxygenFactor = defaultConfig.MaxOxygenFactor
+            MaxOxygenFactor = defaultConfig.MaxOxygenFactor,
+            CreateCuboidsForAttachmentPoints = defaultConfig.CreateCuboidsForAttachmentPoints
         };
 
         CustomModels.Add(_defaultModelCode, defaultModelData);
@@ -434,7 +435,8 @@ public sealed class CustomModelsSystem : ModSystem
             SprintEyeHeightMultiplier = modelConfig.SprintEyeHeightMultiplier,
             SneakEyeHeightMultiplier = modelConfig.SneakEyeHeightMultiplier,
             StepHeight = modelConfig.StepHeight,
-            MaxOxygenFactor = modelConfig.MaxOxygenFactor
+            MaxOxygenFactor = modelConfig.MaxOxygenFactor,
+            CreateCuboidsForAttachmentPoints = modelConfig.CreateCuboidsForAttachmentPoints
         };
 
         AssetLocation icon = new AssetLocation(modelConfig.Icon).WithPathPrefixOnce("textures/").WithPathAppendixOnce(".png");
@@ -795,11 +797,11 @@ public sealed class CustomModelsSystem : ModSystem
             return;
         }
 
-        foreach ((Shape customShape, string code) in CustomModels.Where(entry => entry.Key != _defaultModelCode).Select(entry => (entry.Value.Shape, entry.Value.Code)))
+        foreach ((Shape customShape, string code, bool createCuboids) in CustomModels.Where(entry => entry.Key != _defaultModelCode).Select(entry => (entry.Value.Shape, entry.Value.Code, entry.Value.CreateCuboidsForAttachmentPoints)))
         {
             try
             {
-                AddAttachmentPointsToCustomModel(customShape, attachmentPointsByElement, code);
+                AddAttachmentPointsToCustomModel(customShape, attachmentPointsByElement, code, createCuboids);
             }
             catch (Exception exception)
             {
@@ -875,11 +877,11 @@ public sealed class CustomModelsSystem : ModSystem
             CollectAttachmentPointsRecursively(element, element, attachmentPointsByElement);
         }
     }
-    private void AddAttachmentPointsToCustomModel(Shape customShape, Dictionary<string, (AttachmentPoint[] points, ShapeElement element, string parent)> attachmentPointsByElement, string modelCode)
+    private void AddAttachmentPointsToCustomModel(Shape customShape, Dictionary<string, (AttachmentPoint[] points, ShapeElement element, string parent)> attachmentPointsByElement, string modelCode, bool createMissingCuboids)
     {
         foreach (ShapeElement element in customShape.Elements)
         {
-            AddAttachmentPoints(element, attachmentPointsByElement, modelCode);
+            AddAttachmentPoints(element, attachmentPointsByElement, modelCode, createMissingCuboids);
         }
     }
     private void FixDefaultSkinParts(SkinnablePartExtended[] parts)
@@ -944,7 +946,7 @@ public sealed class CustomModelsSystem : ModSystem
             }
         }
     }
-    private void AddAttachmentPoints(ShapeElement element, Dictionary<string, (AttachmentPoint[] points, ShapeElement element, string parent)> attachmentPointsByElement, string modelCode)
+    private void AddAttachmentPoints(ShapeElement element, Dictionary<string, (AttachmentPoint[] points, ShapeElement element, string parent)> attachmentPointsByElement, string modelCode, bool createMissingCuboids)
     {
         foreach ((string elementName, (AttachmentPoint[] pointsData, ShapeElement elementData, string parentName)) in attachmentPointsByElement)
         {
@@ -976,7 +978,7 @@ public sealed class CustomModelsSystem : ModSystem
                 }
             }
 
-            if (element.Name == parentName && (element.Children == null || !element.Children.Select(child => child?.Name ?? "").Contains(elementName)))
+            if (createMissingCuboids && element.Name == parentName && (element.Children == null || !element.Children.Select(child => child?.Name ?? "").Contains(elementName)))
             {
                 if (element.Children == null)
                 {
@@ -1003,7 +1005,7 @@ public sealed class CustomModelsSystem : ModSystem
         {
             foreach (ShapeElement child in element.Children)
             {
-                AddAttachmentPoints(child, attachmentPointsByElement, modelCode);
+                AddAttachmentPoints(child, attachmentPointsByElement, modelCode, createMissingCuboids);
             }
         }
     }

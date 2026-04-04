@@ -55,6 +55,7 @@ public class CustomModelConfig
     public float SneakEyeHeightMultiplier { get; set; } = 0.8f;
     public float StepHeight { get; set; } = 0.6f;
     public float MaxOxygenFactor { get; set; } = 1;
+    public bool CreateCuboidsForAttachmentPoints { get; set; } = true;
 }
 
 public class CustomModelData
@@ -95,6 +96,7 @@ public class CustomModelData
     public float SneakEyeHeightMultiplier { get; set; } = 0.8f;
     public float StepHeight { get; set; } = 0.6f;
     public float MaxOxygenFactor { get; set; } = 1;
+    public bool CreateCuboidsForAttachmentPoints { get; set; } = true;
 
     public HashSet<string> AvailableClasses { get => PlayerModelModSystem.Settings.DisableModelClassesAndTraits ? [] : _availableClasses; set => _availableClasses = value; }
     public HashSet<string> SkipClasses { get => PlayerModelModSystem.Settings.DisableModelClassesAndTraits ? [] : _skipClasses; set => _skipClasses = value; }

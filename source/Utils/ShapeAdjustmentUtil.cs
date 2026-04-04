@@ -167,7 +167,10 @@ public static class ShapeAdjustmentUtil
                 continue;
             }
 
-            result.StepParentShape(overlayShape, "", "", api.Logger, (_, _) => { });
+            if (!ShapeLoadingUtil.StepParentShape(result, overlayShape))
+            {
+                LoggerUtil.Dev(api, typeof(ShapeAdjustmentUtil), $"Failed to 'StepParentShapeOverlays' for overlay '{overlayPath}' while 'AdjustClothesShape' for base shape '{baseShape.Code}'");
+            }
 
             foreach (ShapeElement? element in overlayShape.Elements)
             {
