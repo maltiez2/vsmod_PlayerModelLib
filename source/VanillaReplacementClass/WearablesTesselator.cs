@@ -1,10 +1,14 @@
-﻿using System.Collections.Immutable;
+﻿using OpenTK.Windowing.GraphicsLibraryFramework;
+using PlayerModelLib.Utils;
+using System;
+using System.Collections.Immutable;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 using Vintagestory.GameContent;
+using static OpenTK.Graphics.OpenGL.GL;
 
 namespace PlayerModelLib;
 
@@ -171,13 +175,11 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
 
         if (compositeGearShape != null && compositeGearShape.Overlays != null)
         {
-            try
+            Result shapeOverlayResult = AttachShapeOverlays(attachableShape, compositeGearShape);
+            shapeOverlayResult.LogErrorsAndWarnings(entity.Api, this);
+            if (!shapeOverlayResult.IsSuccess)
             {
-                AttachShapeOverlays(attachableShape, compositeGearShape);
-            }
-            catch (Exception exception)
-            {
-                LoggerUtil.Error(entity.Api, this, $"Failed to attach attachable shape overlays for collectible '{stack.Collectible.Code}'. Error:\n{exception}");
+                LoggerUtil.Error(entity.Api, this, $"Failed to attach attachable shape overlays for collectible '{stack.Collectible.Code}'.");
                 return;
             }
         }
@@ -200,47 +202,47 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
         ShapeLoadingUtil.PrefixAnimations(attachableShape, prefix);
 
 
-        bool attached;
-        try
+        Result stepParentResult = ShapeLoadingUtil.StepParentShape(entityShape, attachableShape);
+        stepParentResult.LogErrorsAndWarnings(entity.Api, typeof(ShapeAdjustmentUtil));
+        if (!stepParentResult.IsSuccess)
         {
-            attached = ShapeLoadingUtil.StepParentShape(entityShape, attachableShape);
-        }
-        catch (Exception exception)
-        {
-            LoggerUtil.Error(entity.Api, this, $"Failed to attach shape for collectible '{stack.Collectible.Code}'. Error:\n{exception}");
+            LoggerUtil.Error(entity.Api, typeof(ShapeAdjustmentUtil), $"Failed to attach shape for collectible '{stack.Collectible.Code}'.");
             return;
         }
 
-        if (attached && entity.Api is ICoreClientAPI clientApi)
+        if (entity.Api is not ICoreClientAPI clientApi)
         {
-            Dictionary<string, CompositeTexture> attachableTextures = entity.Properties?.Client?.Textures?.ToDictionary() ?? [];
+            return;
+        }
 
-            if (stack.Item.Textures != null)
+
+        Dictionary<string, CompositeTexture> attachableTextures = entity.Properties?.Client?.Textures?.ToDictionary() ?? [];
+
+        if (stack.Item.Textures != null)
+        {
+            foreach ((string textureCode, CompositeTexture texture) in stack.Item.Textures)
             {
-                foreach ((string textureCode, CompositeTexture texture) in stack.Item.Textures)
-                {
-                    attachableTextures[prefix + textureCode] = texture.Clone();
-                }
+                attachableTextures[prefix + textureCode] = texture.Clone();
+            }
+        }
+
+        attachable.CollectTextures(stack, attachableShape, prefix, attachableTextures);
+
+        foreach ((string textureCode, CompositeTexture texture) in attachableTextures)
+        {
+            AddTextureToAtlas(clientApi, textureCode, texture);
+        }
+
+        foreach ((string textureCode, AssetLocation? texturePath) in attachableShape.Textures)
+        {
+            if (texturePath == null || textureCode == "seraph")
+            {
+                continue;
             }
 
-            attachable.CollectTextures(stack, attachableShape, prefix, attachableTextures);
+            CompositeTexture texture = new(texturePath);
 
-            foreach ((string textureCode, CompositeTexture texture) in attachableTextures)
-            {
-                AddTextureToAtlas(clientApi, textureCode, texture);
-            }
-
-            foreach ((string textureCode, AssetLocation? texturePath) in attachableShape.Textures)
-            {
-                if (texturePath == null || textureCode == "seraph")
-                {
-                    continue;
-                }
-
-                CompositeTexture texture = new(texturePath);
-
-                AddTextureToAtlas(clientApi, textureCode, texture);
-            }
+            AddTextureToAtlas(clientApi, textureCode, texture);
         }
     }
 
@@ -297,8 +299,9 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
 
         return gearShape;
     }
-    protected virtual void AttachShapeOverlays(Shape attachableShape, CompositeShape compositeGearShape)
+    protected virtual Result AttachShapeOverlays(Shape attachableShape, CompositeShape compositeGearShape)
     {
+        Result result = Result.Success();
         foreach (CompositeShape? overlay in compositeGearShape.Overlays)
         {
             if (overlay == null)
@@ -308,18 +311,19 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
 
             if (overlay.Base != null)
             {
-                AttachShapeOverlay(attachableShape, overlay.Base);
+                result &= AttachShapeOverlay(attachableShape, overlay.Base);
             }
         }
+        return result;
     }
-    protected virtual void AttachShapeOverlay(Shape attachableShape, AssetLocation overlayShapePath)
+    protected virtual Result AttachShapeOverlay(Shape attachableShape, AssetLocation overlayShapePath)
     {
         Shape? overlayShape = ShapeLoadingUtil.LoadShape(entity.Api, overlayShapePath);
         if (overlayShape == null)
         {
-            return;
+            return Result.Error($"Shape '{overlayShapePath}' was not found when attaching shape overlay.");
         }
 
-        ShapeLoadingUtil.StepParentShape(attachableShape, overlayShape);
+        return ShapeLoadingUtil.StepParentShape(attachableShape, overlayShape);
     }
 }

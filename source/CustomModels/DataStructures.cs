@@ -12,7 +12,7 @@ public class SkinnablePartExtended : SkinnablePart
 {
     public string[] TargetSkinParts { get; set; } = [];
     public bool OverlayTexture { get; set; } = false;
-    public EnumColorBlendMode OverlayMode { get; set; } = EnumColorBlendMode.Normal;
+    public EnumColorBlendMode OverlayMode { get; set; } = EnumColorBlendMode.Overlay;
     public bool Enabled { get; set; } = true;
     public Dictionary<string, string[]> DisableElementsByVariantCode { get; set; } = [];
 }

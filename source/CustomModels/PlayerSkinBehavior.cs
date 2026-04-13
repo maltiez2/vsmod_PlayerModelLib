@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using PlayerModelLib.Utils;
 using System.Diagnostics;
 using System.Reflection;
 using Vintagestory.API.Client;
@@ -9,6 +10,7 @@ using Vintagestory.API.MathTools;
 using Vintagestory.API.Util;
 using Vintagestory.Client.NoObf;
 using Vintagestory.GameContent;
+using static OpenTK.Graphics.OpenGL.GL;
 
 namespace PlayerModelLib;
 
@@ -935,7 +937,13 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
                 WearablesTesselator?.WearableTextures.SetValue(textureCode, position);
             });
         }
-        ShapeLoadingUtil.StepParentShape(entityShape, partShape);
+
+        Result stepParentResult = ShapeLoadingUtil.StepParentShape(entityShape, partShape);
+        stepParentResult.LogErrorsAndWarnings(ClientApi, typeof(ShapeAdjustmentUtil));
+        if (!stepParentResult.IsSuccess)
+        {
+            LoggerUtil.Error(ClientApi, typeof(ShapeAdjustmentUtil), $"Failed to 'AddSkinPart' for part '{part.Category}:{part.Code}'.");
+        }
 
         return entityShape;
     }

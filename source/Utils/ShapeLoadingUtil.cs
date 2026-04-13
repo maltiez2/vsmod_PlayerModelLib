@@ -1,8 +1,11 @@
-﻿using Vintagestory.API.Common;
+﻿using PlayerModelLib.Utils;
+using Vintagestory.API.Common;
 using Vintagestory.API.Util;
 using Vintagestory.ServerMods;
 
 namespace PlayerModelLib;
+
+
 
 public static class ShapeLoadingUtil
 {
@@ -185,64 +188,61 @@ public static class ShapeLoadingUtil
         }
     }
 
-    public static bool StepParentShape(Shape parentShape, Shape childShape)
+    public static Result StepParentShape(Shape parentShape, Shape childShape)
     {
         if (childShape.Elements == null || childShape.Elements.Length == 0)
         {
-            return false;
+            return Result.Error("Child shape does not contain any elements.");
         }
 
-        bool anyElementsAdded = false;
+        Result result = Result.Success();
         foreach (ShapeElement element in childShape.Elements)
         {
-            anyElementsAdded |= StepParentElement(parentShape, element, null);
+            result += StepParentElement(parentShape, element, null);
         }
 
-        if (!anyElementsAdded)
+        if (!result.IsSuccess)
         {
-            return false;
+            return result;
         }
 
         AddChildTextureSizes(parentShape, childShape);
         StepParentAnimations(parentShape, childShape);
 
-        return true;
+        return result;
     }
 
-    public static bool StepParentElement(Shape parentShape, ShapeElement element, ShapeElement? parentElement)
+    public static Result StepParentElement(Shape parentShape, ShapeElement element, ShapeElement? parentElement)
     {
-        bool elementAdded = ProcessShapeElement(parentShape, element, parentElement);
+        Result result = Result.Success();
+
+        result |= ProcessShapeElement(parentShape, element, parentElement);
 
         if (element.Children != null)
         {
             foreach (ShapeElement childElem in element.Children)
             {
-                elementAdded |= StepParentElement(parentShape, childElem, element);
+                result |= StepParentElement(parentShape, childElem, element);
             }
         }
 
-        return elementAdded;
+        return result;
     }
-    public static bool ProcessShapeElement(Shape parentShape, ShapeElement childElement, ShapeElement? parentElement)
+    public static Result ProcessShapeElement(Shape parentShape, ShapeElement childElement, ShapeElement? parentElement)
     {
         ShapeElement stepparentElem;
 
-        if (childElement.StepParentName != null)
+        if (childElement.StepParentName != null && childElement.StepParentName != "")
         {
             stepparentElem = parentShape.GetElementByName(childElement.StepParentName, StringComparison.InvariantCultureIgnoreCase);
             if (stepparentElem == null)
             {
-                parentShape.Elements = parentShape.Elements?.Append(childElement) ?? [childElement];
-                return true;
+                return Result.Error($"Tried to attach '{childElement.Name}' element to '{childElement.StepParentName}', but no such element in parent shape was found.");
             }
         }
         else
         {
-            if (parentElement == null)
-            {
-                throw new InvalidOperationException($"Tried to attach '{childElement.Name}' root element, but it had no step parent element specified");
-            }
-            return false;
+            return Result.Error($"Tried to attach '{childElement.Name}' root element, but it had no step parent element specified");
         }
 
         if (parentElement != null)
@@ -263,7 +263,7 @@ public static class ShapeLoadingUtil
 
         childElement.SetJointIdRecursive(stepparentElem.JointId);
 
-        return true;
+        return Result.Success();
     }
     public static void AddChildTextureSizes(Shape parentShape, Shape childShape)
     {
