@@ -1,6 +1,4 @@
-﻿using OpenTK.Windowing.GraphicsLibraryFramework;
-using PlayerModelLib.Utils;
-using System;
+﻿using PlayerModelLib.Utils;
 using System.Collections.Immutable;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -8,7 +6,6 @@ using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 using Vintagestory.GameContent;
-using static OpenTK.Graphics.OpenGL.GL;
 
 namespace PlayerModelLib;
 
