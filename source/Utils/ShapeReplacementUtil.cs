@@ -136,7 +136,8 @@ public static class ShapeReplacementUtil
         try
         {
             ExportingShape = true;
-            Shape? shape = ShapeLoadingUtil.LoadShape(api, shapePath);
+            string fullPath = new AssetLocation(shapePath).WithPathAppendixOnce(".json").WithPathPrefixOnce("shapes/");
+            Shape? shape = Shape.TryGet(api, fullPath);
             if (shape == null) return;
             shape = ShapeAdjustmentUtil.AdjustClothesShape(api, shape, baseShape, modelData);
             if (shape == null) return;

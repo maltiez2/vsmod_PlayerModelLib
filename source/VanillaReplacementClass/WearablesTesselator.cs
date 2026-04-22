@@ -55,7 +55,7 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
             shapeIsCloned = true;
         }
 
-        if (entityShape.Textures != null && entity.Api is ICoreClientAPI clientApi)
+        /*if (entityShape.Textures != null && entity.Api is ICoreClientAPI clientApi)
         {
             foreach ((string code, AssetLocation? texturePath) in entityShape.Textures)
             {
@@ -63,7 +63,7 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
 
                 AddTextureToAtlas(clientApi, code, texture);
             }
-        }
+        }*/
 
         if (!TesselateItems)
         {
