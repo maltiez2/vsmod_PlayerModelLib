@@ -111,7 +111,16 @@ public static class ShapeLoadingUtil
         {
             WalkShapeElements(shapeElement, element => PrefixFacesTextures(element, prefix, replacedCodes, damageEffect));
         }
-        
+
+        foreach ((string from, string to) in replacedCodes)
+        {
+            if (shape.Textures.ContainsKey(from))
+            {
+                shape.Textures[to] = shape.Textures[from];
+            }
+            //shape.Textures.Remove(from);
+        }
+
         Dictionary<string, int[]> textureSizesCopy = shape.TextureSizes.ShallowClone();
         shape.TextureSizes.Clear();
 
@@ -134,12 +143,6 @@ public static class ShapeLoadingUtil
             {
                 shape.TextureSizes[to] = [shape.TextureWidth, shape.TextureHeight];
             }
-                
-            if (shape.Textures.ContainsKey(from))
-            {
-                shape.Textures[to] = shape.Textures[from];
-            }
-            shape.Textures.Remove(from);
         }
     }
     public static void PrefixAnimations(Shape shape, string prefix)
@@ -180,7 +183,11 @@ public static class ShapeLoadingUtil
         foreach (ShapeElementFace? shapeElementFace in facesResolved)
         {
             string? textureCode = shapeElementFace?.Texture;
-            if (shapeElementFace != null && shapeElementFace.Texture != null && textureCode != null && shapeElementFace.Enabled && !shapeElementFace.Texture.StartsWith(prefix))
+            if (shapeElementFace != null
+                && shapeElementFace.Texture != null
+                && textureCode != null
+                && shapeElementFace.Enabled
+                && (!shapeElementFace.Texture.StartsWith(prefix) || prefix ==""))
             {
                 shapeElementFace.Texture = prefix + shapeElementFace.Texture;
                 replacedCodes[textureCode] = prefix + textureCode;

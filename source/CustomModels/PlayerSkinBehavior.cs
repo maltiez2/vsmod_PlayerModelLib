@@ -907,7 +907,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         Shape? partShape = ShapeLoadingUtil.LoadShape(ClientApi, shapePath);
         if (partShape == null)
         {
-            ClientApi.World.Logger.Warning("Entity skin shape {0} defined in entity config {1} not found or errored, was supposed to be at {2}. Skin part will be invisible.", shapePath, entity.Properties.Code, shapePath);
+            LoggerUtil.Warn(ClientApi, this, $"Entity skin shape {shapePath} defined in entity config {entity.Properties.Code} not found or errored, was supposed to be at {shapePath}. Skin part will be invisible.");
             return entityShape;
         }
 

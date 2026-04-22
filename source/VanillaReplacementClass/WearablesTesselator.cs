@@ -195,11 +195,8 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
 
         float damageEffectValue = GetDamageEffectValue(stack);
         attachableShape.ResolveReferences(entity.Api.Logger, $"WearablesTesselator.ProcessSlot for '{stack.Collectible.Code}'");
-        if (prefix != "")
-        {
-            ShapeLoadingUtil.PrefixTextures(attachableShape, prefix, damageEffectValue);
-            ShapeLoadingUtil.PrefixAnimations(attachableShape, prefix);
-        }
+        ShapeLoadingUtil.PrefixTextures(attachableShape, prefix, damageEffectValue);
+        ShapeLoadingUtil.PrefixAnimations(attachableShape, prefix);
 
 
         Result stepParentResult = ShapeLoadingUtil.StepParentShape(entityShape, attachableShape);
