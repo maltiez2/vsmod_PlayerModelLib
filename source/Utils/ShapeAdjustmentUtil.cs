@@ -31,9 +31,9 @@ public static class ShapeAdjustmentUtil
         {
             if (element == null) continue;
             string code = element.StepParentName ?? "";
-            if (baseShape.ElementSizes.ContainsKey(code) && modelData.ElementSizes.ContainsKey(code) && baseShape.ElementSizes[code] != modelData.ElementSizes[code])
+            if (baseShape.ElementSizes.TryGetValue(code, out (Vector3d origin, Vector3d size) baseValue) && modelData.ElementSizes.TryGetValue(code, out (Vector3d origin, Vector3d size) modelValue) && baseValue != modelValue)
             {
-                Vector3d scaleVector = GetScaleVector(baseShape.ElementSizes[code].size, modelData.ElementSizes[code].size);
+                Vector3d scaleVector = GetScaleVector(baseValue.size, modelValue.size);
                 RescaleShapeElement(element, scaleVector);
             }
         }
@@ -58,10 +58,7 @@ public static class ShapeAdjustmentUtil
     {
         if (element == null) return;
 
-        if (element.RotationOrigin == null)
-        {
-            element.RotationOrigin = [0, 0, 0];
-        }
+        element.RotationOrigin ??= [0, 0, 0];
 
         if (element.From != null && element.From.Length >= 3 && element.To != null && element.To.Length >= 3 && element.RotationOrigin != null && element.RotationOrigin.Length >= 3)
         {

@@ -11,3 +11,6 @@ dotnet_diagnostic.IDE0290.severity = none
 
 # S6602: "Find" method should be used instead of the "FirstOrDefault" extension
 dotnet_diagnostic.S6602.severity = none
+
+# IDE0305: Simplify collection initialization
+dotnet_diagnostic.IDE0305.severity = silent

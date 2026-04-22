@@ -10,7 +10,7 @@ using Vintagestory.GameContent;
 namespace PlayerModelLib;
 
 public delegate void BeforeWearableTesselatedDelegate(WearablesTesselatorBehavior tesselatorBehavior, IInventory inventory, ref ItemSlot slot, ref Shape entityShape, ref string[] willDeleteElements, ref bool skipSlot);
-public delegate void BeforeWearableShapeAttachedDelegate(WearablesTesselatorBehavior tesselatorBehavior, IInventory inventory, ItemSlot slot, ref Shape entityShape, ref string[] willDeleteElements, ref Shape attachableShape, ref CompositeShape? attachableCompisteShape);
+public delegate void BeforeWearableShapeAttachedDelegate(WearablesTesselatorBehavior tesselatorBehavior, IInventory inventory, ItemSlot slot, ref Shape entityShape, ref string[] willDeleteElements, ref Shape? attachableShape, ref CompositeShape? attachableCompisteShape);
 public delegate void OnTryGetTexturePositionDelegate(WearablesTesselatorBehavior tesselatorBehavior, string code, ref TextureAtlasPosition position);
 
 public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
@@ -54,16 +54,6 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
             entityShape = ShapeLoadingUtil.CloneShape(entityShape);
             shapeIsCloned = true;
         }
-
-        /*if (entityShape.Textures != null && entity.Api is ICoreClientAPI clientApi)
-        {
-            foreach ((string code, AssetLocation? texturePath) in entityShape.Textures)
-            {
-                CompositeTexture texture = new(texturePath);
-
-                AddTextureToAtlas(clientApi, code, texture);
-            }
-        }*/
 
         if (!TesselateItems)
         {
@@ -182,6 +172,11 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
         }
 
         BeforeWearableShapeAttached?.Invoke(this, inventory, slot, ref entityShape, ref willDeleteElements, ref attachableShape, ref compositeGearShape);
+
+        if (attachableShape == null)
+        {
+            return;
+        }
 
         if (stack.Item.Textures != null)
         {

@@ -45,17 +45,17 @@ public class CustomPlayerShapeRenderer : EntityPlayerShapeRenderer
         }
     }
 
-    private static readonly FieldInfo? _EntityPlayerShapeRenderer_entityPlayer = typeof(EntityPlayerShapeRenderer).GetField("entityPlayer", BindingFlags.NonPublic | BindingFlags.Instance);
-    private static readonly FieldInfo? _EntityPlayerShapeRenderer_watcherRegistered = typeof(EntityPlayerShapeRenderer).GetField("watcherRegistered", BindingFlags.NonPublic | BindingFlags.Instance);
-    private static readonly FieldInfo? _EntityPlayerShapeRenderer_previfpMode = typeof(EntityPlayerShapeRenderer).GetField("previfpMode", BindingFlags.NonPublic | BindingFlags.Instance);
-    private static readonly FieldInfo? _EntityPlayerShapeRenderer_ims = typeof(EntityShapeRenderer).GetField("ims", BindingFlags.NonPublic | BindingFlags.Instance);
-    private static readonly FieldInfo? _EntityPlayerShapeRenderer_firstPersonMeshRef = typeof(EntityPlayerShapeRenderer).GetField("firstPersonMeshRef", BindingFlags.NonPublic | BindingFlags.Instance);
-    private static readonly FieldInfo? _EntityPlayerShapeRenderer_thirdPersonMeshRef = typeof(EntityPlayerShapeRenderer).GetField("thirdPersonMeshRef", BindingFlags.NonPublic | BindingFlags.Instance);
-    private static readonly FieldInfo? _EntityPlayerShapeRenderer_renderMode = typeof(EntityPlayerShapeRenderer).GetField("renderMode", BindingFlags.NonPublic | BindingFlags.Instance);
+    private static readonly FieldInfo? _entityPlayerShapeRenderer_entityPlayer = typeof(EntityPlayerShapeRenderer).GetField("entityPlayer", BindingFlags.NonPublic | BindingFlags.Instance);
+    private static readonly FieldInfo? _entityPlayerShapeRenderer_watcherRegistered = typeof(EntityPlayerShapeRenderer).GetField("watcherRegistered", BindingFlags.NonPublic | BindingFlags.Instance);
+    private static readonly FieldInfo? _entityPlayerShapeRenderer_previfpMode = typeof(EntityPlayerShapeRenderer).GetField("previfpMode", BindingFlags.NonPublic | BindingFlags.Instance);
+    private static readonly FieldInfo? _entityPlayerShapeRenderer_ims = typeof(EntityShapeRenderer).GetField("ims", BindingFlags.NonPublic | BindingFlags.Instance);
+    private static readonly FieldInfo? _entityPlayerShapeRenderer_firstPersonMeshRef = typeof(EntityPlayerShapeRenderer).GetField("firstPersonMeshRef", BindingFlags.NonPublic | BindingFlags.Instance);
+    private static readonly FieldInfo? _entityPlayerShapeRenderer_thirdPersonMeshRef = typeof(EntityPlayerShapeRenderer).GetField("thirdPersonMeshRef", BindingFlags.NonPublic | BindingFlags.Instance);
+    private static readonly FieldInfo? _entityPlayerShapeRenderer_renderMode = typeof(EntityPlayerShapeRenderer).GetField("renderMode", BindingFlags.NonPublic | BindingFlags.Instance);
 
-    private static readonly MethodInfo? _EntityPlayerShapeRenderer_disposeMeshes = typeof(EntityPlayerShapeRenderer).GetMethod("disposeMeshes", BindingFlags.NonPublic | BindingFlags.Instance);
-    private static readonly MethodInfo? _EntityPlayerShapeRenderer_determineRenderMode = typeof(EntityPlayerShapeRenderer).GetMethod("determineRenderMode", BindingFlags.NonPublic | BindingFlags.Instance);
-    private static readonly MethodInfo? _EntityPlayerShapeRenderer_loadJointIdsRecursive = typeof(EntityPlayerShapeRenderer).GetMethod("loadJointIdsRecursive", BindingFlags.NonPublic | BindingFlags.Instance);
+    private static readonly MethodInfo? _entityPlayerShapeRenderer_disposeMeshes = typeof(EntityPlayerShapeRenderer).GetMethod("disposeMeshes", BindingFlags.NonPublic | BindingFlags.Instance);
+    private static readonly MethodInfo? _entityPlayerShapeRenderer_determineRenderMode = typeof(EntityPlayerShapeRenderer).GetMethod("determineRenderMode", BindingFlags.NonPublic | BindingFlags.Instance);
+    private static readonly MethodInfo? _entityPlayerShapeRenderer_loadJointIdsRecursive = typeof(EntityPlayerShapeRenderer).GetMethod("loadJointIdsRecursive", BindingFlags.NonPublic | BindingFlags.Instance);
 
     private readonly ThreadSafeBool _tesselating = new(false);
 
@@ -63,8 +63,8 @@ public class CustomPlayerShapeRenderer : EntityPlayerShapeRenderer
     {
         try
         {
-            EntityPlayer? entityPlayer = (EntityPlayer?)_EntityPlayerShapeRenderer_entityPlayer?.GetValue(this);
-            bool watcherRegistered = (bool)(_EntityPlayerShapeRenderer_watcherRegistered?.GetValue(this) ?? false);
+            EntityPlayer? entityPlayer = (EntityPlayer?)_entityPlayerShapeRenderer_entityPlayer?.GetValue(this);
+            bool watcherRegistered = (bool)(_entityPlayerShapeRenderer_watcherRegistered?.GetValue(this) ?? false);
 
             if (entityPlayer?.GetBehavior<EntityBehaviorPlayerInventory>()?.Inventory == null)
             {
@@ -78,8 +78,8 @@ public class CustomPlayerShapeRenderer : EntityPlayerShapeRenderer
                 return;
             }
 
-            _EntityPlayerShapeRenderer_previfpMode?.SetValue(this, capi.Settings.Bool["immersiveFpMode"]);
-            bool previfpMode = (bool)(_EntityPlayerShapeRenderer_previfpMode?.GetValue(this) ?? false);
+            _entityPlayerShapeRenderer_previfpMode?.SetValue(this, capi.Settings.Bool["immersiveFpMode"]);
+            bool previfpMode = (bool)(_entityPlayerShapeRenderer_previfpMode?.GetValue(this) ?? false);
 
             if (IsSelf)
             {
@@ -90,7 +90,7 @@ public class CustomPlayerShapeRenderer : EntityPlayerShapeRenderer
                 });
             }
 
-            _EntityPlayerShapeRenderer_watcherRegistered?.SetValue(this, true);
+            _entityPlayerShapeRenderer_watcherRegistered?.SetValue(this, true);
         }
         catch (Exception exception)
         {
@@ -109,7 +109,7 @@ public class CustomPlayerShapeRenderer : EntityPlayerShapeRenderer
         {
             if (!loaded) return;
 
-            _EntityPlayerShapeRenderer_ims?.SetValue(this, entity.GetInterface<IMountable>());
+            _entityPlayerShapeRenderer_ims?.SetValue(this, entity.GetInterface<IMountable>());
 
             CustomEntityTesselateShapeOffThread(onMeshReady);
         }
@@ -122,30 +122,30 @@ public class CustomPlayerShapeRenderer : EntityPlayerShapeRenderer
 
             CustomEntityTesselateShapeOffThread(delegate (MeshData meshData)
             {
-                _EntityPlayerShapeRenderer_disposeMeshes?.Invoke(this, []);
+                _entityPlayerShapeRenderer_disposeMeshes?.Invoke(this, []);
                 if (!capi.IsShuttingDown && meshData.VerticesCount > 0)
                 {
                     MeshData meshData2 = meshData.EmptyClone();
-                    _EntityPlayerShapeRenderer_thirdPersonMeshRef?.SetValue(this, capi.Render.UploadMultiTextureMesh(meshData));
-                    _EntityPlayerShapeRenderer_determineRenderMode?.Invoke(this, []);
+                    _entityPlayerShapeRenderer_thirdPersonMeshRef?.SetValue(this, capi.Render.UploadMultiTextureMesh(meshData));
+                    _entityPlayerShapeRenderer_determineRenderMode?.Invoke(this, []);
 
-                    RenderMode renderMode = (RenderMode)(_EntityPlayerShapeRenderer_renderMode?.GetValue(this) ?? RenderMode.ThirdPerson);
+                    RenderMode renderMode = (RenderMode)(_entityPlayerShapeRenderer_renderMode?.GetValue(this) ?? RenderMode.ThirdPerson);
 
                     if (renderMode == RenderMode.ImmersiveFirstPerson)
                     {
-                        HashSet<int> skipJointIds = new HashSet<int>();
-                        _EntityPlayerShapeRenderer_loadJointIdsRecursive?.Invoke(this, [entity.AnimManager.Animator.GetPosebyName("Neck"), skipJointIds]);
-                        meshData2.AddMeshData(meshData, (int i) => !skipJointIds.Contains(meshData.CustomInts.Values[i * 4]));
+                        HashSet<int> skipJointIds = [];
+                        _entityPlayerShapeRenderer_loadJointIdsRecursive?.Invoke(this, [entity.AnimManager.Animator.GetPosebyName("Neck"), skipJointIds]);
+                        meshData2.AddMeshData(meshData, i => !skipJointIds.Contains(meshData.CustomInts.Values[i * 4]));
                     }
                     else
                     {
-                        HashSet<int> includeJointIds = new HashSet<int>();
-                        _EntityPlayerShapeRenderer_loadJointIdsRecursive?.Invoke(this, [entity.AnimManager.Animator.GetPosebyName("UpperArmL"), includeJointIds]);
-                        _EntityPlayerShapeRenderer_loadJointIdsRecursive?.Invoke(this, [entity.AnimManager.Animator.GetPosebyName("UpperArmR"), includeJointIds]);
-                        meshData2.AddMeshData(meshData, (int i) => includeJointIds.Contains(meshData.CustomInts.Values[i * 4]));
+                        HashSet<int> includeJointIds = [];
+                        _entityPlayerShapeRenderer_loadJointIdsRecursive?.Invoke(this, [entity.AnimManager.Animator.GetPosebyName("UpperArmL"), includeJointIds]);
+                        _entityPlayerShapeRenderer_loadJointIdsRecursive?.Invoke(this, [entity.AnimManager.Animator.GetPosebyName("UpperArmR"), includeJointIds]);
+                        meshData2.AddMeshData(meshData, i => includeJointIds.Contains(meshData.CustomInts.Values[i * 4]));
                     }
 
-                    _EntityPlayerShapeRenderer_firstPersonMeshRef?.SetValue(this, capi.Render.UploadMultiTextureMesh(meshData2));
+                    _entityPlayerShapeRenderer_firstPersonMeshRef?.SetValue(this, capi.Render.UploadMultiTextureMesh(meshData2));
                 }
             });
         }
@@ -159,8 +159,8 @@ public class CustomPlayerShapeRenderer : EntityPlayerShapeRenderer
             return;
         }
 
-        CompositeShape compositeShape = ((OverrideCompositeShape != null) ? OverrideCompositeShape : entity.Properties.Client.Shape);
-        Shape entityShape = ((OverrideEntityShape != null) ? OverrideEntityShape : entity.Properties.Client.LoadedShapeForEntity);
+        CompositeShape compositeShape = OverrideCompositeShape ?? entity.Properties.Client.Shape;
+        Shape entityShape = OverrideEntityShape ?? entity.Properties.Client.LoadedShapeForEntity;
         if (entityShape == null)
         {
             _tesselating.SetFalse();
@@ -181,7 +181,7 @@ public class CustomPlayerShapeRenderer : EntityPlayerShapeRenderer
         if (entity.Properties.Client.Shape.VoxelizeTexture)
         {
             int @int = entity.WatchedAttributes.GetInt("textureIndex");
-            TextureAtlasPosition atlasPos = defaultTexSource["all"];
+            TextureAtlasPosition? atlasPos = defaultTexSource["all"];
             CompositeTexture firstTexture = entity.Properties.Client.FirstTexture;
             CompositeTexture[] alternates = firstTexture.Alternates;
             CompositeTexture texture = ((@int == 0) ? firstTexture : alternates[@int % alternates.Length]);
@@ -197,7 +197,7 @@ public class CustomPlayerShapeRenderer : EntityPlayerShapeRenderer
         {
             try
             {
-                TesselationMetaData meta = new TesselationMetaData
+                TesselationMetaData meta = new()
                 {
                     QuantityElements = compositeShape.QuantityElements,
                     SelectiveElements = (ovse ?? compositeShape.SelectiveElements),

@@ -61,11 +61,11 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
 
     public static event OnWearableItemProcessingDelegate? OnWearableItemProcessing;
 
-#pragma warning disable CS8766 // Vanilla has incorrect nullability
+
     public Size2i? AtlasSize => ModelSystem?.GetAtlasSize(CurrentModelCode, entity);
 
     public TextureAtlasPosition? this[string textureCode] => GetAtlasPosition(textureCode, entity);
-#pragma warning restore CS8766
+
 
     public override void Initialize(EntityProperties properties, JsonObject attributes)
     {
@@ -400,7 +400,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
 
     public virtual void ApplyVoice(string voiceType, string voicePitch, bool testTalk)
     {
-        if (!AvailableSkinPartsByCode.TryGetValue("voicetype", out SkinnablePart? availVoices) || !AvailableSkinPartsByCode.TryGetValue("voicepitch", out SkinnablePart? availPitches))
+        if (!AvailableSkinPartsByCode.TryGetValue("voicetype", out SkinnablePart? availVoices) || !AvailableSkinPartsByCode.TryGetValue("voicepitch", out _))
         {
             return;
         }
@@ -442,7 +442,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
     {
         bool mustached = entity.Api.World.Rand.NextDouble() < 0.3;
 
-        Dictionary<string, RandomizerConstraint> currentConstraints = new();
+        Dictionary<string, RandomizerConstraint> currentConstraints = [];
 
         foreach (SkinnablePart skinpart in AvailableSkinParts.Get())
         {
@@ -469,14 +469,11 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
                 }
             }
 
-            if (variantCode == null) variantCode = variants[index].Code;
+            variantCode ??= variants[index].Code;
 
             SelectSkinPart(skinpart.Code, variantCode, true, playVoice);
 
-            if (SkinRandomizerConstraints == null)
-            {
-                SkinRandomizerConstraints = entity.Api.Assets.Get("config/seraphrandomizer.json").ToObject<SeraphRandomizerConstraints>();
-            }
+            SkinRandomizerConstraints ??= entity.Api.Assets.Get("config/seraphrandomizer.json").ToObject<SeraphRandomizerConstraints>();
 
             if (SkinRandomizerConstraints.Constraints.TryGetValue(skinpart.Code, out Dictionary<string, Dictionary<string, RandomizerConstraint>>? partConstraintsGroup) &&
                 partConstraintsGroup.TryGetValue(variantCode, out Dictionary<string, RandomizerConstraint>? constraints))
@@ -664,9 +661,8 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
     protected virtual void RemoveNotExistingTraits()
     {
         CharacterSystem? characterSystem = entity.Api.ModLoader.GetModSystem<CharacterSystem>();
-        EntityPlayer? player = entity as EntityPlayer;
 
-        if (characterSystem == null || player == null) return;
+        if (characterSystem == null || entity is not EntityPlayer player) return;
 
         IEnumerable<string> extraTraits = player.WatchedAttributes.GetStringArray("extraTraits", []);
         IEnumerable<string> removedTraits = extraTraits.Where(trait => !characterSystem.TraitsByCode.ContainsKey(trait));
@@ -873,10 +869,10 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         disableElements = (stack.Collectible as IAttachableToEntity)?.GetDisableElements(stack);
         keepElements = (stack.Collectible as IAttachableToEntity)?.GetKeepElements(stack);
 
-        disableElements ??= stack.Collectible?.Attributes?["disableElements"]?.AsArray<string>(null);
-        disableElements ??= stack.Collectible?.Attributes?["attachableToEntity"]?["disableElements"]?.AsArray<string>(null);
-        keepElements ??= stack.Collectible?.Attributes?["keepElements"]?.AsArray<string>(null);
-        keepElements ??= stack.Collectible?.Attributes?["attachableToEntity"]?["keepElements"]?.AsArray<string>(null);
+        disableElements ??= stack.Collectible?.Attributes?["disableElements"]?.AsArray<string>(null)?.OfType<string>().ToArray();
+        disableElements ??= stack.Collectible?.Attributes?["attachableToEntity"]?["disableElements"]?.AsArray<string>(null)?.OfType<string>().ToArray();
+        keepElements ??= stack.Collectible?.Attributes?["keepElements"]?.AsArray<string>(null)?.OfType<string>().ToArray();
+        keepElements ??= stack.Collectible?.Attributes?["attachableToEntity"]?["keepElements"]?.AsArray<string>(null)?.OfType<string>().ToArray();
     }
 
     protected virtual Shape AddSkinPart(AppliedSkinnablePartVariant part, Shape entityShape, string[] disableElements, string shapePathForLogging)
@@ -1013,8 +1009,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
 
     protected virtual void SetZNear(ICoreClientAPI api, float multiplier)
     {
-        ClientMain? client = api.World as ClientMain;
-        if (client == null) return;
+        if (api.World is not ClientMain client) return;
 
         PlayerCamera? camera = client.MainCamera;
         if (camera == null) return;

@@ -25,7 +25,7 @@ internal static class TranspilerPatches
 
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
-            List<CodeInstruction> codes = new(instructions);
+            List<CodeInstruction> codes = [.. instructions];
             MethodInfo getMultMethod = AccessTools.Method(typeof(PatchEntityPlayerUpdateEyeHeight), nameof(GetSneakEyeMultiplier));
 
             for (int i = 0; i < codes.Count; i++)
@@ -59,7 +59,7 @@ internal static class TranspilerPatches
 
             if (skinBehavior == null) return 1f;
 
-            bool moving = (player.Controls.TriesToMove && player.SidedPos.Motion.LengthSq() > 0.00001) && !player.Controls.NoClip && !player.Controls.DetachedMode;
+            bool moving = (player.Controls.TriesToMove && player.Pos.Motion.LengthSq() > 0.00001) && !player.Controls.NoClip && !player.Controls.DetachedMode;
             bool walking = moving && player.OnGround;
 
             if (walking && !player.Controls.Backward && !player.Controls.Sneak && !player.Controls.IsClimbing && !player.Controls.IsFlying)
@@ -79,7 +79,7 @@ internal static class TranspilerPatches
 
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
-            List<CodeInstruction> codes = new(instructions);
+            List<CodeInstruction> codes = [.. instructions];
             MethodInfo callMethod = AccessTools.Method(typeof(PatchEntityPlayerUpdateEyeHeightInsertBeforeFloorSitting), nameof(ApplyEyeHightModifiers));
 
             for (int i = 0; i < codes.Count - 2; i++)
@@ -90,13 +90,13 @@ internal static class TranspilerPatches
                     mi.Name == "get_FloorSitting")
                 {
                     // Insert before i
-                    codes.InsertRange(i, new[]
-                    {
+                    codes.InsertRange(i,
+                    [
                         new CodeInstruction(OpCodes.Ldarg_0),        // this (EntityPlayer)
                         new CodeInstruction(OpCodes.Ldloca_S, 4),    // ref newEyeheight
                         new CodeInstruction(OpCodes.Ldloca_S, 5),    // ref newModelHeight
                         new CodeInstruction(OpCodes.Call, callMethod)
-                    });
+                    ]);
                     break;
                 }
             }
@@ -109,17 +109,17 @@ internal static class TranspilerPatches
     [HarmonyPatch(typeof(Entity), "FromBytes", [typeof(BinaryReader), typeof(bool)])]
     public static class PatchEntityFromBytesRemoveMaxSaturation
     {
-        static readonly MethodInfo SetFloatMethod = AccessTools.Method(typeof(ITreeAttribute), nameof(ITreeAttribute.SetFloat));
+        static readonly MethodInfo _setFloatMethod = AccessTools.Method(typeof(ITreeAttribute), nameof(ITreeAttribute.SetFloat));
 
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
-            List<CodeInstruction> codes = new(instructions);
+            List<CodeInstruction> codes = [.. instructions];
 
             for (int i = 0; i < codes.Count; i++)
             {
                 if (codes[i].opcode == OpCodes.Callvirt &&
                     codes[i].operand is MethodInfo mi &&
-                    mi == SetFloatMethod)
+                    mi == _setFloatMethod)
                 {
                     codes.RemoveRange(i - 3, 4);
                     i -= 4;
@@ -132,18 +132,18 @@ internal static class TranspilerPatches
 
     [HarmonyPatchCategory("PlayerModelLibTranspiler")]
     [HarmonyPatch(typeof(EntityBehaviorBodyTemperature), "updateWearableConditions")]
-    public static class Patch_UpdateWearableConditions
+    public static class PatchUpdateWearableConditions
     {
-        private static void ApplyWarmthStats(ref float clothingBonus, EntityAgent agent)
+        public static void ApplyWarmthStats(ref float clothingBonus, EntityAgent agent)
         {
             float value = clothingBonus;
             value += Math.Clamp(agent.Stats.GetBlended(StatsPatches.WarmthBonusStat), -100, 100);
             clothingBonus = value;
         }
 
-        static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
-            List<CodeInstruction> code = new(instructions);
+            List<CodeInstruction> code = [.. instructions];
 
             FieldInfo clothingBonusField = AccessTools.Field(
                 typeof(EntityBehaviorBodyTemperature),
@@ -154,7 +154,7 @@ internal static class TranspilerPatches
                 "entity");
 
             MethodInfo hookMethod = AccessTools.Method(
-                typeof(Patch_UpdateWearableConditions),
+                typeof(PatchUpdateWearableConditions),
                 nameof(ApplyWarmthStats));
 
             for (int i = code.Count - 1; i >= 0; i--)

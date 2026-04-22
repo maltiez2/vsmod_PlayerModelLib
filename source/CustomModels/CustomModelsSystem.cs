@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json.Linq;
 using OpenTK.Mathematics;
 using SkiaSharp;
+using System;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.CommandAbbr;
@@ -27,7 +28,7 @@ public sealed class CustomModelsSystem : ModSystem
     public HashSet<string> ExclusiveClasses { get; private set; } = [];
     public Dictionary<string, BaseShapeData> BaseShapesData { get; private set; } = [];
     public bool CanHotLoad => ModelsLoaded;
-    public string SeraphModelCode => _defaultModelCode;
+    public static string SeraphModelCode => _defaultModelCode;
 
     public event Action? OnCustomModelsLoaded;
     public event Action<string>? OnCustomModelHotLoaded;
@@ -271,9 +272,9 @@ public sealed class CustomModelsSystem : ModSystem
         EntityProperties playerProperties = _api.World.GetEntityType(_playerEntityCode) ?? throw new ArgumentException("[Player Model lib] Unable to get player entity properties.");
 
         SkinnablePartExtended[] parts = playerProperties.Attributes["skinnableParts"]
-            .AsObject<SkinnablePartExtended[]>()
-            .Where(part => part.Enabled)
-            .ToArray();
+            ?.AsObject<SkinnablePartExtended[]>()
+            ?.Where(part => part.Enabled)
+            .ToArray() ?? [];
 
         FixDefaultSkinParts(parts);
 
@@ -372,7 +373,7 @@ public sealed class CustomModelsSystem : ModSystem
             return;
         }
 
-        if (!shape.Textures.Any())
+        if (shape.Textures.Count == 0)
         {
             LoggerUtil.Error(_api, this, $"({code}) Shape '{modelConfig.ShapePath}' does not have any textures specified, will skip the model.");
             return;
@@ -410,7 +411,7 @@ public sealed class CustomModelsSystem : ModSystem
             Name = modelConfig.Name,
             SkinParts = partsByCode,
             SkinPartsArray = modelConfig.SkinnableParts,
-            MainTextureCodes = mainTextures.Select(textureCode => PrefixTextureCode(code, textureCode)).ToArray(),
+            MainTextureCodes = [.. mainTextures.Select(textureCode => PrefixTextureCode(code, textureCode))],
             AvailableClasses = [.. modelConfig.AvailableClasses],
             SkipClasses = [.. modelConfig.SkipClasses],
             ExclusiveClasses = [.. modelConfig.ExclusiveClasses],
@@ -472,14 +473,14 @@ public sealed class CustomModelsSystem : ModSystem
 
         if (BaseShapesData.TryGetValue(modelData.BaseShapeCode, out BaseShapeData? baseShapeData))
         {
-            CollectBaseShapeElements(shape.Elements, baseShapeData.ElementSizes.Keys.ToArray(), modelData.ElementSizes);
+            CollectBaseShapeElements(shape.Elements, [.. baseShapeData.ElementSizes.Keys], modelData.ElementSizes);
         }
 
         _wearableModelReplacers.Add(code, modelConfig.WearableModelReplacers);
         _wearableCompositeModelReplacers.Add(code, modelConfig.WearableCompositeModelReplacers);
 
         CustomModels.Add(code, modelData);
-        _oldMainTextureCodes.Add(code, mainTextures.ToArray());
+        _oldMainTextureCodes.Add(code, [.. mainTextures]);
     }
     private void LoadModelReplacements(ICoreAPI api)
     {
@@ -548,13 +549,13 @@ public sealed class CustomModelsSystem : ModSystem
     }
     private void LoadCustomModelWearableModelReplacers(ICoreAPI api, string modelCode, Dictionary<string, string> paths)
     {
-        if (!CustomModels.ContainsKey(modelCode))
+        if (!CustomModels.TryGetValue(modelCode, out CustomModelData? value))
         {
             LoggerUtil.Error(_api, this, $"Error while loading wearable model replacements by shape: custom model with code '{modelCode}' does not exists.");
             return;
         }
 
-        CustomModels[modelCode].WearableShapeReplacers = [];
+        value.WearableShapeReplacers = [];
 
         foreach ((string itemCodeWildcard, string path) in paths)
         {
@@ -582,21 +583,20 @@ public sealed class CustomModelsSystem : ModSystem
     }
     private void LoadCustomModelWearableCompositeModelReplacers(ICoreAPI api, string modelCode, Dictionary<string, CompositeShape> paths)
     {
-        if (!CustomModels.ContainsKey(modelCode))
+        if (!CustomModels.TryGetValue(modelCode, out CustomModelData? value))
         {
             LoggerUtil.Error(_api, this, $"Error while loading wearable composite model replacements by shape: custom model with code '{modelCode}' does not exists.");
             return;
         }
 
-        CustomModels[modelCode].WearableShapeReplacers = [];
+        value.WearableShapeReplacers = [];
 
         foreach ((string itemCodeWildcard, CompositeShape path) in paths)
         {
             foreach (Item item in api.World.Items)
             {
                 if (!WildcardUtil.Match(itemCodeWildcard, item.Code?.ToString() ?? "")) continue;
-
-                CustomModels[modelCode].WearableCompositeShapeReplacers[item.Id] = path;
+                value.WearableCompositeShapeReplacers[item.Id] = path;
             }
         }
     }
@@ -731,7 +731,7 @@ public sealed class CustomModelsSystem : ModSystem
         }
     }
 
-    private AssetLocation GetShapeLocation(string path) => new AssetLocation(path).WithPathPrefixOnce("shapes/").WithPathAppendixOnce(".json");
+    private static AssetLocation GetShapeLocation(string path) => new AssetLocation(path).WithPathPrefixOnce("shapes/").WithPathAppendixOnce(".json");
     private void ProcessAnimations(ICoreAPI api)
     {
         foreach ((Shape customShape, string code) in CustomModels.Where(entry => entry.Key != _defaultModelCode).Select(entry => (entry.Value.Shape, entry.Value.Code)))
@@ -748,10 +748,7 @@ public sealed class CustomModelsSystem : ModSystem
     }
     private void ProcessCustomModelAnimations(Shape customShape, string modelCode, ICoreAPI api)
     {
-        if (customShape.Animations == null)
-        {
-            customShape.Animations = [];
-        }
+        customShape.Animations ??= [];
 
         HashSet<string> existingAnimations = [.. customShape.Animations.Select(GetAnimationCode)];
 
@@ -809,7 +806,7 @@ public sealed class CustomModelsSystem : ModSystem
             }
         }
     }
-    private void RemoveNotExistingShapeElements(Animation animation, HashSet<string> existing, out HashSet<string> removed)
+    private static void RemoveNotExistingShapeElements(Animation animation, HashSet<string> existing, out HashSet<string> removed)
     {
         removed = [];
 
@@ -884,7 +881,7 @@ public sealed class CustomModelsSystem : ModSystem
             AddAttachmentPoints(element, attachmentPointsByElement, modelCode, createMissingCuboids);
         }
     }
-    private void FixDefaultSkinParts(SkinnablePartExtended[] parts)
+    private static void FixDefaultSkinParts(SkinnablePartExtended[] parts)
     {
         foreach (SkinnablePartExtended part in parts)
         {
@@ -931,9 +928,9 @@ public sealed class CustomModelsSystem : ModSystem
             parts[index].Colbreak = (index == middleIndex);
         }
     }
-    private void CollectAttachmentPointsRecursively(ShapeElement element, ShapeElement parent, Dictionary<string, (AttachmentPoint[] points, ShapeElement element, string parent)> attachmentPointsByElement)
+    private static void CollectAttachmentPointsRecursively(ShapeElement element, ShapeElement parent, Dictionary<string, (AttachmentPoint[] points, ShapeElement element, string parent)> attachmentPointsByElement)
     {
-        if (element.AttachmentPoints != null && element.AttachmentPoints.Length > 0)
+        if (element.AttachmentPoints != null && element.AttachmentPoints.Length > 0 && parent.Name != null && element.Name != null)
         {
             attachmentPointsByElement[element.Name] = (element.AttachmentPoints, element, parent.Name);
         }
@@ -980,10 +977,7 @@ public sealed class CustomModelsSystem : ModSystem
 
             if (createMissingCuboids && element.Name == parentName && (element.Children == null || !element.Children.Select(child => child?.Name ?? "").Contains(elementName)))
             {
-                if (element.Children == null)
-                {
-                    element.Children = [];
-                }
+                element.Children ??= [];
 
                 IEnumerable<string> newPoints = pointsData.Select(point => point.Code);
                 if (newPoints.Any())
@@ -1058,7 +1052,12 @@ public sealed class CustomModelsSystem : ModSystem
             try
             {
                 JsonObject configJson = new(token);
-                CustomModelConfig config = configJson.AsObject<CustomModelConfig>();
+                CustomModelConfig? config = configJson.AsObject<CustomModelConfig>();
+                if (config == null)
+                {
+                    LoggerUtil.Error(_api, this, $"Error when trying to load model config '{asset.Location}' for model '{code}'");
+                    continue;
+                }
                 config.Domain = domain;
                 result.Add($"{domain}:{code}", config);
             }
@@ -1074,7 +1073,7 @@ public sealed class CustomModelsSystem : ModSystem
     {
         try
         {
-            return JsonObject.FromJson(asset.ToText()).AsObject<Dictionary<string, Dictionary<string, string>>>();
+            return JsonObject.FromJson(asset.ToText())?.AsObject<Dictionary<string, Dictionary<string, string>>>() ?? [];
         }
         catch (Exception exception)
         {
@@ -1086,7 +1085,7 @@ public sealed class CustomModelsSystem : ModSystem
     {
         try
         {
-            return JsonObject.FromJson(asset.ToText()).AsObject<Dictionary<string, Dictionary<string, CompositeShape>>>();
+            return JsonObject.FromJson(asset.ToText())?.AsObject<Dictionary<string, Dictionary<string, CompositeShape>>>() ?? [];
         }
         catch (Exception exception)
         {
@@ -1122,7 +1121,12 @@ public sealed class CustomModelsSystem : ModSystem
             try
             {
                 JsonObject configJson = new(token);
-                BaseShapeDataJson config = configJson.AsObject<BaseShapeDataJson>();
+                BaseShapeDataJson? config = configJson.AsObject<BaseShapeDataJson>();
+                if (config == null)
+                {
+                    LoggerUtil.Error(_api, this, $"Error when trying to load base shape config '{asset.Location}' for base shape '{code}'.");
+                    continue;
+                }
                 config.Domain = domain;
                 result.Add($"{domain}:{code}", config);
             }
@@ -1134,7 +1138,7 @@ public sealed class CustomModelsSystem : ModSystem
 
         return result;
     }
-    private void ReplaceVariants(CompositeShape shape, Item item)
+    private static void ReplaceVariants(CompositeShape shape, Item item)
     {
         string processedPath = shape.Base;
 
@@ -1381,16 +1385,14 @@ public sealed class CustomModelsSystem : ModSystem
             string oldTextureCode = oldTextureCodes[textureIndex];
             string newTextureCode = newTextureCodes[textureIndex];
 
-            if (data.Shape.Textures.ContainsKey(oldTextureCode))
+            if (data.Shape.Textures.TryGetValue(oldTextureCode, out AssetLocation? texturePath))
             {
-                AssetLocation texturePath = data.Shape.Textures[oldTextureCode];
                 data.Shape.Textures.Remove(oldTextureCode);
                 data.Shape.Textures[newTextureCode] = texturePath;
             }
 
-            if (data.Shape.TextureSizes.ContainsKey(oldTextureCode))
+            if (data.Shape.TextureSizes.TryGetValue(oldTextureCode, out int[]? size))
             {
-                int[] size = data.Shape.TextureSizes[oldTextureCode];
                 data.Shape.TextureSizes.Remove(oldTextureCode);
                 data.Shape.TextureSizes[newTextureCode] = size;
             }

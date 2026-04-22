@@ -83,7 +83,7 @@ public static class ShapeLoadingUtil
             };
             newFaces.Add(newFace);
         }
-        element.FacesResolved = newFaces.ToArray();
+        element.FacesResolved = [.. newFaces.OfType<ShapeElementFace>()];
     }
     public static void WalkShapeElements(ShapeElement element, Action<ShapeElement> action)
     {
@@ -114,11 +114,11 @@ public static class ShapeLoadingUtil
 
         foreach ((string from, string to) in replacedCodes)
         {
-            if (shape.Textures.ContainsKey(from))
+            if (shape.Textures.TryGetValue(from, out AssetLocation? fromValue))
             {
-                shape.Textures[to] = shape.Textures[from];
+                shape.Textures[to] = fromValue;
             }
-            //shape.Textures.Remove(from);
+            //shape.Textures.Remove(from); // Was removed to fix issues with skin parts being black
         }
 
         Dictionary<string, int[]> textureSizesCopy = shape.TextureSizes.ShallowClone();
@@ -126,18 +126,18 @@ public static class ShapeLoadingUtil
 
         foreach ((string code, int[] size) in textureSizesCopy)
         {
-            if (replacedCodes.ContainsKey(code))
+            if (replacedCodes.TryGetValue(code, out string? value))
             {
-                shape.TextureSizes[replacedCodes[code]] = size;
+                shape.TextureSizes[value] = size;
                 replacedCodes.Remove(code);
             }
         }
 
         foreach ((string from, string to) in replacedCodes)
         {
-            if (shape.TextureSizes.ContainsKey(from))
+            if (shape.TextureSizes.TryGetValue(from, out int[]? fromValue))
             {
-                shape.TextureSizes[to] = shape.TextureSizes[from];
+                shape.TextureSizes[to] = fromValue;
             }
             else
             {
@@ -156,7 +156,7 @@ public static class ShapeLoadingUtil
         {
             foreach (AnimationKeyFrame animationKeyFrame in animation.KeyFrames)
             {
-                Dictionary<string, AnimationKeyFrameElement> dictionary = new();
+                Dictionary<string, AnimationKeyFrameElement> dictionary = [];
                 foreach ((string code, AnimationKeyFrameElement element) in animationKeyFrame.Elements)
                 {
                     dictionary[prefix + code] = element;

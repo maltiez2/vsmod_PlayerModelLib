@@ -7,7 +7,7 @@ using Vintagestory.GameContent;
 
 namespace PlayerModelLib;
 
-public static class ShapeReplacementUtil
+public static partial class ShapeReplacementUtil
 {
     public static bool ExportingShape { get; set; } = false;
 
@@ -15,7 +15,9 @@ public static class ShapeReplacementUtil
     {
         if (entity.Api.Side != EnumAppSide.Client) return;
 
-        int itemId = stack?.Item?.Id ?? 0;
+        if (stack == null) return;
+
+        int itemId = stack.Item?.Id ?? 0;
 
         _system ??= entity.Api.ModLoader.GetModSystem<CustomModelsSystem>();
 
@@ -23,7 +25,7 @@ public static class ShapeReplacementUtil
 
         string? currentModel = skinBehavior?.CurrentModelCode;
 
-        if (skinBehavior == null || currentModel == null || itemId == 0 || _system == null || !_system.ModelsLoaded || currentModel == _system.SeraphModelCode) return;
+        if (skinBehavior == null || currentModel == null || itemId == 0 || _system == null || !_system.ModelsLoaded || currentModel == CustomModelsSystem.SeraphModelCode) return;
 
         CustomModelData customModel = _system.CustomModels[currentModel];
 
@@ -33,7 +35,7 @@ public static class ShapeReplacementUtil
         GenerateShapes(prefixCode, customModel, itemId, _system, currentModel, stack, entity, ref defaultShape, ref compositeShape, yadayada, damageEffect, ref willDeleteElements);
     }
 
-    public static void ReplaceWearableShape(WearablesTesselatorBehavior tesselatorBehavior, IInventory inventory, ItemSlot slot, ref Shape entityShape, ref string[] willDeleteElements, ref Shape attachableShape, ref CompositeShape? attachableCompisteShape)
+    public static void ReplaceWearableShape(WearablesTesselatorBehavior tesselatorBehavior, IInventory inventory, ItemSlot slot, ref Shape entityShape, ref string[] willDeleteElements, ref Shape? attachableShape, ref CompositeShape? attachableCompisteShape)
     {
         if (tesselatorBehavior.entity.Api.Side != EnumAppSide.Client) return;
 
@@ -45,11 +47,16 @@ public static class ShapeReplacementUtil
 
         string? currentModel = skinBehavior?.CurrentModelCode;
 
-        if (skinBehavior == null || currentModel == null || itemId == 0 || _system == null || !_system.ModelsLoaded || currentModel == _system.SeraphModelCode) return;
+        if (skinBehavior == null || currentModel == null || itemId == 0 || _system == null || !_system.ModelsLoaded || currentModel == CustomModelsSystem.SeraphModelCode) return;
 
         CustomModelData customModel = _system.CustomModels[currentModel];
 
-        IAttachableToEntity? attachable = IAttachableToEntity.FromCollectible(slot.Itemstack?.Collectible);
+        if (slot.Itemstack?.Collectible == null)
+        {
+            return;
+        }
+
+        IAttachableToEntity? attachable = IAttachableToEntity.FromCollectible(slot.Itemstack.Collectible);
         if (attachable == null)
         {
             return;
@@ -94,7 +101,12 @@ public static class ShapeReplacementUtil
 
         ReplaceOverlays(stack, ref compositeShape, customModel, yadayada);
 
-        CompositeShape oldCompositeShape = yadayada.GetAttachedShape(stack, "default").Clone();
+        CompositeShape? oldCompositeShape = stack == null ? null : yadayada.GetAttachedShape(stack, "default")?.Clone();
+        if (oldCompositeShape == null)
+        {
+            LoggerUtil.Warn(entity.Api, typeof(ShapeReplacementUtil), $"Unable to get attached shape from '{stack?.Collectible?.Code}'");
+            return;
+        }
         string shapePath = oldCompositeShape.Base.ToString();
 
         if (system.BaseShapesData.TryGetValue(customModel.BaseShapeCode, out BaseShapeData? baseShapeData))
@@ -173,7 +185,7 @@ public static class ShapeReplacementUtil
     }
     private static void FixAnimationsEnums(ref string json)
     {
-        json = Regex.Replace(json, @"""onAnimationEnd""\s*:\s*(\d+)", match =>
+        json = OnAnimantionEndRegex().Replace(json, match =>
         {
             int value = int.Parse(match.Groups[1].Value);
             string enumName = value switch
@@ -187,7 +199,7 @@ public static class ShapeReplacementUtil
             return $"\"onAnimationEnd\": \"{enumName}\"";
         });
 
-        json = Regex.Replace(json, @"""onActivityStopped""\s*:\s*(\d+)", match =>
+        json = OnActivityStoppedRegex().Replace(json, match =>
         {
             int value = int.Parse(match.Groups[1].Value);
             string enumName = value switch
@@ -209,22 +221,24 @@ public static class ShapeReplacementUtil
         {
             string faceJson = match.Value;
 
-            if (Regex.IsMatch(faceJson, @"""autoUv""\s*:"))
+            if (AutoUvRegex().IsMatch(faceJson))
+            {
                 return faceJson;
+            }
 
-            return Regex.Replace(faceJson, @"\}\s*$", @", ""autoUv"": false}");
+            return AutoUvOffRegex().Replace(faceJson, @", ""autoUv"": false}");
         }, RegexOptions.Singleline);
     }
     private static void LowercaseJsonKeys(ref string json)
     {
-        json = Regex.Replace(json, @"\""([A-Z][^\""]*)\"":", match =>
+        json = LowerCaseJsonKeysRegex().Replace(json, match =>
         {
             string key = match.Groups[1].Value;
             if (string.IsNullOrEmpty(key))
                 return match.Value;
 
             // Lowercase only the first letter
-            string lowerKey = char.ToLowerInvariant(key[0]) + key.Substring(1);
+            string lowerKey = char.ToLowerInvariant(key[0]) + key[1..];
             return $"\"{lowerKey}\":";
         });
     }
@@ -300,8 +314,17 @@ public static class ShapeReplacementUtil
     }
     private static bool ReplaceShapeByShape(string prefixCode, ItemStack? stack, Entity entity, ref Shape? defaultShape, ref CompositeShape? compositeShape, float damageEffect, CustomModelData customModel, IAttachableToEntity yadayada)
     {
-        CompositeShape oldCompositeShape = yadayada.GetAttachedShape(stack, "default").Clone();
-
+        if (stack == null)
+        {
+            return false;
+        }    
+        
+        CompositeShape? oldCompositeShape = yadayada.GetAttachedShape(stack, "default")?.Clone();
+        if (oldCompositeShape == null)
+        {
+            LoggerUtil.Warn(entity.Api, typeof(ShapeReplacementUtil), $"Unable to get attached shape from '{stack.Collectible?.Code}'");
+            return false;
+        }
         string shapePath = oldCompositeShape.Base.ToString();
 
         if (!customModel.WearableShapeReplacersByShape.TryGetValue(shapePath, out string? shape)) return false;
@@ -326,7 +349,10 @@ public static class ShapeReplacementUtil
     }
     private static void ReplaceOverlays(ItemStack? stack, ref CompositeShape? compositeShape, CustomModelData customModel, IAttachableToEntity yadayada)
     {
-        CompositeShape oldCompositeShape = yadayada.GetAttachedShape(stack, "default").Clone();
+        if (stack == null) return;
+        
+        CompositeShape? oldCompositeShape = yadayada.GetAttachedShape(stack, "default")?.Clone();
+        if (oldCompositeShape == null) return;
 
         if (oldCompositeShape.Overlays != null)
         {
@@ -340,4 +366,15 @@ public static class ShapeReplacementUtil
             compositeShape = oldCompositeShape;
         }
     }
+
+    [GeneratedRegex(@"""onAnimationEnd""\s*:\s*(\d+)")]
+    public static partial Regex OnAnimantionEndRegex();
+    [GeneratedRegex(@"\""([A-Z][^\""]*)\"":")]
+    public static partial Regex LowerCaseJsonKeysRegex();
+    [GeneratedRegex(@"""onActivityStopped""\s*:\s*(\d+)")]
+    public static partial Regex OnActivityStoppedRegex();
+    [GeneratedRegex(@"""autoUv""\s*:")]
+    public static partial Regex AutoUvRegex();
+    [GeneratedRegex(@"\}\s*$")]
+    public static partial Regex AutoUvOffRegex();
 }

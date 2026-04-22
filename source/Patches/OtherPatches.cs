@@ -345,8 +345,12 @@ internal static class OtherPatches
                 ShapeElementFace f = val.Value;
                 if (!f.Enabled) continue;
                 BlockFacing facing = BlockFacing.FromFirstLetter(val.Key);
+                if (__instance.FacesResolved == null)
+                {
+                    continue;
+                }
                 __instance.FacesResolved[facing.Index] = f;
-                f.Texture = f.Texture.Substring(1).DeDuplicate();
+                f.Texture = f.Texture[1..].DeDuplicate();
             }
 
         }
@@ -358,7 +362,7 @@ internal static class OtherPatches
 
         __instance.Name = __instance.Name.DeDuplicate();
         __instance.StepParentName = __instance.StepParentName.DeDuplicate();
-        AttachmentPoint[] AttachmentPoints = __instance.AttachmentPoints;
+        AttachmentPoint[]? AttachmentPoints = __instance.AttachmentPoints;
         if (AttachmentPoints != null)
         {
             for (int i = 0; i < AttachmentPoints.Length; i++) AttachmentPoints[i].DeDuplicate();
@@ -383,7 +387,7 @@ internal static class OtherPatches
 
         foreach (string code in availableSkinParts.Select(skinpart => skinpart.Code))
         {
-            AppliedSkinnablePartVariant? appliedVar = skinMod.AppliedSkinParts.Get().FirstOrDefault((AppliedSkinnablePartVariant sp) => sp.PartCode == code);
+            AppliedSkinnablePartVariant? appliedVar = skinMod.AppliedSkinParts.Get().FirstOrDefault(sp => sp.PartCode == code);
 
             if (appliedVar == null)
             {
