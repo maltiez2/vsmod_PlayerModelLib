@@ -29,7 +29,7 @@ public readonly struct Result
         {
             foreach (string error in _warnings)
             {
-                LoggerUtil.Error(api, caller, error);
+                LoggerUtil.Warn(api, caller, error);
             }
         }
     }

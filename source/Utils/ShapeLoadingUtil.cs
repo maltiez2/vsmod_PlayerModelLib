@@ -192,7 +192,8 @@ public static class ShapeLoadingUtil
     {
         if (childShape.Elements == null || childShape.Elements.Length == 0)
         {
-            return Result.Error("Child shape does not contain any elements.");
+            return Result.Success();
+            //return Result.Warning("Child shape does not contain any elements."); // too many warnings about empty skin parts
         }
 
         Result result = Result.Success();

@@ -938,10 +938,10 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         }
 
         Result stepParentResult = ShapeLoadingUtil.StepParentShape(entityShape, partShape);
-        stepParentResult.LogErrorsAndWarnings(ClientApi, typeof(ShapeAdjustmentUtil));
+        stepParentResult.LogErrorsAndWarnings(ClientApi, this);
         if (!stepParentResult.IsSuccess)
         {
-            LoggerUtil.Error(ClientApi, typeof(ShapeAdjustmentUtil), $"Failed to 'AddSkinPart' for part '{part.Category}:{part.Code}'.");
+            LoggerUtil.Warn(ClientApi, this, $"Failed to 'AddSkinPart' for part '{part.Category}:{part.Code}'.");
         }
 
         return entityShape;
