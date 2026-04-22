@@ -773,7 +773,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         composer.AddInset(_insetSlotBounds, 2);
         composer.AddToggleButton(Lang.Get("playermodellib:gui-button-hide-clothing"), smallfont, OnToggleDressOnOff, toggleButtonBounds, "showdressedtoggle");
-        composer.AddButton(Lang.Get("Randomize"), () => { return OnRandomizeSkin(new Dictionary<string, string>()); }, ElementBounds.Fixed(0, _dlgHeight - 25).WithAlignment(EnumDialogArea.LeftFixed).WithFixedPadding(8, 6), CairoFont.WhiteSmallText(), EnumButtonStyle.Small);
+        composer.AddButton(Lang.Get("Randomize"), () => { return OnRandomizeSkin([]); }, ElementBounds.Fixed(0, _dlgHeight - 25).WithAlignment(EnumDialogArea.LeftFixed).WithFixedPadding(8, 6), CairoFont.WhiteSmallText(), EnumButtonStyle.Small);
         composer.AddIf(capi.Settings.String.Exists("lastSkinSelection"))
             .AddButton(Lang.Get("Last selection"), () => { return OnRandomizeSkin(GetPreviousSelection()); }, ElementBounds.Fixed(130, _dlgHeight - 25).WithAlignment(EnumDialogArea.LeftFixed).WithFixedPadding(8, 6), CairoFont.WhiteSmallText(), EnumButtonStyle.Small)
             .EndIf();
@@ -1193,7 +1193,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         return fullDescription.ToString();
     }
-    private void AppendTraits(StringBuilder fullDescription, IEnumerable<Trait> traits)
+    private static void AppendTraits(StringBuilder fullDescription, IEnumerable<Trait> traits)
     {
         StringBuilder attributes = new();
 
@@ -1282,11 +1282,11 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         string[] extraCustomModels = capi?.World?.Player?.Entity?.WatchedAttributes?.GetStringArray("extraCustomModels", []) ?? [];
         return system.CustomModels.Where(entry => entry.Value.Enabled || extraCustomModels.Contains(entry.Value.Code)).Select(entry => entry.Key).ToArray();
     }
-    private string GetCustomModelLangEntry(AssetLocation code, string? name) => name ?? Lang.Get($"{code.Domain}:playermodel-{code.Path}");
+    private static string GetCustomModelLangEntry(AssetLocation code, string? name) => name ?? Lang.Get($"{code.Domain}:playermodel-{code.Path}");
     private string GetCustomGroupLangEntry(AssetLocation code) => Lang.GetIfExists($"game:playermodelgroup-{code.Path}") ?? Lang.Get($"{code.Domain}:playermodel-{code.Path}");
     private bool GetCurrentModelAndGroup(CustomModelsSystem system, PlayerSkinBehavior skinBehavior, out int modelIndex, out int groupIndex)
     {
-        GetCustomGroups(system, out string[] groupValues, out string[] groupNames);
+        GetCustomGroups(system, out string[] groupValues, out _);
 
         for (groupIndex = 0; groupIndex < groupValues.Length; groupIndex++)
         {
@@ -1307,7 +1307,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     }
     private void ClientSelectionDone(IInventory? characterInv, string characterClass, bool didSelect)
     {
-        List<ClothStack> clothesPacket = new();
+        List<ClothStack> clothesPacket = [];
         if (characterInv != null)
         {
             for (int i = 0; i < characterInv.Count; i++)
@@ -1324,7 +1324,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             }
         }
 
-        Dictionary<string, string> skinParts = new();
+        Dictionary<string, string> skinParts = [];
         PlayerSkinBehavior? bh = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
 
         List<AppliedSkinnablePartVariant> applied = bh?.AppliedSkinParts.Get().ToList() ?? [];

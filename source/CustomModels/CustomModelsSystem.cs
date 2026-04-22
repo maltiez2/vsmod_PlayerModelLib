@@ -1,7 +1,6 @@
 ﻿using Newtonsoft.Json.Linq;
 using OpenTK.Mathematics;
 using SkiaSharp;
-using System;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.CommandAbbr;
@@ -1320,6 +1319,7 @@ public sealed class CustomModelsSystem : ModSystem
 
     private void ProcessTexturePart(ICoreClientAPI clientApi, SkinnablePart part, string model)
     {
+        List<SkinnablePartVariant> variantsToSkip = [];
         foreach (SkinnablePartVariant? variant in part.Variants)
         {
             AssetLocation textureLoc;
@@ -1338,9 +1338,9 @@ public sealed class CustomModelsSystem : ModSystem
 
             if (asset == null)
             {
-                LoggerUtil.Error(clientApi, this, $"(model: {model}) Texture '{textureLoc}' not found for skin part '{part.Code}' and variant '{variant.Code}'.");
-
-                throw new ArgumentException($"[Player Model lib] (model: {model}) Texture '{textureLoc}' not found for skin part '{part.Code}' and variant '{variant.Code}'.");
+                LoggerUtil.Error(clientApi, this, $"(model: {model}) Texture '{textureLoc}' not found for skin part '{part.Code}' and variant '{variant.Code}', will skip.");
+                variantsToSkip.Add(variant);
+                continue;
             }
 
             if (variant.Color != 0)
@@ -1359,6 +1359,11 @@ public sealed class CustomModelsSystem : ModSystem
             }
 
             part.VariantsByCode[variant.Code] = variant;
+        }
+
+        foreach (SkinnablePartVariant variant in variantsToSkip)
+        {
+            part.Variants = part.Variants.Remove(variant);
         }
     }
     private void ProcessMainTextures(ICoreAPI api)
@@ -1413,7 +1418,10 @@ public sealed class CustomModelsSystem : ModSystem
             }
         }
 
-        if (element.FacesResolved == null) return;
+        if (element.FacesResolved == null)
+        {
+            return;
+        }
 
         foreach (ShapeElementFace face in element.FacesResolved)
         {

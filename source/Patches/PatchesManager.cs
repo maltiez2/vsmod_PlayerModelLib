@@ -28,10 +28,10 @@ public static class PatchesManager
             PatchUniversal(api);
         }
 
-        if (api is ICoreServerAPI serverApi && !PatchedServerSide)
+        if (api is ICoreServerAPI && !PatchedServerSide)
         {
             PatchedServerSide = true;
-            PatchServer(serverApi);
+            PatchServer();
         }
 
         if (api is ICoreClientAPI clientApi && !PatchedClientSide)
@@ -73,7 +73,7 @@ public static class PatchesManager
     {
         ScrollPatches.Init(api);
     }
-    private static void PatchServer(ICoreServerAPI api)
+    private static void PatchServer()
     {
         // no server patches
     }

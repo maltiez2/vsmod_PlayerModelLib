@@ -83,7 +83,9 @@ public static class ShapeLoadingUtil
             };
             newFaces.Add(newFace);
         }
-        element.FacesResolved = [.. newFaces.OfType<ShapeElementFace>()];
+#pragma warning disable CS8601 // Possible null reference assignment. - Vanilla has wrong nullability here
+        element.FacesResolved = [.. newFaces];
+#pragma warning restore CS8601 // Possible null reference assignment.
     }
     public static void WalkShapeElements(ShapeElement element, Action<ShapeElement> action)
     {

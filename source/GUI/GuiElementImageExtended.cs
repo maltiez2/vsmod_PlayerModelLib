@@ -7,35 +7,35 @@ namespace PlayerModelLib;
 
 public class GuiElementImageExtended : GuiElementTextBase
 {
-    private readonly AssetLocation imageAsset;
-    private readonly float brightness;
-    private readonly float alpha;
-    private readonly int width;
-    private readonly int height;
+    private readonly AssetLocation _imageAsset;
+    private readonly float _brightness;
+    private readonly float _alpha;
+    private readonly int _width;
+    private readonly int _height;
 
     public GuiElementImageExtended(ICoreClientAPI capi, ElementBounds bounds, AssetLocation imageAsset, float brightness, float alpha, int width = 0, int height = 0)
         : base(capi, "", null, bounds)
     {
-        this.imageAsset = imageAsset;
-        this.brightness = brightness;
-        this.alpha = alpha;
-        this.width = width;
-        this.height = height;
+        this._imageAsset = imageAsset;
+        this._brightness = brightness;
+        this._alpha = alpha;
+        this._width = width;
+        this._height = height;
     }
 
-    public override void ComposeElements(Context context, ImageSurface surface)
+    public override void ComposeElements(Context ctx, ImageSurface surface)
     {
-        context.Save();
-        ImageSurface imageSurfaceFromAsset = GetImageSurfaceFromAsset(api, imageAsset, mulAlpha: (int)(alpha * 255f), width, height);
-        context.Rectangle(Bounds.drawX, Bounds.drawY, Bounds.OuterWidth, Bounds.OuterHeight);
-        context.SetSourceSurface(imageSurfaceFromAsset, (int)Bounds.drawX, (int)Bounds.drawY);
-        context.FillPreserve();
-        if (brightness < 1)
+        ctx.Save();
+        ImageSurface imageSurfaceFromAsset = GetImageSurfaceFromAsset(api, _imageAsset, mulAlpha: (int)(_alpha * 255f), _width, _height);
+        ctx.Rectangle(Bounds.drawX, Bounds.drawY, Bounds.OuterWidth, Bounds.OuterHeight);
+        ctx.SetSourceSurface(imageSurfaceFromAsset, (int)Bounds.drawX, (int)Bounds.drawY);
+        ctx.FillPreserve();
+        if (_brightness < 1)
         {
-            context.SetSourceRGBA(0.0, 0.0, 0.0, 1f - brightness);
-            context.Fill();
+            ctx.SetSourceRGBA(0.0, 0.0, 0.0, 1f - _brightness);
+            ctx.Fill();
         }
-        context.Restore();
+        ctx.Restore();
         imageSurfaceFromAsset.Dispose();
     }
 
@@ -53,9 +53,9 @@ public class GuiElementImageExtended : GuiElementTextBase
             bitmapExternal.bmp = bitmapExternal.bmp.Resize(new SKSizeI(width, height), options);
         }
 
-        ImageSurface imageSurface = new ImageSurface(Format.Argb32, bitmapExternal.Width, bitmapExternal.Height);
-        uint* ptr = (uint*)((IntPtr)imageSurface.DataPtr).ToPointer();
-        uint* ptr2 = (uint*)((IntPtr)bitmapExternal.PixelsPtrAndLock).ToPointer();
+        ImageSurface imageSurface = new(Format.Argb32, bitmapExternal.Width, bitmapExternal.Height);
+        uint* ptr = (uint*)imageSurface.DataPtr.ToPointer();
+        uint* ptr2 = (uint*)bitmapExternal.PixelsPtrAndLock.ToPointer();
         int num = bitmapExternal.Width * bitmapExternal.Height;
         for (int i = 0; i < num; i++)
         {

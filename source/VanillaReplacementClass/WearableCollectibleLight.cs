@@ -17,12 +17,12 @@ public class WearableCollectibleLightBehavior : EntityBehavior
     public static event OnWearableCollectibleLightAppliedDelegate? OnWearableCollectibleLightApplied;
     public static event AfterWearableCollectibleLightAppliedDelegate? AfterWearableCollectibleLightApplied;
 
-    public readonly EntityPlayer PlayerEntity;
-    public readonly HashSet<string> InventoriesToProcess = [
+    public EntityPlayer PlayerEntity { get; }
+    public HashSet<string> InventoriesToProcess { get; } = [
         GlobalConstants.characterInvClassName,
         GlobalConstants.backpackInvClassName
     ];
-    public readonly Dictionary<string, List<int>> InventoriesSlotsToProcess = new()
+    public Dictionary<string, List<int>> InventoriesSlotsToProcess { get; } = new()
     {
          [GlobalConstants.backpackInvClassName] = [0, 1, 2, 3]
     };
@@ -50,7 +50,7 @@ public class WearableCollectibleLightBehavior : EntityBehavior
                     continue;
                 }
 
-                if (InventoriesSlotsToProcess.ContainsKey(inventoryId) && !InventoriesSlotsToProcess[inventoryId].Contains(inventory.GetSlotId(slot)))
+                if (InventoriesSlotsToProcess.TryGetValue(inventoryId, out List<int>? value) && !value.Contains(inventory.GetSlotId(slot)))
                 {
                     continue;
                 }
