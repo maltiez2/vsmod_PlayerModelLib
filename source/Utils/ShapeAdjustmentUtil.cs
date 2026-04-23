@@ -1,8 +1,7 @@
 ﻿using OpenTK.Mathematics;
-using OpenTK.Windowing.GraphicsLibraryFramework;
-using PlayerModelLib.Utils;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
+using OverhaulLib.Utils;
 
 namespace PlayerModelLib;
 
@@ -171,15 +170,15 @@ public static class ShapeAdjustmentUtil
             {
                 foreach (string warning in stepParentResult.Warnings)
                 {
-                    LoggerUtil.Dev(api, typeof(ShapeAdjustmentUtil), warning);
+                    Log.Dev(api, typeof(ShapeAdjustmentUtil), warning);
                 }
             }
             if (!stepParentResult.IsSuccess)
             {
-                LoggerUtil.Dev(api, typeof(ShapeAdjustmentUtil), $"Failed to 'StepParentShapeOverlays' for overlay '{overlayPath}' while 'AdjustClothesShape' for base shape '{baseShape.Code}'");
+                Log.Dev(api, typeof(ShapeAdjustmentUtil), $"Failed to 'StepParentShapeOverlays' for overlay '{overlayPath}' while 'AdjustClothesShape' for base shape '{baseShape.Code}'");
                 foreach (string warning in stepParentResult.Warnings)
                 {
-                    LoggerUtil.Dev(api, typeof(ShapeAdjustmentUtil), warning);
+                    Log.Dev(api, typeof(ShapeAdjustmentUtil), warning);
                 }
             }
 

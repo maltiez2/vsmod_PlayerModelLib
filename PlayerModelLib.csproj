@@ -3,7 +3,7 @@
   <PropertyGroup>
     <ModName>Player Model Library</ModName>
     <ModType>code</ModType>
-    <ModVersion>1.14.13</ModVersion>
+    <ModVersion>1.15.0</ModVersion>
     <ModId>playermodellib</ModId>
     <Description></Description>
     <Side>Universal</Side>
@@ -19,7 +19,8 @@
 
   <!-- Dependencies -->
   <ItemGroup>
-    <Dependencies Include="jsonpatcheslib" Version="1.4.0" />
+    <Dependencies Include="jsonpatcheslib" Version="1.5.1" />
+    <Dependencies Include="overhaullib" Version="2.0.2" />
   </ItemGroup>
 
   <!-- Project settings -->

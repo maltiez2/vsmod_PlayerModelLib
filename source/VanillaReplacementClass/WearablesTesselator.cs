@@ -1,11 +1,11 @@
-﻿using PlayerModelLib.Utils;
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 using Vintagestory.GameContent;
+using OverhaulLib.Utils;
 
 namespace PlayerModelLib;
 
@@ -70,7 +70,7 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
             IInventory? inventory = PlayerEntity.Player?.InventoryManager?.GetOwnInventory(inventoryId);
             if (inventory == null)
             {
-                LoggerUtil.Error(entity.Api, this, $"Unable to get inventory with id '{inventoryId}' for player '{PlayerEntity.Player?.PlayerName}'");
+                Log.Verbose(entity.Api, this, $"(OnTesselation) Unable to get inventory with id '{inventoryId}' for player '{PlayerEntity.Player?.PlayerName}'");
                 continue;
             }
 
@@ -166,7 +166,7 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
             shapeOverlayResult.LogErrorsAndWarnings(entity.Api, this);
             if (!shapeOverlayResult.IsSuccess)
             {
-                LoggerUtil.Error(entity.Api, this, $"Failed to attach attachable shape overlays for collectible '{stack.Collectible.Code}'.");
+                Log.Error(entity.Api, this, $"Failed to attach attachable shape overlays for collectible '{stack.Collectible.Code}'.");
                 return;
             }
         }
@@ -198,7 +198,7 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
         stepParentResult.LogErrorsAndWarnings(entity.Api, this);
         if (!stepParentResult.IsSuccess)
         {
-            LoggerUtil.Error(entity.Api, this, $"Failed to attach shape for collectible '{stack.Collectible.Code}'.");
+            Log.Error(entity.Api, this, $"Failed to attach shape for collectible '{stack.Collectible.Code}'.");
             return;
         }
 
@@ -285,7 +285,7 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
         Shape? gearShape = ShapeLoadingUtil.LoadShape(entity.Api, shapePath);
         if (gearShape == null)
         {
-            LoggerUtil.Warn(entity.Api, this, $"Cant load attachable wearable shape by path '{shapePath}' for item '{stack.Collectible.Code}'");
+            Log.Warn(entity.Api, this, $"Cant load attachable wearable shape by path '{shapePath}' for item '{stack.Collectible.Code}'");
             return null;
         }
 

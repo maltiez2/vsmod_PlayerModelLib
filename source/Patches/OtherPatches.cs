@@ -1,5 +1,4 @@
 ﻿using HarmonyLib;
-using System.Diagnostics;
 using System.Reflection;
 using System.Text;
 using Vintagestory.API.Client;
@@ -11,6 +10,7 @@ using Vintagestory.API.Server;
 using Vintagestory.API.Util;
 using Vintagestory.Client.NoObf;
 using Vintagestory.GameContent;
+using OverhaulLib.Utils;
 
 namespace PlayerModelLib;
 
@@ -281,7 +281,7 @@ internal static class OtherPatches
 
         if (characterClass == null)
         {
-            LoggerUtil.Error(_clientApi, typeof(OtherPatches), $"Character class with code '{classCode}' not found when trying to set character class for player '{_clientApi?.World?.Player?.PlayerName}'.");
+            Log.Error(_clientApi, typeof(OtherPatches), $"Character class with code '{classCode}' not found when trying to set character class for player '{_clientApi?.World?.Player?.PlayerName}'.");
             __result = "";
             return false;
         }

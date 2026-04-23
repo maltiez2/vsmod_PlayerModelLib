@@ -4,6 +4,7 @@ using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Config;
 using Vintagestory.GameContent;
+using OverhaulLib.Utils;
 
 namespace PlayerModelLib;
 
@@ -104,7 +105,7 @@ public static partial class ShapeReplacementUtil
         CompositeShape? oldCompositeShape = stack == null ? null : yadayada.GetAttachedShape(stack, "default")?.Clone();
         if (oldCompositeShape == null)
         {
-            LoggerUtil.Warn(entity.Api, typeof(ShapeReplacementUtil), $"Unable to get attached shape from '{stack?.Collectible?.Code}'");
+            Log.Warn(entity.Api, typeof(ShapeReplacementUtil), $"Unable to get attached shape from '{stack?.Collectible?.Code}'");
             return;
         }
         string shapePath = oldCompositeShape.Base.ToString();
@@ -164,15 +165,15 @@ public static partial class ShapeReplacementUtil
 
             File.WriteAllText(fifo.FullName, json);
 
-            LoggerUtil.Verbose(api, typeof(ShapeReplacementUtil), $"('{modelData.Code}') Exported '{shapePath}' to '{fullFilePath}'");
-            LoggerUtil.Dev(api, typeof(ShapeReplacementUtil), $"('{modelData.Code}') Exported '{shapePath}' to '{fullFilePath}'");
+            Log.Verbose(api, typeof(ShapeReplacementUtil), $"('{modelData.Code}') Exported '{shapePath}' to '{fullFilePath}'");
+            Log.Dev(api, typeof(ShapeReplacementUtil), $"('{modelData.Code}') Exported '{shapePath}' to '{fullFilePath}'");
 
             ExportingShape = false;
         }
         catch (Exception exception)
         {
             ExportingShape = false;
-            LoggerUtil.Error(api, typeof(ShapeReplacementUtil), $"Error on exporting shape '{fileName}':\n{exception}\n");
+            Log.Error(api, typeof(ShapeReplacementUtil), $"Error on exporting shape '{fileName}':\n{exception}\n");
         }
     }
     private static void FixShapeJson(ref string json)
@@ -322,7 +323,7 @@ public static partial class ShapeReplacementUtil
         CompositeShape? oldCompositeShape = yadayada.GetAttachedShape(stack, "default")?.Clone();
         if (oldCompositeShape == null)
         {
-            LoggerUtil.Warn(entity.Api, typeof(ShapeReplacementUtil), $"Unable to get attached shape from '{stack.Collectible?.Code}'");
+            Log.Warn(entity.Api, typeof(ShapeReplacementUtil), $"Unable to get attached shape from '{stack.Collectible?.Code}'");
             return false;
         }
         string shapePath = oldCompositeShape.Base.ToString();

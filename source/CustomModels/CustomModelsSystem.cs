@@ -12,6 +12,7 @@ using Vintagestory.API.Server;
 using Vintagestory.API.Util;
 using Vintagestory.GameContent;
 using Vintagestory.Server;
+using OverhaulLib.Utils;
 
 namespace PlayerModelLib;
 
@@ -77,7 +78,7 @@ public sealed class CustomModelsSystem : ModSystem
         }
         catch (Exception exception)
         {
-            LoggerUtil.Fatal(api, this, $"Failed to load default player model, error:\n{exception}");
+            Log.Error(api, this, $"Failed to load default player model, error:\n{exception}");
             return;
         }
 
@@ -193,7 +194,7 @@ public sealed class CustomModelsSystem : ModSystem
         }
         catch (Exception exception)
         {
-            LoggerUtil.Error(_api, this, $"({code}) Error on hot-loading custom player model:\n{exception}");
+            Log.Error(_api, this, $"({code}) Error on hot-loading custom player model:\n{exception}");
             CustomModels.Remove(code);
             return;
         }
@@ -209,7 +210,7 @@ public sealed class CustomModelsSystem : ModSystem
         }
         catch (Exception exception)
         {
-            LoggerUtil.Error(_api, this, $"({player.PlayerName}|{code}) Error on invoking 'OnCustomModelChanged' event:\n{exception}");
+            Log.Error(_api, this, $"({player.PlayerName}|{code}) Error on invoking 'OnCustomModelChanged' event:\n{exception}");
         }
     }
 
@@ -345,7 +346,7 @@ public sealed class CustomModelsSystem : ModSystem
                 }
                 catch (Exception exception)
                 {
-                    LoggerUtil.Error(api, this, $"Error on loading model '{code}': {exception}");
+                    Log.Error(api, this, $"Error on loading model '{code}': {exception}");
                 }
             }
         }
@@ -354,7 +355,7 @@ public sealed class CustomModelsSystem : ModSystem
     {
         if (!CanBeNullAttribute.Validate(modelConfig, api, $"config for '{code}'"))
         {
-            LoggerUtil.Error(api, this, $"({code}) Custom model config contains properties that were set to null, that should not be equal to null.");
+            Log.Error(api, this, $"({code}) Custom model config contains properties that were set to null, that should not be equal to null.");
             return;
         }
 
@@ -362,19 +363,19 @@ public sealed class CustomModelsSystem : ModSystem
 
         if (shape == null)
         {
-            LoggerUtil.Error(_api, this, $"({code}) Unable to load shape '{modelConfig.ShapePath}'");
+            Log.Error(_api, this, $"({code}) Unable to load shape '{modelConfig.ShapePath}'");
             return;
         }
 
         if (shape.Textures == null)
         {
-            LoggerUtil.Error(_api, this, $"({code}) Shape '{modelConfig.ShapePath}' does not have textures list defined");
+            Log.Error(_api, this, $"({code}) Shape '{modelConfig.ShapePath}' does not have textures list defined");
             return;
         }
 
         if (shape.Textures.Count == 0)
         {
-            LoggerUtil.Error(_api, this, $"({code}) Shape '{modelConfig.ShapePath}' does not have any textures specified, will skip the model.");
+            Log.Error(_api, this, $"({code}) Shape '{modelConfig.ShapePath}' does not have any textures specified, will skip the model.");
             return;
         }
 
@@ -393,7 +394,7 @@ public sealed class CustomModelsSystem : ModSystem
 
             if (!api.Assets.Exists(path) && api.Side == EnumAppSide.Client)
             {
-                LoggerUtil.Error(_api, this, $"({code}) Shape '{modelConfig.ShapePath}' has texture with code '{textureCode}' and path '{texturePath}'. This texture was not found in assets, will skip loading this model.");
+                Log.Error(_api, this, $"({code}) Shape '{modelConfig.ShapePath}' has texture with code '{textureCode}' and path '{texturePath}'. This texture was not found in assets, will skip loading this model.");
                 return;
             }
         }
@@ -446,7 +447,7 @@ public sealed class CustomModelsSystem : ModSystem
         }
         else
         {
-            LoggerUtil.Warn(_api, this, $"({code}) Model icon by path '{icon}' does not exists");
+            Log.Warn(_api, this, $"({code}) Model icon by path '{icon}' does not exists");
             modelData.Icon = null;
         }
 
@@ -457,7 +458,7 @@ public sealed class CustomModelsSystem : ModSystem
         }
         else
         {
-            LoggerUtil.Verbose(_api, this, $"({code}) Group icon by path '{icon}' does not exists");
+            Log.Verbose(_api, this, $"({code}) Group icon by path '{icon}' does not exists");
             modelData.GroupIcon = null;
         }
 
@@ -491,7 +492,7 @@ public sealed class CustomModelsSystem : ModSystem
             }
             catch (Exception exception)
             {
-                LoggerUtil.Error(api, this, $"({modelCode}) Error on loading wearable model replacers for custom model:\n{exception}");
+                Log.Error(api, this, $"({modelCode}) Error on loading wearable model replacers for custom model:\n{exception}");
             }
         }
 
@@ -503,7 +504,7 @@ public sealed class CustomModelsSystem : ModSystem
             }
             catch (Exception exception)
             {
-                LoggerUtil.Error(api, this, $"({modelCode}) Error on loading wearable composite model replacers for custom model:\n{exception}");
+                Log.Error(api, this, $"({modelCode}) Error on loading wearable composite model replacers for custom model:\n{exception}");
             }
         }
 
@@ -516,7 +517,7 @@ public sealed class CustomModelsSystem : ModSystem
             }
             catch (Exception exception)
             {
-                LoggerUtil.Error(api, this, $"({asset.Location}) Error on loading composite model replacements by code:\n{exception}");
+                Log.Error(api, this, $"({asset.Location}) Error on loading composite model replacements by code:\n{exception}");
             }
         }
 
@@ -529,7 +530,7 @@ public sealed class CustomModelsSystem : ModSystem
             }
             catch (Exception exception)
             {
-                LoggerUtil.Error(api, this, $"({asset.Location}) Error on loading model replacements by code:\n{exception}");
+                Log.Error(api, this, $"({asset.Location}) Error on loading model replacements by code:\n{exception}");
             }
         }
 
@@ -542,7 +543,7 @@ public sealed class CustomModelsSystem : ModSystem
             }
             catch (Exception exception)
             {
-                LoggerUtil.Error(api, this, $"({asset.Location}) Error on loading model replacements by shape:\n{exception}");
+                Log.Error(api, this, $"({asset.Location}) Error on loading model replacements by shape:\n{exception}");
             }
         }
     }
@@ -550,7 +551,7 @@ public sealed class CustomModelsSystem : ModSystem
     {
         if (!CustomModels.TryGetValue(modelCode, out CustomModelData? value))
         {
-            LoggerUtil.Error(_api, this, $"Error while loading wearable model replacements by shape: custom model with code '{modelCode}' does not exists.");
+            Log.Error(_api, this, $"Error while loading wearable model replacements by shape: custom model with code '{modelCode}' does not exists.");
             return;
         }
 
@@ -575,7 +576,7 @@ public sealed class CustomModelsSystem : ModSystem
                 }
                 else
                 {
-                    LoggerUtil.Error(_api, this, $"Shape '{processedPath}' that replaces shape for item '{item.Code}' for model '{modelCode}' was not found, skipping.");
+                    Log.Error(_api, this, $"Shape '{processedPath}' that replaces shape for item '{item.Code}' for model '{modelCode}' was not found, skipping.");
                 }
             }
         }
@@ -584,7 +585,7 @@ public sealed class CustomModelsSystem : ModSystem
     {
         if (!CustomModels.TryGetValue(modelCode, out CustomModelData? value))
         {
-            LoggerUtil.Error(_api, this, $"Error while loading wearable composite model replacements by shape: custom model with code '{modelCode}' does not exists.");
+            Log.Error(_api, this, $"Error while loading wearable composite model replacements by shape: custom model with code '{modelCode}' does not exists.");
             return;
         }
 
@@ -610,7 +611,7 @@ public sealed class CustomModelsSystem : ModSystem
             {
                 if (!CustomModels.ContainsKey(modelCode))
                 {
-                    LoggerUtil.Error(_api, this, $"Error while loading wearable composite model replacements by code: custom model with code '{modelCode}' does not exists.");
+                    Log.Error(_api, this, $"Error while loading wearable composite model replacements by code: custom model with code '{modelCode}' does not exists.");
                     continue;
                 }
 
@@ -639,7 +640,7 @@ public sealed class CustomModelsSystem : ModSystem
             {
                 if (!CustomModels.ContainsKey(modelCode))
                 {
-                    LoggerUtil.Error(_api, this, $"Error while loading wearable model replacements by code: custom model with code '{modelCode}' does not exists.");
+                    Log.Error(_api, this, $"Error while loading wearable model replacements by code: custom model with code '{modelCode}' does not exists.");
                     continue;
                 }
 
@@ -662,7 +663,7 @@ public sealed class CustomModelsSystem : ModSystem
                         }
                         else
                         {
-                            LoggerUtil.Error(_api, this, $"Shape '{processedPath}' that replaces shape for item '{item.Code}' for model '{modelCode}' was not found, skipping.");
+                            Log.Error(_api, this, $"Shape '{processedPath}' that replaces shape for item '{item.Code}' for model '{modelCode}' was not found, skipping.");
                         }
                     }
                 }
@@ -680,7 +681,7 @@ public sealed class CustomModelsSystem : ModSystem
             {
                 if (!CustomModels.ContainsKey(modelCode))
                 {
-                    LoggerUtil.Error(_api, this, $"Error while loading wearable model replacements by shape: custom model with code '{modelCode}' does not exists.");
+                    Log.Error(_api, this, $"Error while loading wearable model replacements by shape: custom model with code '{modelCode}' does not exists.");
                     continue;
                 }
 
@@ -692,7 +693,7 @@ public sealed class CustomModelsSystem : ModSystem
                     }
                     else
                     {
-                        LoggerUtil.Error(_api, this, $"Shape '{toPath}' that replaces shape '{fromPath}' for model '{modelCode}' was not found, skipping.");
+                        Log.Error(_api, this, $"Shape '{toPath}' that replaces shape '{fromPath}' for model '{modelCode}' was not found, skipping.");
                     }
                 }
             }
@@ -712,7 +713,7 @@ public sealed class CustomModelsSystem : ModSystem
                 }
                 catch (Exception exception)
                 {
-                    LoggerUtil.Error(api, this, $"Error on loading base shape '{code}': {exception}");
+                    Log.Error(api, this, $"Error on loading base shape '{code}': {exception}");
                 }
             }
         }
@@ -741,7 +742,7 @@ public sealed class CustomModelsSystem : ModSystem
             }
             catch (Exception exception)
             {
-                LoggerUtil.Error(api, this, $"({code}) Error on processing animations for custom model:\n{exception}");
+                Log.Error(api, this, $"({code}) Error on processing animations for custom model:\n{exception}");
             }
         }
     }
@@ -775,7 +776,7 @@ public sealed class CustomModelsSystem : ModSystem
         if (removedElements.Count > 0)
         {
             string removedList = removedElements.Aggregate((f, s) => $"{f}, {s}");
-            LoggerUtil.Verbose(_api, this, $"For model '{modelCode}' removed {removedElements.Count} not existing elements from animations: {removedList}");
+            Log.Verbose(_api, this, $"For model '{modelCode}' removed {removedElements.Count} not existing elements from animations: {removedList}");
         }
 
         customShape.ResolveReferences(api.Logger, "PlayerModelLib:CustomModel-ProcessAnimations");
@@ -789,7 +790,7 @@ public sealed class CustomModelsSystem : ModSystem
         }
         catch (Exception exception)
         {
-            LoggerUtil.Error(api, this, $"Error on collectible attachment points from default player model:\n{exception}");
+            Log.Error(api, this, $"Error on collectible attachment points from default player model:\n{exception}");
             return;
         }
 
@@ -801,7 +802,7 @@ public sealed class CustomModelsSystem : ModSystem
             }
             catch (Exception exception)
             {
-                LoggerUtil.Error(api, this, $"({code}) Error on adding missing attachment points to custom model:\n{exception}");
+                Log.Error(api, this, $"({code}) Error on adding missing attachment points to custom model:\n{exception}");
             }
         }
     }
@@ -843,7 +844,7 @@ public sealed class CustomModelsSystem : ModSystem
         {
             if (names.Contains(element.Name))
             {
-                LoggerUtil.Warn(api, this, $"({modelCode}) Model shape has element with duplicated name: '{element.Name}'. This will cause issues, make sure model shape does not contain elements with same name.");
+                Log.Warn(api, this, $"({modelCode}) Model shape has element with duplicated name: '{element.Name}'. This will cause issues, make sure model shape does not contain elements with same name.");
             }
             names.Add(element.Name);
         }
@@ -919,7 +920,7 @@ public sealed class CustomModelsSystem : ModSystem
     {
         if (parts.Count(skinPart => skinPart.Colbreak) == 1) return;
 
-        LoggerUtil.Warn(_api, this, $"Model '{modelCodeForLogging}' has no 'calBreak: true' specified, or has specified it more than once. Will automatically reassign 'calBreak' values.\nColumn break is used so split skin parts into left and right columns in character creation gui dialog.");
+        Log.Warn(_api, this, $"Model '{modelCodeForLogging}' has no 'calBreak: true' specified, or has specified it more than once. Will automatically reassign 'calBreak' values.\nColumn break is used so split skin parts into left and right columns in character creation gui dialog.");
 
         int middleIndex = (parts.Length - 1) / 2;
         for (int index = 0; index < parts.Length; index++)
@@ -956,7 +957,7 @@ public sealed class CustomModelsSystem : ModSystem
                     if (newPoints.Any())
                     {
                         string pointsList = newPoints.Aggregate((f, s) => $"{f}, {s}");
-                        LoggerUtil.Verbose(_api, this, $"Adding attachment points to model '{modelCode}' into element '{elementName}': {pointsList}");
+                        Log.Verbose(_api, this, $"Adding attachment points to model '{modelCode}' into element '{elementName}': {pointsList}");
                     }
 
                     element.AttachmentPoints = [.. element.AttachmentPoints, .. pointsData.Where(point => !existing.Contains(point.Code))];
@@ -967,7 +968,7 @@ public sealed class CustomModelsSystem : ModSystem
                     if (newPoints.Any())
                     {
                         string pointsList = newPoints.Aggregate((f, s) => $"{f}, {s}");
-                        LoggerUtil.Verbose(_api, this, $"Adding attachment points to model '{modelCode}' into element '{elementName}': {pointsList}");
+                        Log.Verbose(_api, this, $"Adding attachment points to model '{modelCode}' into element '{elementName}': {pointsList}");
                     }
 
                     element.AttachmentPoints = pointsData;
@@ -982,8 +983,8 @@ public sealed class CustomModelsSystem : ModSystem
                 if (newPoints.Any())
                 {
                     string pointsList = newPoints.Aggregate((f, s) => $"{f}, {s}");
-                    LoggerUtil.Verbose(_api, this, $"Adding missing shape element '{elementName}' to model '{modelCode}' into element '{parentName}' for adding attachments point");
-                    LoggerUtil.Verbose(_api, this, $"Adding attachment points to model '{modelCode}' into element '{elementName}': {pointsList}");
+                    Log.Verbose(_api, this, $"Adding missing shape element '{elementName}' to model '{modelCode}' into element '{parentName}' for adding attachments point");
+                    Log.Verbose(_api, this, $"Adding attachment points to model '{modelCode}' into element '{elementName}': {pointsList}");
                 }
 
                 ShapeElement newShapeElement = elementData.Clone();
@@ -1036,13 +1037,13 @@ public sealed class CustomModelsSystem : ModSystem
 
             if (json == null)
             {
-                LoggerUtil.Error(_api, this, $"Error when trying to load model config '{asset.Location}'.");
+                Log.Error(_api, this, $"Error when trying to load model config '{asset.Location}'.");
                 return result;
             }
         }
         catch (Exception exception)
         {
-            LoggerUtil.Error(_api, this, $"Exception when trying to load model config '{asset.Location}':\n{exception}");
+            Log.Error(_api, this, $"Exception when trying to load model config '{asset.Location}':\n{exception}");
             return result;
         }
 
@@ -1054,7 +1055,7 @@ public sealed class CustomModelsSystem : ModSystem
                 CustomModelConfig? config = configJson.AsObject<CustomModelConfig>();
                 if (config == null)
                 {
-                    LoggerUtil.Error(_api, this, $"Error when trying to load model config '{asset.Location}' for model '{code}'");
+                    Log.Error(_api, this, $"Error when trying to load model config '{asset.Location}' for model '{code}'");
                     continue;
                 }
                 config.Domain = domain;
@@ -1062,7 +1063,7 @@ public sealed class CustomModelsSystem : ModSystem
             }
             catch (Exception exception)
             {
-                LoggerUtil.Error(_api, this, $"Exception when trying to load model config '{asset.Location}' for model '{code}':\n{exception}");
+                Log.Error(_api, this, $"Exception when trying to load model config '{asset.Location}' for model '{code}':\n{exception}");
             }
         }
 
@@ -1076,7 +1077,7 @@ public sealed class CustomModelsSystem : ModSystem
         }
         catch (Exception exception)
         {
-            LoggerUtil.Error(_api, this, $"Failed to get model replacements from '{asset.Location}'. Exception: {exception}");
+            Log.Error(_api, this, $"Failed to get model replacements from '{asset.Location}'. Exception: {exception}");
             return [];
         }
     }
@@ -1088,7 +1089,7 @@ public sealed class CustomModelsSystem : ModSystem
         }
         catch (Exception exception)
         {
-            LoggerUtil.Error(_api, this, $"Failed to get composite model replacements from '{asset.Location}'. Exception: {exception}");
+            Log.Error(_api, this, $"Failed to get composite model replacements from '{asset.Location}'. Exception: {exception}");
             return [];
         }
     }
@@ -1105,13 +1106,13 @@ public sealed class CustomModelsSystem : ModSystem
 
             if (json == null)
             {
-                LoggerUtil.Error(_api, this, $"Error when trying to load base shape config '{asset.Location}'.");
+                Log.Error(_api, this, $"Error when trying to load base shape config '{asset.Location}'.");
                 return result;
             }
         }
         catch (Exception exception)
         {
-            LoggerUtil.Error(_api, this, $"Exception when trying to load base shape config '{asset.Location}':\n{exception}");
+            Log.Error(_api, this, $"Exception when trying to load base shape config '{asset.Location}':\n{exception}");
             return result;
         }
 
@@ -1123,7 +1124,7 @@ public sealed class CustomModelsSystem : ModSystem
                 BaseShapeDataJson? config = configJson.AsObject<BaseShapeDataJson>();
                 if (config == null)
                 {
-                    LoggerUtil.Error(_api, this, $"Error when trying to load base shape config '{asset.Location}' for base shape '{code}'.");
+                    Log.Error(_api, this, $"Error when trying to load base shape config '{asset.Location}' for base shape '{code}'.");
                     continue;
                 }
                 config.Domain = domain;
@@ -1131,7 +1132,7 @@ public sealed class CustomModelsSystem : ModSystem
             }
             catch (Exception exception)
             {
-                LoggerUtil.Error(_api, this, $"Exception when trying to load base shape config '{asset.Location}' for base shape '{code}':\n{exception}");
+                Log.Error(_api, this, $"Exception when trying to load base shape config '{asset.Location}' for base shape '{code}':\n{exception}");
             }
         }
 
@@ -1167,7 +1168,7 @@ public sealed class CustomModelsSystem : ModSystem
         {
             if (part.Code == null)
             {
-                LoggerUtil.Error(_api, this, $"Skin part for model '{model}' does not have code specified, skipping.");
+                Log.Error(_api, this, $"Skin part for model '{model}' does not have code specified, skipping.");
                 continue;
             }
 
@@ -1211,7 +1212,7 @@ public sealed class CustomModelsSystem : ModSystem
 
         if (shape == null)
         {
-            LoggerUtil.Error(api, this, $"Error while loading base shape '{code}': shape '{json.ShapePath}' does not exists.");
+            Log.Error(api, this, $"Error while loading base shape '{code}': shape '{json.ShapePath}' does not exists.");
             return;
         }
 
@@ -1227,7 +1228,7 @@ public sealed class CustomModelsSystem : ModSystem
 
         if (BaseShapesData.ContainsKey(code))
         {
-            LoggerUtil.Error(api, this, $"Error while loading base shape '{code}': such base shape is already loaded.");
+            Log.Error(api, this, $"Error while loading base shape '{code}': such base shape is already loaded.");
             return;
         }
 
@@ -1338,7 +1339,7 @@ public sealed class CustomModelsSystem : ModSystem
 
             if (asset == null)
             {
-                LoggerUtil.Error(clientApi, this, $"(model: {model}) Texture '{textureLoc}' not found for skin part '{part.Code}' and variant '{variant.Code}', will skip.");
+                Log.Error(clientApi, this, $"(model: {model}) Texture '{textureLoc}' not found for skin part '{part.Code}' and variant '{variant.Code}', will skip.");
                 variantsToSkip.Add(variant);
                 continue;
             }
@@ -1376,7 +1377,7 @@ public sealed class CustomModelsSystem : ModSystem
             }
             catch (Exception exception)
             {
-                LoggerUtil.Error(api, this, $"({modelCode}) Error on processing custom model main textures:\n{exception}");
+                Log.Error(api, this, $"({modelCode}) Error on processing custom model main textures:\n{exception}");
             }
         }
     }
@@ -1441,7 +1442,7 @@ public sealed class CustomModelsSystem : ModSystem
             }
             catch (Exception exception)
             {
-                LoggerUtil.Error(api, this, $"({modelCode}) Error on collecting textures from custom model:\n{exception}");
+                Log.Error(api, this, $"({modelCode}) Error on collecting textures from custom model:\n{exception}");
             }
         }
     }

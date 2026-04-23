@@ -1,6 +1,7 @@
 ﻿using ConfigLib;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using OverhaulLib.Utils;
 
 namespace PlayerModelLib;
 
@@ -28,8 +29,6 @@ public sealed class PlayerModelModSystem : ModSystem
     public static Settings Settings { get; set; } = new();
     public static event Action<ICoreAPI, Settings>? OnSettingsLoaded;
 
-    public static ObjectCache<string, Shape>? ShapesCache { get; set; }
-
     public override void Start(ICoreAPI api)
     {
         api.RegisterEntityBehaviorClass("PlayerModelLib:ExtraSkinnable", typeof(PlayerSkinBehavior));
@@ -45,16 +44,12 @@ public sealed class PlayerModelModSystem : ModSystem
         }
 
         OnSettingsLoaded?.Invoke(api, Settings);
-
-        ShapesCache = new(api, "[PML] shapes", TimeSpan.FromMinutes(10), threadSafe: true);
-        ShapeLoadingUtil.ShapesCache = ShapesCache;
     }
 
     public override void Dispose()
     {
         PatchesManager.Unpatch();
 
-        ShapesCache?.Dispose();
         ShapeReplacementUtil.StaticDispose();
     }
 

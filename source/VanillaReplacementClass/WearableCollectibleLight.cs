@@ -1,6 +1,7 @@
 ﻿using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Config;
+using OverhaulLib.Utils;
 
 namespace PlayerModelLib;
 
@@ -39,7 +40,7 @@ public class WearableCollectibleLightBehavior : EntityBehavior
             IInventory? inventory = PlayerEntity.Player?.InventoryManager?.GetOwnInventory(inventoryId);
             if (inventory == null)
             {
-                LoggerUtil.Error(entity.Api, this, $"Unable to get inventory with id '{inventoryId}' for player '{PlayerEntity.Player?.PlayerName}'");
+                Log.Error(entity.Api, this, $"Unable to get inventory with id '{inventoryId}' for player '{PlayerEntity.Player?.PlayerName}'");
                 continue;
             }
 

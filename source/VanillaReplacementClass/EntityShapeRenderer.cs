@@ -5,6 +5,7 @@ using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.MathTools;
 using Vintagestory.GameContent;
+using OverhaulLib.Utils;
 
 namespace PlayerModelLib;
 
@@ -97,7 +98,7 @@ public class CustomPlayerShapeRenderer : EntityPlayerShapeRenderer
             if (PlayerModelModSystem.Settings.LogOffThreadTesselationErrors)
             {
                 string message = $"Error while tesselating player shape off-thread (please report in the lib thread on discord):\n{exception}";
-                LoggerUtil.Warn(entity.Api, this, message);
+                Log.Warn(entity.Api, this, message);
             }
             entity.MarkShapeModified();
         }

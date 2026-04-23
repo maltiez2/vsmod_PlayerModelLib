@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Text;
+using OverhaulLib.Utils;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
@@ -1150,12 +1151,12 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         if (missingTraits.Any())
         {
             string missingTraitsList = missingTraits.Aggregate((a, b) => $"{a}, {b}");
-            LoggerUtil.Error(_api, this, $"Custom model '{model}' has traits that does not exist: {missingTraitsList}.\nIt can be caused by either bug in the mod that adds that model, or it can be caused by some other mods breaking vanilla character system.");
+            Log.Error(_api, this, $"Custom model '{model}' has traits that does not exist: {missingTraitsList}.\nIt can be caused by either bug in the mod that adds that model, or it can be caused by some other mods breaking vanilla character system.");
             IEnumerable<string> existingTraits = _characterSystem.TraitsByCode.Keys;
             if (existingTraits.Any())
             {
                 string existingTraitsList = existingTraits.Aggregate((a, b) => $"{a},\n{b}");
-                LoggerUtil.Error(_api, this, $"All existing traits:\n{existingTraitsList}\n");
+                Log.Error(_api, this, $"All existing traits:\n{existingTraitsList}\n");
             }
 
             fullDescription.AppendLine();

@@ -1,5 +1,5 @@
 ﻿using HarmonyLib;
-using PlayerModelLib.Utils;
+using OverhaulLib.Utils;
 using System.Diagnostics;
 using System.Reflection;
 using Vintagestory.API.Client;
@@ -36,7 +36,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
                 return value;
             }
 
-            LoggerUtil.Warn(ClientApi, this, $"Custom model '{CurrentModelCode}' does not exists.");
+            Log.Warn(ClientApi, this, $"Custom model '{CurrentModelCode}' does not exists.");
 
             return ModelSystem.CustomModels[ModelSystem.DefaultModelCode];
         }
@@ -122,7 +122,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
 
         if (!ModelSystem.CustomModels.ContainsKey(skinModel) && entity.Api.ModLoader.IsModEnabled("customplayermodel"))
         {
-            LoggerUtil.Notify(entity.Api, this, $"(player: {(entity as EntityPlayer)?.GetName()}) Custom model with code '{skinModel}' was not found. Probably was not yet received from player. Will reset model to default until the model is received.");
+            Log.Notify(entity.Api, this, $"(player: {(entity as EntityPlayer)?.GetName()}) Custom model with code '{skinModel}' was not found. Probably was not yet received from player. Will reset model to default until the model is received.");
 
             TempModelCode = skinModel;
             TempSkinConfig = SkinTree.Clone();
@@ -143,7 +143,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
             {
                 if (!Initialized && TempModelCode == code)
                 {
-                    LoggerUtil.Notify(entity.Api, this, $"(player: {(entity as EntityPlayer)?.GetName()}) A custom model '{code}' was hot loaded, trying to restore original model.");
+                    Log.Notify(entity.Api, this, $"(player: {(entity as EntityPlayer)?.GetName()}) A custom model '{code}' was hot loaded, trying to restore original model.");
                     ActuallyInitialize();
                 }
             };
@@ -540,7 +540,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         }
         catch (Exception exception)
         {
-            LoggerUtil.Error(ClientApi, this, $"({CurrentModelCode}) Error when tesselating custom player model:\n{exception}");
+            Log.Error(ClientApi, this, $"({CurrentModelCode}) Error when tesselating custom player model:\n{exception}");
         }
 
         return null;
@@ -671,7 +671,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         if (!removedTraits.Any()) return;
 
         string removedTraitsMessage = removedTraits.Aggregate((a, b) => $"{a}, {b}");
-        LoggerUtil.Warn(player.Api, this, $"Removed traits that no longer exist from player '{player.Player?.PlayerName ?? player.GetName()}': {removedTraitsMessage}");
+        Log.Warn(player.Api, this, $"Removed traits that no longer exist from player '{player.Player?.PlayerName ?? player.GetName()}': {removedTraitsMessage}");
 
         player.WatchedAttributes.SetStringArray("extraTraits", newTraits.ToArray());
     }
@@ -903,7 +903,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         Shape? partShape = ShapeLoadingUtil.LoadShape(ClientApi, shapePath);
         if (partShape == null)
         {
-            LoggerUtil.Warn(ClientApi, this, $"Entity skin shape {shapePath} defined in entity config {entity.Properties.Code} not found or errored, was supposed to be at {shapePath}. Skin part will be invisible.");
+            Log.Warn(ClientApi, this, $"Entity skin shape {shapePath} defined in entity config {entity.Properties.Code} not found or errored, was supposed to be at {shapePath}. Skin part will be invisible.");
             return entityShape;
         }
 
@@ -937,7 +937,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         stepParentResult.LogErrorsAndWarnings(ClientApi, this);
         if (!stepParentResult.IsSuccess)
         {
-            LoggerUtil.Warn(ClientApi, this, $"Failed to 'AddSkinPart' for part '{part.Category}:{part.Code}'.");
+            Log.Warn(ClientApi, this, $"Failed to 'AddSkinPart' for part '{part.Category}:{part.Code}'.");
         }
 
         return entityShape;
@@ -986,7 +986,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
 
         if (clonedBaseTexture == null)
         {
-            LoggerUtil.Error(api, this, $"({CurrentModelCode}) Texture '{code}' in null, cant apply overlays to it, will skip.");
+            Log.Error(api, this, $"({CurrentModelCode}) Texture '{code}' in null, cant apply overlays to it, will skip.");
             return;
         }
 
@@ -1033,7 +1033,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
 
         if (characterClass == null)
         {
-            LoggerUtil.Error(entity.Api, this, $"Character class with code '{classCode}' not found when trying to apply class traits for player '{eplr.Player?.PlayerName ?? eplr.GetName()}'.");
+            Log.Error(entity.Api, this, $"Character class with code '{classCode}' not found when trying to apply class traits for player '{eplr.Player?.PlayerName ?? eplr.GetName()}'.");
             return;
         }
 
