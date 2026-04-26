@@ -1,7 +1,6 @@
 ﻿using ConfigLib;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
-using OverhaulLib.Utils;
 
 namespace PlayerModelLib;
 
@@ -35,6 +34,7 @@ public sealed class PlayerModelModSystem : ModSystem
         api.RegisterEntityBehaviorClass("PlayerModelLib:CustomPlayerInventory", typeof(CustomPlayerInventory));
         api.RegisterEntityBehaviorClass("PlayerModelLib:WearablesTesselator", typeof(WearablesTesselatorBehavior));
         api.RegisterEntityBehaviorClass("PlayerModelLib:WearableCollectibleLight", typeof(WearableCollectibleLightBehavior));
+        api.RegisterEntityBehaviorClass("PlayerModelLib:EntityTextureSourceBehavior", typeof(EntityTextureSourceBehavior));
 
         PatchesManager.Patch(api);
 

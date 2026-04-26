@@ -1,11 +1,12 @@
-﻿using System.Collections.Immutable;
+﻿using OpenTK.Windowing.GraphicsLibraryFramework;
+using OverhaulLib.Utils;
+using System.Collections.Immutable;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 using Vintagestory.GameContent;
-using OverhaulLib.Utils;
 
 namespace PlayerModelLib;
 
@@ -46,6 +47,12 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
     }
 
     public event OnTryGetTexturePositionDelegate? OnTryGetTexturePositionByInstance;
+
+    public override void AfterInitialized(bool onFirstSpawn)
+    {
+        EntityTextureSourceBehavior? textureSourceBehavior = entity.GetBehavior<EntityTextureSourceBehavior>();
+        textureSourceBehavior?.AddTextureSource(this, 1.0f);
+    }
 
     public override void OnTesselation(ref Shape entityShape, string shapePathForLogging, ref bool shapeIsCloned, ref string[] willDeleteElements)
     {
@@ -89,19 +96,16 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
     protected readonly ThreadSafeBool TesselateItemsValue = new(true);
 
     Size2i ITexPositionSource.AtlasSize => (entity.Api as ICoreClientAPI)?.EntityTextureAtlas.Size ?? new();
-    TextureAtlasPosition ITexPositionSource.this[string textureCode]
+    TextureAtlasPosition? ITexPositionSource.this[string textureCode]
     {
         get
         {
             if (WearableTextures.TryGetValue(textureCode, out TextureAtlasPosition? position))
             {
-                OnTryGetTexturePosition?.Invoke(this, textureCode, ref position);
-                OnTryGetTexturePositionByInstance?.Invoke(this, textureCode, ref position);
-
                 return position;
             }
 
-            return (entity.Api as ICoreClientAPI)?.EntityTextureAtlas[textureCode] ?? new();
+            return null;
         }
     }
 
@@ -186,7 +190,7 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
             }
         }
 
-        
+
 
         float damageEffectValue = GetDamageEffectValue(stack);
         attachableShape.ResolveReferences(entity.Api.Logger, $"WearablesTesselator.ProcessSlot for '{stack.Collectible.Code}'");
@@ -218,7 +222,13 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
             }
         }
 
-        attachable.CollectTextures(stack, attachableShape, prefix, attachableTextures);
+        Dictionary<string, CompositeTexture> attachableCollectedTextures = [];
+        attachable.CollectTextures(stack, attachableShape, prefix, attachableCollectedTextures);
+        foreach ((string textureCode, CompositeTexture texture) in attachableCollectedTextures)
+        {
+            attachableTextures[prefix + textureCode] = texture.Clone();
+            attachableShape.Textures[prefix + textureCode] = texture.Base.Clone();
+        }
 
         foreach ((string textureCode, CompositeTexture texture) in attachableTextures)
         {

@@ -47,32 +47,24 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
     public readonly ThreadSafeDictionary<string, SkinnablePart> AvailableSkinPartsByCode = new([]);
     public readonly ThreadSafeList<SkinnablePart> AvailableSkinParts = new([]);
     public readonly ThreadSafeList<AppliedSkinnablePartVariant> AppliedSkinParts = new([]);
-    public readonly ThreadSafeDictionary<string, TextureAtlasPosition> OverlayTextures = new([]);
 
     public string VoiceType { get; set; } = "altoflute";
     public string VoicePitch { get; set; } = "medium";
     public string MainTextureCode { get; set; } = "";
 
     public event Action? OnActuallyInitialize;
-
     public event Action<string>? OnModelChanged;
-
     public event Action<Shape>? OnShapeTesselated;
-
     public static event OnWearableItemProcessingDelegate? OnWearableItemProcessing;
-
 
     public Size2i? AtlasSize => ModelSystem?.GetAtlasSize(CurrentModelCode, entity);
 
     public TextureAtlasPosition? this[string textureCode] => GetAtlasPosition(textureCode, entity);
 
-
     public override void Initialize(EntityProperties properties, JsonObject attributes)
     {
         DefaultSize = entity.Properties.Client.Size;
-
         ClientApi = entity.Api as ICoreClientAPI;
-
         ModelSystem = entity.Api.ModLoader.GetModSystem<CustomModelsSystem>();
 
         if (ModelSystem.ModelsLoaded)
@@ -94,17 +86,13 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
 
     public override void AfterInitialized(bool onFirstSpawn)
     {
-        WearablesTesselator = entity.GetBehavior<WearablesTesselatorBehavior>();
-        if (WearablesTesselator != null)
-        {
-            WearablesTesselator.OnTryGetTexturePositionByInstance += ReplaceOverlay;
-        }
+        EntityTextureSourceBehavior? textureSourceBehavior = entity.GetBehavior<EntityTextureSourceBehavior>();
+        textureSourceBehavior?.AddTextureSource(this, 2.0f);
     }
 
     public virtual void ActuallyInitialize()
     {
         if (Initialized) return;
-
         if (ModelSystem == null) return;
 
         SkinTree = entity.WatchedAttributes.GetTreeAttribute("skinConfig");
@@ -114,11 +102,6 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         }
 
         string skinModel = GetPlayerModelAttributeValue();
-
-        if (entity.Api.Side == EnumAppSide.Client)
-        {
-            Debug.WriteLine($"Client: {skinModel}");
-        }
 
         if (!ModelSystem.CustomModels.ContainsKey(skinModel) && entity.Api.ModLoader.IsModEnabled("customplayermodel"))
         {
@@ -189,7 +172,6 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         entity.WatchedAttributes.RegisterModifiedListener("voicepitch", OnVoiceConfigChanged);
 
         OnVoiceConfigChanged();
-
         OnSkinModelChanged();
 
         if (entity.Api.Side == EnumAppSide.Server && !GetAppliedSkinParts().Any())
@@ -198,16 +180,28 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         }
 
         Initialized = true;
-
         OnActuallyInitialize?.Invoke();
     }
 
-#pragma warning disable CS8765 // Vanilla has incorect nullability of willDeleteElements
+#pragma warning disable CS8765
     public override void OnTesselation(ref Shape entityShape, string shapePathForLogging, ref bool shapeIsCloned, ref string[]? willDeleteElements)
     {
         if (ModelSystem == null || ClientApi == null || !ModelSystem.ModelsLoaded) return;
 
         Shape? newShape = Tesselate(shapePathForLogging, ref willDeleteElements);
+
+        /*ClientApi.World.RegisterCallback(_ =>
+        {
+            ClientApi.Event.EnqueueMainThreadTask(() =>
+            {
+                foreach ((string code, TextureAtlasPosition? position) in OverlaysTexturePositions.Get())
+                {
+                    Debug.WriteLine($"Exporting {code}");
+                    TextureUtils.ExportTextureAtlasPositionAsPng(ClientApi, position, ClientApi.DataBasePath + $"/debug/{code}.png", ClientApi.Logger);
+                }
+            }, "debug");
+        }, 1000);*/
+
         if (newShape != null)
         {
             entityShape = newShape;
@@ -245,9 +239,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
             return position;
         }
 
-        TextureAtlasPosition? result = ModelSystem?.GetAtlasPosition(CurrentModelCode, textureCode, entity);
-
-        return result ?? ClientApi?.EntityTextureAtlas.UnknownTexturePosition;
+        return null;
     }
 
     public override void OnEntityLoaded()
@@ -328,7 +320,6 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         }
 
         ChangeTags();
-
         SetZNear();
     }
 
@@ -373,7 +364,6 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         }
         appliedTree[partCode] = new StringAttribute(variantCode);
 
-
         if (part?.Type == EnumSkinnableType.Voice)
         {
             entity.WatchedAttributes.SetString(partCode, variantCode);
@@ -410,7 +400,6 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
 
         if (entity is EntityPlayer plr && plr.talkUtil != null && voiceType != null)
         {
-
             if (!availVoices.VariantsByCode.ContainsKey(voiceType))
             {
                 voiceType = availVoices.Variants[0].Code;
@@ -495,7 +484,8 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
     protected CustomModelsSystem? ModelSystem;
     protected ICoreClientAPI? ClientApi;
     protected readonly ThreadSafeDictionary<string, TextureAtlasPosition?> OverlaysTexturePositions = new([]);
-    protected readonly ThreadSafeDictionary<string, BlendedOverlayTexture[]> OverlaysByTextures = new([]);
+    protected readonly ThreadSafeDictionary<string, RecusiveOverlaysTextureWithTarget> RecursiveOverlaysByTextures = new([]);
+
     protected TagSetFast PreviousAddedTags = TagSetFast.Empty;
     protected TagSetFast PreviousRemovedTags = TagSetFast.Empty;
     protected const float DefaultStepHeight = 0.6f;
@@ -509,7 +499,6 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
     protected string? TempModelCode;
     protected ITreeAttribute? SkinTree;
     protected SeraphRandomizerConstraints? SkinRandomizerConstraints;
-    protected WearablesTesselatorBehavior? WearablesTesselator;
 
 
     protected virtual void SetModelAttribute(string code)
@@ -529,10 +518,15 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         {
             Shape entityShape = ShapeLoadingUtil.CloneShape(ModelSystem.CustomModels[CurrentModelCode].Shape);
 
+            RecursiveOverlaysByTextures.Set([]);
+            OverlaysTexturePositions.Set([]);
+
             AddMainTextures();
             AddSkinParts(ref entityShape, shapePathForLogging, ref willDeleteElements);
             AddSkinPartsTextures(ClientApi, entityShape, shapePathForLogging);
             RemoveHiddenElements(entityShape, ref willDeleteElements);
+
+            InsertTexturesIntoAtlas(ClientApi);
 
             entityShape.CollectAndResolveReferences(entity.Api.Logger, shapePathForLogging);
 
@@ -549,7 +543,6 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
     protected virtual void OnSkinConfigChanged()
     {
         if (GuiDialogCreateCustomCharacter.DialogOpened) return;
-
         if (ModelSystem?.ModelsLoaded != true) return;
 
         SkinTree = entity.WatchedAttributes["skinConfig"] as ITreeAttribute;
@@ -567,7 +560,6 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
     protected virtual void OnVoiceConfigChanged()
     {
         if (GuiDialogCreateCustomCharacter.DialogOpened) return;
-
         if (ModelSystem?.ModelsLoaded != true) return;
 
         string? voiceType = entity.WatchedAttributes.GetString("voicetype");
@@ -635,7 +627,6 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         }
 
         UpdateEntityProperties();
-
         OnModelChanged?.Invoke(CurrentModelCode);
     }
 
@@ -680,11 +671,14 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
     {
         if (ModelSystem == null) return;
 
-        foreach ((_, CustomModelData? data) in ModelSystem.CustomModels)
+        CustomModelData data = ModelSystem.CustomModels[CurrentModelCode];
+
+        foreach (string code in data.MainTextureCodes)
         {
-            foreach (string code in data.MainTextureCodes)
+            CompositeTexture? texture = data.MainTextures[code];
+            if (texture != null)
             {
-                entity.Properties.Client.Textures[code] = data.MainTextures[code];
+                AddTexture(code, texture.Base);
             }
         }
     }
@@ -735,8 +729,6 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
 
     protected virtual void AddSkinPartsTextures(ICoreClientAPI api, Shape entityShape, string shapePathForLogging)
     {
-        OverlaysByTextures.Set([]);
-
         foreach (AppliedSkinnablePartVariant? skinPart in GetAppliedSkinParts())
         {
             AvailableSkinPartsByCode.TryGetValue(skinPart.PartCode, out SkinnablePart? part);
@@ -754,57 +746,26 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
                 textureLoc = skinPart.Texture;
             }
 
-            SkinnablePartExtended extendedPart = part as SkinnablePartExtended ?? throw new InvalidOperationException($"Player model lib uses only 'SkinnablePartExtended'");
+            SkinnablePartExtended extendedPart = part as SkinnablePartExtended
+                ?? throw new InvalidOperationException($"Player model lib uses only 'SkinnablePartExtended'");
 
             if (extendedPart.TargetSkinParts.Length > 0)
             {
                 foreach (string targetSkinPart in extendedPart.TargetSkinParts)
                 {
-                    string code = CustomModelsSystem.PrefixSkinPartTextures(CurrentModelCode, part.TextureTarget, targetSkinPart);
+                    string code = CustomModelsSystem.PrefixSkinPartTextures(CurrentModelCode, extendedPart.TextureTarget, skinPart.PartCode);
+                    string target = CustomModelsSystem.PrefixSkinPartTextures(CurrentModelCode, part.TextureTarget, targetSkinPart);
 
-                    if (extendedPart.OverlayTexture)
-                    {
-                        AddOverlayTexture(code, textureLoc, extendedPart.OverlayMode);
-                    }
-                    else
-                    {
-                        if (entityShape.TextureSizes?.TryGetValue(code, out int[]? sizes) == true)
-                        {
-                            ReplaceTexture(api, entityShape, code, textureLoc, sizes[0], sizes[1], shapePathForLogging);
-                        }
-                        else
-                        {
-                            ReplaceTexture(api, entityShape, code, textureLoc, entityShape.TextureWidth, entityShape.TextureHeight, shapePathForLogging);
-                        }
-                    }
+                    AddOverlayTexture(code, target, textureLoc, extendedPart.OverlayMode);
                 }
             }
             else
             {
-                string mainCode = CustomModelsSystem.PrefixTextureCode(CurrentModelCode, part.TextureTarget);
+                string code = CustomModelsSystem.PrefixSkinPartTextures(CurrentModelCode, extendedPart.TextureTarget, skinPart.PartCode);
+                string target = CustomModelsSystem.PrefixSkinPartTextures(CurrentModelCode, part.TextureTarget, "base");
 
-                if (extendedPart.OverlayTexture)
-                {
-                    AddOverlayTexture(mainCode, textureLoc, extendedPart.OverlayMode);
-                }
-                else
-                {
-                    if (entityShape.TextureSizes?.TryGetValue(mainCode, out int[]? sizes) == true)
-                    {
-                        ReplaceTexture(api, entityShape, mainCode, textureLoc, sizes[0], sizes[1], shapePathForLogging);
-                    }
-                    else
-                    {
-                        ReplaceTexture(api, entityShape, mainCode, textureLoc, entityShape.TextureWidth, entityShape.TextureHeight, shapePathForLogging);
-                    }
-                }
-
+                AddOverlayTexture(code, target, textureLoc, extendedPart.OverlayMode);
             }
-        }
-
-        foreach (string code in OverlaysByTextures.Get().Keys)
-        {
-            ApplyOverlayTexture(api, entityShape, code);
         }
     }
 
@@ -927,9 +888,11 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
             CompositeTexture compositeTexture = new(texturePath);
             entityTextures[textureCode] = compositeTexture;
 
+            AddTexture(textureCode, texturePath);
+
             ThreadSafeUtils.InsertTextureIntoAtlas(compositeTexture, ClientApi, entity, onInsert: (textureSubId, position) =>
             {
-                WearablesTesselator?.WearableTextures.SetValue(textureCode, position);
+                OverlaysTexturePositions.SetValue(textureCode, position);
             });
         }
 
@@ -943,59 +906,116 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         return entityShape;
     }
 
-    protected virtual void ReplaceTexture(ICoreClientAPI api, Shape entityShape, string code, AssetLocation location, int textureWidth, int textureHeight, string shapePathForLogging)
+    protected virtual void AddTexture(string code, AssetLocation texturePath)
     {
-        IDictionary<string, CompositeTexture> textures = entity.Properties.Client.Textures;
-
-        CompositeTexture compositeTexture = new(location);
-        textures[code] = compositeTexture;
-
-        compositeTexture.Bake(api.Assets);
-        entityShape.TextureSizes[code] = [textureWidth, textureHeight];
-        textures[code] = compositeTexture;
-
-        ThreadSafeUtils.InsertTextureIntoAtlas(compositeTexture, api, entity, onInsert: (textureSubId, position) =>
+        CompositeTexture overlayComposite = new(texturePath);
+        if (RecursiveOverlaysByTextures.TryGetValue(code, out RecusiveOverlaysTextureWithTarget? existingNode))
         {
-            WearablesTesselator?.WearableTextures.SetValue(code, position);
-        });
+            existingNode.Texture = overlayComposite;
+        }
+        else
+        {
+            RecusiveOverlaysTextureWithTarget newNode = new(overlayComposite);
+            RecursiveOverlaysByTextures.SetValue(code, newNode);
+        }
     }
 
-    protected virtual void AddOverlayTexture(string code, AssetLocation overlayTextureLocation, EnumColorBlendMode overlayMode)
+    protected virtual void AddOverlayTexture(string code, string target, AssetLocation texturePath, EnumTextureOverlayMode overlayMode)
     {
-        CompositeTexture overlayTexture = new(overlayTextureLocation);
-
-        if (OverlaysByTextures.TryGetValue(code, out BlendedOverlayTexture[]? overlayTextures))
+        if (RecursiveOverlaysByTextures.TryGetValue(code, out RecusiveOverlaysTextureWithTarget? overlay))
         {
-            OverlaysByTextures.SetValue(code, overlayTextures.Append(new BlendedOverlayTexture() { Base = overlayTexture.Base, BlendMode = overlayMode }));
+            overlay.TargetCodes.Add(target);
             return;
         }
 
-        OverlaysByTextures.SetValue(code, [new BlendedOverlayTexture() { Base = overlayTexture.Base, BlendMode = overlayMode }]);
+        CompositeTexture texture = new(texturePath);
+        RecusiveOverlaysTextureWithTarget node = new(texture, overlayMode)
+        {
+            TargetCodes = [target]
+        };
+        RecursiveOverlaysByTextures.SetValue(code, node);
     }
 
-    protected virtual void ApplyOverlayTexture(ICoreClientAPI api, Shape entityShape, string code)
+    protected virtual void InsertTexturesIntoAtlas(ICoreClientAPI api)
     {
-        IDictionary<string, CompositeTexture?> textures = entity.Properties.Client.Textures;
+        CombineOverlays();
+        foreach (string code in RecursiveOverlaysByTextures.Get().Keys)
+        {
+            InsertOverlayIntoAtlas(api, code);
+        }
+    }
+    
+    protected virtual void CombineOverlays()
+    {
+        IReadOnlyDictionary<string, RecusiveOverlaysTextureWithTarget> overlays = RecursiveOverlaysByTextures.Get();
 
-        if (!textures.TryGetValue(code, out CompositeTexture? baseTexture))
+        HashSet<string> referencedAsChildren = [];
+        foreach ((string code, RecusiveOverlaysTextureWithTarget node) in overlays)
+        {
+            List<string> notProcessed = [];
+            foreach (string targetCode in node.TargetCodes)
+            {
+                if (overlays.TryGetValue(targetCode, out RecusiveOverlaysTextureWithTarget? parent))
+                {
+                    parent.Overlays.Add(node);
+                    referencedAsChildren.Add(code);
+                }
+                else
+                {
+                    notProcessed.Add(targetCode);
+                }
+            }
+            node.TargetCodes = notProcessed;
+            if (notProcessed.Count > 0)
+            {
+                referencedAsChildren.Remove(code);
+            }
+        }
+        Dictionary<string, RecusiveOverlaysTextureWithTarget> roots = overlays
+            .Where(entry => !referencedAsChildren.Contains(entry.Key))
+            .ToDictionary(entry => entry.Key, entry => entry.Value);
+
+        HashSet<string> toRemove = [];
+        Dictionary<string, RecusiveOverlaysTextureWithTarget> toAdd = [];
+        foreach ((string code, RecusiveOverlaysTextureWithTarget texture) in roots)
+        {
+            if (texture.TargetCodes.Count > 0)
+            {
+                toRemove.Add(code);
+                foreach (string target in texture.TargetCodes)
+                {
+                    toAdd[target] = texture;
+                }
+            }
+        }
+
+        foreach (string code in toRemove)
+        {
+            roots.Remove(code);
+        }
+        foreach ((string code, RecusiveOverlaysTextureWithTarget texture) in toAdd)
+        {
+            roots[code] = texture;
+        }
+
+        RecursiveOverlaysByTextures.Set(roots);
+    }
+
+    protected virtual void InsertOverlayIntoAtlas(ICoreClientAPI api, string code)
+    {
+        if (!RecursiveOverlaysByTextures.TryGetValue(code, out RecusiveOverlaysTextureWithTarget? rootNode))
         {
             return;
         }
 
-        CompositeTexture? clonedBaseTexture = baseTexture?.Clone();
-
-        if (clonedBaseTexture == null)
+        //Debug.WriteLine($"InsertOverlayIntoAtlas - try insert {code}");
+        ThreadSafeUtils.InsertTextureIntoAtlas(rootNode, api, entity, onInsert: (textureSubId, position) =>
         {
-            Log.Error(api, this, $"({CurrentModelCode}) Texture '{code}' in null, cant apply overlays to it, will skip.");
-            return;
-        }
-
-        clonedBaseTexture.BlendedOverlays = OverlaysByTextures.GetValue(code);
-
-        ThreadSafeUtils.InsertTextureIntoAtlas(clonedBaseTexture, api, entity, onInsert: (textureSubId, position) =>
-        {
-            OverlayTextures.SetValue(code, position);
-        });
+            //Debug.WriteLine($"InsertOverlayIntoAtlas - inserted {code}");
+            //TextureUtils.ExportTextureAtlasPositionAsPng(api, position, api.DataBasePath + $"/debug/{code}.png");
+            OverlaysTexturePositions.SetValue(code, position);
+        },
+        debugCode: code);
     }
 
     protected virtual void SetZNear()
@@ -1037,7 +1057,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
             return;
         }
 
-        // Reset 
+        // Reset
         foreach ((_, EntityFloatStats stats) in eplr.Stats)
         {
             foreach ((string stat, _) in stats.ValuesByKey)
@@ -1080,13 +1100,5 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         }
 
         eplr.GetBehavior<EntityBehaviorHealth>()?.MarkDirty();
-    }
-
-    protected virtual void ReplaceOverlay(WearablesTesselatorBehavior tesselatorBehavior, string code, ref TextureAtlasPosition position)
-    {
-        if (OverlayTextures.TryGetValue(code, out TextureAtlasPosition? overlayPosition))
-        {
-            position = overlayPosition;
-        }
     }
 }

@@ -3,17 +3,31 @@ using ProtoBuf;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
-using Vintagestory.API.MathTools;
 using Vintagestory.GameContent;
 using OverhaulLib.Utils;
 
 namespace PlayerModelLib;
 
+public enum EnumTextureOverlayMode
+{
+    Replace,
+    Normal,
+    AlphaMask,
+    AlphaMaskBlackAndWhite,
+    Darken,
+    Lighten,
+    Multiply,
+    Screen,
+    ColorDodge,
+    ColorBurn,
+    Overlay,
+    OverlayCutout
+}
+
 public class SkinnablePartExtended : SkinnablePart
 {
     public string[] TargetSkinParts { get; set; } = [];
-    public bool OverlayTexture { get; set; } = false;
-    public EnumColorBlendMode OverlayMode { get; set; } = EnumColorBlendMode.Overlay;
+    public EnumTextureOverlayMode OverlayMode { get; set; } = EnumTextureOverlayMode.Replace;
     public bool Enabled { get; set; } = true;
     public Dictionary<string, string[]> DisableElementsByVariantCode { get; set; } = [];
 }
@@ -33,6 +47,8 @@ public class CustomModelConfig
     public Dictionary<string, string> WearableModelReplacers { get; set; } = [];
     public Dictionary<string, CompositeShape> WearableCompositeModelReplacers { get; set; } = [];
     public Dictionary<string, string> WearableModelReplacersByShape { get; set; } = [];
+    public Dictionary<string, string[]> DisabledElementsByShape { get; set; } = [];
+    public Dictionary<string, string[]> EnabledElementsByShape { get; set; } = [];
     public string[] AvailableClasses { get; set; } = [];
     public string[] SkipClasses { get; set; } = [];
     public string[] ExtraTraits { get; set; } = [];
@@ -78,6 +94,8 @@ public class CustomModelData
     public Dictionary<int, string> WearableShapeReplacers { get; set; } = [];
     public Dictionary<int, CompositeShape> WearableCompositeShapeReplacers { get; set; } = [];
     public Dictionary<string, string> WearableShapeReplacersByShape { get; set; } = [];
+    public Dictionary<string, string[]> DisabledElementsByShape { get; set; } = [];
+    public Dictionary<string, string[]> EnabledElementsByShape { get; set; } = [];
     public Vector2 CollisionBox { get; set; }
     public float EyeHeight { get; set; }
     public Vector2 SizeRange { get; set; }

@@ -88,6 +88,8 @@ public static partial class ShapeReplacementUtil
         float damageEffect,
         ref string[] willDeleteElements)
     {
+        ReplaceDeleteElementsByShape(ref willDeleteElements, yadayada, stack, entity, customModel);
+
         willDeleteElements = ReplaceWildcardPrefixes(willDeleteElements, prefix);
 
         if (ReplaceShapeByItem(prefix, entity, ref defaultShape, ref compositeShape, damageEffect, itemId, customModel))
@@ -135,6 +137,30 @@ public static partial class ShapeReplacementUtil
         }
     }
 
+    private static void ReplaceDeleteElementsByShape(ref string[] elements, IAttachableToEntity yadayada, ItemStack? stack, Entity entity, CustomModelData customModel)
+    {
+        if (stack == null)
+        {
+            return;
+        }
+        
+        CompositeShape? oldCompositeShape = yadayada.GetAttachedShape(stack, "default")?.Clone();
+        if (oldCompositeShape == null)
+        {
+            return;
+        }
+        string shapePath = oldCompositeShape.Base.ToString();
+        
+        if (customModel.DisabledElementsByShape.TryGetValue(shapePath, out string[]? disableElements))
+        {
+            elements = elements.Concat(disableElements).ToArray();
+        }
+
+        if (customModel.EnabledElementsByShape.TryGetValue(shapePath, out string[]? enabledElements))
+        {
+            elements = elements.Except(enabledElements).ToArray();
+        }
+    }
     private static string[] ReplaceWildcardPrefixes(string[] elements, string prefix)
     {
         return elements

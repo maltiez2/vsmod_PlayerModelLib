@@ -121,7 +121,9 @@ public sealed class CustomModelsSystem : ModSystem
             }
         }
 
-        int textureIndex = entity.WatchedAttributes.GetInt("textureIndex");
+        return null;
+
+        /*int textureIndex = entity.WatchedAttributes.GetInt("textureIndex");
         try
         {
             ITexPositionSource? source = _clientApi?.Tesselator.GetTextureSource(entity, null, textureIndex);
@@ -131,7 +133,7 @@ public sealed class CustomModelsSystem : ModSystem
         catch (Exception)
         {
             return null;
-        }
+        }*/
     }
     public Size2i? GetAtlasSize(string modelCode, Entity entity)
     {
@@ -234,6 +236,8 @@ public sealed class CustomModelsSystem : ModSystem
     private const string _extraCustomModelsAttribute = "extraCustomModels";
     private const string _modelReplacementsByCodePath = "config/model-replacements-bycode";
     private const string _modelReplacementsByShapePath = "config/model-replacements-byshape";
+    private const string _enabledElementsByShapePath = "config/enabled-elements-byshape";
+    private const string _disabledElementsByShapePath = "config/disabled-elements-byshape";
     private const string _compositeModelReplacementsByCodePath = "config/composite-model-replacements-bycode";
 
     private bool _defaultLoaded = false;
@@ -298,6 +302,8 @@ public sealed class CustomModelsSystem : ModSystem
             ExclusiveClasses = [.. defaultConfig.ExclusiveClasses],
             ExtraTraits = defaultConfig.ExtraTraits,
             WearableShapeReplacersByShape = defaultConfig.WearableModelReplacersByShape,
+            DisabledElementsByShape = defaultConfig.DisabledElementsByShape,
+            EnabledElementsByShape = defaultConfig.EnabledElementsByShape,
             SizeRange = new(defaultConfig.SizeRange[0], defaultConfig.SizeRange[1]),
             MaxCollisionBox = new Vector2(defaultConfig.MaxCollisionBox[0], defaultConfig.MaxCollisionBox[1]),
             MinCollisionBox = new Vector2(defaultConfig.MinCollisionBox[0], defaultConfig.MinCollisionBox[1]),
@@ -417,6 +423,8 @@ public sealed class CustomModelsSystem : ModSystem
             ExclusiveClasses = [.. modelConfig.ExclusiveClasses],
             ExtraTraits = modelConfig.ExtraTraits,
             WearableShapeReplacersByShape = modelConfig.WearableModelReplacersByShape,
+            DisabledElementsByShape = modelConfig.DisabledElementsByShape,
+            EnabledElementsByShape = modelConfig.EnabledElementsByShape,
             CollisionBox = modelConfig.CollisionBox.Length == 0 ? CustomModels[_defaultModelCode].CollisionBox : new Vector2(modelConfig.CollisionBox[0], modelConfig.CollisionBox[1]),
             EyeHeight = modelConfig.EyeHeight,
             SizeRange = new(modelConfig.SizeRange[0], modelConfig.SizeRange[1]),
@@ -544,6 +552,32 @@ public sealed class CustomModelsSystem : ModSystem
             catch (Exception exception)
             {
                 Log.Error(api, this, $"({asset.Location}) Error on loading model replacements by shape:\n{exception}");
+            }
+        }
+
+        modelsConfigs = api.Assets.GetMany(_disabledElementsByShapePath);
+        foreach (IAsset asset in modelsConfigs)
+        {
+            try
+            {
+                LoadDisabledElementsByShapeFromAsset(asset);
+            }
+            catch (Exception exception)
+            {
+                Log.Error(api, this, $"({asset.Location}) Error on loading disabled elements by shape:\n{exception}");
+            }
+        }
+
+        modelsConfigs = api.Assets.GetMany(_enabledElementsByShapePath);
+        foreach (IAsset asset in modelsConfigs)
+        {
+            try
+            {
+                LoadEnabledElementsByShapeFromAsset(asset);
+            }
+            catch (Exception exception)
+            {
+                Log.Error(api, this, $"({asset.Location}) Error on loading enabled elements by shape:\n{exception}");
             }
         }
     }
@@ -695,6 +729,50 @@ public sealed class CustomModelsSystem : ModSystem
                     {
                         Log.Error(_api, this, $"Shape '{toPath}' that replaces shape '{fromPath}' for model '{modelCode}' was not found, skipping.");
                     }
+                }
+            }
+        }
+    }
+    private void LoadDisabledElementsByShapeFromAsset(IAsset asset)
+    {
+        Dictionary<string, Dictionary<string, string[]>> replacements = ShapeElementsByShapeFromAsset(asset);
+
+        foreach ((string modelCodeExpression, Dictionary<string, string[]> elementArrays) in replacements)
+        {
+            string[] modelCodes = modelCodeExpression.Split('|');
+            foreach (string modelCode in modelCodes)
+            {
+                if (!CustomModels.ContainsKey(modelCode))
+                {
+                    Log.Error(_api, this, $"Error while loading disabled elements by shape: custom model with code '{modelCode}' does not exists.");
+                    continue;
+                }
+
+                foreach ((string shapePath, string[] elementsArray) in elementArrays)
+                {
+                    CustomModels[modelCode].DisabledElementsByShape[shapePath] = elementsArray;
+                }
+            }
+        }
+    }
+    private void LoadEnabledElementsByShapeFromAsset(IAsset asset)
+    {
+        Dictionary<string, Dictionary<string, string[]>> replacements = ShapeElementsByShapeFromAsset(asset);
+
+        foreach ((string modelCodeExpression, Dictionary<string, string[]> elementArrays) in replacements)
+        {
+            string[] modelCodes = modelCodeExpression.Split('|');
+            foreach (string modelCode in modelCodes)
+            {
+                if (!CustomModels.ContainsKey(modelCode))
+                {
+                    Log.Error(_api, this, $"Error while loading enabled elements by shape: custom model with code '{modelCode}' does not exists.");
+                    continue;
+                }
+
+                foreach ((string shapePath, string[] elementsArray) in elementArrays)
+                {
+                    CustomModels[modelCode].EnabledElementsByShape[shapePath] = elementsArray;
                 }
             }
         }
@@ -890,11 +968,12 @@ public sealed class CustomModelsSystem : ModSystem
                 case "underwear":
                 case "baseskin":
                     part.TextureTarget = "seraph";
-                    part.OverlayTexture = true;
-                    part.OverlayMode = EnumColorBlendMode.Normal;
+                    part.TargetSkinParts = ["base"];
+                    part.OverlayMode = EnumTextureOverlayMode.Normal;
                     break;
 
                 case "haircolor":
+                    part.TextureTarget = "hair";
                     part.TargetSkinParts = ["beard", "mustache", "hairextra", "hairbase"];
                     break;
 
@@ -1078,6 +1157,18 @@ public sealed class CustomModelsSystem : ModSystem
         catch (Exception exception)
         {
             Log.Error(_api, this, $"Failed to get model replacements from '{asset.Location}'. Exception: {exception}");
+            return [];
+        }
+    }
+    private Dictionary<string, Dictionary<string, string[]>> ShapeElementsByShapeFromAsset(IAsset asset)
+    {
+        try
+        {
+            return JsonObject.FromJson(asset.ToText())?.AsObject<Dictionary<string, Dictionary<string, string[]>>>() ?? [];
+        }
+        catch (Exception exception)
+        {
+            Log.Error(_api, this, $"Failed to get disabled/enabled elements from '{asset.Location}'. Exception: {exception}");
             return [];
         }
     }

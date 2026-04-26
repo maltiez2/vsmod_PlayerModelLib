@@ -72,7 +72,7 @@ public class CustomPlayerShapeRenderer : EntityPlayerShapeRenderer
                 return;
             }
 
-            defaultTexSource = GetTextureSource();
+            defaultTexSource = entity.GetBehavior<EntityTextureSourceBehavior>();
             CustomTesselateOffThread();
             if (watcherRegistered)
             {
@@ -175,50 +175,32 @@ public class CustomPlayerShapeRenderer : EntityPlayerShapeRenderer
             Thread.Sleep(30);
         }
 
-        defaultTexSource = GetTextureSource();
+        defaultTexSource = entity.GetBehavior<EntityTextureSourceBehavior>();
         string[] ovse = overrideSelectiveElements ?? OverrideSelectiveElements;
 
         MeshData meshdata;
-        if (entity.Properties.Client.Shape.VoxelizeTexture)
+        try
         {
-            int @int = entity.WatchedAttributes.GetInt("textureIndex");
-            TextureAtlasPosition? atlasPos = defaultTexSource["all"];
-            CompositeTexture firstTexture = entity.Properties.Client.FirstTexture;
-            CompositeTexture[] alternates = firstTexture.Alternates;
-            CompositeTexture texture = ((@int == 0) ? firstTexture : alternates[@int % alternates.Length]);
-            meshdata = capi.Tesselator.VoxelizeTexture(texture, capi.EntityTextureAtlas.Size, atlasPos);
-            for (int i = 0; i < meshdata.xyz.Length; i += 3)
+            TesselationMetaData meta = new()
             {
-                meshdata.xyz[i] -= 0.125f;
-                meshdata.xyz[i + 1] -= 0.5f;
-                meshdata.xyz[i + 2] += 0.0625f;
-            }
+                QuantityElements = compositeShape.QuantityElements,
+                SelectiveElements = (ovse ?? compositeShape.SelectiveElements),
+                IgnoreElements = compositeShape.IgnoreElements,
+                TexSource = entity.GetBehavior<EntityTextureSourceBehavior>(),
+                WithJointIds = true,
+                WithDamageEffect = true,
+                TypeForLogging = "entity",
+                Rotation = new Vec3f(compositeShape.rotateX, compositeShape.rotateY, compositeShape.rotateZ)
+            };
+            capi.Tesselator.TesselateShape(meta, entityShape, out meshdata);
+            meshdata.Translate(compositeShape.offsetX, compositeShape.offsetY, compositeShape.offsetZ);
         }
-        else
+        catch (Exception e)
         {
-            try
-            {
-                TesselationMetaData meta = new()
-                {
-                    QuantityElements = compositeShape.QuantityElements,
-                    SelectiveElements = (ovse ?? compositeShape.SelectiveElements),
-                    IgnoreElements = compositeShape.IgnoreElements,
-                    TexSource = entity.GetBehavior<WearablesTesselatorBehavior>(),
-                    WithJointIds = true,
-                    WithDamageEffect = true,
-                    TypeForLogging = "entity",
-                    Rotation = new Vec3f(compositeShape.rotateX, compositeShape.rotateY, compositeShape.rotateZ)
-                };
-                capi.Tesselator.TesselateShape(meta, entityShape, out meshdata);
-                meshdata.Translate(compositeShape.offsetX, compositeShape.offsetY, compositeShape.offsetZ);
-            }
-            catch (Exception e)
-            {
-                capi.World.Logger.Fatal("Failed tesselating entity {0} with id {1}. Entity will probably be invisible!.", entity.Code, entity.EntityId);
-                capi.World.Logger.Fatal(e);
-                _tesselating.SetFalse();
-                return;
-            }
+            capi.World.Logger.Fatal("Failed tesselating entity {0} with id {1}. Entity will probably be invisible!.", entity.Code, entity.EntityId);
+            capi.World.Logger.Fatal(e);
+            _tesselating.SetFalse();
+            return;
         }
 
         capi.Event.EnqueueMainThreadTask(delegate

@@ -3,7 +3,7 @@
   <PropertyGroup>
     <ModName>Player Model Library</ModName>
     <ModType>code</ModType>
-    <ModVersion>1.15.0</ModVersion>
+    <ModVersion>1.16.4</ModVersion>
     <ModId>playermodellib</ModId>
     <Description></Description>
     <Side>Universal</Side>
@@ -19,8 +19,8 @@
 
   <!-- Dependencies -->
   <ItemGroup>
-    <Dependencies Include="jsonpatcheslib" Version="1.5.1" />
-    <Dependencies Include="overhaullib" Version="2.0.2" />
+    <Dependencies Include="jsonpatcheslib" Version="1.5.2" />
+    <Dependencies Include="overhaullib" Version="2.0.5" />
   </ItemGroup>
 
   <!-- Project settings -->
@@ -96,6 +96,9 @@
     <Reference Include="Tavis.JsonPatch" HintPath="$(GameDirectory)/Lib/Tavis.JsonPatch.dll" Private="false" />
     <Reference Include="SkiaSharp" HintPath="$(GameDirectory)/Lib/SkiaSharp.dll" Private="false" />
     <Reference Include="$(GameDirectory)/Lib/OpenTK*.dll" Private="false" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="resources\assets\playermodellib\jsonpatches\compatibility\" />
   </ItemGroup>
 
   <!-- Creating local settings file -->
