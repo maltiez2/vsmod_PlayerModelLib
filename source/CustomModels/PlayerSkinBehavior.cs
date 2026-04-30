@@ -869,7 +869,9 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         }
 
         string prefixCode = CustomModelsSystem.GetSkinPartTexturePrefix(CurrentModelCode, skinPart.Code);
+        string elementPrefixCode = skinPart.Code + '-';
 
+        ShapeLoadingUtil.PrefixElements(partShape, elementPrefixCode);
         ShapeLoadingUtil.PrefixTextures(partShape, prefixCode);
         ShapeLoadingUtil.PrefixAnimations(partShape, prefixCode);
 
@@ -887,12 +889,6 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         {
             CompositeTexture compositeTexture = new(texturePath);
             entityTextures[textureCode] = compositeTexture;
-
-            /*AddTexture(textureCode, texturePath);
-            ThreadSafeUtils.InsertTextureIntoAtlas(compositeTexture, ClientApi, entity, onInsert: (textureSubId, position) =>
-            {
-                OverlaysTexturePositions.SetValue(textureCode, position);
-            });*/
 
             string assetPath = texturePath.Clone().WithPathPrefixOnce("textures/").WithPathAppendixOnce(".png");
             IAsset? texture = ClientApi.Assets.TryGet(assetPath, loadAsset: true);

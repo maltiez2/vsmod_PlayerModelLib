@@ -71,7 +71,7 @@ public static class TextureUtils
     public static void DebugPrintRecusiveOverlaysTexture(RecusiveOverlaysTexture node, int depth = 0)
     {
         string indent = new(' ', depth * 2);
-        Debug.WriteLine($"{indent}[{node.BlendMode}] {node.Texture.Base}");
+        //Debug.WriteLine($"{indent}[{node.BlendMode}] {node.Texture.Base}");
 
         foreach (RecusiveOverlaysTexture child in node.Overlays)
         {
