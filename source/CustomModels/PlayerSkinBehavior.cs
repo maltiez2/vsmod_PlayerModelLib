@@ -888,12 +888,31 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
             CompositeTexture compositeTexture = new(texturePath);
             entityTextures[textureCode] = compositeTexture;
 
-            AddTexture(textureCode, texturePath);
-
+            /*AddTexture(textureCode, texturePath);
             ThreadSafeUtils.InsertTextureIntoAtlas(compositeTexture, ClientApi, entity, onInsert: (textureSubId, position) =>
             {
                 OverlaysTexturePositions.SetValue(textureCode, position);
-            });
+            });*/
+
+            string assetPath = texturePath.Clone().WithPathPrefixOnce("textures/").WithPathAppendixOnce(".png");
+            IAsset? texture = ClientApi.Assets.TryGet(assetPath, loadAsset: true);
+            if (texture != null)
+            {
+                AddTexture(textureCode, texturePath);
+                ThreadSafeUtils.InsertTextureIntoAtlas(compositeTexture, ClientApi, entity, onInsert: (textureSubId, position) =>
+                {
+                    OverlaysTexturePositions.SetValue(textureCode, position);
+                });
+            }
+            else
+            {
+                string code = textureCode;
+                if (code.StartsWith(prefixCode))
+                {
+                    code = code.Replace(prefixCode, "");
+                }
+                Log.Warn(ClientApi, this, $"Have not found texture by code '{code}' and path '{texturePath}' in skin part '{part.PartCode}:{part.Code}' with shape '{shapePath}'.");
+            }
         }
 
         Result stepParentResult = ShapeLoadingUtil.StepParentShape(entityShape, partShape);
@@ -908,6 +927,11 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
 
     protected virtual void AddTexture(string code, AssetLocation texturePath)
     {
+        if (texturePath.Path.StartsWith(TextureUtils.TexturesPrefixPath))
+        {
+            texturePath.Path = texturePath.Path.Replace(TextureUtils.TexturesPrefixPath, "");
+        }
+        
         CompositeTexture overlayComposite = new(texturePath);
         if (RecursiveOverlaysByTextures.TryGetValue(code, out RecusiveOverlaysTextureWithTarget? existingNode))
         {
@@ -926,6 +950,11 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         {
             overlay.TargetCodes.Add(target);
             return;
+        }
+
+        if (texturePath.Path.StartsWith(TextureUtils.TexturesPrefixPath))
+        {
+            texturePath.Path = texturePath.Path.Replace(TextureUtils.TexturesPrefixPath, "");
         }
 
         CompositeTexture texture = new(texturePath);
