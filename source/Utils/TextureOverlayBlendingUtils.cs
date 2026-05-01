@@ -10,14 +10,6 @@ public static class TextureOverlayBlendingUtils
         int length = basePixels.Length;
         switch (mode)
         {
-            case EnumTextureOverlayMode.Color:
-                int rgbaColor = ColorUtil.Hex2Int(color);
-                for (int pixelIndex = 0; pixelIndex < length; pixelIndex++)
-                {
-                    basePixels[pixelIndex] = rgbaColor;
-                }
-                break;
-
             case EnumTextureOverlayMode.Replace:
                 for (int pixelIndex = 0; pixelIndex < length; pixelIndex++)
                 {

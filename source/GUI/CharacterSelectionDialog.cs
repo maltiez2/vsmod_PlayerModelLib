@@ -697,7 +697,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
             SkinnablePartExtended? extendedPart = skinpart as SkinnablePartExtended;
 
-            if (skinpart.Type == EnumSkinnableType.Texture && extendedPart?.OverlayMode == EnumTextureOverlayMode.Color)
+            if (skinpart.Type == EnumSkinnableType.Texture && extendedPart?.SolidColor == true)
             {
                 bounds = bounds.BelowCopy(0, 10).WithFixedSize(210, 22);
                 composer.AddRichtext(Lang.Get("skinpart-" + code), CairoFont.WhiteSmallText(), bounds);
@@ -973,6 +973,10 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
             int index = variants.IndexOf(part => part.Code == appliedPart.Code);
 
+            if (skinPart.Type == EnumSkinnableType.Texture && skinPart is SkinnablePartExtended ext && ext.SolidColor)
+            {
+                Composers["createcharacter"].GetTextInput("textinput-" + partcode)?.SetValue(variants[index].Code);
+            }
             if (skinPart.Type == EnumSkinnableType.Texture && !skinPart.UseDropDown)
             {
                 Composers["createcharacter"].ColorListPickerSetValue("picker-" + partcode, index);

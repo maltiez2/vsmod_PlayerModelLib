@@ -82,7 +82,7 @@ public static class TextureUtils
     public static BakedBitmap LoadCompositeBitmap(ClientMain game, RecusiveOverlaysTexture recursiveOverlaysTexture, bool calledFromItself = false, string? debugCode = null, int depth = 0)
     {
         BakedBitmap? result = null;
-        if (recursiveOverlaysTexture.BlendMode != EnumTextureOverlayMode.Color)
+        if (!recursiveOverlaysTexture.SolidColor)
         {
             BakedCompositeTexture baked = Bake(game.AssetManager, recursiveOverlaysTexture.Texture);
             AssetLocationAndSource baseLoc = new(baked.BakedName, "RecursiveOverlay", recursiveOverlaysTexture.Texture.Base);
@@ -220,7 +220,7 @@ public static class TextureUtils
 
     private static void AppendNodeName(RecusiveOverlaysTexture node, System.Text.StringBuilder sb)
     {
-        if (node.BlendMode == EnumTextureOverlayMode.Color)
+        if (node.SolidColor)
         {
             sb.Append($"{node.Color}-{node.SizeOverride.X}-{node.SizeOverride.Y}");
         }

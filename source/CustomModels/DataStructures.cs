@@ -15,7 +15,6 @@ public enum EnumTextureOverlayMode
     AlphaMask,
     AlphaMaskBlackAndWhite,
     AlphaMaskBlackAndWhiteInverted,
-    Color,
     Darken,
     Lighten,
     Multiply,
@@ -32,6 +31,7 @@ public class SkinnablePartExtended : SkinnablePart
     public EnumTextureOverlayMode OverlayMode { get; set; } = EnumTextureOverlayMode.Replace;
     public bool Enabled { get; set; } = true;
     public Dictionary<string, string[]> DisableElementsByVariantCode { get; set; } = [];
+    public bool SolidColor { get; set; } = false;
     public int[] Size { get; set; } = [];
 }
 

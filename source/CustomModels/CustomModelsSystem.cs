@@ -988,8 +988,6 @@ public sealed class CustomModelsSystem : ModSystem
                 case "eyecolor":
                     part.TextureTarget = "playermodellib-iris";
                     part.TargetSkinParts = ["facialexpression"];
-                    part.OverlayMode = EnumTextureOverlayMode.Color;
-                    part.Size = [8, 8];
                     break;
 
                 default:
@@ -1286,7 +1284,7 @@ public sealed class CustomModelsSystem : ModSystem
                     .Distinct()
                     .ToArray();
 
-                if (part.OverlayMode == EnumTextureOverlayMode.Color)
+                if (part.SolidColor)
                 {
                     ProcessSolidColorTexturePart(clientApi, part, model);
                 }
