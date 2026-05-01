@@ -82,7 +82,14 @@ public static class TextureUtils
     public static BakedBitmap LoadCompositeBitmap(ClientMain game, RecusiveOverlaysTexture recursiveOverlaysTexture, bool calledFromItself = false, string? debugCode = null, int depth = 0)
     {
         BakedBitmap? result = null;
-        if (!recursiveOverlaysTexture.SolidColor)
+        if (recursiveOverlaysTexture.Canvas && recursiveOverlaysTexture.SerializedCanvas != null)
+        {
+            string serializedData = recursiveOverlaysTexture.SerializedCanvas;
+            TextureCanvasData canvasData = TextureCanvasData.Deserialize(serializedData);
+            result = canvasData.ToBitmap();
+        }
+        
+        if (!recursiveOverlaysTexture.SolidColor && !recursiveOverlaysTexture.Canvas)
         {
             BakedCompositeTexture baked = Bake(game.AssetManager, recursiveOverlaysTexture.Texture);
             AssetLocationAndSource baseLoc = new(baked.BakedName, "RecursiveOverlay", recursiveOverlaysTexture.Texture.Base);
@@ -100,7 +107,7 @@ public static class TextureUtils
         {
             BakedBitmap overlayBitmap = LoadCompositeBitmap(game, overlay, calledFromItself: true, debugCode: debugCode, depth: depth + 1);
 
-            if (result == null)
+            if (result == null && recursiveOverlaysTexture.SolidColor)
             {
                 int color = ColorUtil.Hex2Int(recursiveOverlaysTexture.Color ?? "#00000000");
                 result = CreateSolidColorBitmap(overlayBitmap.Width, overlayBitmap.Height, color);
@@ -123,7 +130,7 @@ public static class TextureUtils
             TextureOverlayBlendingUtils.Blend(overlay.BlendMode, result.TexturePixels, overlayBitmap.TexturePixels, overlay.Color);
         }
 
-        if (result == null)
+        if (result == null && recursiveOverlaysTexture.SolidColor)
         {
             int color = ColorUtil.Hex2Int(recursiveOverlaysTexture.Color ?? "#00000000");
             result = CreateSolidColorBitmap(recursiveOverlaysTexture.SizeOverride.X, recursiveOverlaysTexture.SizeOverride.Y, color);
@@ -223,6 +230,10 @@ public static class TextureUtils
         if (node.SolidColor)
         {
             sb.Append($"{node.Color}-{node.SizeOverride.X}-{node.SizeOverride.Y}");
+        }
+        else if (node.Canvas)
+        {
+            sb.Append($"{node.SerializedCanvas?.GetHashCode()}");
         }
         else
         {

@@ -71,7 +71,7 @@ public static class PatchesManager
     }
     private static void PatchClient(ICoreClientAPI api)
     {
-        ScrollPatches.Init(api);
+        // no client patches
     }
     private static void PatchServer()
     {

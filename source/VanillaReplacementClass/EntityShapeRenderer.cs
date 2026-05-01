@@ -13,6 +13,7 @@ public class CustomPlayerShapeRenderer : EntityPlayerShapeRenderer
 {
     public CustomPlayerShapeRenderer(Entity entity, ICoreClientAPI api) : base(entity, api)
     {
+        _isSinglePlayer = api.IsSinglePlayer;
     }
 
     public readonly ThreadSafeUInt TexturesAwaitingToBeAddedToAtlas = new(0);
@@ -60,8 +61,18 @@ public class CustomPlayerShapeRenderer : EntityPlayerShapeRenderer
 
     private readonly ThreadSafeBool _tesselating = new(false);
 
+    private bool _firstTesselate = true;
+    private const int _firstTesselatedealyMs = 2000;
+    private readonly bool _isSinglePlayer;
+
     public virtual void TesselateShapeOffThread()
     {
+        if (_firstTesselate && !_isSinglePlayer)
+        {
+            Thread.Sleep(_firstTesselatedealyMs);
+            _firstTesselate = false;
+        }    
+        
         try
         {
             EntityPlayer? entityPlayer = (EntityPlayer?)_entityPlayerShapeRenderer_entityPlayer?.GetValue(this);

@@ -337,7 +337,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         foreach (SkinnablePart part in AvailableSkinParts.Get())
         {
             string code = appliedTree.GetString(part.Code);
-            if (code != null && part is SkinnablePartExtended extended && extended.SolidColor)
+            if (code != null && part is SkinnablePartExtended extended && (extended.SolidColor || extended.Canvas))
             {
                 appliedSkinParts.Add(new() { Code = code, PartCode = part.Code });
             }
@@ -530,6 +530,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
             AddSkinParts(ref entityShape, shapePathForLogging, ref willDeleteElements);
             AddSkinPartsTextures(ClientApi, entityShape, shapePathForLogging);
             AddSkinPartsSolidColor(ClientApi, entityShape, shapePathForLogging);
+            AddSkinPartsCanvas(ClientApi, entityShape, shapePathForLogging);
             RemoveHiddenElements(entityShape, ref willDeleteElements);
 
             InsertTexturesIntoAtlas(ClientApi);
@@ -744,7 +745,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
             SkinnablePartExtended extendedPart = part as SkinnablePartExtended
                 ?? throw new InvalidOperationException($"Player model lib uses only 'SkinnablePartExtended'");
 
-            if (extendedPart.SolidColor) continue;
+            if (extendedPart.SolidColor || extendedPart.Canvas) continue;
 
             AssetLocation textureLoc;
             if (part.TextureTemplate != null)
@@ -818,6 +819,51 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
                 }
 
                 AddSolidColorTexture(code, target, skinPart.Code, size, extendedPart.OverlayMode);
+            }
+        }
+    }
+
+    protected virtual void AddSkinPartsCanvas(ICoreClientAPI api, Shape entityShape, string shapePathForLogging)
+    {
+        foreach (AppliedSkinnablePartVariant? skinPart in GetAppliedSkinParts())
+        {
+            AvailableSkinPartsByCode.TryGetValue(skinPart.PartCode, out SkinnablePart? part);
+
+            if (part == null || part.Type != EnumSkinnableType.Texture || part.TextureTarget == null) continue;
+
+            SkinnablePartExtended extendedPart = part as SkinnablePartExtended
+                ?? throw new InvalidOperationException($"Player model lib uses only 'SkinnablePartExtended'");
+
+            if (!extendedPart.Canvas) continue;
+
+            if (extendedPart.TargetSkinParts.Length > 0)
+            {
+                foreach (string targetSkinPart in extendedPart.TargetSkinParts)
+                {
+                    string code = CustomModelsSystem.PrefixSkinPartTextures(CurrentModelCode, extendedPart.TextureTarget, skinPart.PartCode);
+                    string target = CustomModelsSystem.PrefixSkinPartTextures(CurrentModelCode, part.TextureTarget, targetSkinPart);
+
+                    Vector2i size = Vector2i.Zero;
+                    if (extendedPart.Size.Length == 2)
+                    {
+                        size = new(extendedPart.Size[0], extendedPart.Size[1]);
+                    }
+
+                    AddCavnasTexture(code, target, skinPart.Code, size, extendedPart.OverlayMode);
+                }
+            }
+            else
+            {
+                string code = CustomModelsSystem.PrefixSkinPartTextures(CurrentModelCode, extendedPart.TextureTarget, skinPart.PartCode);
+                string target = CustomModelsSystem.PrefixSkinPartTextures(CurrentModelCode, part.TextureTarget, "base");
+
+                Vector2i size = Vector2i.Zero;
+                if (extendedPart.Size.Length == 2)
+                {
+                    size = new(extendedPart.Size[0], extendedPart.Size[1]);
+                }
+
+                AddCavnasTexture(code, target, skinPart.Code, size, extendedPart.OverlayMode);
             }
         }
     }
@@ -1027,6 +1073,24 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
             Color = color,
             SizeOverride = size,
             SolidColor = true
+        };
+        RecursiveOverlaysByTextures.SetValue(code, node);
+    }
+
+    protected virtual void AddCavnasTexture(string code, string target, string serializedCanvas, Vector2i size, EnumTextureOverlayMode overlayMode)
+    {
+        if (RecursiveOverlaysByTextures.TryGetValue(code, out RecusiveOverlaysTextureWithTarget? overlay))
+        {
+            overlay.TargetCodes.Add(target);
+            return;
+        }
+
+        RecusiveOverlaysTextureWithTarget node = new(new(), overlayMode)
+        {
+            TargetCodes = [target],
+            SerializedCanvas = serializedCanvas,
+            SizeOverride = size,
+            Canvas = true
         };
         RecursiveOverlaysByTextures.SetValue(code, node);
     }

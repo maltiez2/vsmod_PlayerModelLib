@@ -1,6 +1,6 @@
-﻿using System.Diagnostics;
+﻿using OverhaulLib.Utils;
+using System.Diagnostics;
 using System.Text;
-using OverhaulLib.Utils;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
@@ -392,8 +392,6 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             Debug.WriteLine(ex);
             return;
         }
-
-        ScrollPatches.Composed();
     }
 
     private void ComposeModelTab(GuiComposer composer, CustomModelsSystem system, double yPosition, double padding, double slotSize)
@@ -681,13 +679,9 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         double leftX = 0;
 
-        ScrollPatches.PreLoop(composer, skinMod.AvailableSkinParts.Get().ToArray(), backgroundBounds, leftColBounds, _insetSlotBounds, toggleButtonBounds, ref leftX);
-
         foreach (SkinnablePart? skinpart in skinMod.AvailableSkinParts.Get())
         {
             bounds = ElementBounds.Fixed(leftX, (prevbounds == null || prevbounds.fixedY == 0) ? -10 : prevbounds.fixedY + prevbounds.fixedHeight - 24, 0, 24);
-
-            ScrollPatches.NewBounds(bounds);
 
             string code = skinpart.Code;
 
@@ -709,15 +703,48 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
                     composer.AddHoverText(tooltip, CairoFont.WhiteSmallText(), 300, bounds);
                 }
 
-                bounds = bounds.BelowCopy(0, 0).WithFixedSize(200, 100);
-                composer.AddInset(bounds);
+                bounds = bounds.BelowCopy(0, 0).WithFixedSize(200, 110);
+                ElementBounds pickerBounds = bounds.FlatCopy().FixedShrink(4).WithFixedOffset(1, 2);
+                composer.AddInset(bounds, depth: 2);
                 composer.AddColorPicker(
                     rgba => onToggleSkinPartActuallyColor(code, rgba),
-                    bounds,
+                    pickerBounds,
                     [1.0, 1.0, 1.0, 1.0],
                     key: "colorpicker-" + code
                     );
-                //composer.AddTextInput(bounds, (variantcode) => onToggleSkinPartActuallyColor(code, variantcode), key: "textinput-" + code);
+            }
+            else if (skinpart.Type == EnumSkinnableType.Texture && extendedPart?.Canvas == true)
+            {
+                bounds = bounds.BelowCopy(0, 10).WithFixedSize(210, 22);
+                composer.AddRichtext(Lang.Get("skinpart-" + code), CairoFont.WhiteSmallText(), bounds);
+
+                string tooltip = Lang.GetIfExists("skinpartdesc-" + code);
+                if (tooltip != null)
+                {
+                    bounds = bounds.FlatCopy();
+                    composer.AddHoverText(tooltip, CairoFont.WhiteSmallText(), 300, bounds);
+                }
+
+                int colorsNumber = Math.Clamp(extendedPart.ColorsNumber, 1, 14);
+
+                TextureCanvasData canvasData = new()
+                {
+                    Width = extendedPart.Size[0],
+                    Height = extendedPart.Size[1],
+                    Colors = new int[colorsNumber],
+                    Pixels = new int[extendedPart.Size[0] * extendedPart.Size[1]]
+                };
+
+                for (int i = 0; i < colorsNumber; i++)
+                {
+                    canvasData.Colors[i] = -1;
+                }
+
+                int additionalHeight = (colorsNumber + 1) / 8;
+
+                bounds = bounds.BelowCopy(0, 4).WithFixedSize(200, 236 + additionalHeight * 20);
+                composer.AddInset(bounds, depth: 2);
+                composer.AddCanvasEditor(canvasData, bounds, data => onToggleSkinPartCanvas(code, data));
             }
             else if (skinpart.Type == EnumSkinnableType.Texture && !skinpart.UseDropDown)
             {
@@ -787,14 +814,10 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
             if (skinpart.Colbreak)
             {
-                ScrollPatches.ColBreak(composer, backgroundBounds, bounds, ref leftX);
-
                 leftX = _insetSlotBounds.fixedX + _insetSlotBounds.fixedWidth + 22;
                 prevbounds.fixedY = 0;
             }
         }
-
-        ScrollPatches.PostLoop(composer, toggleButtonBounds);
 
         composer.AddInset(_insetSlotBounds, 2);
         composer.AddToggleButton(Lang.Get("playermodellib:gui-button-hide-clothing"), smallfont, OnToggleDressOnOff, toggleButtonBounds, "showdressedtoggle");
@@ -1029,6 +1052,12 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         string colorHex = RgbaToArgbHex(color);
         PlayerSkinBehavior? skinMod = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
         skinMod?.SelectSkinPart(partCode, colorHex);
+    }
+    private void onToggleSkinPartCanvas(string partCode, TextureCanvasData data)
+    {
+        string serializedCanvas = data.Serialize();
+        PlayerSkinBehavior? skinMod = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
+        skinMod?.SelectSkinPart(partCode, serializedCanvas);
     }
     public static string RgbaToArgbHex(double[] rgba)
     {

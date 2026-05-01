@@ -32,6 +32,8 @@ public class SkinnablePartExtended : SkinnablePart
     public bool Enabled { get; set; } = true;
     public Dictionary<string, string[]> DisableElementsByVariantCode { get; set; } = [];
     public bool SolidColor { get; set; } = false;
+    public bool Canvas { get; set; } = false;
+    public int ColorsNumber { get; set; } = 3;
     public int[] Size { get; set; } = [];
 }
 

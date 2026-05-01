@@ -10,10 +10,9 @@ public class GuiElementColorPicker : GuiElement
     //  Constants (unscaled)
     // ─────────────────────────────────────────────────────────────
     private const double SliderHeight = 16;
-    private const double SliderPadding = 3;
+    private const double SliderPadding = 4;
     private const double PreviewSize = 24;
     private const double BottomPadding = 6;
-    private const double InnerPadding = 4;  // left/right inner padding of text input
 
     // ─────────────────────────────────────────────────────────────
     //  Derived layout (unscaled, relative to Bounds.renderX/Y)
@@ -103,8 +102,6 @@ public class GuiElementColorPicker : GuiElement
     // ─────────────────────────────────────────────────────────────
     private void CalcLayout()
     {
-        // InnerWidth / InnerHeight are already in scaled pixels —
-        // divide by GUIScale to get unscaled design units.
         double innerW = Bounds.InnerWidth / RuntimeEnv.GUIScale;
 
         _sliderW = Math.Max(10, innerW);
@@ -127,7 +124,7 @@ public class GuiElementColorPicker : GuiElement
     {
         Bounds.CalcWorldBounds();
         CalcLayout();
-        BuildHexInput();
+        BuildHexInput(ctxStatic, surface);
 
         RecomposeHueSlider();
         RecomposeSatSlider();
@@ -136,18 +133,18 @@ public class GuiElementColorPicker : GuiElement
         RecomposePreview();
     }
 
-    // Build (or rebuild) the embedded vanilla text input.
-    // Its bounds are expressed in the same fixed coordinate space as the
-    // composer uses, but parented to Bounds so they move with the picker.
-    private void BuildHexInput()
+    // ─────────────────────────────────────────────────────────────
+    //  Build the embedded text input
+    // ─────────────────────────────────────────────────────────────
+    private void BuildHexInput(Context ctxStatic, ImageSurface surface)
     {
         _hexInput?.Dispose();
 
-        // ElementBounds.Fixed takes unscaled values.
-        // Bounds.fixedX/Y are the picker's own fixed position;
-        // we offset by the padding + bottom-row position.
-        double absX = Bounds.fixedX + (Bounds.fixedPaddingX) + _hexInputX;
-        double absY = Bounds.fixedY + (Bounds.fixedPaddingY) + _bottomRowY;
+        // Build bounds as a fixed-offset child of this element's parent.
+        // fixedX/Y are the picker's unscaled position inside its parent;
+        // we add the intra-picker offsets to reach the hex field.
+        double absX = Bounds.fixedX + Bounds.fixedPaddingX + _hexInputX;
+        double absY = Bounds.fixedY + Bounds.fixedPaddingY + _bottomRowY;
 
         ElementBounds hexBounds = ElementBounds
             .Fixed(absX, absY, _hexInputW, PreviewSize)
@@ -163,13 +160,9 @@ public class GuiElementColorPicker : GuiElement
         );
         _hexInput.SetMaxLength(9);
 
-        // Compose the text input onto the same static surface
-        ImageSurface tmpSurface = new ImageSurface(Format.Argb32,
-            (int)hexBounds.OuterWidth, (int)hexBounds.OuterHeight);
-        Context tmpCtx = new Context(tmpSurface);
-        _hexInput.ComposeElements(tmpCtx, tmpSurface);
-        tmpCtx.Dispose();
-        tmpSurface.Dispose();
+        // Compose onto the *same* static surface so the inset/emboss is
+        // baked into the same layer as everything else — matching vanilla.
+        _hexInput.ComposeElements(ctxStatic, surface);
 
         _suppressHexCallback = true;
         _hexInput.SetValue(BuildHexString());
@@ -292,13 +285,8 @@ public class GuiElementColorPicker : GuiElement
         surface.Dispose();
     }
 
-    /// <summary>
-    /// Draws a vertical indicator line at position x inside a slider of pixel
-    /// dimensions (w × h).  Both x and w are in scaled pixels.
-    /// </summary>
     private static void DrawIndicator(Context ctx, int w, int h, double x)
     {
-        // Keep the line fully visible at both extremes
         x = Math.Max(1.5, Math.Min(x, w - 1.5));
 
         ctx.SetSourceRGBA(0, 0, 0, 0.7);
@@ -378,8 +366,24 @@ public class GuiElementColorPicker : GuiElement
             bx, by + scaled(_bottomRowY),
             scaled(PreviewSize), scaled(PreviewSize));
 
-        // Vanilla text input — bottom-right of bottom row
+        // Vanilla text input renders itself (highlight, text, caret)
         _hexInput?.RenderInteractiveElements(deltaTime);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    //  Focus
+    // ─────────────────────────────────────────────────────────────
+    public override void OnFocusGained()
+    {
+        base.OnFocusGained();
+        // Do not auto-focus the text input; wait for an explicit click on it.
+    }
+
+    public override void OnFocusLost()
+    {
+        base.OnFocusLost();
+        if (_hexInput != null && _hexInput.HasFocus)
+            _hexInput.OnFocusLost();
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -387,23 +391,24 @@ public class GuiElementColorPicker : GuiElement
     // ─────────────────────────────────────────────────────────────
     public override void OnMouseDown(ICoreClientAPI api, MouseEvent mouse)
     {
-        // Forward to text input if the click lands inside it
-        if (_hexInput != null)
+        // Hit-test the hex input first.
+        if (_hexInput != null && HitTestElement(_hexInput.Bounds, mouse))
         {
-            ElementBounds hb = _hexInput.Bounds;
-            if (mouse.X >= hb.renderX && mouse.X < hb.renderX + hb.OuterWidth &&
-                mouse.Y >= hb.renderY && mouse.Y < hb.renderY + hb.OuterHeight)
-            {
-                _hexInput.OnMouseDownOnElement(api, mouse);
-                mouse.Handled = true;
-                return;
-            }
+            // Grant focus to the text input and revoke it from the picker
+            // so the GUI system routes keyboard events correctly.
+            if (!_hexInput.HasFocus)
+                _hexInput.OnFocusGained();
 
-            if (_hexInput.HasFocus)
-                _hexInput.OnFocusLost();
+            _hexInput.OnMouseDownOnElement(api, mouse);
+            mouse.Handled = true;
+            return;
         }
 
-        // Relative mouse position inside this element (scaled pixels)
+        // Click outside the text input → lose focus on it.
+        if (_hexInput != null && _hexInput.HasFocus)
+            _hexInput.OnFocusLost();
+
+        // Slider hit-tests (mx/my in scaled pixels relative to this element).
         double mx = mouse.X - Bounds.renderX;
         double my = mouse.Y - Bounds.renderY;
 
@@ -434,7 +439,7 @@ public class GuiElementColorPicker : GuiElement
     }
 
     // ─────────────────────────────────────────────────────────────
-    //  Keyboard — forward to embedded text input
+    //  Keyboard — forward to embedded text input when it has focus
     // ─────────────────────────────────────────────────────────────
     public override void OnKeyDown(ICoreClientAPI api, KeyEvent args)
     {
@@ -485,8 +490,15 @@ public class GuiElementColorPicker : GuiElement
     }
 
     // ─────────────────────────────────────────────────────────────
-    //  Hit-test helpers  (mx/my are in scaled pixels)
+    //  Hit-test helpers
     // ─────────────────────────────────────────────────────────────
+
+    /// <summary>Hit-test a generic element bounds against a mouse event.</summary>
+    private static bool HitTestElement(ElementBounds b, MouseEvent mouse)
+        => mouse.X >= b.renderX && mouse.X < b.renderX + b.OuterWidth &&
+           mouse.Y >= b.renderY && mouse.Y < b.renderY + b.OuterHeight;
+
+    /// <summary>Hit-test one of the colour sliders (mx/my in scaled pixels).</summary>
     private bool HitSlider(double mx, double my, double sliderUnscaledY)
     {
         double sy = scaled(sliderUnscaledY);
@@ -638,14 +650,6 @@ public class GuiElementColorPicker : GuiElement
 // ─────────────────────────────────────────────────────────────────
 public static class GuiComposerColorPickerExtension
 {
-    /// <summary>
-    /// Adds a color picker with four horizontal sliders (H, S, V, A),
-    /// a preview square, and a vanilla-style hex text input.
-    /// Minimum recommended unscaled bounds:
-    ///   width  ≥ 160
-    ///   height ≥ (4 * SliderHeight) + (3 * SliderPadding) + BottomPadding + PreviewSize
-    ///          = 80 + 15 + 6 + 36 = 137
-    /// </summary>
     public static GuiComposer AddColorPicker(
         this GuiComposer composer,
         Action<double[]> onColorChanged,
