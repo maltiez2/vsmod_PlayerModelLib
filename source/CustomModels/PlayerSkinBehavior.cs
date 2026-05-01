@@ -869,9 +869,8 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         }
 
         string prefixCode = CustomModelsSystem.GetSkinPartTexturePrefix(CurrentModelCode, skinPart.Code);
-        string elementPrefixCode = skinPart.Code + '-';
 
-        ShapeLoadingUtil.PrefixElements(partShape, elementPrefixCode);
+        //ShapeLoadingUtil.PrefixElements(partShape, skinPart.Code + '-'); // breacks element hiding
         ShapeLoadingUtil.PrefixTextures(partShape, prefixCode);
         ShapeLoadingUtil.PrefixAnimations(partShape, prefixCode);
 
