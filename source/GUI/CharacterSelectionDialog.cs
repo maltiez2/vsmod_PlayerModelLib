@@ -685,7 +685,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         foreach (SkinnablePart? skinpart in skinMod.AvailableSkinParts.Get())
         {
-            bounds = ElementBounds.Fixed(leftX, (prevbounds == null || prevbounds.fixedY == 0) ? -10 : prevbounds.fixedY + 8, colorIconSize, colorIconSize);
+            bounds = ElementBounds.Fixed(leftX, (prevbounds == null || prevbounds.fixedY == 0) ? -10 : prevbounds.fixedY + prevbounds.fixedHeight - 24, 0, 24);
 
             ScrollPatches.NewBounds(bounds);
 
@@ -710,6 +710,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
                 }
 
                 bounds = bounds.BelowCopy(0, 0).WithFixedSize(200, 100);
+                composer.AddInset(bounds);
                 composer.AddColorPicker(
                     rgba => onToggleSkinPartActuallyColor(code, rgba),
                     bounds,

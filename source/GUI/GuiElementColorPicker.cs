@@ -1,59 +1,75 @@
 ﻿using Cairo;
-using PlayerModelLib;
+using Vintagestory.API.Config;
 using Vintagestory.API.Client;
 
 namespace PlayerModelLib;
 
 public class GuiElementColorPicker : GuiElement
 {
-    // Layout constants (unscaled)
-    private const double Padding = 6;
-    private const double SliderWidth = 20;
-    private const double SliderSpacing = 6;
-    private const double PreviewSize = 40;
-    private const double HexInputWidth = 120;
-    private const double HexInputHeight = 24;
-    private const double PickerSize = 200;
+    // ─────────────────────────────────────────────────────────────
+    //  Constants (unscaled)
+    // ─────────────────────────────────────────────────────────────
+    private const double SliderHeight = 16;
+    private const double SliderPadding = 3;
+    private const double PreviewSize = 24;
+    private const double BottomPadding = 6;
+    private const double InnerPadding = 4;  // left/right inner padding of text input
 
-    // Current color state
-    private float _hue;        // 0..1
-    private float _saturation; // 0..1
-    private float _lightness;  // 0..1 (value/brightness in HSV)
-    private float _alpha;      // 0..1
+    // ─────────────────────────────────────────────────────────────
+    //  Derived layout (unscaled, relative to Bounds.renderX/Y)
+    // ─────────────────────────────────────────────────────────────
+    private double _sliderW;
 
-    // Interaction state
-    private bool _draggingPicker;
+    private double _hueSliderY;
+    private double _satSliderY;
+    private double _valSliderY;
+    private double _alphaSliderY;
+    private double _bottomRowY;
+
+    private double _hexInputX;
+    private double _hexInputW;
+
+    // ─────────────────────────────────────────────────────────────
+    //  Color state
+    // ─────────────────────────────────────────────────────────────
+    private float _hue;
+    private float _saturation;
+    private float _value;
+    private float _alpha;
+
+    // ─────────────────────────────────────────────────────────────
+    //  Drag state
+    // ─────────────────────────────────────────────────────────────
     private bool _draggingHue;
+    private bool _draggingSat;
+    private bool _draggingVal;
     private bool _draggingAlpha;
-    private bool _editingHex;
-    private string _hexInputText = "";
-    private string _hexInputDisplay = "";
 
-    // Textures
-    private LoadedTexture _pickerTexture;
+    // ─────────────────────────────────────────────────────────────
+    //  Textures
+    // ─────────────────────────────────────────────────────────────
     private LoadedTexture _hueSliderTexture;
+    private LoadedTexture _satSliderTexture;
+    private LoadedTexture _valSliderTexture;
     private LoadedTexture _alphaSliderTexture;
     private LoadedTexture _previewTexture;
-    private LoadedTexture _hexBgTexture;
 
-    // Callback
-    private readonly Action<double[]> _onColorChanged; // rgba 0..1
+    // ─────────────────────────────────────────────────────────────
+    //  Embedded vanilla text input
+    // ─────────────────────────────────────────────────────────────
+    private GuiElementTextInput _hexInput;
+    private bool _suppressHexCallback;
 
-    // Sub-region positions (relative to Bounds.drawX/drawY, unscaled)
-    private double PickerX => 0;
-    private double PickerY => 0;
-    private double HueSliderX => PickerSize + SliderSpacing;
-    private double HueSliderY => 0;
-    private double AlphaSliderX => HueSliderX + SliderWidth + SliderSpacing;
-    private double AlphaSliderY => 0;
-    private double PreviewX => 0;
-    private double PreviewY => PickerSize + Padding;
-    private double HexInputX => PreviewSize + Padding;
-    private double HexInputY => PickerSize + Padding + (PreviewSize - HexInputHeight) / 2.0;
+    // ─────────────────────────────────────────────────────────────
+    //  Callback
+    // ─────────────────────────────────────────────────────────────
+    private readonly Action<double[]> _onColorChanged;
 
     public override bool Focusable => true;
 
-
+    // ─────────────────────────────────────────────────────────────
+    //  Constructor
+    // ─────────────────────────────────────────────────────────────
     public GuiElementColorPicker(
         ICoreClientAPI capi,
         ElementBounds bounds,
@@ -61,108 +77,117 @@ public class GuiElementColorPicker : GuiElement
         double[] initialColorRgba = null)
         : base(capi, bounds)
     {
-        _pickerTexture = new LoadedTexture(capi);
         _hueSliderTexture = new LoadedTexture(capi);
+        _satSliderTexture = new LoadedTexture(capi);
+        _valSliderTexture = new LoadedTexture(capi);
         _alphaSliderTexture = new LoadedTexture(capi);
         _previewTexture = new LoadedTexture(capi);
-        _hexBgTexture = new LoadedTexture(capi);
 
         _onColorChanged = onColorChanged;
 
         if (initialColorRgba != null && initialColorRgba.Length >= 4)
         {
-            RgbToHsv(
-                (float)initialColorRgba[0],
-                (float)initialColorRgba[1],
-                (float)initialColorRgba[2],
-                out _hue, out _saturation, out _lightness);
+            RgbToHsv((float)initialColorRgba[0], (float)initialColorRgba[1],
+                     (float)initialColorRgba[2],
+                     out _hue, out _saturation, out _value);
             _alpha = (float)initialColorRgba[3];
         }
         else
         {
-            _hue = 0f;
-            _saturation = 1f;
-            _lightness = 1f;
-            _alpha = 1f;
+            _hue = 0f; _saturation = 1f; _value = 1f; _alpha = 1f;
         }
+    }
 
-        UpdateHexText();
+    // ─────────────────────────────────────────────────────────────
+    //  Layout  (all values unscaled)
+    // ─────────────────────────────────────────────────────────────
+    private void CalcLayout()
+    {
+        // InnerWidth / InnerHeight are already in scaled pixels —
+        // divide by GUIScale to get unscaled design units.
+        double innerW = Bounds.InnerWidth / RuntimeEnv.GUIScale;
+
+        _sliderW = Math.Max(10, innerW);
+
+        _hueSliderY = 0;
+        _satSliderY = _hueSliderY + SliderHeight + SliderPadding;
+        _valSliderY = _satSliderY + SliderHeight + SliderPadding;
+        _alphaSliderY = _valSliderY + SliderHeight + SliderPadding;
+
+        _bottomRowY = _alphaSliderY + SliderHeight + BottomPadding;
+
+        _hexInputX = PreviewSize + SliderPadding;
+        _hexInputW = Math.Max(10, innerW - PreviewSize - SliderPadding);
     }
 
     // ─────────────────────────────────────────────────────────────
     //  Compose
     // ─────────────────────────────────────────────────────────────
-
     public override void ComposeElements(Context ctxStatic, ImageSurface surface)
     {
         Bounds.CalcWorldBounds();
-        RecomposePicker();
+        CalcLayout();
+        BuildHexInput();
+
         RecomposeHueSlider();
+        RecomposeSatSlider();
+        RecomposeValSlider();
         RecomposeAlphaSlider();
         RecomposePreview();
-        RecomposeHexBg();
     }
 
-    private void RecomposePicker()
+    // Build (or rebuild) the embedded vanilla text input.
+    // Its bounds are expressed in the same fixed coordinate space as the
+    // composer uses, but parented to Bounds so they move with the picker.
+    private void BuildHexInput()
     {
-        int w = (int)scaled(PickerSize);
-        int h = (int)scaled(PickerSize);
+        _hexInput?.Dispose();
 
-        ImageSurface surface = new(Format.Argb32, w, h);
-        Context ctx = genContext(surface);
+        // ElementBounds.Fixed takes unscaled values.
+        // Bounds.fixedX/Y are the picker's own fixed position;
+        // we offset by the padding + bottom-row position.
+        double absX = Bounds.fixedX + (Bounds.fixedPaddingX) + _hexInputX;
+        double absY = Bounds.fixedY + (Bounds.fixedPaddingY) + _bottomRowY;
 
-        // Draw saturation/value gradient for current hue
-        // Left→Right: saturation 0→1
-        // Top→Bottom: value 1→0
+        ElementBounds hexBounds = ElementBounds
+            .Fixed(absX, absY, _hexInputW, PreviewSize)
+            .WithParent(Bounds.ParentBounds);
 
-        HsvToRgb(_hue, 1f, 1f, out double hr, out double hg, out double hb);
+        hexBounds.CalcWorldBounds();
 
-        // White → hue color (horizontal)
-        using (LinearGradient hGrad = new(0, 0, w, 0))
-        {
-            hGrad.AddColorStop(0, new Color(1, 1, 1, 1));
-            hGrad.AddColorStop(1, new Color(hr, hg, hb, 1));
-            ctx.Rectangle(0, 0, w, h);
-            ctx.SetSource(hGrad);
-            ctx.Fill();
-        }
+        _hexInput = new GuiElementTextInput(
+            api,
+            hexBounds,
+            OnHexTextChanged,
+            CairoFont.TextInput()
+        );
+        _hexInput.SetMaxLength(9);
 
-        // Transparent → black (vertical overlay)
-        using (LinearGradient vGrad = new(0, 0, 0, h))
-        {
-            vGrad.AddColorStop(0, new Color(0, 0, 0, 0));
-            vGrad.AddColorStop(1, new Color(0, 0, 0, 1));
-            ctx.Rectangle(0, 0, w, h);
-            ctx.SetSource(vGrad);
-            ctx.Fill();
-        }
+        // Compose the text input onto the same static surface
+        ImageSurface tmpSurface = new ImageSurface(Format.Argb32,
+            (int)hexBounds.OuterWidth, (int)hexBounds.OuterHeight);
+        Context tmpCtx = new Context(tmpSurface);
+        _hexInput.ComposeElements(tmpCtx, tmpSurface);
+        tmpCtx.Dispose();
+        tmpSurface.Dispose();
 
-        // Draw crosshair cursor
-        double cx = _saturation * w;
-        double cy = (1.0 - _lightness) * h;
-        ctx.SetSourceRGBA(1, 1, 1, 1);
-        ctx.LineWidth = 1.5;
-        ctx.Arc(cx, cy, scaled(5), 0, 2 * Math.PI);
-        ctx.Stroke();
-        ctx.SetSourceRGBA(0, 0, 0, 0.6);
-        ctx.Arc(cx, cy, scaled(5) + 1, 0, 2 * Math.PI);
-        ctx.Stroke();
-
-        ctx.Dispose();
-        generateTexture(surface, ref _pickerTexture);
-        surface.Dispose();
+        _suppressHexCallback = true;
+        _hexInput.SetValue(BuildHexString());
+        _suppressHexCallback = false;
     }
 
+    // ─────────────────────────────────────────────────────────────
+    //  Slider textures
+    // ─────────────────────────────────────────────────────────────
     private void RecomposeHueSlider()
     {
-        int w = (int)scaled(SliderWidth);
-        int h = (int)scaled(PickerSize);
+        int w = Math.Max(1, (int)scaled(_sliderW));
+        int h = Math.Max(1, (int)scaled(SliderHeight));
 
-        ImageSurface surface = new(Format.Argb32, w, h);
+        ImageSurface surface = new ImageSurface(Format.Argb32, w, h);
         Context ctx = genContext(surface);
 
-        // Rainbow gradient top→bottom
-        using (LinearGradient grad = new(0, 0, 0, h))
+        using (var grad = new LinearGradient(0, 0, w, 0))
         {
             grad.AddColorStop(0.000, new Color(1, 0, 0, 1));
             grad.AddColorStop(0.167, new Color(1, 1, 0, 1));
@@ -176,103 +201,145 @@ public class GuiElementColorPicker : GuiElement
             ctx.Fill();
         }
 
-        // Hue indicator line
-        double iy = _hue * h;
-        ctx.SetSourceRGBA(1, 1, 1, 1);
-        ctx.LineWidth = 2;
-        ctx.MoveTo(0, iy);
-        ctx.LineTo(w, iy);
-        ctx.Stroke();
-        ctx.SetSourceRGBA(0, 0, 0, 0.5);
-        ctx.LineWidth = 1;
-        ctx.MoveTo(0, iy);
-        ctx.LineTo(w, iy);
-        ctx.Stroke();
-
+        DrawIndicator(ctx, w, h, _hue * w);
         ctx.Dispose();
         generateTexture(surface, ref _hueSliderTexture);
         surface.Dispose();
     }
 
-    private void RecomposeAlphaSlider()
+    private void RecomposeSatSlider()
     {
-        int w = (int)scaled(SliderWidth);
-        int h = (int)scaled(PickerSize);
+        int w = Math.Max(1, (int)scaled(_sliderW));
+        int h = Math.Max(1, (int)scaled(SliderHeight));
 
-        ImageSurface surface = new(Format.Argb32, w, h);
+        ImageSurface surface = new ImageSurface(Format.Argb32, w, h);
         Context ctx = genContext(surface);
 
-        // Checkerboard background
-        int tileSize = (int)scaled(6);
-        for (int row = 0; row * tileSize < h; row++)
-        {
-            for (int col = 0; col * tileSize < w; col++)
-            {
-                bool light = (row + col) % 2 == 0;
-                ctx.SetSourceRGBA(light ? 0.8 : 0.5, light ? 0.8 : 0.5, light ? 0.8 : 0.5, 1);
-                ctx.Rectangle(col * tileSize, row * tileSize, tileSize, tileSize);
-                ctx.Fill();
-            }
-        }
+        HsvToRgb(_hue, 0f, _value, out double gr, out double gg, out double gb);
+        HsvToRgb(_hue, 1f, _value, out double hr, out double hg, out double hb);
 
-        // Get current RGB
-        HsvToRgb(_hue, _saturation, _lightness, out double r, out double g, out double b);
-
-        // Alpha gradient top=opaque → bottom=transparent
-        using (LinearGradient grad = new(0, 0, 0, h))
+        using (var grad = new LinearGradient(0, 0, w, 0))
         {
-            grad.AddColorStop(0, new Color(r, g, b, 1));
-            grad.AddColorStop(1, new Color(r, g, b, 0));
+            grad.AddColorStop(0, new Color(gr, gg, gb, 1));
+            grad.AddColorStop(1, new Color(hr, hg, hb, 1));
             ctx.Rectangle(0, 0, w, h);
             ctx.SetSource(grad);
             ctx.Fill();
         }
 
-        // Alpha indicator line
-        double iy = (1.0 - _alpha) * h;
-        ctx.SetSourceRGBA(1, 1, 1, 1);
-        ctx.LineWidth = 2;
-        ctx.MoveTo(0, iy);
-        ctx.LineTo(w, iy);
-        ctx.Stroke();
-        ctx.SetSourceRGBA(0, 0, 0, 0.5);
-        ctx.LineWidth = 1;
-        ctx.MoveTo(0, iy);
-        ctx.LineTo(w, iy);
-        ctx.Stroke();
+        DrawIndicator(ctx, w, h, _saturation * w);
+        ctx.Dispose();
+        generateTexture(surface, ref _satSliderTexture);
+        surface.Dispose();
+    }
 
+    private void RecomposeValSlider()
+    {
+        int w = Math.Max(1, (int)scaled(_sliderW));
+        int h = Math.Max(1, (int)scaled(SliderHeight));
+
+        ImageSurface surface = new ImageSurface(Format.Argb32, w, h);
+        Context ctx = genContext(surface);
+
+        HsvToRgb(_hue, _saturation, 1f, out double vr, out double vg, out double vb);
+
+        using (var grad = new LinearGradient(0, 0, w, 0))
+        {
+            grad.AddColorStop(0, new Color(0, 0, 0, 1));
+            grad.AddColorStop(1, new Color(vr, vg, vb, 1));
+            ctx.Rectangle(0, 0, w, h);
+            ctx.SetSource(grad);
+            ctx.Fill();
+        }
+
+        DrawIndicator(ctx, w, h, _value * w);
+        ctx.Dispose();
+        generateTexture(surface, ref _valSliderTexture);
+        surface.Dispose();
+    }
+
+    private void RecomposeAlphaSlider()
+    {
+        int w = Math.Max(1, (int)scaled(_sliderW));
+        int h = Math.Max(1, (int)scaled(SliderHeight));
+
+        ImageSurface surface = new ImageSurface(Format.Argb32, w, h);
+        Context ctx = genContext(surface);
+
+        int tile = Math.Max(1, (int)scaled(4));
+        for (int row = 0; row * tile < h; row++)
+            for (int col = 0; col * tile < w; col++)
+            {
+                bool light = (row + col) % 2 == 0;
+                ctx.SetSourceRGBA(light ? 0.75 : 0.45, light ? 0.75 : 0.45, light ? 0.75 : 0.45, 1);
+                ctx.Rectangle(col * tile, row * tile, tile, tile);
+                ctx.Fill();
+            }
+
+        HsvToRgb(_hue, _saturation, _value, out double r, out double g, out double b);
+        using (var grad = new LinearGradient(0, 0, w, 0))
+        {
+            grad.AddColorStop(0, new Color(r, g, b, 0));
+            grad.AddColorStop(1, new Color(r, g, b, 1));
+            ctx.Rectangle(0, 0, w, h);
+            ctx.SetSource(grad);
+            ctx.Fill();
+        }
+
+        DrawIndicator(ctx, w, h, _alpha * w);
         ctx.Dispose();
         generateTexture(surface, ref _alphaSliderTexture);
         surface.Dispose();
     }
 
+    /// <summary>
+    /// Draws a vertical indicator line at position x inside a slider of pixel
+    /// dimensions (w × h).  Both x and w are in scaled pixels.
+    /// </summary>
+    private static void DrawIndicator(Context ctx, int w, int h, double x)
+    {
+        // Keep the line fully visible at both extremes
+        x = Math.Max(1.5, Math.Min(x, w - 1.5));
+
+        ctx.SetSourceRGBA(0, 0, 0, 0.7);
+        ctx.LineWidth = 3;
+        ctx.MoveTo(x, 0);
+        ctx.LineTo(x, h);
+        ctx.Stroke();
+
+        ctx.SetSourceRGBA(1, 1, 1, 1);
+        ctx.LineWidth = 1.5;
+        ctx.MoveTo(x, 0);
+        ctx.LineTo(x, h);
+        ctx.Stroke();
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    //  Preview texture
+    // ─────────────────────────────────────────────────────────────
     private void RecomposePreview()
     {
-        int size = (int)scaled(PreviewSize);
+        int size = Math.Max(1, (int)scaled(PreviewSize));
 
-        ImageSurface surface = new(Format.Argb32, size, size);
+        ImageSurface surface = new ImageSurface(Format.Argb32, size, size);
         Context ctx = genContext(surface);
 
-        // Checkerboard
-        int tileSize = (int)scaled(6);
-        for (int row = 0; row * tileSize < size; row++)
-        {
-            for (int col = 0; col * tileSize < size; col++)
+        int tile = Math.Max(1, (int)scaled(5));
+        for (int row = 0; row * tile < size; row++)
+            for (int col = 0; col * tile < size; col++)
             {
                 bool light = (row + col) % 2 == 0;
-                ctx.SetSourceRGBA(light ? 0.8 : 0.5, light ? 0.8 : 0.5, light ? 0.8 : 0.5, 1);
-                ctx.Rectangle(col * tileSize, row * tileSize, tileSize, tileSize);
+                ctx.SetSourceRGBA(light ? 0.75 : 0.45, light ? 0.75 : 0.45, light ? 0.75 : 0.45, 1);
+                ctx.Rectangle(col * tile, row * tile, tile, tile);
                 ctx.Fill();
             }
-        }
 
-        HsvToRgb(_hue, _saturation, _lightness, out double r, out double g, out double b);
+        HsvToRgb(_hue, _saturation, _value, out double r, out double g, out double b);
         ctx.SetSourceRGBA(r, g, b, _alpha);
         ctx.Rectangle(0, 0, size, size);
         ctx.Fill();
 
-        // Border
-        ctx.SetSourceRGBA(0, 0, 0, 0.5);
+        ctx.SetSourceRGBA(0, 0, 0, 0.45);
         ctx.LineWidth = 1;
         ctx.Rectangle(0.5, 0.5, size - 1, size - 1);
         ctx.Stroke();
@@ -282,364 +349,224 @@ public class GuiElementColorPicker : GuiElement
         surface.Dispose();
     }
 
-    private void RecomposeHexBg()
-    {
-        int w = (int)scaled(HexInputWidth);
-        int h = (int)scaled(HexInputHeight);
-
-        ImageSurface surface = new(Format.Argb32, w, h);
-        Context ctx = genContext(surface);
-
-        // Background
-        ctx.SetSourceRGBA(0.1, 0.1, 0.1, 0.85);
-        RoundRectangle(ctx, 0, 0, w, h, scaled(3));
-        ctx.Fill();
-
-        // Border — highlight if focused
-        ctx.SetSourceRGBA(_editingHex ? 0.6 : 0.3, _editingHex ? 0.8 : 0.3, _editingHex ? 1.0 : 0.3, 1);
-        ctx.LineWidth = 1;
-        RoundRectangle(ctx, 0.5, 0.5, w - 1, h - 1, scaled(3));
-        ctx.Stroke();
-
-        // Hex text
-        ctx.SetSourceRGBA(1, 1, 1, 1);
-        ctx.SelectFontFace("monospace", FontSlant.Normal, FontWeight.Normal);
-        ctx.SetFontSize(scaled(11));
-
-        string display = _editingHex ? _hexInputDisplay : _hexInputText;
-        TextExtents te = ctx.TextExtents(display);
-        ctx.MoveTo(scaled(4), (h + te.Height) / 2.0);
-        ctx.ShowText(display);
-
-        // Cursor when editing
-        if (_editingHex)
-        {
-            double cursorX = scaled(4) + te.Width + 1;
-            ctx.SetSourceRGBA(1, 1, 1, 0.9);
-            ctx.LineWidth = 1.5;
-            ctx.MoveTo(cursorX, scaled(4));
-            ctx.LineTo(cursorX, h - scaled(4));
-            ctx.Stroke();
-        }
-
-        ctx.Dispose();
-        generateTexture(surface, ref _hexBgTexture);
-        surface.Dispose();
-    }
-
     // ─────────────────────────────────────────────────────────────
     //  Render
     // ─────────────────────────────────────────────────────────────
-
     public override void RenderInteractiveElements(float deltaTime)
     {
         double bx = Bounds.renderX;
         double by = Bounds.renderY;
 
-        double ps = scaled(PickerSize);
-        double sw = scaled(SliderWidth);
-        double ss = scaled(SliderSpacing);
-
-        // Picker area
-        Render2DTexture(_pickerTexture.TextureId,
-            bx + scaled(PickerX),
-            by + scaled(PickerY),
-            ps, ps);
-
-        // Hue slider
         Render2DTexture(_hueSliderTexture.TextureId,
-            bx + scaled(HueSliderX),
-            by + scaled(HueSliderY),
-            sw, ps);
+            bx, by + scaled(_hueSliderY),
+            scaled(_sliderW), scaled(SliderHeight));
 
-        // Alpha slider
+        Render2DTexture(_satSliderTexture.TextureId,
+            bx, by + scaled(_satSliderY),
+            scaled(_sliderW), scaled(SliderHeight));
+
+        Render2DTexture(_valSliderTexture.TextureId,
+            bx, by + scaled(_valSliderY),
+            scaled(_sliderW), scaled(SliderHeight));
+
         Render2DTexture(_alphaSliderTexture.TextureId,
-            bx + scaled(AlphaSliderX),
-            by + scaled(AlphaSliderY),
-            sw, ps);
+            bx, by + scaled(_alphaSliderY),
+            scaled(_sliderW), scaled(SliderHeight));
 
-        // Preview square
+        // Preview square — bottom-left of bottom row
         Render2DTexture(_previewTexture.TextureId,
-            bx + scaled(PreviewX),
-            by + scaled(PreviewY),
+            bx, by + scaled(_bottomRowY),
             scaled(PreviewSize), scaled(PreviewSize));
 
-        // Hex input
-        Render2DTexture(_hexBgTexture.TextureId,
-            bx + scaled(HexInputX),
-            by + scaled(HexInputY),
-            scaled(HexInputWidth), scaled(HexInputHeight));
+        // Vanilla text input — bottom-right of bottom row
+        _hexInput?.RenderInteractiveElements(deltaTime);
     }
 
     // ─────────────────────────────────────────────────────────────
-    //  Mouse interaction
+    //  Mouse
     // ─────────────────────────────────────────────────────────────
-
     public override void OnMouseDown(ICoreClientAPI api, MouseEvent mouse)
     {
-        double bx = Bounds.renderX;
-        double by = Bounds.renderY;
-        double mx = mouse.X - bx;
-        double my = mouse.Y - by;
-
-        double ps = scaled(PickerSize);
-        double sw = scaled(SliderWidth);
-        double ss = scaled(SliderSpacing);
-
-        // Picker area
-        if (mx >= scaled(PickerX) && mx < scaled(PickerX) + ps &&
-            my >= scaled(PickerY) && my < scaled(PickerY) + ps)
+        // Forward to text input if the click lands inside it
+        if (_hexInput != null)
         {
-            _draggingPicker = true;
-            UpdatePickerFromMouse(mx, my);
-            mouse.Handled = true;
-            return;
+            ElementBounds hb = _hexInput.Bounds;
+            if (mouse.X >= hb.renderX && mouse.X < hb.renderX + hb.OuterWidth &&
+                mouse.Y >= hb.renderY && mouse.Y < hb.renderY + hb.OuterHeight)
+            {
+                _hexInput.OnMouseDownOnElement(api, mouse);
+                mouse.Handled = true;
+                return;
+            }
+
+            if (_hexInput.HasFocus)
+                _hexInput.OnFocusLost();
         }
 
-        // Hue slider
-        if (mx >= scaled(HueSliderX) && mx < scaled(HueSliderX) + sw &&
-            my >= scaled(HueSliderY) && my < scaled(HueSliderY) + ps)
-        {
-            _draggingHue = true;
-            UpdateHueFromMouse(my);
-            mouse.Handled = true;
-            return;
-        }
+        // Relative mouse position inside this element (scaled pixels)
+        double mx = mouse.X - Bounds.renderX;
+        double my = mouse.Y - Bounds.renderY;
 
-        // Alpha slider
-        if (mx >= scaled(AlphaSliderX) && mx < scaled(AlphaSliderX) + sw &&
-            my >= scaled(AlphaSliderY) && my < scaled(AlphaSliderY) + ps)
-        {
-            _draggingAlpha = true;
-            UpdateAlphaFromMouse(my);
-            mouse.Handled = true;
-            return;
-        }
-
-        // Hex input box
-        if (mx >= scaled(HexInputX) && mx < scaled(HexInputX) + scaled(HexInputWidth) &&
-            my >= scaled(HexInputY) && my < scaled(HexInputY) + scaled(HexInputHeight))
-        {
-            _editingHex = true;
-            _hexInputDisplay = _hexInputText;
-            RecomposeHexBg();
-            mouse.Handled = true;
-            return;
-        }
-
-        // Clicked elsewhere — stop hex editing
-        if (_editingHex)
-        {
-            _editingHex = false;
-            RecomposeHexBg();
-        }
+        if (HitSlider(mx, my, _hueSliderY)) { _draggingHue = true; UpdateHueFromMouse(mx); mouse.Handled = true; return; }
+        if (HitSlider(mx, my, _satSliderY)) { _draggingSat = true; UpdateSatFromMouse(mx); mouse.Handled = true; return; }
+        if (HitSlider(mx, my, _valSliderY)) { _draggingVal = true; UpdateValFromMouse(mx); mouse.Handled = true; return; }
+        if (HitSlider(mx, my, _alphaSliderY)) { _draggingAlpha = true; UpdateAlphaFromMouse(mx); mouse.Handled = true; }
     }
 
     public override void OnMouseMove(ICoreClientAPI api, MouseEvent args)
     {
-        if (!_draggingPicker && !_draggingHue && !_draggingAlpha) return;
+        if (!_draggingHue && !_draggingSat && !_draggingVal && !_draggingAlpha) return;
 
-        double bx = Bounds.renderX;
-        double by = Bounds.renderY;
-        double mx = args.X - bx;
-        double my = args.Y - by;
+        double mx = args.X - Bounds.renderX;
 
-        if (_draggingPicker) UpdatePickerFromMouse(mx, my);
-        if (_draggingHue) UpdateHueFromMouse(my);
-        if (_draggingAlpha) UpdateAlphaFromMouse(my);
+        if (_draggingHue) UpdateHueFromMouse(mx);
+        if (_draggingSat) UpdateSatFromMouse(mx);
+        if (_draggingVal) UpdateValFromMouse(mx);
+        if (_draggingAlpha) UpdateAlphaFromMouse(mx);
 
         args.Handled = true;
     }
 
     public override void OnMouseUp(ICoreClientAPI api, MouseEvent args)
     {
-        _draggingPicker = false;
-        _draggingHue = false;
-        _draggingAlpha = false;
-    }
-
-    private void UpdatePickerFromMouse(double mx, double my)
-    {
-        double ps = scaled(PickerSize);
-        double ox = mx - scaled(PickerX);
-        double oy = my - scaled(PickerY);
-
-        _saturation = (float)Math.Max(0, Math.Min(1, ox / ps));
-        _lightness = (float)Math.Max(0, Math.Min(1, 1.0 - oy / ps));
-
-        OnColorUpdated();
-    }
-
-    private void UpdateHueFromMouse(double my)
-    {
-        double ps = scaled(PickerSize);
-        double oy = my - scaled(HueSliderY);
-        _hue = (float)Math.Max(0, Math.Min(1, oy / ps));
-
-        OnColorUpdated();
-    }
-
-    private void UpdateAlphaFromMouse(double my)
-    {
-        double ps = scaled(PickerSize);
-        double oy = my - scaled(AlphaSliderY);
-        _alpha = (float)Math.Max(0, Math.Min(1, 1.0 - oy / ps));
-
-        OnColorUpdated();
+        _draggingHue = _draggingSat = _draggingVal = _draggingAlpha = false;
+        _hexInput?.OnMouseUp(api, args);
     }
 
     // ─────────────────────────────────────────────────────────────
-    //  Keyboard (hex input)
+    //  Keyboard — forward to embedded text input
     // ─────────────────────────────────────────────────────────────
+    public override void OnKeyDown(ICoreClientAPI api, KeyEvent args)
+    {
+        if (_hexInput == null || !_hexInput.HasFocus) return;
+        _hexInput.OnKeyDown(api, args);
+    }
 
     public override void OnKeyPress(ICoreClientAPI api, KeyEvent args)
     {
-        if (!_editingHex) return;
-
-        char c = args.KeyChar;
-
-        if (args.KeyCode == (int)GlKeys.BackSpace)
-        {
-            if (_hexInputDisplay.Length > 0)
-                _hexInputDisplay = _hexInputDisplay.Substring(0, _hexInputDisplay.Length - 1);
-            RecomposeHexBg();
-            args.Handled = true;
-            return;
-        }
-
-        if (args.KeyCode == (int)GlKeys.Enter || args.KeyCode == (int)GlKeys.KeypadEnter)
-        {
-            TryApplyHexInput();
-            _editingHex = false;
-            RecomposeHexBg();
-            args.Handled = true;
-            return;
-        }
-
-        if (args.KeyCode == (int)GlKeys.Escape)
-        {
-            _editingHex = false;
-            _hexInputDisplay = _hexInputText;
-            RecomposeHexBg();
-            args.Handled = true;
-            return;
-        }
-
-        // Allow hex chars + optional leading #
-        if (_hexInputDisplay.Length < 9 &&
-            (IsHexChar(c) || (c == '#' && _hexInputDisplay.Length == 0)))
-        {
-            _hexInputDisplay += char.ToUpper(c);
-            RecomposeHexBg();
-            args.Handled = true;
-        }
+        if (_hexInput == null || !_hexInput.HasFocus) return;
+        _hexInput.OnKeyPress(api, args);
     }
 
-    public override void OnKeyDown(ICoreClientAPI api, KeyEvent args)
+    // ─────────────────────────────────────────────────────────────
+    //  Hex input callback
+    // ─────────────────────────────────────────────────────────────
+    private void OnHexTextChanged(string text)
     {
-        if (!_editingHex) return;
-
-        if (args.KeyCode == (int)GlKeys.BackSpace)
-        {
-            if (_hexInputDisplay.Length > 0)
-                _hexInputDisplay = _hexInputDisplay.Substring(0, _hexInputDisplay.Length - 1);
-            RecomposeHexBg();
-            args.Handled = true;
-        }
+        if (_suppressHexCallback) return;
+        TryApplyHexInput(text);
     }
 
-    private bool IsHexChar(char c)
+    private void TryApplyHexInput(string raw)
     {
-        return (c >= '0' && c <= '9') ||
-                (c >= 'a' && c <= 'f') ||
-                (c >= 'A' && c <= 'F');
-    }
-
-    private void TryApplyHexInput()
-    {
-        string input = _hexInputDisplay.TrimStart('#');
-
-        // Accept AARRGGBB (8) or RRGGBB (6)
-        if (input.Length == 8)
+        string input = raw.TrimStart('#');
+        try
         {
-            try
+            if (input.Length == 8)
             {
                 byte a = Convert.ToByte(input.Substring(0, 2), 16);
                 byte r = Convert.ToByte(input.Substring(2, 2), 16);
                 byte g = Convert.ToByte(input.Substring(4, 2), 16);
                 byte b = Convert.ToByte(input.Substring(6, 2), 16);
-
                 _alpha = a / 255f;
-                RgbToHsv(r / 255f, g / 255f, b / 255f,
-                            out _hue, out _saturation, out _lightness);
-                OnColorUpdated();
+                RgbToHsv(r / 255f, g / 255f, b / 255f, out _hue, out _saturation, out _value);
+                OnColorUpdated(updateHexField: false);
             }
-            catch { /* invalid — ignore */ }
-        }
-        else if (input.Length == 6)
-        {
-            try
+            else if (input.Length == 6)
             {
                 byte r = Convert.ToByte(input.Substring(0, 2), 16);
                 byte g = Convert.ToByte(input.Substring(2, 2), 16);
                 byte b = Convert.ToByte(input.Substring(4, 2), 16);
-
-                RgbToHsv(r / 255f, g / 255f, b / 255f,
-                            out _hue, out _saturation, out _lightness);
-                OnColorUpdated();
+                RgbToHsv(r / 255f, g / 255f, b / 255f, out _hue, out _saturation, out _value);
+                OnColorUpdated(updateHexField: false);
             }
-            catch { /* invalid — ignore */ }
         }
+        catch { /* malformed — ignore */ }
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    //  Hit-test helpers  (mx/my are in scaled pixels)
+    // ─────────────────────────────────────────────────────────────
+    private bool HitSlider(double mx, double my, double sliderUnscaledY)
+    {
+        double sy = scaled(sliderUnscaledY);
+        double sh = scaled(SliderHeight);
+        double sw = scaled(_sliderW);
+        return mx >= 0 && mx <= sw && my >= sy && my < sy + sh;
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    //  Slider value updaters  (mx is in scaled pixels)
+    // ─────────────────────────────────────────────────────────────
+    private void UpdateHueFromMouse(double mx)
+    {
+        _hue = Clamp01(mx / scaled(_sliderW));
+        OnColorUpdated();
+    }
+
+    private void UpdateSatFromMouse(double mx)
+    {
+        _saturation = Clamp01(mx / scaled(_sliderW));
+        OnColorUpdated();
+    }
+
+    private void UpdateValFromMouse(double mx)
+    {
+        _value = Clamp01(mx / scaled(_sliderW));
+        OnColorUpdated();
+    }
+
+    private void UpdateAlphaFromMouse(double mx)
+    {
+        _alpha = Clamp01(mx / scaled(_sliderW));
+        OnColorUpdated();
     }
 
     // ─────────────────────────────────────────────────────────────
     //  Color update pipeline
     // ─────────────────────────────────────────────────────────────
-
-    private void OnColorUpdated()
+    private void OnColorUpdated(bool updateHexField = true)
     {
-        UpdateHexText();
-        RecomposePicker();
         RecomposeHueSlider();
+        RecomposeSatSlider();
+        RecomposeValSlider();
         RecomposeAlphaSlider();
         RecomposePreview();
-        RecomposeHexBg();
 
-        HsvToRgb(_hue, _saturation, _lightness, out double r, out double g, out double b);
+        if (updateHexField && _hexInput != null)
+        {
+            _suppressHexCallback = true;
+            _hexInput.SetValue(BuildHexString());
+            _suppressHexCallback = false;
+        }
+
+        HsvToRgb(_hue, _saturation, _value, out double r, out double g, out double b);
         _onColorChanged?.Invoke(new double[] { r, g, b, _alpha });
     }
 
-    private void UpdateHexText()
+    private string BuildHexString()
     {
-        HsvToRgb(_hue, _saturation, _lightness, out double r, out double g, out double b);
+        HsvToRgb(_hue, _saturation, _value, out double r, out double g, out double b);
         byte rb = (byte)Math.Round(r * 255);
         byte gb = (byte)Math.Round(g * 255);
         byte bb = (byte)Math.Round(b * 255);
         byte ab = (byte)Math.Round(_alpha * 255);
-        _hexInputText = $"#{ab:X2}{rb:X2}{gb:X2}{bb:X2}";
+        return $"#{ab:X2}{rb:X2}{gb:X2}{bb:X2}";
     }
 
     // ─────────────────────────────────────────────────────────────
     //  Color space helpers
     // ─────────────────────────────────────────────────────────────
-
-    /// <summary>Converts HSV to RGB. All values 0..1.</summary>
     private static void HsvToRgb(float h, float s, float v,
-                                    out double r, out double g, out double b)
+                                  out double r, out double g, out double b)
     {
-        if (s <= 0f)
-        {
-            r = g = b = v;
-            return;
-        }
-
+        if (s <= 0f) { r = g = b = v; return; }
         float hh = (h * 360f) / 60f;
         int i = (int)hh;
         float ff = hh - i;
         float p = v * (1f - s);
         float q = v * (1f - s * ff);
         float t = v * (1f - s * (1f - ff));
-
         switch (i % 6)
         {
             case 0: r = v; g = t; b = p; break;
@@ -651,90 +578,74 @@ public class GuiElementColorPicker : GuiElement
         }
     }
 
-    /// <summary>Converts RGB to HSV. All values 0..1.</summary>
     private static void RgbToHsv(float r, float g, float b,
-                                    out float h, out float s, out float v)
+                                  out float h, out float s, out float v)
     {
         float max = Math.Max(r, Math.Max(g, b));
         float min = Math.Min(r, Math.Min(g, b));
         float delta = max - min;
-
         v = max;
         s = max < 1e-6f ? 0f : delta / max;
-
-        if (delta < 1e-6f)
-        {
-            h = 0f;
-            return;
-        }
-
-        if (max == r)
-            h = (g - b) / delta;
-        else if (max == g)
-            h = 2f + (b - r) / delta;
-        else
-            h = 4f + (r - g) / delta;
-
+        if (delta < 1e-6f) { h = 0f; return; }
+        if (max == r) h = (g - b) / delta;
+        else if (max == g) h = 2f + (b - r) / delta;
+        else h = 4f + (r - g) / delta;
         h /= 6f;
         if (h < 0f) h += 1f;
     }
 
+    private static float Clamp01(double v)
+        => (float)Math.Max(0.0, Math.Min(1.0, v));
+
     // ─────────────────────────────────────────────────────────────
     //  Public API
     // ─────────────────────────────────────────────────────────────
-
-    /// <summary>
-    /// Programmatically set the color. Fires the callback.
-    /// </summary>
     public void SetColor(double r, double g, double b, double a = 1.0)
     {
-        RgbToHsv((float)r, (float)g, (float)b,
-                    out _hue, out _saturation, out _lightness);
+        RgbToHsv((float)r, (float)g, (float)b, out _hue, out _saturation, out _value);
         _alpha = (float)a;
         OnColorUpdated();
     }
 
-    /// <summary>
-    /// Returns current color as RGBA double array (0..1 each).
-    /// </summary>
     public double[] GetColor()
     {
-        HsvToRgb(_hue, _saturation, _lightness, out double r, out double g, out double b);
+        HsvToRgb(_hue, _saturation, _value, out double r, out double g, out double b);
         return new double[] { r, g, b, _alpha };
     }
 
     // ─────────────────────────────────────────────────────────────
     //  Dispose
     // ─────────────────────────────────────────────────────────────
-
     public override void Dispose()
     {
-        _pickerTexture?.Dispose();
         _hueSliderTexture?.Dispose();
+        _satSliderTexture?.Dispose();
+        _valSliderTexture?.Dispose();
         _alphaSliderTexture?.Dispose();
         _previewTexture?.Dispose();
-        _hexBgTexture?.Dispose();
+        _hexInput?.Dispose();
 
-        _pickerTexture = null;
-        _hueSliderTexture = null;
-        _alphaSliderTexture = null;
-        _previewTexture = null;
-        _hexBgTexture = null;
+        _hueSliderTexture = _satSliderTexture = _valSliderTexture =
+            _alphaSliderTexture = _previewTexture = null;
+        _hexInput = null;
 
         base.Dispose();
     }
 }
 
+// ─────────────────────────────────────────────────────────────────
+//  Composer extension
+// ─────────────────────────────────────────────────────────────────
 public static class GuiComposerColorPickerExtension
 {
     /// <summary>
-    /// Adds a color picker element.
+    /// Adds a color picker with four horizontal sliders (H, S, V, A),
+    /// a preview square, and a vanilla-style hex text input.
+    /// Minimum recommended unscaled bounds:
+    ///   width  ≥ 160
+    ///   height ≥ (4 * SliderHeight) + (3 * SliderPadding) + BottomPadding + PreviewSize
+    ///          = 80 + 15 + 6 + 36 = 137
     /// </summary>
-    /// <param name="composer">The composer.</param>
-    /// <param name="onColorChanged">Callback receiving RGBA (0..1 each) when color changes.</param>
-    /// <param name="bounds">Element bounds. Should be at least ~270×260 unscaled.</param>
-    /// <param name="initialColor">Optional initial RGBA color (0..1 each).</param>
-    /// <param name="key">Optional element key.</param>
     public static GuiComposer AddColorPicker(
         this GuiComposer composer,
         Action<double[]> onColorChanged,
@@ -751,9 +662,6 @@ public static class GuiComposerColorPickerExtension
         return composer;
     }
 
-    /// <summary>
-    /// Retrieves a color picker element by key.
-    /// </summary>
     public static GuiElementColorPicker GetColorPicker(this GuiComposer composer, string key)
         => composer.GetElement(key) as GuiElementColorPicker;
 }
