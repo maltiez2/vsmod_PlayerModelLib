@@ -695,7 +695,24 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
             SkinnablePartVariant[] variants = skinpart.Variants.Where(variant => variant.Category == "standard" || variant.Category == null || variant.Category == "").ToArray();
 
-            if (skinpart.Type == EnumSkinnableType.Texture && !skinpart.UseDropDown)
+            SkinnablePartExtended? extendedPart = skinpart as SkinnablePartExtended;
+
+            if (skinpart.Type == EnumSkinnableType.Texture && extendedPart?.OverlayMode == EnumTextureOverlayMode.Color)
+            {
+                bounds = bounds.BelowCopy(0, 10).WithFixedSize(210, 22);
+                composer.AddRichtext(Lang.Get("skinpart-" + code), CairoFont.WhiteSmallText(), bounds);
+
+                string tooltip = Lang.GetIfExists("skinpartdesc-" + code);
+                if (tooltip != null)
+                {
+                    bounds = bounds.FlatCopy();
+                    composer.AddHoverText(tooltip, CairoFont.WhiteSmallText(), 300, bounds);
+                }
+
+                bounds = bounds.BelowCopy(0, 0).WithFixedSize(200, 25);
+                composer.AddTextInput(bounds, (variantcode) => onToggleSkinPartActuallyColor(code, variantcode), key: "textinput-" + code);
+            }
+            else if (skinpart.Type == EnumSkinnableType.Texture && !skinpart.UseDropDown)
             {
                 int selectedIndex = 0;
                 int[] colors = new int[variants.Length];
@@ -995,6 +1012,12 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         string variantCode = skinMod.AvailableSkinPartsByCode.GetValue(partCode)?.Variants[index].Code ?? "";
 
         skinMod.SelectSkinPart(partCode, variantCode);
+    }
+    private void onToggleSkinPartActuallyColor(string partCode, string variantCode)
+    {
+        if (!variantCode.StartsWith('#') || variantCode.Length != 9) return;
+        PlayerSkinBehavior? skinMod = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
+        skinMod?.SelectSkinPart(partCode, variantCode);
     }
     private void onToggleModel(string modelCode, GuiComposer? composer = null)
     {

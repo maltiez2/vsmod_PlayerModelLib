@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using OpenTK.Mathematics;
 using OverhaulLib.Utils;
 using System.Diagnostics;
 using System.Reflection;
@@ -336,7 +337,11 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         foreach (SkinnablePart part in AvailableSkinParts.Get())
         {
             string code = appliedTree.GetString(part.Code);
-            if (code != null && part.VariantsByCode.TryGetValue(code, out SkinnablePartVariant? variant))
+            if (code != null && part is SkinnablePartExtended extended && extended.OverlayMode == EnumTextureOverlayMode.Color)
+            {
+                appliedSkinParts.Add(new() { Code = code, PartCode = part.Code });
+            }
+            else if (code != null && part.VariantsByCode.TryGetValue(code, out SkinnablePartVariant? variant))
             {
                 appliedSkinParts.Add(variant.AppliedCopy(part.Code));
             }
@@ -524,6 +529,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
             AddMainTextures();
             AddSkinParts(ref entityShape, shapePathForLogging, ref willDeleteElements);
             AddSkinPartsTextures(ClientApi, entityShape, shapePathForLogging);
+            AddSkinPartsSolidColor(ClientApi, entityShape, shapePathForLogging);
             RemoveHiddenElements(entityShape, ref willDeleteElements);
 
             InsertTexturesIntoAtlas(ClientApi);
@@ -685,7 +691,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
 
     protected virtual void AddSkinParts(ref Shape entityShape, string shapePathForLogging, ref string[]? willDeleteElements)
     {
-        foreach (AppliedSkinnablePartVariant? skinPart in GetAppliedSkinParts())
+        foreach (AppliedSkinnablePartVariant skinPart in GetAppliedSkinParts())
         {
             AvailableSkinPartsByCode.TryGetValue(skinPart.PartCode, out SkinnablePart? part);
 
@@ -735,6 +741,11 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
 
             if (part == null || part.Type != EnumSkinnableType.Texture || part.TextureTarget == null) continue;
 
+            SkinnablePartExtended extendedPart = part as SkinnablePartExtended
+                ?? throw new InvalidOperationException($"Player model lib uses only 'SkinnablePartExtended'");
+
+            if (extendedPart.OverlayMode == EnumTextureOverlayMode.Color) continue;
+
             AssetLocation textureLoc;
             if (part.TextureTemplate != null)
             {
@@ -745,9 +756,6 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
             {
                 textureLoc = skinPart.Texture;
             }
-
-            SkinnablePartExtended extendedPart = part as SkinnablePartExtended
-                ?? throw new InvalidOperationException($"Player model lib uses only 'SkinnablePartExtended'");
 
             if (extendedPart.TargetSkinParts.Length > 0)
             {
@@ -765,6 +773,53 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
                 string target = CustomModelsSystem.PrefixSkinPartTextures(CurrentModelCode, part.TextureTarget, "base");
 
                 AddOverlayTexture(code, target, textureLoc, extendedPart.OverlayMode);
+            }
+        }
+    }
+
+    protected virtual void AddSkinPartsSolidColor(ICoreClientAPI api, Shape entityShape, string shapePathForLogging)
+    {
+        foreach (AppliedSkinnablePartVariant? skinPart in GetAppliedSkinParts())
+        {
+            AvailableSkinPartsByCode.TryGetValue(skinPart.PartCode, out SkinnablePart? part);
+
+            if (part == null || part.Type != EnumSkinnableType.Texture || part.TextureTarget == null) continue;
+
+            SkinnablePartExtended extendedPart = part as SkinnablePartExtended
+                ?? throw new InvalidOperationException($"Player model lib uses only 'SkinnablePartExtended'");
+
+            Debug.WriteLine($"{skinPart.PartCode}: {extendedPart.OverlayMode}");
+
+            if (extendedPart.OverlayMode != EnumTextureOverlayMode.Color) continue;
+
+            if (extendedPart.TargetSkinParts.Length > 0)
+            {
+                foreach (string targetSkinPart in extendedPart.TargetSkinParts)
+                {
+                    string code = CustomModelsSystem.PrefixSkinPartTextures(CurrentModelCode, extendedPart.TextureTarget, skinPart.PartCode);
+                    string target = CustomModelsSystem.PrefixSkinPartTextures(CurrentModelCode, part.TextureTarget, targetSkinPart);
+
+                    Vector2i size = Vector2i.Zero;
+                    if (extendedPart.Size.Length == 2)
+                    {
+                        size = new(extendedPart.Size[0], extendedPart.Size[1]);
+                    }
+
+                    AddSolidColorTexture(code, target, skinPart.Code, size);
+                }
+            }
+            else
+            {
+                string code = CustomModelsSystem.PrefixSkinPartTextures(CurrentModelCode, extendedPart.TextureTarget, skinPart.PartCode);
+                string target = CustomModelsSystem.PrefixSkinPartTextures(CurrentModelCode, part.TextureTarget, "base");
+
+                Vector2i size = Vector2i.Zero;
+                if (extendedPart.Size.Length == 2)
+                {
+                    size = new(extendedPart.Size[0], extendedPart.Size[1]);
+                }
+
+                AddSolidColorTexture(code, target, skinPart.Code, size);
             }
         }
     }
@@ -956,6 +1011,23 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         RecusiveOverlaysTextureWithTarget node = new(texture, overlayMode)
         {
             TargetCodes = [target]
+        };
+        RecursiveOverlaysByTextures.SetValue(code, node);
+    }
+
+    protected virtual void AddSolidColorTexture(string code, string target, string color, Vector2i size)
+    {
+        if (RecursiveOverlaysByTextures.TryGetValue(code, out RecusiveOverlaysTextureWithTarget? overlay))
+        {
+            overlay.TargetCodes.Add(target);
+            return;
+        }
+
+        RecusiveOverlaysTextureWithTarget node = new(new(), EnumTextureOverlayMode.Color)
+        {
+            TargetCodes = [target],
+            Color = color,
+            SizeOverride = size
         };
         RecursiveOverlaysByTextures.SetValue(code, node);
     }

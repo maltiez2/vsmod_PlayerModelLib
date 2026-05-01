@@ -5,11 +5,19 @@ namespace PlayerModelLib;
 
 public static class TextureOverlayBlendingUtils
 {
-    public static void Blend(EnumTextureOverlayMode mode, int[] basePixels, int[] overlayPixels)
+    public static void Blend(EnumTextureOverlayMode mode, int[] basePixels, int[] overlayPixels, string? color = null)
     {
         int length = basePixels.Length;
         switch (mode)
         {
+            case EnumTextureOverlayMode.Color:
+                int rgbaColor = ColorUtil.Hex2Int(color);
+                for (int pixelIndex = 0; pixelIndex < length; pixelIndex++)
+                {
+                    basePixels[pixelIndex] = rgbaColor;
+                }
+                break;
+
             case EnumTextureOverlayMode.Replace:
                 for (int pixelIndex = 0; pixelIndex < length; pixelIndex++)
                 {
@@ -35,6 +43,13 @@ public static class TextureOverlayBlendingUtils
                 for (int pixelIndex = 0; pixelIndex < length; pixelIndex++)
                 {
                     basePixels[pixelIndex] = AlphaMaskBlackAndWhite(basePixels[pixelIndex], overlayPixels[pixelIndex]);
+                }
+                break;
+
+            case EnumTextureOverlayMode.AlphaMaskBlackAndWhiteInverted:
+                for (int pixelIndex = 0; pixelIndex < length; pixelIndex++)
+                {
+                    basePixels[pixelIndex] = AlphaMaskBlackAndWhiteInverted(basePixels[pixelIndex], overlayPixels[pixelIndex]);
                 }
                 break;
 
@@ -138,6 +153,21 @@ public static class TextureOverlayBlendingUtils
 
         int baseAlpha = (baseColor >> 24) & 0xFF;
         int newAlpha = (baseAlpha * luminance) / 255;
+
+        return (baseColor & 0x00FFFFFF) | (newAlpha << 24);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int AlphaMaskBlackAndWhiteInverted(int baseColor, int overlayColor)
+    {
+        int overlayR = (overlayColor >> 16) & 0xFF;
+        int overlayG = (overlayColor >> 8) & 0xFF;
+        int overlayB = overlayColor & 0xFF;
+
+        int luminance = (overlayR * 2126 + overlayG * 7152 + overlayB * 722) / 10000;
+
+        int baseAlpha = (baseColor >> 24) & 0xFF;
+        int newAlpha = (baseAlpha * (1 - luminance)) / 255;
 
         return (baseColor & 0x00FFFFFF) | (newAlpha << 24);
     }

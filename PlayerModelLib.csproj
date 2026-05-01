@@ -97,9 +97,6 @@
     <Reference Include="SkiaSharp" HintPath="$(GameDirectory)/Lib/SkiaSharp.dll" Private="false" />
     <Reference Include="$(GameDirectory)/Lib/OpenTK*.dll" Private="false" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="resources\assets\playermodellib\jsonpatches\compatibility\" />
-  </ItemGroup>
 
   <!-- Creating local settings file -->
   <Target Name="EnsureSettingsJson" BeforeTargets="ModInfo" Condition="!Exists('Properties\localSettings.props')">

@@ -71,7 +71,7 @@ public static class TextureUtils
     public static void DebugPrintRecusiveOverlaysTexture(RecusiveOverlaysTexture node, int depth = 0)
     {
         string indent = new(' ', depth * 2);
-        //Debug.WriteLine($"{indent}[{node.BlendMode}] {node.Texture.Base}");
+        Debug.WriteLine($"{indent}[{node.BlendMode}] {node.Texture.Base}");
 
         foreach (RecusiveOverlaysTexture child in node.Overlays)
         {
@@ -81,19 +81,30 @@ public static class TextureUtils
 
     public static BakedBitmap LoadCompositeBitmap(ClientMain game, RecusiveOverlaysTexture recursiveOverlaysTexture, bool calledFromItself = false, string? debugCode = null, int depth = 0)
     {
-        BakedCompositeTexture baked = Bake(game.AssetManager, recursiveOverlaysTexture.Texture);
-        AssetLocationAndSource baseLoc = new(baked.BakedName, "RecursiveOverlay", recursiveOverlaysTexture.Texture.Base);
-
-        BakedBitmap result = TextureAtlasManager.LoadCompositeBitmap(game, baseLoc);
+        BakedBitmap? result = null;
+        if (recursiveOverlaysTexture.BlendMode != EnumTextureOverlayMode.Color)
+        {
+            BakedCompositeTexture baked = Bake(game.AssetManager, recursiveOverlaysTexture.Texture);
+            AssetLocationAndSource baseLoc = new(baked.BakedName, "RecursiveOverlay", recursiveOverlaysTexture.Texture.Base);
+            result = TextureAtlasManager.LoadCompositeBitmap(game, baseLoc);
+        }
 
         if (recursiveOverlaysTexture.Overlays.Count == 0)
         {
+            int color = ColorUtil.Hex2Int(recursiveOverlaysTexture.Color ?? "#00000000");
+            result ??= CreateSolidColorBitmap(recursiveOverlaysTexture.SizeOverride.X, recursiveOverlaysTexture.SizeOverride.Y, color);
             return result;
         }
 
         foreach (RecusiveOverlaysTexture overlay in recursiveOverlaysTexture.Overlays)
         {
             BakedBitmap overlayBitmap = LoadCompositeBitmap(game, overlay, calledFromItself: true, debugCode: debugCode, depth: depth + 1);
+
+            if (result == null)
+            {
+                int color = ColorUtil.Hex2Int(recursiveOverlaysTexture.Color ?? "#00000000");
+                result = CreateSolidColorBitmap(overlayBitmap.Width, overlayBitmap.Height, color);
+            }
 
             if (overlayBitmap?.TexturePixels == null)
             {
@@ -109,7 +120,13 @@ public static class TextureUtils
                 continue;
             }
 
-            TextureOverlayBlendingUtils.Blend(overlay.BlendMode, result.TexturePixels, overlayBitmap.TexturePixels);
+            TextureOverlayBlendingUtils.Blend(overlay.BlendMode, result.TexturePixels, overlayBitmap.TexturePixels, overlay.Color);
+        }
+
+        if (result == null)
+        {
+            int color = ColorUtil.Hex2Int(recursiveOverlaysTexture.Color ?? "#00000000");
+            result = CreateSolidColorBitmap(recursiveOverlaysTexture.SizeOverride.X, recursiveOverlaysTexture.SizeOverride.Y, color);
         }
 
         return result;
@@ -203,12 +220,15 @@ public static class TextureUtils
 
     private static void AppendNodeName(RecusiveOverlaysTexture node, System.Text.StringBuilder sb)
     {
-        // Use the raw base path (before baking) as the stable identity for this node.
-        // Baking is not needed here — we only want a unique string, not a loadable name.
-        sb.Append(node.Texture.Base.ToShortString());
+        if (node.BlendMode == EnumTextureOverlayMode.Color)
+        {
+            sb.Append($"{node.Color}-{node.SizeOverride.X}-{node.SizeOverride.Y}");
+        }
+        else
+        {
+            sb.Append(node.Texture.Base.ToShortString());
+        }
 
-        // Append rotation / alpha suffixes so two textures that differ only in those
-        // properties still produce different names.
         if (node.Texture.Rotation != 0)
         {
             sb.Append(RotationSuffix);
@@ -432,5 +452,24 @@ public static class TextureUtils
         BakedCompositeTexture bakedTile = Bake(assetManager, tile);
         bakedTile.TilesWidth = compositeTexture.TilesWidth;
         return bakedTile;
+    }
+
+    private static BakedBitmap CreateSolidColorBitmap(int width, int height, int color)
+    {
+        int[] pixels = new int[width * height];
+
+        for (int i = 0; i < pixels.Length; i++)
+        {
+            pixels[i] = color;
+        }
+
+        BakedBitmap bitmap = new BakedBitmap()
+        {
+            Width = width,
+            Height = height,
+            TexturePixels = pixels
+        };
+
+        return bitmap;
     }
 }

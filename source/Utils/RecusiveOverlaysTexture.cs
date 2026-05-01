@@ -1,4 +1,5 @@
-﻿using Vintagestory.API.Client;
+﻿using OpenTK.Mathematics;
+using Vintagestory.API.Client;
 
 namespace PlayerModelLib;
 
@@ -20,6 +21,8 @@ public class RecusiveOverlaysTexture
     public CompositeTexture Texture { get; set; }
     public EnumTextureOverlayMode BlendMode { get; set; }
     public List<RecusiveOverlaysTexture> Overlays { get; set; } = [];
+    public string? Color { get; set; }
+    public Vector2i SizeOverride { get; set; } = Vector2i.Zero;
 }
 
 public class RecusiveOverlaysTextureWithTarget : RecusiveOverlaysTexture

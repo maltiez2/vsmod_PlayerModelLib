@@ -988,6 +988,8 @@ public sealed class CustomModelsSystem : ModSystem
                 case "eyecolor":
                     part.TextureTarget = "playermodellib-iris";
                     part.TargetSkinParts = ["facialexpression"];
+                    part.OverlayMode = EnumTextureOverlayMode.Color;
+                    part.Size = [8, 8];
                     break;
 
                 default:
@@ -1284,7 +1286,14 @@ public sealed class CustomModelsSystem : ModSystem
                     .Distinct()
                     .ToArray();
 
-                ProcessTexturePart(clientApi, part, model);
+                if (part.OverlayMode == EnumTextureOverlayMode.Color)
+                {
+                    ProcessSolidColorTexturePart(clientApi, part, model);
+                }
+                else
+                {
+                    ProcessTexturePart(clientApi, part, model);
+                }
             }
             else
             {
@@ -1409,6 +1418,10 @@ public sealed class CustomModelsSystem : ModSystem
         return TextCommandResult.Success($"Player '{targetPlayer.Name}' now does not have access to '{playerModelCode}' player model");
     }
 
+    private void ProcessSolidColorTexturePart(ICoreClientAPI clientApi, SkinnablePart part, string model)
+    {
+        // nothing to process yet
+    }
     private void ProcessTexturePart(ICoreClientAPI clientApi, SkinnablePart part, string model)
     {
         List<SkinnablePartVariant> variantsToSkip = [];
