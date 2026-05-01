@@ -709,8 +709,14 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
                     composer.AddHoverText(tooltip, CairoFont.WhiteSmallText(), 300, bounds);
                 }
 
-                bounds = bounds.BelowCopy(0, 0).WithFixedSize(200, 25);
-                composer.AddTextInput(bounds, (variantcode) => onToggleSkinPartActuallyColor(code, variantcode), key: "textinput-" + code);
+                bounds = bounds.BelowCopy(0, 0).WithFixedSize(200, 100);
+                composer.AddColorPicker(
+                    rgba => onToggleSkinPartActuallyColor(code, rgba),
+                    bounds,
+                    [1.0, 1.0, 1.0, 1.0],
+                    key: "colorpicker-" + code
+                    );
+                //composer.AddTextInput(bounds, (variantcode) => onToggleSkinPartActuallyColor(code, variantcode), key: "textinput-" + code);
             }
             else if (skinpart.Type == EnumSkinnableType.Texture && !skinpart.UseDropDown)
             {
@@ -975,7 +981,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
             if (skinPart.Type == EnumSkinnableType.Texture && skinPart is SkinnablePartExtended ext && ext.SolidColor)
             {
-                Composers["createcharacter"].GetTextInput("textinput-" + partcode)?.SetValue(variants[index].Code);
+                //Composers["createcharacter"].GetTextInput("textinput-" + partcode)?.SetValue(variants[index].Code);
             }
             if (skinPart.Type == EnumSkinnableType.Texture && !skinPart.UseDropDown)
             {
@@ -1017,11 +1023,22 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         skinMod.SelectSkinPart(partCode, variantCode);
     }
-    private void onToggleSkinPartActuallyColor(string partCode, string variantCode)
+    private void onToggleSkinPartActuallyColor(string partCode, double[] color)
     {
-        if (!variantCode.StartsWith('#') || variantCode.Length != 9) return;
+        string colorHex = RgbaToArgbHex(color);
         PlayerSkinBehavior? skinMod = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
-        skinMod?.SelectSkinPart(partCode, variantCode);
+        skinMod?.SelectSkinPart(partCode, colorHex);
+    }
+    public static string RgbaToArgbHex(double[] rgba)
+    {
+        if (rgba == null || rgba.Length != 4) throw new ArgumentException("Input must be a double[4] array (RGBA).");
+
+        byte r = (byte)(Math.Clamp(rgba[0], 0.0, 1.0) * 255);
+        byte g = (byte)(Math.Clamp(rgba[1], 0.0, 1.0) * 255);
+        byte b = (byte)(Math.Clamp(rgba[2], 0.0, 1.0) * 255);
+        byte a = (byte)(Math.Clamp(rgba[3], 0.0, 1.0) * 255);
+
+        return $"#{a:X2}{r:X2}{g:X2}{b:X2}";
     }
     private void onToggleModel(string modelCode, GuiComposer? composer = null)
     {
