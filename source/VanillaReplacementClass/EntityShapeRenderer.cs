@@ -62,12 +62,12 @@ public class CustomPlayerShapeRenderer : EntityPlayerShapeRenderer
     private readonly ThreadSafeBool _tesselating = new(false);
 
     private bool _firstTesselate = true;
-    private const int _firstTesselatedealyMs = 2000;
+    private const int _firstTesselatedealyMs = 0;
     private readonly bool _isSinglePlayer;
 
     public virtual void TesselateShapeOffThread()
     {
-        if (_firstTesselate && !_isSinglePlayer)
+        if (_firstTesselate && !_isSinglePlayer && _firstTesselatedealyMs > 0)
         {
             Thread.Sleep(_firstTesselatedealyMs);
             _firstTesselate = false;

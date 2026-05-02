@@ -1,4 +1,5 @@
-﻿using OverhaulLib.Utils;
+﻿using HarmonyLib;
+using OverhaulLib.Utils;
 using System.Diagnostics;
 using System.Text;
 using Vintagestory.API.Client;
@@ -318,6 +319,10 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     private float _clipHeight = 377;
     private readonly ICoreClientAPI _api;
     private const string _previousSelectionFile = "playermodellib-previous-selections.json";
+    private const double _dialogWidth = 757;
+
+    private ElementBounds? _skinTabLeftColumnBounds;
+    private ElementBounds? _skinTabRightColumnBounds;
 
     private new void ComposeGuis()
     {
@@ -332,7 +337,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         ElementBounds backgroundBounds = ElementBounds.FixedSize(717, _dlgHeight)
             .WithFixedPadding(GuiStyle.ElementToDialogPadding);
 
-        ElementBounds dialogBounds = ElementBounds.FixedSize(757, _dlgHeight + 40)
+        ElementBounds dialogBounds = ElementBounds.FixedSize(_dialogWidth, _dlgHeight + 40)
             .WithAlignment(EnumDialogArea.CenterMiddle)
             .WithFixedAlignmentOffset(GuiStyle.DialogToScreenPadding, 0);
 
@@ -648,185 +653,123 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     }
     private void ComposeSkinTab(GuiComposer composer, EntityBehaviorPlayerInventory inventoryBehavior, double yPosition, double padding, ElementBounds backgroundBounds)
     {
-        PlayerSkinBehavior? skinMod = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
-
-        if (skinMod == null) return;
-
+        PlayerSkinBehavior? skinBehavior = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
+        if (skinBehavior == null) return;
         inventoryBehavior.hideClothing = _hideClothing;
-
-        EntityShapeRenderer? essr = capi.World.Player.Entity.Properties.Client.Renderer as EntityShapeRenderer;
-        essr?.TesselateShape();
+        EntityShapeRenderer? renderer = capi.World.Player.Entity.Properties.Client.Renderer as EntityShapeRenderer;
+        renderer?.TesselateShape();
 
         CairoFont smallfont = CairoFont.WhiteSmallText();
         Cairo.TextExtents textExt = smallfont.GetTextExtents(Lang.Get("Show dressed"));
+
         int colorIconSize = 22;
+        double horizontalOffset = -10;
+        double verticalOffset = -5;
+        double columnsWidth = 236;
+        double previewWidth = 256;
+        double columnsHeight = _dlgHeight - 54 + 4;
+        double buttonsBarWidth = columnsWidth * 2 + previewWidth + padding * 2;
+        double buttonsBarHeight = 36;
+        double hideClothingHeight = 30;
+        double previewInsetHeight = columnsHeight - hideClothingHeight - padding;
+        double scrollBarWidth = 12;
+        double colorPickerheight = 110;
+        double canvasHeight = 256;
+        double skinPartWidht = columnsWidth - scrollBarWidth;
 
-        ElementBounds leftColBounds = ElementBounds.Fixed(0, yPosition, 204, _dlgHeight - 59).FixedGrow(2 * padding, 2 * padding);
+        // top level bounds
+        ElementBounds leftColumnBounds = ElementBounds.Fixed(horizontalOffset, yPosition, columnsWidth, columnsHeight);
+        ElementBounds previewAreaBounds = leftColumnBounds.RightCopy(padding, 0, 0, 0).WithFixedWidth(previewWidth);
+        ElementBounds rightColumnBounds = ElementBounds.Fixed(0, yPosition, columnsWidth, columnsHeight).FixedRightOf(previewAreaBounds, padding);
+        ElementBounds bottomButtonsBarBounds = ElementBounds.Fixed(horizontalOffset, 0, buttonsBarWidth, buttonsBarHeight).FixedUnder(leftColumnBounds);
+        // preview area
+        ElementBounds insetBounds = ElementBounds.Fixed(0, 0, previewWidth, previewInsetHeight).WithParent(previewAreaBounds);
+        ElementBounds hideClothingButtonBounds = ElementBounds.Fixed(0, padding, previewWidth, hideClothingHeight).WithParent(previewAreaBounds).FixedUnder(insetBounds);
+        // buttons bar
+        ElementBounds randomizeButtonBounds = ElementBounds.Fixed(0, 0).WithFixedOffset(padding, padding).WithParent(bottomButtonsBarBounds).WithFixedPadding(8, 6);
+        ElementBounds lastSelectionButtonBounds = ElementBounds.Fixed(0, 0).WithFixedOffset(padding, padding).WithParent(bottomButtonsBarBounds).WithFixedPadding(8, 6).RightOf(randomizeButtonBounds, padding);
+        ElementBounds confirmButtonBounds = ElementBounds.Fixed(0, 0).WithFixedOffset(-padding, padding).WithParent(bottomButtonsBarBounds).WithAlignment(EnumDialogArea.RightFixed).WithFixedPadding(12, 6);
+        // skin parts
+        ElementBounds dropDownSkinPartBounds = ElementBounds.Fixed(0, 0).WithFixedSize(skinPartWidht, 22);
+        ElementBounds swatchesSkinPartBounds = ElementBounds.Fixed(0, 0).WithFixedSize(colorIconSize, colorIconSize);
+        ElementBounds colorPickerSkinPartBounds = ElementBounds.Fixed(0, 0).WithFixedSize(skinPartWidht, colorPickerheight);
+        ElementBounds canvasSkinPartBounds = ElementBounds.Fixed(0, 0).WithFixedSize(skinPartWidht, canvasHeight);
+        ElementBounds skinPartTitleBounds = ElementBounds.Fixed(0, 0).WithFixedSize(skinPartWidht, 22);
+        // left column
+        ElementBounds leftColumnScrollBarBounds = leftColumnBounds.FlatCopy().WithFixedPosition(0, 0).FixedGrow(-2, -2).WithFixedWidth(scrollBarWidth).WithParent(leftColumnBounds);
+        ElementBounds leftColumnClipBounds = leftColumnBounds.FlatCopy().WithFixedPosition(0, 0).FixedGrow(-scrollBarWidth, -2).WithParent(leftColumnBounds).RightOf(leftColumnScrollBarBounds);
+        ElementBounds leftColumnScrollableBounds = leftColumnClipBounds.FlatCopy().WithFixedPosition(0, 0).WithParent(leftColumnBounds).RightOf(leftColumnScrollBarBounds);
+        _skinTabLeftColumnBounds = leftColumnScrollableBounds;
+        // right column
+        ElementBounds rightColumnClipBounds = rightColumnBounds.FlatCopy().WithFixedPosition(0, 0).FixedGrow(-scrollBarWidth, -2).WithParent(rightColumnBounds);
+        ElementBounds rightColumnScrollableBounds = rightColumnClipBounds.FlatCopy().WithFixedPosition(0, 0).WithParent(rightColumnBounds);
+        ElementBounds rightColumnScrollBarBounds = rightColumnBounds.FlatCopy().WithFixedPosition(0, 0).FixedGrow(-2, -2).WithFixedWidth(scrollBarWidth).WithParent(rightColumnBounds).RightOf(rightColumnClipBounds);
+        _skinTabRightColumnBounds = rightColumnScrollableBounds;
 
-        _insetSlotBounds = ElementBounds.Fixed(0, yPosition + 2, 265, leftColBounds.fixedHeight - 2 * padding - 10).FixedRightOf(leftColBounds, 10);
-        ElementBounds toggleButtonBounds = ElementBounds.Fixed(
-                (int)_insetSlotBounds.fixedX + _insetSlotBounds.fixedWidth / 2 - textExt.Width / RuntimeEnv.GUIScale / 2 - 12,
-                0,
-                textExt.Width / RuntimeEnv.GUIScale + 1,
-                textExt.Height / RuntimeEnv.GUIScale
-            )
-            .FixedUnder(_insetSlotBounds, 4).WithAlignment(EnumDialogArea.LeftFixed).WithFixedPadding(12, 6);
 
+        composer.AddInset(leftColumnBounds, 2, 1);
+        composer.AddInset(previewAreaBounds, 0, 1);
+        composer.AddInset(rightColumnBounds, 2, 1);
+        composer.AddInset(bottomButtonsBarBounds, 0, 1);
+        composer.AddInset(insetBounds);
+        composer.AddInset(hideClothingButtonBounds, 0, 1);
+        composer.AddInset(leftColumnClipBounds, 0, 1);
+        composer.AddScrollableInset(leftColumnScrollableBounds, 0, 1);
+        composer.AddInset(leftColumnScrollBarBounds, 0, 1);
+        composer.AddInset(rightColumnClipBounds, 0, 1);
+        composer.AddScrollableInset(rightColumnScrollableBounds, 0, 1);
+        composer.AddInset(rightColumnScrollBarBounds, 0, 1);
 
+        composer.AddToggleButton(Lang.Get("playermodellib:gui-button-hide-clothing"), smallfont, OnToggleDressOnOff, hideClothingButtonBounds, "showdressedtoggle");
+        composer.AddButton(Lang.Get("Randomize"), () => OnRandomizeSkin([]), randomizeButtonBounds, CairoFont.WhiteSmallText(), EnumButtonStyle.Small);
+        composer.AddButton(Lang.Get("Last selection"), () => OnRandomizeSkin(GetPreviousSelection()), lastSelectionButtonBounds, CairoFont.WhiteSmallText(), EnumButtonStyle.Small);
+        composer.AddButton(Lang.Get("Confirm Skin"), OnNextImpl, confirmButtonBounds, CairoFont.WhiteSmallText(), EnumButtonStyle.Small);
 
-        ElementBounds? bounds = null;
-        ElementBounds? prevbounds = null;
+        _insetSlotBounds = insetBounds;
 
-        double leftX = 0;
-
-        foreach (SkinnablePart? skinpart in skinMod.AvailableSkinParts.Get())
+        IEnumerable<SkinnablePartExtended> skinParts = skinBehavior.AvailableSkinParts.Get().OfType<SkinnablePartExtended>();
+        ElementBounds previousSkinPartBounds = ElementBounds.Fixed(0, 0).WithFixedSize(0, 0).WithParent(leftColumnScrollableBounds);
+        ElementBounds skinPartParentBounds = leftColumnScrollableBounds;
+        bool leftColumn = true;
+        double leftColumnContentHeight = 0;
+        double rightColumnContentHeight = 0;
+        foreach (SkinnablePartExtended skinPart in skinParts)
         {
-            bounds = ElementBounds.Fixed(leftX, (prevbounds == null || prevbounds.fixedY == 0) ? -10 : prevbounds.fixedY + prevbounds.fixedHeight - 24, 0, 24);
-
-            string code = skinpart.Code;
-
-            AppliedSkinnablePartVariant? appliedVar = skinMod.AppliedSkinParts.Get().FirstOrDefault(sp => sp.PartCode == code);
-
-            SkinnablePartVariant[] variants = skinpart.Variants.Where(variant => variant.Category == "standard" || variant.Category == null || variant.Category == "").ToArray();
-
-            SkinnablePartExtended? extendedPart = skinpart as SkinnablePartExtended;
-
-            if (skinpart.Type == EnumSkinnableType.Texture && extendedPart?.SolidColor == true)
+            if (skinPart.Type == EnumSkinnableType.Texture && skinPart.SolidColor)
             {
-                bounds = bounds.BelowCopy(0, 10).WithFixedSize(210, 22);
-                composer.AddRichtext(Lang.Get("skinpart-" + code), CairoFont.WhiteSmallText(), bounds);
-
-                string tooltip = Lang.GetIfExists("skinpartdesc-" + code);
-                if (tooltip != null)
-                {
-                    bounds = bounds.FlatCopy();
-                    composer.AddHoverText(tooltip, CairoFont.WhiteSmallText(), 300, bounds);
-                }
-
-                bounds = bounds.BelowCopy(0, 0).WithFixedSize(200, 110);
-                ElementBounds pickerBounds = bounds.FlatCopy().FixedShrink(4).WithFixedOffset(1, 2);
-                composer.AddInset(bounds, depth: 2);
-                composer.AddColorPicker(
-                    rgba => onToggleSkinPartActuallyColor(code, rgba),
-                    pickerBounds,
-                    [1.0, 1.0, 1.0, 1.0],
-                    key: "colorpicker-" + code
-                    );
+                previousSkinPartBounds = ComposeColorPickerSkinPart(skinPart, composer, previousSkinPartBounds, skinPartTitleBounds, colorPickerSkinPartBounds, skinPartParentBounds, skinBehavior, padding);
             }
-            else if (skinpart.Type == EnumSkinnableType.Texture && extendedPart?.Canvas == true)
+            else if (skinPart.Type == EnumSkinnableType.Texture && skinPart.Canvas)
             {
-                bounds = bounds.BelowCopy(0, 10).WithFixedSize(210, 22);
-                composer.AddRichtext(Lang.Get("skinpart-" + code), CairoFont.WhiteSmallText(), bounds);
-
-                string tooltip = Lang.GetIfExists("skinpartdesc-" + code);
-                if (tooltip != null)
-                {
-                    bounds = bounds.FlatCopy();
-                    composer.AddHoverText(tooltip, CairoFont.WhiteSmallText(), 300, bounds);
-                }
-
-                int colorsNumber = Math.Clamp(extendedPart.ColorsNumber, 1, 14);
-
-                TextureCanvasData canvasData = new()
-                {
-                    Width = extendedPart.Size[0],
-                    Height = extendedPart.Size[1],
-                    Colors = new int[colorsNumber],
-                    Pixels = new int[extendedPart.Size[0] * extendedPart.Size[1]]
-                };
-
-                for (int i = 0; i < colorsNumber; i++)
-                {
-                    canvasData.Colors[i] = -1;
-                }
-
-                int additionalHeight = (colorsNumber + 1) / 8;
-
-                bounds = bounds.BelowCopy(0, 4).WithFixedSize(200, 236 + additionalHeight * 20);
-                composer.AddInset(bounds, depth: 2);
-                composer.AddCanvasEditor(canvasData, bounds, data => onToggleSkinPartCanvas(code, data));
+                previousSkinPartBounds = ComposeCanvasSkinPart(skinPart, composer, previousSkinPartBounds, skinPartTitleBounds, canvasSkinPartBounds, skinPartParentBounds, skinBehavior, padding);
             }
-            else if (skinpart.Type == EnumSkinnableType.Texture && !skinpart.UseDropDown)
+            else if (skinPart.Type == EnumSkinnableType.Texture && !skinPart.UseDropDown)
             {
-                int selectedIndex = 0;
-                int[] colors = new int[variants.Length];
-
-                for (int i = 0; i < variants.Length; i++)
-                {
-                    colors[i] = variants[i].Color;
-
-                    if (appliedVar?.Code == variants[i].Code) selectedIndex = i;
-                }
-
-
-                bounds = bounds.BelowCopy(0, 10).WithFixedSize(210, 22);
-                composer.AddRichtext(Lang.Get("skinpart-" + code), CairoFont.WhiteSmallText(), bounds);
-
-                bounds = bounds.BelowCopy(0, 0).WithFixedSize(colorIconSize, colorIconSize);
-                composer.AddColorListPicker(colors, (index) => onToggleSkinPartColor(code, index), bounds, 180, "picker-" + code);
-
-                for (int i = 0; i < colors.Length; i++)
-                {
-                    GuiElementColorListPicker picker = composer.GetColorListPicker("picker-" + code + "-" + i);
-                    picker.ShowToolTip = true;
-                    if (Lang.HasTranslation("skinpart-" + code + "-" + variants[i].Code))
-                    {
-                        picker.TooltipText = Lang.Get("skinpart-" + code + "-" + variants[i].Code);
-                    }
-                    else
-                    {
-                        picker.TooltipText = Lang.Get("color-" + variants[i].Code);
-                    }
-                }
-
-                composer.ColorListPickerSetValue("picker-" + code, selectedIndex);
+                previousSkinPartBounds = ComposeSwatchSkinPart(skinPart, composer, previousSkinPartBounds, skinPartTitleBounds, swatchesSkinPartBounds, skinPartParentBounds, skinBehavior, padding);
             }
             else
             {
-                int selectedIndex = 0;
-
-                string[] names = new string[variants.Length];
-                string[] values = new string[variants.Length];
-
-                for (int i = 0; i < variants.Length; i++)
-                {
-                    names[i] = Lang.Get("skinpart-" + code + "-" + variants[i].Code);
-                    values[i] = variants[i].Code;
-
-                    if (appliedVar?.Code == values[i]) selectedIndex = i;
-                }
-
-                bounds = bounds.BelowCopy(0, 10).WithFixedSize(210, 22);
-                composer.AddRichtext(Lang.Get("skinpart-" + code), CairoFont.WhiteSmallText(), bounds);
-
-                string tooltip = Lang.GetIfExists("skinpartdesc-" + code);
-                if (tooltip != null)
-                {
-                    bounds = bounds.FlatCopy();
-                    composer.AddHoverText(tooltip, CairoFont.WhiteSmallText(), 300, bounds);
-                }
-
-                bounds = bounds.BelowCopy(0, 0).WithFixedSize(200, 25);
-                composer.AddDropDown(values, names, selectedIndex, (variantcode, selected) => onToggleSkinPartColor(code, variantcode), bounds, "dropdown-" + code);
+                previousSkinPartBounds = ComposeDropDownSkinPart(skinPart, composer, previousSkinPartBounds, skinPartTitleBounds, dropDownSkinPartBounds, skinPartParentBounds, skinBehavior, padding);
             }
 
-            prevbounds = bounds.FlatCopy();
+            composer.AddScrollableInset(previousSkinPartBounds, 2, 1);
 
-            if (skinpart.Colbreak)
+            if (leftColumn)
             {
-                leftX = _insetSlotBounds.fixedX + _insetSlotBounds.fixedWidth + 22;
-                prevbounds.fixedY = 0;
+                leftColumnContentHeight += previousSkinPartBounds.fixedHeight;
+            }
+            else
+            {
+                rightColumnContentHeight += previousSkinPartBounds.fixedHeight;
+            }
+
+            if (skinPart.Colbreak)
+            {
+                previousSkinPartBounds = ElementBounds.Fixed(0, 0).WithFixedSize(0, 0).WithParent(rightColumnScrollableBounds);
+                skinPartParentBounds = rightColumnScrollableBounds;
+                leftColumn = false;
             }
         }
-
-        composer.AddInset(_insetSlotBounds, 2);
-        composer.AddToggleButton(Lang.Get("playermodellib:gui-button-hide-clothing"), smallfont, OnToggleDressOnOff, toggleButtonBounds, "showdressedtoggle");
-        composer.AddButton(Lang.Get("Randomize"), () => { return OnRandomizeSkin([]); }, ElementBounds.Fixed(0, _dlgHeight - 25).WithAlignment(EnumDialogArea.LeftFixed).WithFixedPadding(8, 6), CairoFont.WhiteSmallText(), EnumButtonStyle.Small);
-        composer.AddIf(capi.Settings.String.Exists("lastSkinSelection"))
-            .AddButton(Lang.Get("Last selection"), () => { return OnRandomizeSkin(GetPreviousSelection()); }, ElementBounds.Fixed(130, _dlgHeight - 25).WithAlignment(EnumDialogArea.LeftFixed).WithFixedPadding(8, 6), CairoFont.WhiteSmallText(), EnumButtonStyle.Small)
-            .EndIf();
-
-        composer.AddSmallButton(Lang.Get("Confirm Skin"), OnNextImpl, ElementBounds.Fixed(11, _dlgHeight - 24).WithAlignment(EnumDialogArea.RightFixed).WithFixedPadding(12, 6), EnumButtonStyle.Normal);
 
         composer.GetToggleButton("showdressedtoggle").SetValue(false);
         OnToggleDressOnOff(false);
@@ -891,6 +834,168 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         OnToggleDressOnOff(false);
     }
 
+
+    private ElementBounds ComposeDropDownSkinPart(SkinnablePartExtended skinPart, GuiComposer composer, ElementBounds previous, ElementBounds skinPartTitleBounds, ElementBounds dropDownSkinPartBounds, ElementBounds parentBounds, PlayerSkinBehavior skinBehavior, double padding)
+    {
+        string partCode = skinPart.Code;
+        AppliedSkinnablePartVariant? appliedVariant = skinBehavior.AppliedSkinParts.Get().FirstOrDefault(variant => variant.PartCode == partCode);
+        SkinnablePartVariant[] variants = skinPart.Variants.Where(variant => variant.Category == "standard" || variant.Category == null || variant.Category == "").ToArray();
+
+        int selectedIndex = 0;
+
+        string[] names = new string[variants.Length];
+        string[] values = new string[variants.Length];
+
+        for (int i = 0; i < variants.Length; i++)
+        {
+            names[i] = Lang.Get("skinpart-" + partCode + "-" + variants[i].Code);
+            values[i] = variants[i].Code;
+
+            if (appliedVariant?.Code == values[i]) selectedIndex = i;
+        }
+
+        ElementBounds partBounds = ElementBounds.Fixed(0, 0)
+            .WithFixedSize(skinPartTitleBounds.fixedWidth, skinPartTitleBounds.fixedHeight + padding + dropDownSkinPartBounds.fixedHeight + padding)
+            .WithParent(parentBounds)
+            .FixedUnder(previous);
+            
+        skinPartTitleBounds = skinPartTitleBounds.FlatCopy().WithParent(partBounds);
+        dropDownSkinPartBounds = dropDownSkinPartBounds.FlatCopy().WithParent(partBounds).FixedUnder(skinPartTitleBounds, padding);
+
+        composer.AddRichtext(Lang.Get("skinpart-" + partCode), CairoFont.WhiteSmallText(), skinPartTitleBounds);
+        string tooltip = Lang.GetIfExists("skinpartdesc-" + partCode);
+        if (tooltip != null)
+        {
+            ElementBounds hoverTextBounds = skinPartTitleBounds.FlatCopy();
+            composer.AddHoverText(tooltip, CairoFont.WhiteSmallText(), 300, hoverTextBounds);
+        }
+
+        composer.AddDropDown(values, names, selectedIndex, (variantcode, selected) => onToggleSkinPartColor(partCode, variantcode), dropDownSkinPartBounds, "dropdown-" + partCode);
+
+        return partBounds;
+    }
+    private ElementBounds ComposeSwatchSkinPart(SkinnablePartExtended skinPart, GuiComposer composer, ElementBounds previous, ElementBounds skinPartTitleBounds, ElementBounds swatchesSkinPartBounds, ElementBounds parentBounds, PlayerSkinBehavior skinBehavior, double padding)
+    {
+        string partCode = skinPart.Code;
+        AppliedSkinnablePartVariant? appliedVariant = skinBehavior.AppliedSkinParts.Get().FirstOrDefault(variant => variant.PartCode == partCode);
+        SkinnablePartVariant[] variants = skinPart.Variants.Where(variant => variant.Category == "standard" || variant.Category == null || variant.Category == "").ToArray();
+        int selectedIndex = 0;
+        int[] colors = new int[variants.Length];
+        for (int i = 0; i < variants.Length; i++)
+        {
+            colors[i] = variants[i].Color;
+
+            if (appliedVariant?.Code == variants[i].Code) selectedIndex = i;
+        }
+        int rowsNumber = (int)Math.Ceiling((float)colors.Length / 7);
+
+
+        ElementBounds partBounds = ElementBounds.Fixed(0, 0)
+            .WithFixedSize(skinPartTitleBounds.fixedWidth, skinPartTitleBounds.fixedHeight + padding + (swatchesSkinPartBounds.fixedHeight + padding) * rowsNumber + padding)
+            .WithParent(parentBounds)
+            .FixedUnder(previous);
+        skinPartTitleBounds = skinPartTitleBounds.FlatCopy().WithParent(partBounds);
+        swatchesSkinPartBounds = swatchesSkinPartBounds.FlatCopy().WithParent(partBounds).FixedUnder(skinPartTitleBounds, padding);
+
+        composer.AddRichtext(Lang.Get("skinpart-" + partCode), CairoFont.WhiteSmallText(), skinPartTitleBounds);
+        string tooltip = Lang.GetIfExists("skinpartdesc-" + partCode);
+        if (tooltip != null)
+        {
+            ElementBounds hoverTextBounds = skinPartTitleBounds.FlatCopy();
+            composer.AddHoverText(tooltip, CairoFont.WhiteSmallText(), 300, hoverTextBounds);
+        }
+
+        swatchesSkinPartBounds = swatchesSkinPartBounds.FlatCopy().WithParent(partBounds);
+        composer.AddColorListPicker(colors, (index) => onToggleSkinPartColor(partCode, index), swatchesSkinPartBounds, 180, "picker-" + partCode);
+
+        for (int i = 0; i < colors.Length; i++)
+        {
+            GuiElementColorListPicker picker = composer.GetColorListPicker("picker-" + partCode + "-" + i);
+            picker.ShowToolTip = true;
+            if (Lang.HasTranslation("skinpart-" + partCode + "-" + variants[i].Code))
+            {
+                picker.TooltipText = Lang.Get("skinpart-" + partCode + "-" + variants[i].Code);
+            }
+            else
+            {
+                picker.TooltipText = Lang.Get("color-" + variants[i].Code);
+            }
+        }
+
+        composer.ColorListPickerSetValue("picker-" + partCode, selectedIndex);
+
+
+        return partBounds;
+    }
+    private ElementBounds ComposeColorPickerSkinPart(SkinnablePartExtended skinPart, GuiComposer composer, ElementBounds previous, ElementBounds skinPartTitleBounds, ElementBounds colorPickerSkinPartBounds, ElementBounds parentBounds, PlayerSkinBehavior skinBehavior, double padding)
+    {
+        string partCode = skinPart.Code;
+        AppliedSkinnablePartVariant? appliedVariant = skinBehavior.AppliedSkinParts.Get().FirstOrDefault(variant => variant.PartCode == partCode);
+
+        ElementBounds partBounds = ElementBounds.Fixed(0, 0)
+            .WithFixedSize(skinPartTitleBounds.fixedWidth, skinPartTitleBounds.fixedHeight + padding + colorPickerSkinPartBounds.fixedHeight + padding)
+            .WithParent(parentBounds)
+            .FixedUnder(previous);
+        skinPartTitleBounds = skinPartTitleBounds.FlatCopy().WithParent(partBounds);
+        colorPickerSkinPartBounds = colorPickerSkinPartBounds.FlatCopy().WithParent(partBounds).FixedUnder(skinPartTitleBounds, padding);
+
+        composer.AddRichtext(Lang.Get("skinpart-" + partCode), CairoFont.WhiteSmallText(), skinPartTitleBounds);
+        string tooltip = Lang.GetIfExists("skinpartdesc-" + partCode);
+        if (tooltip != null)
+        {
+            ElementBounds hoverTextBounds = skinPartTitleBounds.FlatCopy();
+            composer.AddHoverText(tooltip, CairoFont.WhiteSmallText(), 300, hoverTextBounds);
+        }
+
+        composer.AddColorPicker(
+            rgba => onToggleSkinPartActuallyColor(partCode, rgba),
+            colorPickerSkinPartBounds,
+            [1.0, 1.0, 1.0, 1.0],
+            key: "colorpicker-" + partCode
+            );
+
+        return partBounds;
+    }
+    private ElementBounds ComposeCanvasSkinPart(SkinnablePartExtended skinPart, GuiComposer composer, ElementBounds previous, ElementBounds skinPartTitleBounds, ElementBounds canvasSkinPartBounds, ElementBounds parentBounds, PlayerSkinBehavior skinBehavior, double padding)
+    {
+        string partCode = skinPart.Code;
+        AppliedSkinnablePartVariant? appliedVariant = skinBehavior.AppliedSkinParts.Get().FirstOrDefault(variant => variant.PartCode == partCode);
+
+        ElementBounds partBounds = ElementBounds.Fixed(0, 0)
+            .WithFixedSize(skinPartTitleBounds.fixedWidth, skinPartTitleBounds.fixedHeight + padding + canvasSkinPartBounds.fixedHeight + padding)
+            .WithParent(parentBounds)
+            .FixedUnder(previous);
+        skinPartTitleBounds = skinPartTitleBounds.FlatCopy().WithParent(partBounds);
+        canvasSkinPartBounds = canvasSkinPartBounds.FlatCopy().WithParent(partBounds).FixedUnder(skinPartTitleBounds, padding);
+
+        composer.AddRichtext(Lang.Get("skinpart-" + partCode), CairoFont.WhiteSmallText(), skinPartTitleBounds);
+        string tooltip = Lang.GetIfExists("skinpartdesc-" + partCode);
+        if (tooltip != null)
+        {
+            ElementBounds hoverTextBounds = skinPartTitleBounds.FlatCopy();
+            composer.AddHoverText(tooltip, CairoFont.WhiteSmallText(), 300, hoverTextBounds);
+        }
+
+
+        int colorsNumber = Math.Clamp(skinPart.ColorsNumber, 1, 14);
+
+        TextureCanvasData canvasData = new()
+        {
+            Width = skinPart.Size[0],
+            Height = skinPart.Size[1],
+            Colors = new int[colorsNumber],
+            Pixels = new int[skinPart.Size[0] * skinPart.Size[1]]
+        };
+
+        for (int i = 0; i < colorsNumber; i++)
+        {
+            canvasData.Colors[i] = -1;
+        }
+
+        composer.AddCanvasEditor(canvasData, canvasSkinPartBounds, data => onToggleSkinPartCanvas(partCode, data));
+
+        return partBounds;
+    }
 
     private void onToggleModelGroup(string groupCode, GuiComposer? composer = null)
     {
