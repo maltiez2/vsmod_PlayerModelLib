@@ -191,18 +191,6 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
 
         Shape? newShape = Tesselate(shapePathForLogging, ref willDeleteElements);
 
-        /*ClientApi.World.RegisterCallback(_ =>
-        {
-            ClientApi.Event.EnqueueMainThreadTask(() =>
-            {
-                foreach ((string code, TextureAtlasPosition? position) in OverlaysTexturePositions.Get())
-                {
-                    Debug.WriteLine($"Exporting {code}");
-                    TextureUtils.ExportTextureAtlasPositionAsPng(ClientApi, position, ClientApi.DataBasePath + $"/debug/{code}.png", ClientApi.Logger);
-                }
-            }, "debug");
-        }, 1000);*/
-
         if (newShape != null)
         {
             entityShape = newShape;

@@ -80,6 +80,15 @@ public class CustomPlayerShapeRenderer : EntityPlayerShapeRenderer
 
             if (entityPlayer?.GetBehavior<EntityBehaviorPlayerInventory>()?.Inventory == null)
             {
+                capi.Event.EnqueueMainThreadTask(delegate
+                {
+                    capi.World.RegisterCallback(_ =>
+                    {
+                        TesselateShape();
+
+                    }, 2000);
+                }, "inventorynullmsm");
+                _tesselating.SetFalse();
                 return;
             }
 
@@ -87,6 +96,7 @@ public class CustomPlayerShapeRenderer : EntityPlayerShapeRenderer
             CustomTesselateOffThread();
             if (watcherRegistered)
             {
+                _tesselating.SetFalse();
                 return;
             }
 
@@ -119,7 +129,11 @@ public class CustomPlayerShapeRenderer : EntityPlayerShapeRenderer
     {
         if (!IsSelf)
         {
-            if (!loaded) return;
+            if (!loaded)
+            {
+                _tesselating.SetFalse();
+                return;
+            }
 
             _entityPlayerShapeRenderer_ims?.SetValue(this, entity.GetInterface<IMountable>());
 
@@ -129,6 +143,7 @@ public class CustomPlayerShapeRenderer : EntityPlayerShapeRenderer
         {
             if (!loaded)
             {
+                _tesselating.SetFalse();
                 return;
             }
 
