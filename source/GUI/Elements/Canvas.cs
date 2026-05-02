@@ -100,6 +100,45 @@ public class GuiElementCanvasEditor : GuiElement
         _paletteDirty = true;
     }
 
+    public void SetData(TextureCanvasData newData)
+    {
+        if (newData == null) throw new ArgumentNullException(nameof(newData));
+
+        // Update pixels
+        _data.Width = newData.Width;
+        _data.Height = newData.Height;
+        _data.Pixels = newData.Pixels ?? Array.Empty<int>();
+
+        // Update colors, ensuring transparent slot 0 is always present
+        var list = new List<int> { 0 };
+        if (newData.Colors != null)
+            foreach (var c in newData.Colors)
+                if (c != 0)
+                    list.Add(c);
+
+        _colors = list.ToArray();
+        _data.Colors = _colors;
+
+        // Clamp selected index in case the new palette is smaller
+        _selectedColorIndex = Math.Min(_selectedColorIndex, _colors.Length - 1);
+        _hoveredColorIndex = -1;
+
+        // Rebuild the pixel→swatch mapping for the new data
+        RebuildPixelSwatchIndex();
+
+        // Sync the color picker to the current selection
+        if (_colorPicker != null && _selectedColorIndex > 0)
+        {
+            _suppressPickerCallback = true;
+            double[] rgba = ArgbToRgba(_colors[_selectedColorIndex]);
+            _colorPicker.SetColor(rgba[0], rgba[1], rgba[2], rgba[3]);
+            _suppressPickerCallback = false;
+        }
+
+        _canvasDirty = true;
+        _paletteDirty = true;
+    }
+
     // =========================================================================
     //  Init helpers
     // =========================================================================
@@ -848,9 +887,8 @@ public static class GuiComposerExtensions
         return composer;
     }
 
-    public static GuiElementCanvasEditor GetCanvasEditor(
+    public static GuiElementCanvasEditor? GetCanvasEditor(
         this GuiComposer composer,
         string key = "canvasEditor")
-        => composer.GetElement(key) as GuiElementCanvasEditor
-           ?? throw new InvalidOperationException($"No canvas editor with key '{key}'");
+        => composer.GetElement(key) as GuiElementCanvasEditor;
 }
