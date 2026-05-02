@@ -738,7 +738,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
             if (skinPart.Type == EnumSkinnableType.Texture && skinPart.SolidColor)
             {
-                previousSkinPartBounds = ComposeColorPickerSkinPart(skinPart, composer, previousSkinPartBounds, skinPartTitleBounds, colorPickerSkinPartBounds, skinPartParentBounds, skinBehavior, padding);
+                previousSkinPartBounds = ComposeColorPickerSkinPart(skinPart, composer, previousSkinPartBounds, skinPartTitleBounds, colorPickerSkinPartBounds, swatchesSkinPartBounds, skinPartParentBounds, skinBehavior, padding, clipBounds);
             }
             else if (skinPart.Type == EnumSkinnableType.Texture && skinPart.Canvas)
             {
@@ -778,8 +778,8 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         composer.EndClip();
 
-        composer.GetExtendedScrollbar("skinparts-left-scrollbar").SetHeights((float)columnsHeight, (float)Math.Max(leftColumnContentHeight, columnsHeight * 2));
-        composer.GetExtendedScrollbar("skinparts-right-scrollbar").SetHeights((float)columnsHeight, (float)Math.Max(rightColumnContentHeight, columnsHeight * 2));
+        composer.GetExtendedScrollbar("skinparts-left-scrollbar").SetHeights((float)columnsHeight, (float)Math.Max(leftColumnContentHeight, columnsHeight));
+        composer.GetExtendedScrollbar("skinparts-right-scrollbar").SetHeights((float)columnsHeight, (float)Math.Max(rightColumnContentHeight, columnsHeight));
         composer.GetExtendedScrollbar("skinparts-left-scrollbar").SetScrollbarPosition(0);
         composer.GetExtendedScrollbar("skinparts-right-scrollbar").SetScrollbarPosition(0);
         composer.GetExtendedScrollbar("skinparts-left-scrollbar").SetFixedHandleHeight(100);
@@ -964,17 +964,28 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         return partBounds;
     }
-    private ElementBounds ComposeColorPickerSkinPart(SkinnablePartExtended skinPart, GuiComposer composer, ElementBounds previous, ElementBounds skinPartTitleBounds, ElementBounds colorPickerSkinPartBounds, ElementBounds parentBounds, PlayerSkinBehavior skinBehavior, double padding)
+    private ElementBounds ComposeColorPickerSkinPart(SkinnablePartExtended skinPart, GuiComposer composer, ElementBounds previous, ElementBounds skinPartTitleBounds, ElementBounds colorPickerSkinPartBounds, ElementBounds swatchesSkinPartBounds, ElementBounds parentBounds, PlayerSkinBehavior skinBehavior, double padding, ElementBounds clipBounds)
     {
         string partCode = skinPart.Code;
         AppliedSkinnablePartVariant? appliedVariant = skinBehavior.AppliedSkinParts.Get().FirstOrDefault(variant => variant.PartCode == partCode);
+        SkinnablePartVariant[] variants = skinPart.Variants.Where(variant => variant.Category == "standard" || variant.Category == null || variant.Category == "").ToArray();
+        int selectedIndex = 0;
+        int[] colors = new int[variants.Length];
+        for (int i = 0; i < variants.Length; i++)
+        {
+            colors[i] = variants[i].Color;
+
+            if (appliedVariant?.Code == variants[i].Code) selectedIndex = i;
+        }
+        int rowsNumber = (int)Math.Ceiling((float)colors.Length / 7);
 
         ElementBounds partBounds = ElementBounds.Fixed(0, 0)
-            .WithFixedSize(skinPartTitleBounds.fixedWidth, skinPartTitleBounds.fixedHeight + padding + colorPickerSkinPartBounds.fixedHeight + padding)
+            .WithFixedSize(skinPartTitleBounds.fixedWidth, skinPartTitleBounds.fixedHeight + padding + colorPickerSkinPartBounds.fixedHeight + padding + (swatchesSkinPartBounds.fixedHeight + padding) * rowsNumber + padding)
             .WithParent(parentBounds)
             .FixedUnder(previous);
         skinPartTitleBounds = skinPartTitleBounds.FlatCopy().WithFixedOffset(padding, padding).FixedGrow(-padding * 2).WithParent(partBounds);
         colorPickerSkinPartBounds = colorPickerSkinPartBounds.FlatCopy().WithFixedOffset(padding, padding).FixedGrow(-padding * 2).WithParent(partBounds).FixedUnder(skinPartTitleBounds, padding);
+        swatchesSkinPartBounds = swatchesSkinPartBounds.FlatCopy().WithFixedOffset(padding * 2, padding).WithParent(partBounds).FixedUnder(colorPickerSkinPartBounds, padding);
 
         composer.AddRichtext(Lang.Get("skinpart-" + partCode), CairoFont.WhiteSmallText(), skinPartTitleBounds);
         string tooltip = Lang.GetIfExists("skinpartdesc-" + partCode);
@@ -990,6 +1001,25 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             [1.0, 1.0, 1.0, 1.0],
             key: "colorpicker-" + partCode
             );
+
+        swatchesSkinPartBounds = swatchesSkinPartBounds.FlatCopy().WithParent(partBounds);
+        composer.AddScrollableColorListPicker(colors, (index) => onTogglePickerPartColor(partCode, index), swatchesSkinPartBounds, 190, clipBounds, "picker-" + partCode);
+
+        for (int i = 0; i < colors.Length; i++)
+        {
+            GuiElementScrollableColorListPicker picker = composer.GetScrollableColorListPicker("picker-" + partCode + "-" + i);
+            picker.ShowToolTip = true;
+            if (Lang.HasTranslation("skinpart-" + partCode + "-" + variants[i].Code))
+            {
+                picker.TooltipText = Lang.Get("skinpart-" + partCode + "-" + variants[i].Code);
+            }
+            else
+            {
+                picker.TooltipText = Lang.Get("color-" + variants[i].Code);
+            }
+        }
+
+        composer.ScrollableColorListPickerSetValue("picker-" + partCode, selectedIndex);
 
         return partBounds;
     }
@@ -1140,29 +1170,27 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
     public static double[] HexArgbToDoubleArray(string hex)
     {
-        if (string.IsNullOrWhiteSpace(hex))
-            throw new ArgumentException("Invalid hex string");
+        if (string.IsNullOrWhiteSpace(hex)) return [0, 0, 0, 0];
 
-        // Remove leading #
-        if (hex.StartsWith("#"))
+        if (hex.StartsWith('#'))
+        {
             hex = hex.Substring(1);
+        }
 
-        if (hex.Length != 8)
-            throw new ArgumentException("Hex string must be 8 characters (ARGB)");
+        if (hex.Length != 8) return [0, 0, 0, 0];
 
         byte a = Convert.ToByte(hex.Substring(0, 2), 16);
         byte r = Convert.ToByte(hex.Substring(2, 2), 16);
         byte g = Convert.ToByte(hex.Substring(4, 2), 16);
         byte b = Convert.ToByte(hex.Substring(6, 2), 16);
 
-        // Normalize to 0.0–1.0
-        return new double[]
-        {
-        a / 255.0,
-        r / 255.0,
-        g / 255.0,
-        b / 255.0
-        };
+        return
+        [
+            a / 255.0,
+            r / 255.0,
+            g / 255.0,
+            b / 255.0
+        ];
     }
     private bool OnRandomizeSkin(Dictionary<string, string> preselection)
     {
@@ -1191,7 +1219,8 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             if (skinPart.Type == EnumSkinnableType.Texture && skinPart is SkinnablePartExtended ext && ext.SolidColor)
             {
                 double[] color = HexArgbToDoubleArray(appliedPart.Code);
-                Composers["createcharacter"].GetColorPicker("textinput-" + partcode)?.SetColor(color[1], color[2], color[3], color[0]);
+                Composers["createcharacter"].GetColorPicker("colorpicker-" + partcode)?.SetColor(color[1], color[2], color[3], color[0]);
+                Composers["createcharacter"].ScrollableColorListPickerSetValue("picker-" + partcode, index);
             }
             else if (skinPart.Type == EnumSkinnableType.Texture && skinPart is SkinnablePartExtended ext2 && ext2.Canvas)
             {
@@ -1246,6 +1275,16 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         string variantCode = skinMod.AvailableSkinPartsByCode.GetValue(partCode)?.Variants[index].Code ?? "";
 
         skinMod.SelectSkinPart(partCode, variantCode);
+    }
+    private void onTogglePickerPartColor(string partCode, int index)
+    {
+        PlayerSkinBehavior? skinMod = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
+
+        if (skinMod == null) return;
+
+        string colorValue = skinMod.AvailableSkinPartsByCode.GetValue(partCode)?.Variants[index].Code ?? "#00000000";
+        double[] color = HexArgbToDoubleArray(colorValue);
+        Composers["createcharacter"].GetColorPicker("colorpicker-" + partCode)?.SetColor(color[1], color[2], color[3], color[0]);
     }
     private void onToggleSkinPartActuallyColor(string partCode, double[] color)
     {

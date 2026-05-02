@@ -989,6 +989,16 @@ public sealed class CustomModelsSystem : ModSystem
                     part.TextureTarget = "playermodellib-iris";
                     part.TargetSkinParts = ["facialexpression"];
                     part.OverlayMode = EnumTextureOverlayMode.Normal;
+                    /*part.SolidColor = true;
+                    part.Size = [8, 8];
+                    part.Variants = [
+                        new() { Code = "#FFAABBCC", Color = ColorUtil.FromRGBADoubles(GuiDialogCreateCustomCharacter.HexArgbToDoubleArray("#FFAABBCC")) },
+                        new() { Code = "#FFCCBBA0", Color = ColorUtil.FromRGBADoubles(GuiDialogCreateCustomCharacter.HexArgbToDoubleArray("#FFCCBBA0")) },
+                        new() { Code = "#FFCCBBA1", Color = ColorUtil.FromRGBADoubles(GuiDialogCreateCustomCharacter.HexArgbToDoubleArray("#FFCCBBA1")) },
+                        new() { Code = "#FFCCBBA2", Color = ColorUtil.FromRGBADoubles(GuiDialogCreateCustomCharacter.HexArgbToDoubleArray("#FFCCBBA2")) },
+                        new() { Code = "#FFCCBBA3", Color = ColorUtil.FromRGBADoubles(GuiDialogCreateCustomCharacter.HexArgbToDoubleArray("#FFCCBBA3")) }
+                    ];
+                    part.VariantsByCode = part.Variants.ToDictionary(a => a.Code, a => a);*/
                     break;
 
                 default:
