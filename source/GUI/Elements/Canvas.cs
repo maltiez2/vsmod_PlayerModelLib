@@ -1,4 +1,5 @@
-﻿using System;
+﻿// Canvas.cs
+using System;
 using System.Collections.Generic;
 using Cairo;
 using Vintagestory.API.Client;
@@ -37,10 +38,11 @@ public class GuiElementCanvasEditor : GuiElement
     private bool _canvasDirty = true;
     private bool _paletteDirty = true;
 
-    // ── Geometry ──────────────────────────────────────────────────────────────
-    private double _canvasX, _canvasY, _canvasW, _canvasH;
+    // ── Geometry (unscaled offsets from Bounds.renderX/Y, recalculated each frame) ──
+    // These are stored as unscaled values and converted to render coords on the fly.
+    private double _canvasOffsetX, _canvasOffsetY, _canvasW, _canvasH;
     private double _cellW, _cellH;
-    private double _paletteX, _paletteY, _paletteW, _paletteH;
+    private double _paletteOffsetX, _paletteOffsetY, _paletteW, _paletteH;
     private int _swatchCols;
     private int _swatchRows;
     private double _swatchSz;
@@ -53,6 +55,13 @@ public class GuiElementCanvasEditor : GuiElement
     private bool _isPainting = false;
     private bool _btnHovered = false;
 
+    // ── Clip bounds ───────────────────────────────────────────────────────────
+    /// <summary>
+    /// Optional scissor/clip bounds. Set this when the canvas editor is inside a
+    /// scrollable area so that it is correctly clipped when scrolled out of view.
+    /// </summary>
+    public ElementBounds ClipBounds { get; set; }
+
     // ── Callback ──────────────────────────────────────────────────────────────
     public event Action<TextureCanvasData>? OnChanged;
 
@@ -61,10 +70,13 @@ public class GuiElementCanvasEditor : GuiElement
     public GuiElementCanvasEditor(
         ICoreClientAPI capi,
         ElementBounds bounds,
-        TextureCanvasData data)
+        TextureCanvasData data,
+        ElementBounds clipBounds = null)
         : base(capi, bounds)
     {
         _data = data;
+        ClipBounds = clipBounds;
+
         RebuildColorList();
         RebuildPixelSwatchIndex();
 
@@ -104,11 +116,6 @@ public class GuiElementCanvasEditor : GuiElement
         _data.Colors = _colors;
     }
 
-    /// <summary>
-    /// Build <see cref="_pixelSwatchIndex"/> from the current pixel array and
-    /// color list.  For each pixel we find the first swatch whose ARGB matches;
-    /// if none matches we use 0 (transparent sentinel).
-    /// </summary>
     private void RebuildPixelSwatchIndex()
     {
         int len = _data.Pixels?.Length ?? 0;
@@ -117,7 +124,7 @@ public class GuiElementCanvasEditor : GuiElement
         for (int i = 0; i < len; i++)
         {
             int argb = _data.Pixels[i];
-            byte si = 0; // default → transparent slot
+            byte si = 0;
 
             for (int c = 0; c < _colors.Length; c++)
             {
@@ -133,7 +140,8 @@ public class GuiElementCanvasEditor : GuiElement
     }
 
     // =========================================================================
-    //  Layout
+    //  Layout — stores unscaled offsets, NOT absolute render coords.
+    //  Render coords are computed each frame as: Bounds.renderX + scaled(offsetX)
     // =========================================================================
 
     private void CalcLayout()
@@ -161,15 +169,16 @@ public class GuiElementCanvasEditor : GuiElement
             canvasH = cellSize * _data.Height;
         }
 
-        _canvasX = Bounds.renderX;
-        _canvasY = Bounds.renderY;
+        // Store as scaled pixel offsets from Bounds.renderX/Y
+        _canvasOffsetX = 0;
+        _canvasOffsetY = 0;
         _canvasW = cellSize * _data.Width;
         _canvasH = canvasH;
         _cellW = cellSize;
         _cellH = cellSize;
 
-        _paletteX = Bounds.renderX + halfW;
-        _paletteY = Bounds.renderY;
+        _paletteOffsetX = halfW;
+        _paletteOffsetY = 0;
         _paletteW = halfW;
         _paletteH = canvasH;
 
@@ -205,11 +214,11 @@ public class GuiElementCanvasEditor : GuiElement
         _cellW = cellSize;
         _cellH = cellSize;
 
-        _canvasX = Bounds.renderX;
-        _canvasY = Bounds.renderY;
+        _canvasOffsetX = 0;
+        _canvasOffsetY = 0;
 
-        _paletteX = Bounds.renderX;
-        _paletteY = Bounds.renderY + _canvasH + pad;
+        _paletteOffsetX = 0;
+        _paletteOffsetY = _canvasH + pad;
         _paletteW = totalW;
         _paletteH = swatchAreaH;
 
@@ -218,13 +227,19 @@ public class GuiElementCanvasEditor : GuiElement
         _swatchCols = cols;
     }
 
+    // Live render coords — always computed from current Bounds.renderX/Y
+    private double CanvasRenderX => Bounds.renderX + _canvasOffsetX;
+    private double CanvasRenderY => Bounds.renderY + _canvasOffsetY;
+    private double PaletteRenderX => Bounds.renderX + _paletteOffsetX;
+    private double PaletteRenderY => Bounds.renderY + _paletteOffsetY;
+
     private ElementBounds BuildPickerBounds()
     {
         double pad = scaled(Pad);
         double scale = RuntimeEnv.GUIScale;
-        double pickerOffsetY = (_canvasY + _canvasH + pad) - Bounds.renderY;
+        double pickerOffsetY = (_canvasOffsetY + _canvasH + pad) / scale;
         return ElementBounds
-            .Fixed(0, pickerOffsetY / scale, Bounds.InnerWidth / scale, ColorPickerHeight)
+            .Fixed(0, pickerOffsetY, Bounds.InnerWidth / scale, ColorPickerHeight)
             .WithParent(Bounds);
     }
 
@@ -246,7 +261,8 @@ public class GuiElementCanvasEditor : GuiElement
                 api,
                 BuildPickerBounds(),
                 OnPickerColorChanged,
-                initialColor);
+                initialColor,
+                ClipBounds);  // propagate clip bounds into the embedded picker
             _colorPicker.ComposeElements(ctxStatic, surface);
         }
 
@@ -255,13 +271,13 @@ public class GuiElementCanvasEditor : GuiElement
     }
 
     // =========================================================================
-    //  Picker callback  – updates swatch color AND recolors all linked pixels
+    //  Picker callback
     // =========================================================================
 
     private void OnPickerColorChanged(double[] rgba)
     {
         if (_suppressPickerCallback) return;
-        if (_selectedColorIndex == 0) return; // transparent slot is locked
+        if (_selectedColorIndex == 0) return;
 
         int argb = RgbaToArgb(rgba);
         if (_colors[_selectedColorIndex] == argb) return;
@@ -269,7 +285,6 @@ public class GuiElementCanvasEditor : GuiElement
         _colors[_selectedColorIndex] = argb;
         _data.Colors = _colors;
 
-        // ── Recolor every pixel that belongs to this swatch ───────────────
         RecolorPixelsForSwatch(_selectedColorIndex);
 
         _paletteDirty = true;
@@ -278,10 +293,6 @@ public class GuiElementCanvasEditor : GuiElement
         OnChanged?.Invoke(_data);
     }
 
-    /// <summary>
-    /// Writes the current color of swatch <paramref name="swatchIndex"/> into
-    /// every pixel whose <see cref="_pixelSwatchIndex"/> entry matches it.
-    /// </summary>
     private void RecolorPixelsForSwatch(int swatchIndex)
     {
         int newArgb = _colors[swatchIndex];
@@ -301,9 +312,21 @@ public class GuiElementCanvasEditor : GuiElement
         if (_canvasDirty) RecomposeCanvas();
         if (_paletteDirty) RecomposePalette();
 
-        Render2DTexture(_canvasTexture.TextureId, _canvasX, _canvasY, _canvasW, _canvasH);
-        Render2DTexture(_paletteTexture.TextureId, _paletteX, _paletteY, _paletteW, _paletteH);
+        bool hasClip = ClipBounds != null;
+        if (hasClip)
+            api.Render.PushScissor(ClipBounds, true);
 
+        // Use live render coords so everything moves with scroll
+        Render2DTexture(_canvasTexture.TextureId,
+            CanvasRenderX, CanvasRenderY, _canvasW, _canvasH);
+
+        Render2DTexture(_paletteTexture.TextureId,
+            PaletteRenderX, PaletteRenderY, _paletteW, _paletteH);
+
+        if (hasClip)
+            api.Render.PopScissor();
+
+        // Color picker manages its own scissor via its own ClipBounds
         _colorPicker?.RenderInteractiveElements(deltaTime);
     }
 
@@ -384,10 +407,8 @@ public class GuiElementCanvasEditor : GuiElement
         double totalGaps = (_swatchCols - 1) * swatchGap;
         _swatchSz = (texW - pad * 2 - totalGaps) / _swatchCols;
 
-        // Slot 0: toggle button
         DrawToggleButton(ctx, pad, pad, _swatchSz);
 
-        // Slots 1..N: colour swatches
         for (int i = 0; i < _colors.Length; i++)
         {
             int slot = i + 1;
@@ -542,19 +563,16 @@ public class GuiElementCanvasEditor : GuiElement
         double shCx = x + size / 2.0;
         double shCy = by;
 
-        // Shackle arc – legs land exactly on body top edge
         ctx.SetSourceRGBA(1, 1, 1, 0.85);
         ctx.LineWidth = slw;
         ctx.LineCap = LineCap.Butt;
         ctx.Arc(shCx, shCy, shOuterR - slw / 2.0, Math.PI, 0);
         ctx.Stroke();
 
-        // Body
         ctx.SetSourceRGBA(1, 1, 1, 0.85);
         RoundRect(ctx, bx, by, bw, bh, br);
         ctx.Fill();
 
-        // Keyhole
         double dotR = bw * 0.14;
         ctx.SetSourceRGBA(0.15, 0.15, 0.15, 0.90);
         ctx.Arc(x + size / 2.0, by + bh * 0.44, dotR, 0, Math.PI * 2);
@@ -577,7 +595,7 @@ public class GuiElementCanvasEditor : GuiElement
     }
 
     // =========================================================================
-    //  Hit testing
+    //  Hit testing — uses live render coords
     // =========================================================================
 
     private int HitTestPaletteSlot(int mx, int my)
@@ -585,8 +603,8 @@ public class GuiElementCanvasEditor : GuiElement
         double pad = scaled(Pad);
         double swatchGap = scaled(ColorSwatchGap);
 
-        double rx = mx - _paletteX - pad;
-        double ry = my - _paletteY - pad;
+        double rx = mx - PaletteRenderX - pad;
+        double ry = my - PaletteRenderY - pad;
         if (rx < 0 || ry < 0) return -1;
 
         int row = (int)(ry / (_swatchSz + swatchGap));
@@ -611,8 +629,8 @@ public class GuiElementCanvasEditor : GuiElement
     private bool TryGetCanvasCell(int mx, int my, out int px, out int py)
     {
         px = py = -1;
-        double rx = mx - _canvasX;
-        double ry = my - _canvasY;
+        double rx = mx - CanvasRenderX;
+        double ry = my - CanvasRenderY;
         if (rx < 0 || ry < 0 || rx >= _canvasW || ry >= _canvasH) return false;
         px = (int)(rx / _cellW);
         py = (int)(ry / _cellH);
@@ -714,7 +732,7 @@ public class GuiElementCanvasEditor : GuiElement
         _selectedColorIndex = index;
         _paletteDirty = true;
 
-        if (index == 0) return; // transparent slot – no picker sync
+        if (index == 0) return;
 
         if (_colorPicker != null)
         {
@@ -726,7 +744,7 @@ public class GuiElementCanvasEditor : GuiElement
     }
 
     // =========================================================================
-    //  Painting  – records swatch index alongside pixel color
+    //  Painting
     // =========================================================================
 
     private void PaintPixel(int px, int py)
@@ -803,14 +821,27 @@ public class GuiElementCanvasEditor : GuiElement
 
 public static class GuiComposerExtensions
 {
+    /// <summary>
+    /// Adds a canvas editor to the current GUI instance.
+    /// </summary>
+    /// <param name="composer"></param>
+    /// <param name="data">The canvas data to edit.</param>
+    /// <param name="bounds">The bounds of the canvas editor.</param>
+    /// <param name="onChanged">Optional callback fired when the canvas changes.</param>
+    /// <param name="clipBounds">
+    /// Optional scissor/clip bounds. Set this when the canvas editor is inside a
+    /// scrollable area so that it is correctly clipped when scrolled out of view.
+    /// </param>
+    /// <param name="key">The name of this element.</param>
     public static GuiComposer AddCanvasEditor(
         this GuiComposer composer,
         TextureCanvasData data,
         ElementBounds bounds,
         Action<TextureCanvasData>? onChanged = null,
+        ElementBounds clipBounds = null,
         string key = "canvasEditor")
     {
-        var element = new GuiElementCanvasEditor(composer.Api, bounds, data);
+        var element = new GuiElementCanvasEditor(composer.Api, bounds, data, clipBounds);
         if (onChanged != null)
             element.OnChanged += onChanged;
         composer.AddInteractiveElement(element, key);

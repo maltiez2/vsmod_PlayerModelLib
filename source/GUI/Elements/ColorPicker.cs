@@ -1,4 +1,5 @@
-﻿using Cairo;
+﻿// ColorPicker.cs
+using Cairo;
 using Vintagestory.API.Config;
 using Vintagestory.API.Client;
 
@@ -54,10 +55,24 @@ public class GuiElementColorPicker : GuiElement
     private LoadedTexture _previewTexture;
 
     // ─────────────────────────────────────────────────────────────
-    //  Embedded vanilla text input
+    //  Hex input — rendered as a texture, not a live element,
+    //  so it moves correctly with scroll and clips properly.
     // ─────────────────────────────────────────────────────────────
-    private GuiElementTextInput _hexInput;
+    private LoadedTexture _hexBgTexture;   // inset background baked once
+    private LoadedTexture _hexTextTexture; // text recomposed on value change
+    private string _hexValue = "";
+    private bool _hexFocused = false;
+    private int _hexCursorPos = 0;
     private bool _suppressHexCallback;
+
+    // ─────────────────────────────────────────────────────────────
+    //  Clip bounds
+    // ─────────────────────────────────────────────────────────────
+    /// <summary>
+    /// Optional scissor/clip bounds. Set this when the picker is inside a scrollable
+    /// area so that it is correctly clipped when scrolled out of view.
+    /// </summary>
+    public ElementBounds ClipBounds { get; set; }
 
     // ─────────────────────────────────────────────────────────────
     //  Callback
@@ -73,7 +88,8 @@ public class GuiElementColorPicker : GuiElement
         ICoreClientAPI capi,
         ElementBounds bounds,
         Action<double[]> onColorChanged,
-        double[] initialColorRgba = null)
+        double[] initialColorRgba = null,
+        ElementBounds clipBounds = null)
         : base(capi, bounds)
     {
         _hueSliderTexture = new LoadedTexture(capi);
@@ -81,8 +97,11 @@ public class GuiElementColorPicker : GuiElement
         _valSliderTexture = new LoadedTexture(capi);
         _alphaSliderTexture = new LoadedTexture(capi);
         _previewTexture = new LoadedTexture(capi);
+        _hexBgTexture = new LoadedTexture(capi);
+        _hexTextTexture = new LoadedTexture(capi);
 
         _onColorChanged = onColorChanged;
+        ClipBounds = clipBounds;
 
         if (initialColorRgba != null && initialColorRgba.Length >= 4)
         {
@@ -124,7 +143,11 @@ public class GuiElementColorPicker : GuiElement
     {
         Bounds.CalcWorldBounds();
         CalcLayout();
-        BuildHexInput(ctxStatic, surface);
+
+        // Bake the hex input background (inset box) into its own texture
+        // so it renders dynamically and moves with scroll.
+        ComposeHexBackground();
+        ComposeHexText();
 
         RecomposeHueSlider();
         RecomposeSatSlider();
@@ -134,39 +157,65 @@ public class GuiElementColorPicker : GuiElement
     }
 
     // ─────────────────────────────────────────────────────────────
-    //  Build the embedded text input
+    //  Hex input background texture (inset box, baked once)
     // ─────────────────────────────────────────────────────────────
-    private void BuildHexInput(Context ctxStatic, ImageSurface surface)
+    private void ComposeHexBackground()
     {
-        _hexInput?.Dispose();
+        int w = Math.Max(1, (int)scaled(_hexInputW));
+        int h = Math.Max(1, (int)scaled(PreviewSize));
 
-        // Build bounds as a fixed-offset child of this element's parent.
-        // fixedX/Y are the picker's unscaled position inside its parent;
-        // we add the intra-picker offsets to reach the hex field.
-        double absX = Bounds.fixedX + Bounds.fixedPaddingX + _hexInputX;
-        double absY = Bounds.fixedY + Bounds.fixedPaddingY + _bottomRowY;
+        ImageSurface surface = new ImageSurface(Format.Argb32, w, h);
+        Context ctx = genContext(surface);
 
-        ElementBounds hexBounds = ElementBounds
-            .Fixed(absX, absY, _hexInputW, PreviewSize)
-            .WithParent(Bounds.ParentBounds);
+        // Dark inset background
+        ctx.SetSourceRGBA(0, 0, 0, 0.2);
+        ctx.Rectangle(0, 0, w, h);
+        ctx.Fill();
 
-        hexBounds.CalcWorldBounds();
+        // Inset emboss border
+        EmbossRoundRectangleElement(ctx, 0, 0, w, h, true, 1, 1);
 
-        _hexInput = new GuiElementTextInput(
-            api,
-            hexBounds,
-            OnHexTextChanged,
-            CairoFont.TextInput()
-        );
-        _hexInput.SetMaxLength(9);
+        generateTexture(surface, ref _hexBgTexture);
+        ctx.Dispose();
+        surface.Dispose();
+    }
 
-        // Compose onto the *same* static surface so the inset/emboss is
-        // baked into the same layer as everything else — matching vanilla.
-        _hexInput.ComposeElements(ctxStatic, surface);
+    // ─────────────────────────────────────────────────────────────
+    //  Hex input text texture (recomposed on value change)
+    // ─────────────────────────────────────────────────────────────
+    private void ComposeHexText()
+    {
+        int w = Math.Max(1, (int)scaled(_hexInputW));
+        int h = Math.Max(1, (int)scaled(PreviewSize));
 
-        _suppressHexCallback = true;
-        _hexInput.SetValue(BuildHexString());
-        _suppressHexCallback = false;
+        ImageSurface surface = new ImageSurface(Format.Argb32, w, h);
+        Context ctx = genContext(surface);
+
+        var font = CairoFont.TextInput();
+        font.SetupContext(ctx);
+
+        // Text color
+        ctx.SetSourceRGBA(1, 1, 1, _hexFocused ? 1.0 : 0.8);
+
+        double textY = (h - font.GetFontExtents().Height) / 2.0 + font.GetFontExtents().Ascent;
+        ctx.MoveTo(scaled(3), textY);
+        ctx.ShowText(_hexValue);
+
+        // Simple cursor when focused
+        if (_hexFocused)
+        {
+            string beforeCursor = _hexValue.Substring(0, Math.Min(_hexCursorPos, _hexValue.Length));
+            double cursorX = scaled(3) + font.GetTextExtents(beforeCursor).XAdvance;
+            ctx.SetSourceRGBA(1, 1, 1, 0.9);
+            ctx.LineWidth = 1.5;
+            ctx.MoveTo(cursorX, scaled(3));
+            ctx.LineTo(cursorX, h - scaled(3));
+            ctx.Stroke();
+        }
+
+        generateTexture(surface, ref _hexTextTexture);
+        ctx.Dispose();
+        surface.Dispose();
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -342,6 +391,10 @@ public class GuiElementColorPicker : GuiElement
     // ─────────────────────────────────────────────────────────────
     public override void RenderInteractiveElements(float deltaTime)
     {
+        bool hasClip = ClipBounds != null;
+        if (hasClip)
+            api.Render.PushScissor(ClipBounds, true);
+
         double bx = Bounds.renderX;
         double by = Bounds.renderY;
 
@@ -361,13 +414,38 @@ public class GuiElementColorPicker : GuiElement
             bx, by + scaled(_alphaSliderY),
             scaled(_sliderW), scaled(SliderHeight));
 
-        // Preview square — bottom-left of bottom row
+        // Preview square
         Render2DTexture(_previewTexture.TextureId,
             bx, by + scaled(_bottomRowY),
             scaled(PreviewSize), scaled(PreviewSize));
 
-        // Vanilla text input renders itself (highlight, text, caret)
-        _hexInput?.RenderInteractiveElements(deltaTime);
+        // Hex input — background then text, both dynamic
+        double hexRenderX = bx + scaled(_hexInputX);
+        double hexRenderY = by + scaled(_bottomRowY);
+        double hexRenderW = scaled(_hexInputW);
+        double hexRenderH = scaled(PreviewSize);
+
+        Render2DTexture(_hexBgTexture.TextureId,
+            hexRenderX, hexRenderY, hexRenderW, hexRenderH);
+
+        Render2DTexture(_hexTextTexture.TextureId,
+            hexRenderX, hexRenderY, hexRenderW, hexRenderH);
+
+        if (hasClip)
+            api.Render.PopScissor();
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    //  Hex input hit bounds (live, from renderX/Y)
+    // ─────────────────────────────────────────────────────────────
+    private bool IsInsideHexInput(int mx, int my)
+    {
+        double hexRenderX = Bounds.renderX + scaled(_hexInputX);
+        double hexRenderY = Bounds.renderY + scaled(_bottomRowY);
+        double hexRenderW = scaled(_hexInputW);
+        double hexRenderH = scaled(PreviewSize);
+        return mx >= hexRenderX && mx < hexRenderX + hexRenderW &&
+               my >= hexRenderY && my < hexRenderY + hexRenderH;
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -376,14 +454,16 @@ public class GuiElementColorPicker : GuiElement
     public override void OnFocusGained()
     {
         base.OnFocusGained();
-        // Do not auto-focus the text input; wait for an explicit click on it.
     }
 
     public override void OnFocusLost()
     {
         base.OnFocusLost();
-        if (_hexInput != null && _hexInput.HasFocus)
-            _hexInput.OnFocusLost();
+        if (_hexFocused)
+        {
+            _hexFocused = false;
+            ComposeHexText();
+        }
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -391,24 +471,21 @@ public class GuiElementColorPicker : GuiElement
     // ─────────────────────────────────────────────────────────────
     public override void OnMouseDown(ICoreClientAPI api, MouseEvent mouse)
     {
-        // Hit-test the hex input first.
-        if (_hexInput != null && HitTestElement(_hexInput.Bounds, mouse))
+        if (IsInsideHexInput(mouse.X, mouse.Y))
         {
-            // Grant focus to the text input and revoke it from the picker
-            // so the GUI system routes keyboard events correctly.
-            if (!_hexInput.HasFocus)
-                _hexInput.OnFocusGained();
-
-            _hexInput.OnMouseDownOnElement(api, mouse);
+            _hexFocused = true;
+            _hexCursorPos = _hexValue.Length;
+            ComposeHexText();
             mouse.Handled = true;
             return;
         }
 
-        // Click outside the text input → lose focus on it.
-        if (_hexInput != null && _hexInput.HasFocus)
-            _hexInput.OnFocusLost();
+        if (_hexFocused)
+        {
+            _hexFocused = false;
+            ComposeHexText();
+        }
 
-        // Slider hit-tests (mx/my in scaled pixels relative to this element).
         double mx = mouse.X - Bounds.renderX;
         double my = mouse.Y - Bounds.renderY;
 
@@ -435,35 +512,97 @@ public class GuiElementColorPicker : GuiElement
     public override void OnMouseUp(ICoreClientAPI api, MouseEvent args)
     {
         _draggingHue = _draggingSat = _draggingVal = _draggingAlpha = false;
-        _hexInput?.OnMouseUp(api, args);
     }
 
     // ─────────────────────────────────────────────────────────────
-    //  Keyboard — forward to embedded text input when it has focus
+    //  Keyboard — only active when hex field is focused
     // ─────────────────────────────────────────────────────────────
     public override void OnKeyDown(ICoreClientAPI api, KeyEvent args)
     {
-        if (_hexInput == null || !_hexInput.HasFocus) return;
-        _hexInput.OnKeyDown(api, args);
+        if (!_hexFocused) return;
+
+        switch (args.KeyCode)
+        {
+            case (int)GlKeys.BackSpace:
+                if (_hexCursorPos > 0 && _hexValue.Length > 0)
+                {
+                    _hexValue = _hexValue.Remove(_hexCursorPos - 1, 1);
+                    _hexCursorPos--;
+                    TryApplyHexInput(_hexValue);
+                    ComposeHexText();
+                }
+                args.Handled = true;
+                break;
+
+            case (int)GlKeys.Delete:
+                if (_hexCursorPos < _hexValue.Length)
+                {
+                    _hexValue = _hexValue.Remove(_hexCursorPos, 1);
+                    TryApplyHexInput(_hexValue);
+                    ComposeHexText();
+                }
+                args.Handled = true;
+                break;
+
+            case (int)GlKeys.Left:
+                if (_hexCursorPos > 0) _hexCursorPos--;
+                ComposeHexText();
+                args.Handled = true;
+                break;
+
+            case (int)GlKeys.Right:
+                if (_hexCursorPos < _hexValue.Length) _hexCursorPos++;
+                ComposeHexText();
+                args.Handled = true;
+                break;
+
+            case (int)GlKeys.Home:
+                _hexCursorPos = 0;
+                ComposeHexText();
+                args.Handled = true;
+                break;
+
+            case (int)GlKeys.End:
+                _hexCursorPos = _hexValue.Length;
+                ComposeHexText();
+                args.Handled = true;
+                break;
+
+            case (int)GlKeys.Escape:
+            //case (int)GlKeys.Return:
+            case (int)GlKeys.KeypadEnter:
+                _hexFocused = false;
+                ComposeHexText();
+                args.Handled = true;
+                break;
+        }
     }
 
     public override void OnKeyPress(ICoreClientAPI api, KeyEvent args)
     {
-        if (_hexInput == null || !_hexInput.HasFocus) return;
-        _hexInput.OnKeyPress(api, args);
+        if (!_hexFocused) return;
+
+        char c = (char)args.KeyChar;
+        // Allow # prefix and hex characters only, max 9 chars (#AARRGGBB)
+        if (_hexValue.Length < 9 && (c == '#' || IsHexChar(c)))
+        {
+            _hexValue = _hexValue.Insert(_hexCursorPos, c.ToString());
+            _hexCursorPos++;
+            TryApplyHexInput(_hexValue);
+            ComposeHexText();
+        }
+        args.Handled = true;
     }
 
-    // ─────────────────────────────────────────────────────────────
-    //  Hex input callback
-    // ─────────────────────────────────────────────────────────────
-    private void OnHexTextChanged(string text)
-    {
-        if (_suppressHexCallback) return;
-        TryApplyHexInput(text);
-    }
+    private static bool IsHexChar(char c)
+        => (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
 
+    // ─────────────────────────────────────────────────────────────
+    //  Hex apply
+    // ─────────────────────────────────────────────────────────────
     private void TryApplyHexInput(string raw)
     {
+        if (_suppressHexCallback) return;
         string input = raw.TrimStart('#');
         try
         {
@@ -492,13 +631,6 @@ public class GuiElementColorPicker : GuiElement
     // ─────────────────────────────────────────────────────────────
     //  Hit-test helpers
     // ─────────────────────────────────────────────────────────────
-
-    /// <summary>Hit-test a generic element bounds against a mouse event.</summary>
-    private static bool HitTestElement(ElementBounds b, MouseEvent mouse)
-        => mouse.X >= b.renderX && mouse.X < b.renderX + b.OuterWidth &&
-           mouse.Y >= b.renderY && mouse.Y < b.renderY + b.OuterHeight;
-
-    /// <summary>Hit-test one of the colour sliders (mx/my in scaled pixels).</summary>
     private bool HitSlider(double mx, double my, double sliderUnscaledY)
     {
         double sy = scaled(sliderUnscaledY);
@@ -508,7 +640,7 @@ public class GuiElementColorPicker : GuiElement
     }
 
     // ─────────────────────────────────────────────────────────────
-    //  Slider value updaters  (mx is in scaled pixels)
+    //  Slider value updaters
     // ─────────────────────────────────────────────────────────────
     private void UpdateHueFromMouse(double mx)
     {
@@ -545,11 +677,13 @@ public class GuiElementColorPicker : GuiElement
         RecomposeAlphaSlider();
         RecomposePreview();
 
-        if (updateHexField && _hexInput != null)
+        if (updateHexField)
         {
             _suppressHexCallback = true;
-            _hexInput.SetValue(BuildHexString());
+            _hexValue = BuildHexString();
+            _hexCursorPos = Math.Min(_hexCursorPos, _hexValue.Length);
             _suppressHexCallback = false;
+            ComposeHexText();
         }
 
         HsvToRgb(_hue, _saturation, _value, out double r, out double g, out double b);
@@ -635,11 +769,12 @@ public class GuiElementColorPicker : GuiElement
         _valSliderTexture?.Dispose();
         _alphaSliderTexture?.Dispose();
         _previewTexture?.Dispose();
-        _hexInput?.Dispose();
+        _hexBgTexture?.Dispose();
+        _hexTextTexture?.Dispose();
 
         _hueSliderTexture = _satSliderTexture = _valSliderTexture =
-            _alphaSliderTexture = _previewTexture = null;
-        _hexInput = null;
+            _alphaSliderTexture = _previewTexture =
+            _hexBgTexture = _hexTextTexture = null;
 
         base.Dispose();
     }
@@ -650,17 +785,30 @@ public class GuiElementColorPicker : GuiElement
 // ─────────────────────────────────────────────────────────────────
 public static class GuiComposerColorPickerExtension
 {
+    /// <summary>
+    /// Adds a color picker to the current GUI instance.
+    /// </summary>
+    /// <param name="composer"></param>
+    /// <param name="onColorChanged">Callback fired when the color changes.</param>
+    /// <param name="bounds">The bounds of the color picker.</param>
+    /// <param name="initialColor">Optional initial RGBA color.</param>
+    /// <param name="clipBounds">
+    /// Optional scissor/clip bounds. Set this when the picker is inside a scrollable
+    /// area so that it is correctly clipped when scrolled out of view.
+    /// </param>
+    /// <param name="key">The name of this element.</param>
     public static GuiComposer AddColorPicker(
         this GuiComposer composer,
         Action<double[]> onColorChanged,
         ElementBounds bounds,
         double[] initialColor = null,
+        ElementBounds clipBounds = null,
         string key = null)
     {
         if (!composer.Composed)
         {
             composer.AddInteractiveElement(
-                new GuiElementColorPicker(composer.Api, bounds, onColorChanged, initialColor),
+                new GuiElementColorPicker(composer.Api, bounds, onColorChanged, initialColor, clipBounds),
                 key);
         }
         return composer;

@@ -1,5 +1,4 @@
-﻿using HarmonyLib;
-using OverhaulLib.Utils;
+﻿using OverhaulLib.Utils;
 using System.Diagnostics;
 using System.Text;
 using Vintagestory.API.Client;
@@ -459,7 +458,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         composer.AddInset(groupDropBoxInset, 2);
 
         // Group dropdown
-        GuiElementDropDown groupDropDown = new(
+        GuiElementScrollableDropDown groupDropDown = new(
             composer.Api,
             groupValues,
             groupNames,
@@ -713,12 +712,6 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         composer.AddInset(bottomButtonsBarBounds, 0, 1);
         composer.AddInset(insetBounds);
         composer.AddInset(hideClothingButtonBounds, 0, 1);
-        composer.AddInset(leftColumnClipBounds, 0, 1);
-        composer.AddScrollableInset(leftColumnScrollableBounds, 0, 1);
-        composer.AddInset(leftColumnScrollBarBounds, 0, 1);
-        composer.AddInset(rightColumnClipBounds, 0, 1);
-        composer.AddScrollableInset(rightColumnScrollableBounds, 0, 1);
-        composer.AddInset(rightColumnScrollBarBounds, 0, 1);
 
         composer.AddToggleButton(Lang.Get("playermodellib:gui-button-hide-clothing"), smallfont, OnToggleDressOnOff, hideClothingButtonBounds, "showdressedtoggle");
         composer.AddButton(Lang.Get("Randomize"), () => OnRandomizeSkin([]), randomizeButtonBounds, CairoFont.WhiteSmallText(), EnumButtonStyle.Small);
@@ -727,29 +720,42 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         _insetSlotBounds = insetBounds;
 
+        composer.AddVerticalScrollbar(OnNewScrollbarValueSkinLeft, leftColumnScrollBarBounds, "skinparts-left-scrollbar");
+        composer.BeginClip(leftColumnClipBounds);
+        //composer.AddScrollableInset(leftColumnScrollableBounds, 0, 1);
+
         IEnumerable<SkinnablePartExtended> skinParts = skinBehavior.AvailableSkinParts.Get().OfType<SkinnablePartExtended>();
         ElementBounds previousSkinPartBounds = ElementBounds.Fixed(0, 0).WithFixedSize(0, 0).WithParent(leftColumnScrollableBounds);
-        ElementBounds skinPartParentBounds = leftColumnScrollableBounds;
+        
         bool leftColumn = true;
+        bool columnBroken = false;
         double leftColumnContentHeight = 0;
         double rightColumnContentHeight = 0;
         foreach (SkinnablePartExtended skinPart in skinParts)
         {
+            ElementBounds clipBounds = leftColumn ? leftColumnClipBounds : rightColumnClipBounds;
+            ElementBounds skinPartParentBounds = leftColumn ? leftColumnScrollableBounds : rightColumnScrollableBounds;
+
+            
+
             if (skinPart.Type == EnumSkinnableType.Texture && skinPart.SolidColor)
             {
+                //previousSkinPartBounds = ComposeDebugSkinPart(skinPart, composer, previousSkinPartBounds, skinPartTitleBounds, dropDownSkinPartBounds, skinPartParentBounds, skinBehavior, padding, clipBounds);
                 previousSkinPartBounds = ComposeColorPickerSkinPart(skinPart, composer, previousSkinPartBounds, skinPartTitleBounds, colorPickerSkinPartBounds, skinPartParentBounds, skinBehavior, padding);
             }
             else if (skinPart.Type == EnumSkinnableType.Texture && skinPart.Canvas)
             {
+                //previousSkinPartBounds = ComposeDebugSkinPart(skinPart, composer, previousSkinPartBounds, skinPartTitleBounds, dropDownSkinPartBounds, skinPartParentBounds, skinBehavior, padding, clipBounds);
                 previousSkinPartBounds = ComposeCanvasSkinPart(skinPart, composer, previousSkinPartBounds, skinPartTitleBounds, canvasSkinPartBounds, skinPartParentBounds, skinBehavior, padding);
             }
             else if (skinPart.Type == EnumSkinnableType.Texture && !skinPart.UseDropDown)
             {
-                previousSkinPartBounds = ComposeSwatchSkinPart(skinPart, composer, previousSkinPartBounds, skinPartTitleBounds, swatchesSkinPartBounds, skinPartParentBounds, skinBehavior, padding);
+                //previousSkinPartBounds = ComposeDebugSkinPart(skinPart, composer, previousSkinPartBounds, skinPartTitleBounds, dropDownSkinPartBounds, skinPartParentBounds, skinBehavior, padding, clipBounds);
+                previousSkinPartBounds = ComposeSwatchSkinPart(skinPart, composer, previousSkinPartBounds, skinPartTitleBounds, swatchesSkinPartBounds, skinPartParentBounds, skinBehavior, padding, clipBounds);
             }
             else
             {
-                previousSkinPartBounds = ComposeDropDownSkinPart(skinPart, composer, previousSkinPartBounds, skinPartTitleBounds, dropDownSkinPartBounds, skinPartParentBounds, skinBehavior, padding);
+                previousSkinPartBounds = ComposeDropDownSkinPart(skinPart, composer, previousSkinPartBounds, skinPartTitleBounds, dropDownSkinPartBounds, skinPartParentBounds, skinBehavior, padding, clipBounds);
             }
 
             composer.AddScrollableInset(previousSkinPartBounds, 2, 1);
@@ -763,13 +769,26 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
                 rightColumnContentHeight += previousSkinPartBounds.fixedHeight;
             }
 
-            if (skinPart.Colbreak)
+            if (skinPart.Colbreak && !columnBroken)
             {
+                composer.EndClip();
+                composer.AddVerticalScrollbar(OnNewScrollbarValueSkinRight, rightColumnScrollBarBounds, "skinparts-right-scrollbar");
+                composer.BeginClip(rightColumnClipBounds);
+                //composer.AddScrollableInset(rightColumnScrollableBounds, 0, 1);
+
                 previousSkinPartBounds = ElementBounds.Fixed(0, 0).WithFixedSize(0, 0).WithParent(rightColumnScrollableBounds);
-                skinPartParentBounds = rightColumnScrollableBounds;
                 leftColumn = false;
+                columnBroken = true;
             }
         }
+
+        composer.EndClip();
+
+        composer.GetScrollbar("skinparts-left-scrollbar").SetHeights((float)columnsHeight, (float)columnsHeight * 2f); // DEBUG
+        composer.GetScrollbar("skinparts-right-scrollbar").SetHeights((float)columnsHeight, (float)columnsHeight * 2f); // DEBUG
+
+        //composer.GetScrollbar("skinparts-left-scrollbar").SetHeights((float)columnsHeight, (float)leftColumnContentHeight);
+        //composer.GetScrollbar("skinparts-right-scrollbar").SetHeights((float)columnsHeight, (float)rightColumnContentHeight);
 
         composer.GetToggleButton("showdressedtoggle").SetValue(false);
         OnToggleDressOnOff(false);
@@ -835,7 +854,30 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     }
 
 
-    private ElementBounds ComposeDropDownSkinPart(SkinnablePartExtended skinPart, GuiComposer composer, ElementBounds previous, ElementBounds skinPartTitleBounds, ElementBounds dropDownSkinPartBounds, ElementBounds parentBounds, PlayerSkinBehavior skinBehavior, double padding)
+    private ElementBounds ComposeDebugSkinPart(SkinnablePartExtended skinPart, GuiComposer composer, ElementBounds previous, ElementBounds skinPartTitleBounds, ElementBounds dropDownSkinPartBounds, ElementBounds parentBounds, PlayerSkinBehavior skinBehavior, double padding, ElementBounds clipBounds)
+    {
+        string partCode = skinPart.Code;
+        ElementBounds partBounds = ElementBounds.Fixed(0, 0)
+            .WithFixedSize(skinPartTitleBounds.fixedWidth, skinPartTitleBounds.fixedHeight + padding + dropDownSkinPartBounds.fixedHeight + padding)
+            .WithParent(parentBounds)
+            .FixedUnder(previous);
+
+        skinPartTitleBounds = skinPartTitleBounds.FlatCopy().WithParent(partBounds);
+        dropDownSkinPartBounds = dropDownSkinPartBounds.FlatCopy().WithParent(partBounds).FixedUnder(skinPartTitleBounds, padding);
+
+        composer.AddRichtext(Lang.Get("skinpart-" + partCode), CairoFont.WhiteSmallText(), skinPartTitleBounds);
+        string tooltip = Lang.GetIfExists("skinpartdesc-" + partCode);
+        if (tooltip != null)
+        {
+            ElementBounds hoverTextBounds = skinPartTitleBounds.FlatCopy();
+            composer.AddHoverText(tooltip, CairoFont.WhiteSmallText(), 300, hoverTextBounds);
+        }
+        composer.AddScrollableInset(dropDownSkinPartBounds);
+
+        return partBounds;
+    }
+
+    private ElementBounds ComposeDropDownSkinPart(SkinnablePartExtended skinPart, GuiComposer composer, ElementBounds previous, ElementBounds skinPartTitleBounds, ElementBounds dropDownSkinPartBounds, ElementBounds parentBounds, PlayerSkinBehavior skinBehavior, double padding, ElementBounds clipBounds)
     {
         string partCode = skinPart.Code;
         AppliedSkinnablePartVariant? appliedVariant = skinBehavior.AppliedSkinParts.Get().FirstOrDefault(variant => variant.PartCode == partCode);
@@ -858,7 +900,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             .WithFixedSize(skinPartTitleBounds.fixedWidth, skinPartTitleBounds.fixedHeight + padding + dropDownSkinPartBounds.fixedHeight + padding)
             .WithParent(parentBounds)
             .FixedUnder(previous);
-            
+
         skinPartTitleBounds = skinPartTitleBounds.FlatCopy().WithParent(partBounds);
         dropDownSkinPartBounds = dropDownSkinPartBounds.FlatCopy().WithParent(partBounds).FixedUnder(skinPartTitleBounds, padding);
 
@@ -870,11 +912,11 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             composer.AddHoverText(tooltip, CairoFont.WhiteSmallText(), 300, hoverTextBounds);
         }
 
-        composer.AddDropDown(values, names, selectedIndex, (variantcode, selected) => onToggleSkinPartColor(partCode, variantcode), dropDownSkinPartBounds, "dropdown-" + partCode);
+        composer.AddScrollableDropDown(values, names, selectedIndex, (variantcode, selected) => onToggleSkinPartColor(partCode, variantcode), dropDownSkinPartBounds, clipBounds, "dropdown-" + partCode);
 
         return partBounds;
     }
-    private ElementBounds ComposeSwatchSkinPart(SkinnablePartExtended skinPart, GuiComposer composer, ElementBounds previous, ElementBounds skinPartTitleBounds, ElementBounds swatchesSkinPartBounds, ElementBounds parentBounds, PlayerSkinBehavior skinBehavior, double padding)
+    private ElementBounds ComposeSwatchSkinPart(SkinnablePartExtended skinPart, GuiComposer composer, ElementBounds previous, ElementBounds skinPartTitleBounds, ElementBounds swatchesSkinPartBounds, ElementBounds parentBounds, PlayerSkinBehavior skinBehavior, double padding, ElementBounds clipBounds)
     {
         string partCode = skinPart.Code;
         AppliedSkinnablePartVariant? appliedVariant = skinBehavior.AppliedSkinParts.Get().FirstOrDefault(variant => variant.PartCode == partCode);
@@ -906,11 +948,11 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         }
 
         swatchesSkinPartBounds = swatchesSkinPartBounds.FlatCopy().WithParent(partBounds);
-        composer.AddColorListPicker(colors, (index) => onToggleSkinPartColor(partCode, index), swatchesSkinPartBounds, 180, "picker-" + partCode);
+        composer.AddScrollableColorListPicker(colors, (index) => onToggleSkinPartColor(partCode, index), swatchesSkinPartBounds, 180, clipBounds, "picker-" + partCode);
 
         for (int i = 0; i < colors.Length; i++)
         {
-            GuiElementColorListPicker picker = composer.GetColorListPicker("picker-" + partCode + "-" + i);
+            GuiElementScrollableColorListPicker picker = composer.GetScrollableColorListPicker("picker-" + partCode + "-" + i);
             picker.ShowToolTip = true;
             if (Lang.HasTranslation("skinpart-" + partCode + "-" + variants[i].Code))
             {
@@ -922,7 +964,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             }
         }
 
-        composer.ColorListPickerSetValue("picker-" + partCode, selectedIndex);
+        composer.ScrollableColorListPickerSetValue("picker-" + partCode, selectedIndex);
 
 
         return partBounds;
@@ -1084,6 +1126,23 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         }
     }
 
+    private void OnNewScrollbarValueSkinLeft(float value)
+    {
+        if (_skinTabLeftColumnBounds != null)
+        {
+            _skinTabLeftColumnBounds.fixedY = -value;
+            _skinTabLeftColumnBounds.CalcWorldBounds();
+        }
+    }
+    private void OnNewScrollbarValueSkinRight(float value)
+    {
+        if (_skinTabRightColumnBounds != null)
+        {
+            _skinTabRightColumnBounds.fixedY = -value;
+            _skinTabRightColumnBounds.CalcWorldBounds();
+        }
+    }
+
     private bool OnRandomizeSkin(Dictionary<string, string> preselection)
     {
         EntityPlayer entity = capi.World.Player.Entity;
@@ -1118,7 +1177,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             }
             else
             {
-                Composers["createcharacter"].GetDropDown("dropdown-" + partcode)?.SetSelectedIndex(index);
+                Composers["createcharacter"].GetScrollableDropDown("dropdown-" + partcode)?.SetSelectedIndex(index);
             }
         }
 
