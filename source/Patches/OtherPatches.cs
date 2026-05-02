@@ -1,4 +1,6 @@
 ﻿using HarmonyLib;
+using OpenTK.Windowing.GraphicsLibraryFramework;
+using OverhaulLib.Utils;
 using System.Reflection;
 using System.Text;
 using Vintagestory.API.Client;
@@ -10,7 +12,6 @@ using Vintagestory.API.Server;
 using Vintagestory.API.Util;
 using Vintagestory.Client.NoObf;
 using Vintagestory.GameContent;
-using OverhaulLib.Utils;
 
 namespace PlayerModelLib;
 
@@ -67,6 +68,11 @@ internal static class OtherPatches
                 typeof(CharacterSystem).GetMethod("onCharacterSelection", AccessTools.all),
                 prefix: new HarmonyMethod(AccessTools.Method(typeof(OtherPatches), nameof(onCharacterSelection)))
             );
+
+        new Harmony(harmonyId).Patch(
+                typeof(ModSystemGliding).GetMethod("get_HasGlider", AccessTools.all),
+                prefix: new HarmonyMethod(AccessTools.Method(typeof(OtherPatches), nameof(ModSystemGliding_get_HasGlider)))
+            );
     }
 
     public static void Unpatch(string harmonyId)
@@ -81,6 +87,7 @@ internal static class OtherPatches
         new Harmony(harmonyId).Unpatch(typeof(GuiDialogHairStyling).GetMethod("AllowedSkinPartSelection", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
         new Harmony(harmonyId).Unpatch(typeof(TextureAtlasManager).GetMethod("RegenMipMaps", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
         new Harmony(harmonyId).Unpatch(typeof(CharacterSystem).GetMethod("onCharacterSelection", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
+        new Harmony(harmonyId).Unpatch(typeof(ModSystemGliding).GetMethod("get_HasGlider", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
 
         _clientApi = null;
     }
@@ -103,6 +110,17 @@ internal static class OtherPatches
     private static readonly FieldInfo? _characterSystem_createCharDlg = typeof(CharacterSystem).GetField("createCharDlg", BindingFlags.NonPublic | BindingFlags.Instance);
     private static readonly FieldInfo? _characterSystem_capi = typeof(CharacterSystem).GetField("capi", BindingFlags.NonPublic | BindingFlags.Instance);
     private static readonly FieldInfo? _guiDialogHairStyling_currentSkin = typeof(GuiDialogHairStyling).GetField("currentSkin", BindingFlags.NonPublic | BindingFlags.Instance);
+
+    private static bool ModSystemGliding_get_HasGlider(ModSystemGliding __instance, ref bool __result)
+    {
+        float canGlide = _clientApi?.World.Player.Entity.Stats.GetBlended("canGlide") ?? 1;
+        if (canGlide > 1)
+        {
+            __result = true;
+            return false;
+        }
+        return true;
+    }
 
     private static bool TextureAtlasManager_RegenMipMaps(TextureAtlasManager __instance, int atlasNumber)
     {
