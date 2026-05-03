@@ -1,6 +1,8 @@
 {
   "game:playermodel-seraph": "Seraph",
-  "game:tab-model": "Model",
+  "playermodellib:tab-model": "Model",
+  "playermodellib:tab-skin": "Skin",
+  "playermodellib:tab-class": "Class",
   "game:modeldesc-seraph": "Tall humanoids of mysterious origins, that recently started to appear all over the world.",
   "available-classes": "<strong>Available classes:</strong> ",
   "model-size-slider": "Model size: ",

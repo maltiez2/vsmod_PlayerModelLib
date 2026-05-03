@@ -167,7 +167,7 @@ internal static class OtherPatches
             //Need to undo the last translation to ensure that the player scales from the correct origin.
             Mat4f.Translate(___ModelMat, ___ModelMat, 0.5f, 0f, 0.5f);
 
-            bool resize = GuiDialogCreateCustomCharacter.RenderState != (int)EnumCreateCharacterTabs.Model + 1;
+            bool resize = GuiDialogCreateCustomCharacter.RenderState != 1;
 
             float size = MathF.Sqrt((resize ? entity.Properties.Client.Size : CurrentModelScale) / CurrentModelGuiScale);
 
@@ -245,9 +245,9 @@ internal static class OtherPatches
 
         ElementBounds charTextBounds;
 
-        if (_clientApi.ModLoader.IsModEnabled("overhaullib"))
+        if (_clientApi.ModLoader.IsModEnabled("playerinventorylib"))
         {
-            charTextBounds = ElementBounds.Fixed(-18, 14, 417, 370);
+            charTextBounds = ElementBounds.Fixed(-18, 14, 416, 386);
         }
         else
         {
