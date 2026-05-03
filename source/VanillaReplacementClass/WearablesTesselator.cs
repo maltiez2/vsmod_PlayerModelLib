@@ -193,9 +193,9 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
         float damageEffectValue = GetDamageEffectValue(stack);
         attachableShape.ResolveReferences(entity.Api.Logger, $"WearablesTesselator.ProcessSlot for '{stack.Collectible.Code}'");
         ShapeLoadingUtil.PrefixElements(attachableShape, prefix);
-        ShapeLoadingUtil.PrefixTextures(attachableShape, prefix, damageEffectValue);
+        ShapeLoadingUtil.PrefixTextures(attachableShape, prefix);
         ShapeLoadingUtil.PrefixAnimations(attachableShape, prefix);
-
+        ShapeLoadingUtil.SetDamageEffect(attachableShape, damageEffectValue);
 
         Result stepParentResult = ShapeLoadingUtil.StepParentShape(entityShape, attachableShape);
         stepParentResult.LogErrorsAndWarnings(entity.Api, this);
@@ -210,14 +210,26 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
             return;
         }
 
-
         Dictionary<string, CompositeTexture> attachableTextures = entity.Properties?.Client?.Textures?.ToDictionary() ?? [];
+
+        foreach ((string textureCode, AssetLocation texturePath) in attachableShape.Textures)
+        {
+            attachableTextures[textureCode] = new(texturePath);
+        }
 
         if (stack.Item.Textures != null)
         {
             foreach ((string textureCode, CompositeTexture texture) in stack.Item.Textures)
             {
                 attachableTextures[prefix + textureCode] = texture.Clone();
+            }
+        }
+
+        if (attachableShape.TextureSizes != null)
+        {
+            foreach ((string textureCode, int[] textureSize) in attachableShape.TextureSizes)
+            {
+                entityShape.TextureSizes[prefix + textureCode] = textureSize;
             }
         }
 
