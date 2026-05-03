@@ -778,8 +778,8 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         composer.EndClip();
 
-        composer.GetExtendedScrollbar("skinparts-left-scrollbar").SetHeights((float)columnsHeight, (float)Math.Max(leftColumnContentHeight, columnsHeight));
-        composer.GetExtendedScrollbar("skinparts-right-scrollbar").SetHeights((float)columnsHeight, (float)Math.Max(rightColumnContentHeight, columnsHeight));
+        composer.GetExtendedScrollbar("skinparts-left-scrollbar").SetHeights((float)columnsHeight, (float)Math.Max(leftColumnContentHeight + columnsHeight, columnsHeight));
+        composer.GetExtendedScrollbar("skinparts-right-scrollbar").SetHeights((float)columnsHeight, (float)Math.Max(rightColumnContentHeight + columnsHeight, columnsHeight));
         composer.GetExtendedScrollbar("skinparts-left-scrollbar").SetScrollbarPosition(0);
         composer.GetExtendedScrollbar("skinparts-right-scrollbar").SetScrollbarPosition(0);
         composer.GetExtendedScrollbar("skinparts-left-scrollbar").SetFixedHandleHeight(100);
@@ -1053,10 +1053,14 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             Colors = new int[colorsNumber],
             Pixels = new int[skinPart.Size[0] * skinPart.Size[1]]
         };
-
         for (int i = 0; i < colorsNumber; i++)
         {
             canvasData.Colors[i] = -1;
+        }
+
+        if (appliedVariant?.Code != null)
+        {
+            canvasData = TextureCanvasData.Deserialize(appliedVariant.Code);
         }
 
         composer.AddCanvasEditor(canvasData, canvasSkinPartBounds, data => onToggleSkinPartCanvas(partCode, data), key: "canvas-" + partCode);
@@ -1227,12 +1231,17 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
                 TextureCanvasData newData = TextureCanvasData.Deserialize(appliedPart.Code);
                 newData.Width = ext2.Size[0];
                 newData.Height = ext2.Size[1];
-                if (newData.Colors.Length < ext2.ColorsNumber)
+                int colorsNumber = ext2.ColorsNumber + 1;
+                if (newData.Colors.Length < colorsNumber)
                 {
-                    for (int i = newData.Colors.Length; i < ext2.ColorsNumber; i++)
+                    for (int i = newData.Colors.Length; i <= colorsNumber; i++)
                     {
                         newData.Colors = newData.Colors.Append(-1);
                     }
+                }
+                else if (newData.Colors.Length > colorsNumber)
+                {
+                    newData.Colors = newData.Colors[0..colorsNumber];
                 }
                 Composers["createcharacter"].GetCanvasEditor("canvas-" + partcode)?.SetData(newData);
             }

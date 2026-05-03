@@ -21,6 +21,7 @@ public class RecusiveOverlaysTexture
     public CompositeTexture Texture { get; set; }
     public EnumTextureOverlayMode BlendMode { get; set; }
     public List<RecusiveOverlaysTexture> Overlays { get; set; } = [];
+    public Vector2i Offset { get; set; } = Vector2i.Zero;
     public bool SolidColor { get; set; } = false;
     public bool Canvas { get; set; } = false;
     public string? SerializedCanvas { get; set; }

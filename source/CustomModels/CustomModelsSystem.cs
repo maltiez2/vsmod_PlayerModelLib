@@ -1306,9 +1306,16 @@ public sealed class CustomModelsSystem : ModSystem
             }
             else
             {
-                foreach (SkinnablePartVariant variant in part.Variants)
+                if (part.Variants != null)
                 {
-                    part.VariantsByCode[variant.Code] = variant;
+                    foreach (SkinnablePartVariant variant in part.Variants)
+                    {
+                        part.VariantsByCode[variant.Code] = variant;
+                    }
+                }
+                else
+                {
+                    part.Variants = [];
                 }
             }
         }

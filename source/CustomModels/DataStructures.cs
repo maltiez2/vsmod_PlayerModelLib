@@ -28,13 +28,14 @@ public enum EnumTextureOverlayMode
 public class SkinnablePartExtended : SkinnablePart
 {
     public string[] TargetSkinParts { get; set; } = [];
-    public EnumTextureOverlayMode OverlayMode { get; set; } = EnumTextureOverlayMode.Replace;
+    public EnumTextureOverlayMode OverlayMode { get; set; } = EnumTextureOverlayMode.Normal;
     public bool Enabled { get; set; } = true;
     public Dictionary<string, string[]> DisableElementsByVariantCode { get; set; } = [];
     public bool SolidColor { get; set; } = false;
     public bool Canvas { get; set; } = false;
     public int ColorsNumber { get; set; } = 3;
     public int[] Size { get; set; } = [];
+    public int[] OverlayOffset { get; set; } = [];
 }
 
 public class CustomModelConfig

@@ -1,105 +1,45 @@
-﻿using System.Runtime.CompilerServices;
+﻿using OpenTK.Mathematics;
+using System.Runtime.CompilerServices;
 using Vintagestory.API.MathTools;
 
 namespace PlayerModelLib;
 
 public static class TextureOverlayBlendingUtils
 {
-    public static void Blend(EnumTextureOverlayMode mode, int[] basePixels, int[] overlayPixels, string? color = null)
+    public static void Blend(EnumTextureOverlayMode mode, int[] basePixels, int[] overlayPixels, Vector2i offset, Vector2i baseSize, Vector2i overlaySize)
     {
-        int length = basePixels.Length;
-        switch (mode)
+        int startX = Math.Max(0, offset.X);
+        int startY = Math.Max(0, offset.Y);
+        int endX = Math.Min(baseSize.X, offset.X + overlaySize.X);
+        int endY = Math.Min(baseSize.Y, offset.Y + overlaySize.Y);
+
+        for (int baseY = startY; baseY < endY; baseY++)
         {
-            case EnumTextureOverlayMode.Replace:
-                for (int pixelIndex = 0; pixelIndex < length; pixelIndex++)
-                {
-                    basePixels[pixelIndex] = overlayPixels[pixelIndex];
-                }
-                break;
+            for (int baseX = startX; baseX < endX; baseX++)
+            {
+                int baseIndex = baseY * baseSize.X + baseX;
+                int overlayX = baseX - offset.X;
+                int overlayY = baseY - offset.Y;
+                int overlayIndex = overlayY * overlaySize.X + overlayX;
 
-            case EnumTextureOverlayMode.Normal:
-                for (int pixelIndex = 0; pixelIndex < length; pixelIndex++)
+                basePixels[baseIndex] = mode switch
                 {
-                    basePixels[pixelIndex] = NormalBlend(basePixels[pixelIndex], overlayPixels[pixelIndex]);
-                }
-                break;
-
-            case EnumTextureOverlayMode.AlphaMask:
-                for (int pixelIndex = 0; pixelIndex < length; pixelIndex++)
-                {
-                    basePixels[pixelIndex] = AlphaMask(basePixels[pixelIndex], overlayPixels[pixelIndex]);
-                }
-                break;
-
-            case EnumTextureOverlayMode.AlphaMaskBlackAndWhite:
-                for (int pixelIndex = 0; pixelIndex < length; pixelIndex++)
-                {
-                    basePixels[pixelIndex] = AlphaMaskBlackAndWhite(basePixels[pixelIndex], overlayPixels[pixelIndex]);
-                }
-                break;
-
-            case EnumTextureOverlayMode.AlphaMaskBlackAndWhiteInverted:
-                for (int pixelIndex = 0; pixelIndex < length; pixelIndex++)
-                {
-                    basePixels[pixelIndex] = AlphaMaskBlackAndWhiteInverted(basePixels[pixelIndex], overlayPixels[pixelIndex]);
-                }
-                break;
-
-            case EnumTextureOverlayMode.Darken:
-                for (int pixelIndex = 0; pixelIndex < length; pixelIndex++)
-                {
-                    basePixels[pixelIndex] = ColorBlend.Darken(basePixels[pixelIndex], overlayPixels[pixelIndex]);
-                }
-                break;
-
-            case EnumTextureOverlayMode.Lighten:
-                for (int pixelIndex = 0; pixelIndex < length; pixelIndex++)
-                {
-                    basePixels[pixelIndex] = ColorBlend.Lighten(basePixels[pixelIndex], overlayPixels[pixelIndex]);
-                }
-                break;
-
-            case EnumTextureOverlayMode.Multiply:
-                for (int pixelIndex = 0; pixelIndex < length; pixelIndex++)
-                {
-                    basePixels[pixelIndex] = ColorBlend.Multiply(basePixels[pixelIndex], overlayPixels[pixelIndex]);
-                }
-                break;
-
-            case EnumTextureOverlayMode.Screen:
-                for (int pixelIndex = 0; pixelIndex < length; pixelIndex++)
-                {
-                    basePixels[pixelIndex] = ColorBlend.Screen(basePixels[pixelIndex], overlayPixels[pixelIndex]);
-                }
-                break;
-
-            case EnumTextureOverlayMode.ColorDodge:
-                for (int pixelIndex = 0; pixelIndex < length; pixelIndex++)
-                {
-                    basePixels[pixelIndex] = ColorBlend.ColorDodge(basePixels[pixelIndex], overlayPixels[pixelIndex]);
-                }
-                break;
-
-            case EnumTextureOverlayMode.ColorBurn:
-                for (int pixelIndex = 0; pixelIndex < length; pixelIndex++)
-                {
-                    basePixels[pixelIndex] = ColorBlend.ColorBurn(basePixels[pixelIndex], overlayPixels[pixelIndex]);
-                }
-                break;
-
-            case EnumTextureOverlayMode.Overlay:
-                for (int pixelIndex = 0; pixelIndex < length; pixelIndex++)
-                {
-                    basePixels[pixelIndex] = ColorBlend.Overlay(basePixels[pixelIndex], overlayPixels[pixelIndex]);
-                }
-                break;
-
-            case EnumTextureOverlayMode.OverlayCutout:
-                for (int pixelIndex = 0; pixelIndex < length; pixelIndex++)
-                {
-                    basePixels[pixelIndex] = ColorBlend.OverlayCutout(basePixels[pixelIndex], overlayPixels[pixelIndex]);
-                }
-                break;
+                    EnumTextureOverlayMode.Replace => overlayPixels[overlayIndex],
+                    EnumTextureOverlayMode.Normal => NormalBlend(basePixels[baseIndex], overlayPixels[overlayIndex]),
+                    EnumTextureOverlayMode.AlphaMask => AlphaMask(basePixels[baseIndex], overlayPixels[overlayIndex]),
+                    EnumTextureOverlayMode.AlphaMaskBlackAndWhite => AlphaMaskBlackAndWhite(basePixels[baseIndex], overlayPixels[overlayIndex]),
+                    EnumTextureOverlayMode.AlphaMaskBlackAndWhiteInverted => AlphaMaskBlackAndWhiteInverted(basePixels[baseIndex], overlayPixels[overlayIndex]),
+                    EnumTextureOverlayMode.Darken => ColorBlend.Darken(basePixels[baseIndex], overlayPixels[overlayIndex]),
+                    EnumTextureOverlayMode.Lighten => ColorBlend.Lighten(basePixels[baseIndex], overlayPixels[overlayIndex]),
+                    EnumTextureOverlayMode.Multiply => ColorBlend.Multiply(basePixels[baseIndex], overlayPixels[overlayIndex]),
+                    EnumTextureOverlayMode.Screen => ColorBlend.Screen(basePixels[baseIndex], overlayPixels[overlayIndex]),
+                    EnumTextureOverlayMode.ColorDodge => ColorBlend.ColorDodge(basePixels[baseIndex], overlayPixels[overlayIndex]),
+                    EnumTextureOverlayMode.ColorBurn => ColorBlend.ColorBurn(basePixels[baseIndex], overlayPixels[overlayIndex]),
+                    EnumTextureOverlayMode.Overlay => ColorBlend.Overlay(basePixels[baseIndex], overlayPixels[overlayIndex]),
+                    EnumTextureOverlayMode.OverlayCutout => ColorBlend.OverlayCutout(basePixels[baseIndex], overlayPixels[overlayIndex]),
+                    _ => basePixels[baseIndex]
+                };
+            }
         }
     }
 

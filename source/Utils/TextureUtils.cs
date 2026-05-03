@@ -1,4 +1,5 @@
-﻿using SkiaSharp;
+﻿using OpenTK.Mathematics;
+using SkiaSharp;
 using System.Diagnostics;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -81,59 +82,40 @@ public static class TextureUtils
 
     public static BakedBitmap LoadCompositeBitmap(ClientMain game, RecusiveOverlaysTexture recursiveOverlaysTexture, bool calledFromItself = false, string? debugCode = null, int depth = 0)
     {
-        BakedBitmap? result = null;
+        BakedBitmap? result;
         if (recursiveOverlaysTexture.Canvas && recursiveOverlaysTexture.SerializedCanvas != null)
         {
             string serializedData = recursiveOverlaysTexture.SerializedCanvas;
             TextureCanvasData canvasData = TextureCanvasData.Deserialize(serializedData);
             result = canvasData.ToBitmap();
         }
-        
-        if (!recursiveOverlaysTexture.SolidColor && !recursiveOverlaysTexture.Canvas)
+        else if (recursiveOverlaysTexture.Canvas && recursiveOverlaysTexture.SerializedCanvas == null)
+        {
+            int color = ColorUtil.Hex2Int("#00000000");
+            result = CreateSolidColorBitmap(recursiveOverlaysTexture.SizeOverride.X, recursiveOverlaysTexture.SizeOverride.Y, color);
+        }
+        else if (recursiveOverlaysTexture.SolidColor && recursiveOverlaysTexture.SizeOverride != Vector2i.Zero)
+        {
+            int color = ColorUtil.Hex2Int(recursiveOverlaysTexture.Color ?? "#00000000");
+            result = CreateSolidColorBitmap(recursiveOverlaysTexture.SizeOverride.X, recursiveOverlaysTexture.SizeOverride.Y, color);
+        }
+        else
         {
             BakedCompositeTexture baked = Bake(game.AssetManager, recursiveOverlaysTexture.Texture);
             AssetLocationAndSource baseLoc = new(baked.BakedName, "RecursiveOverlay", recursiveOverlaysTexture.Texture.Base);
             result = TextureAtlasManager.LoadCompositeBitmap(game, baseLoc);
         }
 
-        if (recursiveOverlaysTexture.Overlays.Count == 0)
-        {
-            int color = ColorUtil.Hex2Int(recursiveOverlaysTexture.Color ?? "#00000000");
-            result ??= CreateSolidColorBitmap(recursiveOverlaysTexture.SizeOverride.X, recursiveOverlaysTexture.SizeOverride.Y, color);
-            return result;
-        }
-
         foreach (RecusiveOverlaysTexture overlay in recursiveOverlaysTexture.Overlays)
         {
             BakedBitmap overlayBitmap = LoadCompositeBitmap(game, overlay, calledFromItself: true, debugCode: debugCode, depth: depth + 1);
-
-            if (result == null && recursiveOverlaysTexture.SolidColor)
-            {
-                int color = ColorUtil.Hex2Int(recursiveOverlaysTexture.Color ?? "#00000000");
-                result = CreateSolidColorBitmap(overlayBitmap.Width, overlayBitmap.Height, color);
-            }
 
             if (overlayBitmap?.TexturePixels == null)
             {
                 continue;
             }
 
-            if (result.Width != overlayBitmap.Width || result.Height != overlayBitmap.Height)
-            {
-                game.Logger.Warning(
-                    "RecursiveOverlay: overlay texture ({0}x{1}) does not match base texture size ({2}x{3}), ignoring.",
-                    overlayBitmap.Width, overlayBitmap.Height,
-                    result.Width, result.Height);
-                continue;
-            }
-
-            TextureOverlayBlendingUtils.Blend(overlay.BlendMode, result.TexturePixels, overlayBitmap.TexturePixels, overlay.Color);
-        }
-
-        if (result == null && recursiveOverlaysTexture.SolidColor)
-        {
-            int color = ColorUtil.Hex2Int(recursiveOverlaysTexture.Color ?? "#00000000");
-            result = CreateSolidColorBitmap(recursiveOverlaysTexture.SizeOverride.X, recursiveOverlaysTexture.SizeOverride.Y, color);
+            TextureOverlayBlendingUtils.Blend(overlay.BlendMode, result.TexturePixels, overlayBitmap.TexturePixels, overlay.Offset, new(result.Width, result.Height), new(overlayBitmap.Width, overlayBitmap.Height));
         }
 
         return result;
