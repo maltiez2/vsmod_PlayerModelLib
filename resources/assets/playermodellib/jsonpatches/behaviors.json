@@ -2,5 +2,6 @@
   {"side": "Server", "file": "game:entities/humanoid/player", "op": "replace", "path": "/@@@(client|server)/behaviors/code=extraskinnable/code", "value": "PlayerModelLib:ExtraSkinnable"},
   {"side": "Server", "file": "game:entities/humanoid/player", "op": "replace", "path": "/@@@(client|server)/behaviors/code=playerinventory/code", "value": "PlayerModelLib:CustomPlayerInventory"},
   {"side": "Server", "file": "game:entities/humanoid/player", "op": "add", "path": "/@@@(client|server)/behaviors/-", "value": { "code": "PlayerModelLib:WearablesTesselator" }},
+  {"side": "Server", "file": "game:entities/humanoid/player", "op": "add", "path": "/@@@(client|server)/behaviors/-", "value": { "code": "PlayerModelLib:WearableCollectibleLight" }},
   {"side": "Server", "file": "game:entities/humanoid/player", "op": "add", "path": "/client/behaviors/-", "value": { "code": "PlayerModelLib:EntityTextureSourceBehavior" }}
 ]
