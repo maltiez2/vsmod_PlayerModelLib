@@ -5,6 +5,7 @@
   "available-classes": "<strong>Available classes:</strong> ",
   "model-size-slider": "Model size: ",
   "game:model-traits-title": "<strong>Model traits</strong>",
+  "game:charattribute-canGlide-1": "has ability to glide",
   
   "game:playermodelgroup-temporal": "Anomalous",
   "game:playermodelgroup-humans": "Humans",

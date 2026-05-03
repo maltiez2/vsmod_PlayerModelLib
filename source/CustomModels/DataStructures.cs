@@ -22,7 +22,10 @@ public enum EnumTextureOverlayMode
     ColorDodge,
     ColorBurn,
     Overlay,
-    OverlayCutout
+    OverlayCutout,
+    HueBlend,
+    SaturationBlend,
+    LuminosityBlend
 }
 
 public class SkinnablePartExtended : SkinnablePart
