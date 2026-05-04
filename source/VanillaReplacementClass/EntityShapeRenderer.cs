@@ -22,20 +22,22 @@ public class CustomPlayerShapeRenderer : EntityPlayerShapeRenderer
     public override void TesselateShape()
     {
 #if DEBUG
-        PlayerModelModSystem.Settings.MultiThreadPayerShapeGeneration = false;
+        //PlayerModelModSystem.Settings.MultiThreadPayerShapeGeneration = false;
 #endif
 
         if (PlayerModelModSystem.Settings.MultiThreadPayerShapeGeneration && entity.Api.Side == EnumAppSide.Client)
         {
-            if (!_tesselating.Value)
+            if (_tesselating.TrySet(false, true))
             {
-                _tesselating.SetTrue();
-                TyronThreadPool.QueueTask(TesselateShapeOffThread, "CustomPlayerShapeRenderer");
+                TyronThreadPool.QueueTask(TryTesselateShapeOffThread, "CustomPlayerShapeRenderer");
             }
         }
         else
         {
-            TesselateShapeOffThread();
+            if (_tesselating.TrySet(false, true))
+            {
+                TryTesselateShapeOffThread();
+            }
         }
     }
 
@@ -66,8 +68,25 @@ public class CustomPlayerShapeRenderer : EntityPlayerShapeRenderer
     private readonly ThreadSafeBool _tesselating = new(false);
 
     private bool _firstTesselate = true;
-    private const int _firstTesselatedealyMs = 0;
+    private const int _firstTesselatedealyMs = 400;
+    private const int _textureToAtlasWaitRetryCount = 160;
     private readonly bool _isSinglePlayer;
+
+    public virtual void TryTesselateShapeOffThread()
+    {
+        try
+        {
+            TesselateShapeOffThread();
+        }
+        catch (Exception exception)
+        {
+            Log.Verbose(entity.Api, this, $"Failed to tesselate player shape: {exception}");
+        }
+        finally
+        {
+            _tesselating.SetFalse();
+        }
+    }
 
     public virtual void TesselateShapeOffThread()
     {
@@ -82,7 +101,12 @@ public class CustomPlayerShapeRenderer : EntityPlayerShapeRenderer
             EntityPlayer? entityPlayer = (EntityPlayer?)_entityPlayerShapeRenderer_entityPlayer?.GetValue(this);
             bool watcherRegistered = (bool)(_entityPlayerShapeRenderer_watcherRegistered?.GetValue(this) ?? false);
 
-            if (entityPlayer?.GetBehavior<EntityBehaviorPlayerInventory>()?.Inventory == null)
+            if (entityPlayer == null)
+            {
+                return;
+            }
+
+            /*if (entityPlayer?.GetBehavior<EntityBehaviorPlayerInventory>()?.Inventory == null)
             {
                 capi.Event.EnqueueMainThreadTask(delegate
                 {
@@ -94,13 +118,14 @@ public class CustomPlayerShapeRenderer : EntityPlayerShapeRenderer
                 }, "inventorynullmsm");
                 _tesselating.SetFalse();
                 return;
-            }
+            }*/
 
             defaultTexSource = entity.GetBehavior<EntityTextureSourceBehavior>();
+            
             CustomTesselateOffThread();
+            
             if (watcherRegistered)
             {
-                _tesselating.SetFalse();
                 return;
             }
 
@@ -135,7 +160,6 @@ public class CustomPlayerShapeRenderer : EntityPlayerShapeRenderer
         {
             if (!loaded)
             {
-                _tesselating.SetFalse();
                 return;
             }
 
@@ -147,7 +171,6 @@ public class CustomPlayerShapeRenderer : EntityPlayerShapeRenderer
         {
             if (!loaded)
             {
-                _tesselating.SetFalse();
                 return;
             }
 
@@ -186,7 +209,6 @@ public class CustomPlayerShapeRenderer : EntityPlayerShapeRenderer
     {
         if (!loaded)
         {
-            _tesselating.SetFalse();
             return;
         }
 
@@ -194,14 +216,20 @@ public class CustomPlayerShapeRenderer : EntityPlayerShapeRenderer
         Shape entityShape = OverrideEntityShape ?? entity.Properties.Client.LoadedShapeForEntity;
         if (entityShape == null)
         {
-            _tesselating.SetFalse();
             return;
         }
 
         entity.OnTesselation(ref entityShape, compositeShape.Base.ToString());
 
+        int retriesCount = 0;
         while (TexturesAwaitingToBeAddedToAtlas.Value > 0)
         {
+            retriesCount += 1;
+            if (retriesCount > _textureToAtlasWaitRetryCount)
+            {
+                Log.Verbose(entity.Api, this, $"Failed to tesselate player shape. Was waiting for textures to be added to atlas, but it took too long.");
+                return;
+            }
             Thread.Sleep(30);
         }
 
@@ -229,7 +257,6 @@ public class CustomPlayerShapeRenderer : EntityPlayerShapeRenderer
         {
             capi.World.Logger.Fatal("Failed tesselating entity {0} with id {1}. Entity will probably be invisible!.", entity.Code, entity.EntityId);
             capi.World.Logger.Fatal(e);
-            _tesselating.SetFalse();
             return;
         }
 
@@ -239,6 +266,5 @@ public class CustomPlayerShapeRenderer : EntityPlayerShapeRenderer
             entity.OnTesselated();
         }, "uploadentitymesh");
         capi.TesselatorManager.ThreadDispose();
-        _tesselating.SetFalse();
     }
 }
