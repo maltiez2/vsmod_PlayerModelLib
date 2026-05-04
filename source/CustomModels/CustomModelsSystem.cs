@@ -400,7 +400,7 @@ public sealed class CustomModelsSystem : ModSystem
 
             if (!api.Assets.Exists(path) && api.Side == EnumAppSide.Client)
             {
-                Log.Error(_api, this, $"({code}) Shape '{modelConfig.ShapePath}' has texture with code '{textureCode}' and path '{texturePath}'. This texture was not found in assets, will skip loading this model.");
+                Log.Error(_api, this, $"({code}) Shape '{modelConfig.ShapePath}' has texture with code '{textureCode}' and path '{path}'. This texture was not found in assets, will skip loading this model.");
                 return;
             }
         }

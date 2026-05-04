@@ -163,6 +163,7 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
         string[] elementsToRemove = attachable.GetDisableElements(stack) ?? [];
         string[] elementsToKeep = attachable.GetKeepElements(stack) ?? [];
         willDeleteElements = willDeleteElements.Except(elementsToKeep).Concat(elementsToRemove).Distinct().ToArray();
+        willDeleteElements = ShapeReplacementUtil.ReplaceWildcardPrefixes(willDeleteElements, prefix);
 
         if (compositeGearShape != null && compositeGearShape.Overlays != null)
         {

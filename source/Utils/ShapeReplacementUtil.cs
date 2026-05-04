@@ -71,6 +71,16 @@ public static partial class ShapeReplacementUtil
         _system = null;
     }
 
+    public static string[] ReplaceWildcardPrefixes(string[] elements, string prefix)
+    {
+        return elements
+            .Where(name => name != null && name.StartsWith('*'))
+            .Select(name => prefix + name[1..])
+            .Concat(elements)
+            .Distinct()
+            .ToArray();
+    }
+
 
     private static CustomModelsSystem? _system;
 
@@ -160,15 +170,6 @@ public static partial class ShapeReplacementUtil
         {
             elements = elements.Except(enabledElements).ToArray();
         }
-    }
-    private static string[] ReplaceWildcardPrefixes(string[] elements, string prefix)
-    {
-        return elements
-            .Where(name => name != null && name.StartsWith('*'))
-            .Select(name => prefix + name[1..])
-            .Concat(elements)
-            .Distinct()
-            .ToArray();
     }
     private static void ExportShape(ICoreAPI api, string shapePath, string fileName, BaseShapeData baseShape, CustomModelData modelData)
     {
