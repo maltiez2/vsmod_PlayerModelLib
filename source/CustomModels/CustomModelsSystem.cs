@@ -1274,6 +1274,8 @@ public sealed class CustomModelsSystem : ModSystem
                 continue;
             }
 
+            part.Variants ??= [];
+
             part.VariantsByCode = [];
 
             patsByCode[part.Code] = part;

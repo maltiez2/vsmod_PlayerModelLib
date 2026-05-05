@@ -703,8 +703,7 @@ public class GuiElementColorPicker : GuiElement
     // ─────────────────────────────────────────────────────────────
     //  Color space helpers
     // ─────────────────────────────────────────────────────────────
-    private static void HsvToRgb(float h, float s, float v,
-                                  out double r, out double g, out double b)
+    private static void HsvToRgb(float h, float s, float v, out double r, out double g, out double b)
     {
         if (s <= 0f) { r = g = b = v; return; }
         float hh = (h * 360f) / 60f;
@@ -724,8 +723,7 @@ public class GuiElementColorPicker : GuiElement
         }
     }
 
-    private static void RgbToHsv(float r, float g, float b,
-                                  out float h, out float s, out float v)
+    private static void RgbToHsv(float r, float g, float b, out float h, out float s, out float v)
     {
         float max = Math.Max(r, Math.Max(g, b));
         float min = Math.Min(r, Math.Min(g, b));

@@ -725,7 +725,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         InsetSlotBounds = insetBounds;
 
-        composer.AddExtendedVerticalScrollbar(OnNewScrollbarValueSkinLeft, leftColumnScrollBarBounds, "skinparts-left-scrollbar", leftColumnBounds);
+        composer.AddExtendedVerticalScrollbar(OnNewScrollbarValueSkinLeft, leftColumnScrollBarBounds, "skinparts-left-scrollbar", leftColumnScrollBarBounds);
         composer.BeginClip(leftColumnClipBounds);
 
         IEnumerable<SkinnablePartExtended> skinParts = skinBehavior.AvailableSkinParts.Get().OfType<SkinnablePartExtended>();
@@ -771,7 +771,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             if (skinPart.Colbreak && !columnBroken)
             {
                 composer.EndClip();
-                composer.AddExtendedVerticalScrollbar(OnNewScrollbarValueSkinRight, rightColumnScrollBarBounds, "skinparts-right-scrollbar", rightColumnBounds);
+                composer.AddExtendedVerticalScrollbar(OnNewScrollbarValueSkinRight, rightColumnScrollBarBounds, "skinparts-right-scrollbar", rightColumnScrollBarBounds);
                 composer.BeginClip(rightColumnClipBounds);
 
                 previousSkinPartBounds = ElementBounds.Fixed(0, 0).WithFixedSize(0, 0).WithParent(rightColumnScrollableBounds);
@@ -1006,6 +1006,9 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             key: "colorpicker-" + partCode
             );
 
+        double[] color = HexArgbToDoubleArray(appliedVariant.Code);
+        Composers["createcharacter"].GetColorPicker("colorpicker-" + partCode).SetColor(color[1], color[2], color[3], color[0]);
+
         swatchesSkinPartBounds = swatchesSkinPartBounds.FlatCopy().WithParent(partBounds);
         composer.AddScrollableColorListPicker(colors, (index) => onTogglePickerPartColor(partCode, index), swatchesSkinPartBounds, 190, clipBounds, "picker-" + partCode);
 
@@ -1046,7 +1049,6 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             ElementBounds hoverTextBounds = skinPartTitleBounds.FlatCopy();
             composer.AddHoverText(tooltip, CairoFont.WhiteSmallText(), 300, hoverTextBounds);
         }
-
 
         int colorsNumber = Math.Clamp(skinPart.ColorsNumber, 1, 14);
 
