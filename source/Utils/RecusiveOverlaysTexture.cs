@@ -27,6 +27,19 @@ public class RecusiveOverlaysTexture
     public string? SerializedCanvas { get; set; }
     public string? Color { get; set; }
     public Vector2i SizeOverride { get; set; } = Vector2i.Zero;
+    public float Priority { get; set; } = 0;
+
+    public override string ToString() => $"({BlendMode}|{Priority}) {Texture.Base}{Color}{SerializedCanvas}";
+
+    public string DebugPrint(string offset = "")
+    {
+        string result = $"{offset}{this}\n";
+        foreach (RecusiveOverlaysTexture overlay in Overlays.OrderBy(x => x.Priority))
+        {
+            result += overlay.DebugPrint(offset + "--");
+        }
+        return result;
+    }
 }
 
 public class RecusiveOverlaysTextureWithTarget : RecusiveOverlaysTexture

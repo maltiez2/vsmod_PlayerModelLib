@@ -82,6 +82,11 @@ public static class TextureUtils
 
     public static BakedBitmap LoadCompositeBitmap(ClientMain game, RecusiveOverlaysTexture recursiveOverlaysTexture, bool calledFromItself = false, string? debugCode = null, int depth = 0)
     {
+        /*if (!calledFromItself)
+        {
+            Debug.WriteLine(recursiveOverlaysTexture.DebugPrint());
+        }*/
+        
         BakedBitmap? result;
         if (recursiveOverlaysTexture.Canvas && recursiveOverlaysTexture.SerializedCanvas != null)
         {
@@ -106,7 +111,7 @@ public static class TextureUtils
             result = TextureAtlasManager.LoadCompositeBitmap(game, baseLoc);
         }
 
-        foreach (RecusiveOverlaysTexture overlay in recursiveOverlaysTexture.Overlays)
+        foreach (RecusiveOverlaysTexture overlay in recursiveOverlaysTexture.Overlays.OrderBy(x => x.Priority))
         {
             BakedBitmap overlayBitmap = LoadCompositeBitmap(game, overlay, calledFromItself: true, debugCode: debugCode, depth: depth + 1);
 

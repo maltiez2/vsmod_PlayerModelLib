@@ -735,7 +735,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
 
     protected virtual void AddSkinPartsTextures(ICoreClientAPI api, Shape entityShape, string shapePathForLogging)
     {
-        foreach (AppliedSkinnablePartVariant? skinPart in GetAppliedSkinParts())
+        foreach (AppliedSkinnablePartVariant skinPart in GetAppliedSkinParts())
         {
             AvailableSkinPartsByCode.TryGetValue(skinPart.PartCode, out SkinnablePart? part);
 
@@ -764,7 +764,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
                     string code = CustomModelsSystem.PrefixSkinPartTextures(CurrentModelCode, extendedPart.TextureTarget, skinPart.PartCode);
                     string target = CustomModelsSystem.PrefixSkinPartTextures(CurrentModelCode, part.TextureTarget, targetSkinPart);
 
-                    AddOverlayTexture(code, target, textureLoc, extendedPart.OverlayMode, extendedPart.OverlayOffset);
+                    AddOverlayTexture(code, target, textureLoc, extendedPart.OverlayMode, extendedPart.OverlayOffset, extendedPart.Priority);
                 }
             }
             else
@@ -772,7 +772,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
                 string code = CustomModelsSystem.PrefixSkinPartTextures(CurrentModelCode, extendedPart.TextureTarget, skinPart.PartCode);
                 string target = CustomModelsSystem.PrefixSkinPartTextures(CurrentModelCode, part.TextureTarget, "base");
 
-                AddOverlayTexture(code, target, textureLoc, extendedPart.OverlayMode, extendedPart.OverlayOffset);
+                AddOverlayTexture(code, target, textureLoc, extendedPart.OverlayMode, extendedPart.OverlayOffset, extendedPart.Priority);
             }
         }
     }
@@ -803,7 +803,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
                         size = new(extendedPart.Size[0], extendedPart.Size[1]);
                     }
 
-                    AddSolidColorTexture(code, target, skinPart.Code, size, extendedPart.OverlayMode, extendedPart.OverlayOffset);
+                    AddSolidColorTexture(code, target, skinPart.Code, size, extendedPart.OverlayMode, extendedPart.OverlayOffset, extendedPart.Priority);
                 }
             }
             else
@@ -817,7 +817,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
                     size = new(extendedPart.Size[0], extendedPart.Size[1]);
                 }
 
-                AddSolidColorTexture(code, target, skinPart.Code, size, extendedPart.OverlayMode, extendedPart.OverlayOffset);
+                AddSolidColorTexture(code, target, skinPart.Code, size, extendedPart.OverlayMode, extendedPart.OverlayOffset, extendedPart.Priority);
             }
         }
     }
@@ -848,7 +848,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
                         size = new(extendedPart.Size[0], extendedPart.Size[1]);
                     }
 
-                    AddCavnasTexture(code, target, skinPart.Code, size, extendedPart.OverlayMode, extendedPart.OverlayOffset);
+                    AddCavnasTexture(code, target, skinPart.Code, size, extendedPart.OverlayMode, extendedPart.OverlayOffset, extendedPart.Priority);
                 }
             }
             else
@@ -862,7 +862,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
                     size = new(extendedPart.Size[0], extendedPart.Size[1]);
                 }
 
-                AddCavnasTexture(code, target, skinPart.Code, size, extendedPart.OverlayMode, extendedPart.OverlayOffset);
+                AddCavnasTexture(code, target, skinPart.Code, size, extendedPart.OverlayMode, extendedPart.OverlayOffset, extendedPart.Priority);
             }
         }
     }
@@ -1037,7 +1037,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         }
     }
 
-    protected virtual void AddOverlayTexture(string code, string target, AssetLocation texturePath, EnumTextureOverlayMode overlayMode, int[] offset)
+    protected virtual void AddOverlayTexture(string code, string target, AssetLocation texturePath, EnumTextureOverlayMode overlayMode, int[] offset, float priority)
     {
         if (RecursiveOverlaysByTextures.TryGetValue(code, out RecusiveOverlaysTextureWithTarget? overlay))
         {
@@ -1060,12 +1060,13 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         RecusiveOverlaysTextureWithTarget node = new(texture, overlayMode)
         {
             TargetCodes = [target],
-            Offset = overlayOffset
+            Offset = overlayOffset,
+            Priority = priority
         };
         RecursiveOverlaysByTextures.SetValue(code, node);
     }
 
-    protected virtual void AddSolidColorTexture(string code, string target, string color, Vector2i size, EnumTextureOverlayMode overlayMode, int[] offset)
+    protected virtual void AddSolidColorTexture(string code, string target, string color, Vector2i size, EnumTextureOverlayMode overlayMode, int[] offset, float priority)
     {
         if (RecursiveOverlaysByTextures.TryGetValue(code, out RecusiveOverlaysTextureWithTarget? overlay))
         {
@@ -1085,12 +1086,13 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
             Color = color,
             SizeOverride = size,
             SolidColor = true,
-            Offset = overlayOffset
+            Offset = overlayOffset,
+            Priority = priority
         };
         RecursiveOverlaysByTextures.SetValue(code, node);
     }
 
-    protected virtual void AddCavnasTexture(string code, string target, string serializedCanvas, Vector2i size, EnumTextureOverlayMode overlayMode, int[] offset)
+    protected virtual void AddCavnasTexture(string code, string target, string serializedCanvas, Vector2i size, EnumTextureOverlayMode overlayMode, int[] offset, float priority)
     {
         if (RecursiveOverlaysByTextures.TryGetValue(code, out RecusiveOverlaysTextureWithTarget? overlay))
         {
@@ -1110,7 +1112,8 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
             SerializedCanvas = serializedCanvas,
             SizeOverride = size,
             Canvas = true,
-            Offset = overlayOffset
+            Offset = overlayOffset,
+            Priority = priority
         };
         RecursiveOverlaysByTextures.SetValue(code, node);
     }

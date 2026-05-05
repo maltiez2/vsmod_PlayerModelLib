@@ -85,9 +85,9 @@ public static class TextureOverlayBlendingUtils
 
         if (overlayAlpha == 0) return baseColor;
 
-        if (overlayAlpha == 255) return overlayColor;
-
         int baseAlpha = (baseColor >> 24) & 0xFF;
+
+        if (baseAlpha == 0) return 0;
 
         int baseR = (baseColor >> 16) & 0xFF;
         int baseG = (baseColor >> 8) & 0xFF;
@@ -100,7 +100,7 @@ public static class TextureOverlayBlendingUtils
         int inverseOverlayAlpha = 255 - overlayAlpha;
         int outAlpha = overlayAlpha + (baseAlpha * inverseOverlayAlpha) / 255;
 
-        if (outAlpha == 0) return 0;
+        
 
         int outR = (overlayR * overlayAlpha + baseR * baseAlpha * inverseOverlayAlpha / 255) / outAlpha;
         int outG = (overlayG * overlayAlpha + baseG * baseAlpha * inverseOverlayAlpha / 255) / outAlpha;
@@ -280,12 +280,11 @@ public static class TextureOverlayBlendingUtils
         int baseAlpha = (baseColor >> 24) & 0xFF;
         int overlayAlpha = (overlayColor >> 24) & 0xFF;
 
+        if (baseAlpha == 0) return 0;
         if (overlayAlpha == 0) return baseColor;
 
         int inverseOverlayAlpha = 255 - overlayAlpha;
         int outAlpha = overlayAlpha + (baseAlpha * inverseOverlayAlpha) / 255;
-
-        if (outAlpha == 0) return 0;
 
         int outR = (overlayR * overlayAlpha + baseR * baseAlpha * inverseOverlayAlpha / 255) / outAlpha;
         int outG = (overlayG * overlayAlpha + baseG * baseAlpha * inverseOverlayAlpha / 255) / outAlpha;
@@ -295,6 +294,6 @@ public static class TextureOverlayBlendingUtils
         outG = Math.Clamp(outG, 0, 255);
         outB = Math.Clamp(outB, 0, 255);
 
-        return (outAlpha << 24) | (outR << 16) | (outG << 8) | outB;
+        return (baseAlpha << 24) | (outR << 16) | (outG << 8) | outB;
     }
 }

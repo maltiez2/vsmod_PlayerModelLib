@@ -38,6 +38,7 @@ public class SkinnablePartExtended : SkinnablePart
     public bool SolidColor { get; set; } = false;
     public bool Canvas { get; set; } = false;
     public int ColorsNumber { get; set; } = 3;
+    public float Priority { get; set; } = 0;
     public int[] Size { get; set; } = [];
     public int[] OverlayOffset { get; set; } = [];
 }
