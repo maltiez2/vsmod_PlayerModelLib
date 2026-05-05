@@ -12,6 +12,7 @@ public enum EnumTextureOverlayMode
 {
     Replace,
     Normal,
+    NormalPreserveAlpha,
     AlphaMask,
     AlphaMaskBlackAndWhite,
     AlphaMaskBlackAndWhiteInverted,

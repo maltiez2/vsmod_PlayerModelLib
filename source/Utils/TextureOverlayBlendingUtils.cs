@@ -26,6 +26,7 @@ public static class TextureOverlayBlendingUtils
                 {
                     EnumTextureOverlayMode.Replace => overlayPixels[overlayIndex],
                     EnumTextureOverlayMode.Normal => NormalBlend(basePixels[baseIndex], overlayPixels[overlayIndex]),
+                    EnumTextureOverlayMode.NormalPreserveAlpha => NormalPreserveAlphaBlend(basePixels[baseIndex], overlayPixels[overlayIndex]),
                     EnumTextureOverlayMode.AlphaMask => AlphaMask(basePixels[baseIndex], overlayPixels[overlayIndex]),
                     EnumTextureOverlayMode.AlphaMaskBlackAndWhite => AlphaMaskBlackAndWhite(basePixels[baseIndex], overlayPixels[overlayIndex]),
                     EnumTextureOverlayMode.AlphaMaskBlackAndWhiteInverted => AlphaMaskBlackAndWhiteInverted(basePixels[baseIndex], overlayPixels[overlayIndex]),
@@ -75,6 +76,37 @@ public static class TextureOverlayBlendingUtils
         int outB = (overlayB * overlayAlpha + baseB * baseAlpha * inverseOverlayAlpha / 255) / outAlpha;
 
         return (outAlpha << 24) | (outR << 16) | (outG << 8) | outB;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int NormalPreserveAlphaBlend(int baseColor, int overlayColor)
+    {
+        int overlayAlpha = (overlayColor >> 24) & 0xFF;
+
+        if (overlayAlpha == 0) return baseColor;
+
+        if (overlayAlpha == 255) return overlayColor;
+
+        int baseAlpha = (baseColor >> 24) & 0xFF;
+
+        int baseR = (baseColor >> 16) & 0xFF;
+        int baseG = (baseColor >> 8) & 0xFF;
+        int baseB = baseColor & 0xFF;
+
+        int overlayR = (overlayColor >> 16) & 0xFF;
+        int overlayG = (overlayColor >> 8) & 0xFF;
+        int overlayB = overlayColor & 0xFF;
+
+        int inverseOverlayAlpha = 255 - overlayAlpha;
+        int outAlpha = overlayAlpha + (baseAlpha * inverseOverlayAlpha) / 255;
+
+        if (outAlpha == 0) return 0;
+
+        int outR = (overlayR * overlayAlpha + baseR * baseAlpha * inverseOverlayAlpha / 255) / outAlpha;
+        int outG = (overlayG * overlayAlpha + baseG * baseAlpha * inverseOverlayAlpha / 255) / outAlpha;
+        int outB = (overlayB * overlayAlpha + baseB * baseAlpha * inverseOverlayAlpha / 255) / outAlpha;
+
+        return (baseAlpha << 24) | (outR << 16) | (outG << 8) | outB;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
