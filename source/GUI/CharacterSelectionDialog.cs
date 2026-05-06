@@ -45,6 +45,8 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     {
         DialogOpened = true;
 
+        CurrentTab = 0;
+
         string? characterClass = capi.World.Player.Entity.WatchedAttributes.GetString("characterClass");
         if (characterClass != null && CharacterSystem.characterClassesByCode.ContainsKey(characterClass))
         {
@@ -1006,7 +1008,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             key: "colorpicker-" + partCode
             );
 
-        double[] color = HexArgbToDoubleArray(appliedVariant.Code);
+        double[] color = HexArgbToDoubleArray(appliedVariant?.Code ?? $"#FFFFFFFF");
         Composers["createcharacter"].GetColorPicker("colorpicker-" + partCode).SetColor(color[1], color[2], color[3], color[0]);
 
         swatchesSkinPartBounds = swatchesSkinPartBounds.FlatCopy().WithParent(partBounds);
