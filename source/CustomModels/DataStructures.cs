@@ -26,7 +26,8 @@ public enum EnumTextureOverlayMode
     OverlayCutout,
     HueBlend,
     SaturationBlend,
-    LuminosityBlend
+    LuminosityBlend,
+    HueSaturationBlend
 }
 
 public class SkinnablePartExtended : SkinnablePart
