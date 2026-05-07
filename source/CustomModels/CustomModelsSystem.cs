@@ -1289,7 +1289,7 @@ public sealed class CustomModelsSystem : ModSystem
 
                 if (part.SolidColor)
                 {
-                    ProcessSolidColorTexturePart(clientApi, part, model);
+                    ProcessSolidColorTexturePart(part);
                 }
                 else
                 {
@@ -1426,9 +1426,39 @@ public sealed class CustomModelsSystem : ModSystem
         return TextCommandResult.Success($"Player '{targetPlayer.Name}' now does not have access to '{playerModelCode}' player model");
     }
 
-    private void ProcessSolidColorTexturePart(ICoreClientAPI clientApi, SkinnablePart part, string model)
+    private static double[] HexArgbToDoubleRgba(string hex)
     {
-        // nothing to process yet
+        if (string.IsNullOrWhiteSpace(hex)) return [0, 0, 0, 0];
+
+        if (hex.StartsWith('#'))
+        {
+            hex = hex.Substring(1);
+        }
+
+        if (hex.Length != 8) return [0, 0, 0, 0];
+
+        byte a = Convert.ToByte(hex.Substring(0, 2), 16);
+        byte r = Convert.ToByte(hex.Substring(2, 2), 16);
+        byte g = Convert.ToByte(hex.Substring(4, 2), 16);
+        byte b = Convert.ToByte(hex.Substring(6, 2), 16);
+
+        return
+        [
+            b / 255.0,
+            g / 255.0,
+            r / 255.0,
+            a / 255.0
+        ];
+    }
+    private void ProcessSolidColorTexturePart(SkinnablePart part)
+    {
+        foreach (SkinnablePartVariant? variant in part.Variants)
+        {
+            double[] color = HexArgbToDoubleRgba(variant.Code);
+            int colorInt = ColorUtil.FromRGBADoubles(color);
+            variant.Color = colorInt;
+            part.VariantsByCode[variant.Code] = variant;
+        }
     }
     private void ProcessTexturePart(ICoreClientAPI clientApi, SkinnablePart part, string model)
     {

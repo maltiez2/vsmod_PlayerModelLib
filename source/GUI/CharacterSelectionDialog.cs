@@ -1299,7 +1299,11 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         if (skinMod == null) return;
 
-        string colorValue = skinMod.AvailableSkinPartsByCode.GetValue(partCode)?.Variants[index].Code ?? "#00000000";
+        SkinnablePart? skinPart = skinMod.AvailableSkinPartsByCode.GetValue(partCode);
+        SkinnablePartVariant[]? variants = skinPart?.Variants.Where(variant => variant.Category == "standard" || variant.Category == null || variant.Category == "").ToArray();
+        if (variants == null || index >= variants.Length) return;
+
+        string colorValue = variants[index].Code ?? "#00000000";
         double[] color = HexArgbToDoubleArray(colorValue);
         Composers["createcharacter"].GetColorPicker("colorpicker-" + partCode)?.SetColor(color[1], color[2], color[3], color[0]);
     }

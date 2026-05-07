@@ -235,8 +235,6 @@ public static class TextureOverlayBlendingUtils
 
 
 
-
-
     private static void RgbToHsl(int r, int g, int b, out float h, out float s, out float l)
     {
         float rf = r / 255f;
