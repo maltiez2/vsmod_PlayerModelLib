@@ -1068,7 +1068,11 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         if (appliedVariant?.Code != null)
         {
-            canvasData = TextureCanvasData.Deserialize(appliedVariant.Code);
+            TextureCanvasData appliedCanvasData = TextureCanvasData.Deserialize(appliedVariant.Code);
+            if (canvasData.Width == appliedCanvasData.Width && canvasData.Height == appliedCanvasData.Height)
+            {
+                canvasData = appliedCanvasData;
+            }
         }
 
         composer.AddCanvasEditor(canvasData, canvasSkinPartBounds, data => onToggleSkinPartCanvas(partCode, data), key: "canvas-" + partCode);
@@ -1184,10 +1188,12 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     {
         if (string.IsNullOrWhiteSpace(hex)) return [0, 0, 0, 0];
 
-        if (hex.StartsWith('#'))
+        if (!hex.StartsWith('#'))
         {
-            hex = hex.Substring(1);
+            return [0, 0, 0, 0];
         }
+
+        hex = hex.Substring(1);
 
         if (hex.Length != 8) return [0, 0, 0, 0];
 

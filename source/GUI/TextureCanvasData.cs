@@ -23,8 +23,7 @@ public class TextureCanvasData
 
     public static TextureCanvasData Deserialize(string data)
     {
-        if (string.IsNullOrWhiteSpace(data))
-            return Blank(1, 1);
+        if (string.IsNullOrWhiteSpace(data)) return Blank(1, 1);
 
         try
         {
