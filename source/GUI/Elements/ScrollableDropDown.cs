@@ -412,11 +412,6 @@ public class GuiElementScrollableDropDown : GuiElementTextBase
         listMenu.OnKeyPress(api, args);
     }
 
-    public override void OnMouseMove(ICoreClientAPI api, MouseEvent args)
-    {
-        listMenu.OnMouseMove(api, args);
-    }
-
     public override void OnMouseWheel(ICoreClientAPI api, MouseWheelEventArgs args)
     {
         if (!enabled || !HasFocus) return;
@@ -435,32 +430,68 @@ public class GuiElementScrollableDropDown : GuiElementTextBase
         listMenu.OnMouseWheel(api, args);
     }
 
+    public override void OnMouseDown(ICoreClientAPI api, MouseEvent args)
+    {
+        if (!enabled) return;
+
+        // Swallow ALL clicks inside the open list menu immediately
+        if (listMenu.IsOpened && listMenu.IsPositionInside(args.X, args.Y))
+        {
+            listMenu.OnMouseDown(api, args);
+            args.Handled = true;
+            return;
+        }
+
+        // Swallow clicks on the dropdown button itself
+        if (IsPositionInside(args.X, args.Y))
+        {
+            listMenu.OnMouseDown(api, args);
+            if (!listMenu.IsOpened)
+            {
+                listMenu.Open();
+                api.Gui.PlaySound("menubutton");
+            }
+            args.Handled = true;
+            return;
+        }
+
+        // Click was outside everything — close the list if open
+        if (listMenu.IsOpened)
+        {
+            listMenu.OnMouseDown(api, args);
+        }
+    }
+
     public override void OnMouseUp(ICoreClientAPI api, MouseEvent args)
     {
         if (!enabled) return;
+
+        if (listMenu.IsOpened && listMenu.IsPositionInside(args.X, args.Y))
+        {
+            listMenu.OnMouseUp(api, args);
+            args.Handled = true;
+            return;
+        }
 
         listMenu.OnMouseUp(api, args);
         args.Handled |= IsPositionInside(args.X, args.Y);
     }
 
+    public override void OnMouseMove(ICoreClientAPI api, MouseEvent args)
+    {
+        listMenu.OnMouseMove(api, args);
+
+        // Swallow mouse move events over the open list so tooltips
+        // or hover states on elements beneath don't trigger
+        if (listMenu.IsOpened && listMenu.IsPositionInside(args.X, args.Y))
+        {
+            args.Handled = true;
+        }
+    }
+
     public override bool IsPositionInside(int posX, int posY)
     {
         return base.IsPositionInside(posX, posY) || (listMenu.IsOpened && listMenu.IsPositionInside(posX, posY));
-    }
-
-    public override void OnMouseDown(ICoreClientAPI api, MouseEvent args)
-    {
-        if (!enabled) return;
-
-        listMenu.OnMouseDown(api, args);
-
-        if (!listMenu.IsOpened && IsPositionInside(args.X, args.Y) && !args.Handled)
-        {
-            listMenu.Open();
-            api.Gui.PlaySound("menubutton");
-            args.Handled = true;
-            return;
-        }
     }
 
     public override void OnFocusGained()

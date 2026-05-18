@@ -22,7 +22,7 @@ public class CustomPlayerShapeRenderer : EntityPlayerShapeRenderer
     public override void TesselateShape()
     {
 #if DEBUG
-        PlayerModelModSystem.Settings.MultiThreadPayerShapeGeneration = false;
+        PlayerModelModSystem.Settings.MultiThreadPayerShapeGeneration = true;
 #endif
 
         if (PlayerModelModSystem.Settings.MultiThreadPayerShapeGeneration && entity.Api.Side == EnumAppSide.Client)

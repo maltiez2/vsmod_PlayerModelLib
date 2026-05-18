@@ -96,7 +96,8 @@ public static class TextureUtils
         }
         else if (recursiveOverlaysTexture.SolidColor && recursiveOverlaysTexture.SizeOverride != Vector2i.Zero)
         {
-            int color = ColorUtil.Hex2Int(recursiveOverlaysTexture.Color ?? "#00000000");
+            string colorString = recursiveOverlaysTexture.Color ?? "#00000000";
+            int color = colorString.StartsWith('#') ? ColorUtil.Hex2Int(colorString) : 0;
             result = CreateSolidColorBitmap(recursiveOverlaysTexture.SizeOverride.X, recursiveOverlaysTexture.SizeOverride.Y, color);
         }
         else

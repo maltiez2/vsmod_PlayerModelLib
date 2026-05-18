@@ -1289,7 +1289,7 @@ public sealed class CustomModelsSystem : ModSystem
 
                 if (part.SolidColor)
                 {
-                    ProcessSolidColorTexturePart(part);
+                    ProcessSolidColorTexturePart(clientApi, part, model);
                 }
                 else
                 {
@@ -1434,6 +1434,10 @@ public sealed class CustomModelsSystem : ModSystem
         {
             hex = hex.Substring(1);
         }
+        else
+        {
+            return [0, 0, 0, 0];
+        }
 
         if (hex.Length != 8) return [0, 0, 0, 0];
 
@@ -1450,10 +1454,15 @@ public sealed class CustomModelsSystem : ModSystem
             a / 255.0
         ];
     }
-    private void ProcessSolidColorTexturePart(SkinnablePart part)
+    private void ProcessSolidColorTexturePart(ICoreAPI api, SkinnablePart part, string model)
     {
         foreach (SkinnablePartVariant? variant in part.Variants)
         {
+            if (!variant.Code.StartsWith('#') || variant.Code.Length != 9)
+            {
+                Log.Error(api, this, $"({model}) Solid color texture part '{part.Code}' contains variant with code '{variant.Code}' that is not in hex ARGB");
+                continue;
+            }
             double[] color = HexArgbToDoubleRgba(variant.Code);
             int colorInt = ColorUtil.FromRGBADoubles(color);
             variant.Color = colorInt;

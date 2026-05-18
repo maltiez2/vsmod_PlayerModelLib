@@ -1,5 +1,6 @@
 ﻿using OverhaulLib.Utils;
 using System.Diagnostics;
+using System.Reflection;
 using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -9,7 +10,6 @@ using Vintagestory.API.Util;
 using Vintagestory.GameContent;
 
 namespace PlayerModelLib;
-
 
 public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 {
@@ -159,6 +159,14 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     }
     public override void OnMouseDown(MouseEvent args)
     {
+        foreach (var composer in Composers.Values)
+        {
+            if (GuiComposerDropDownBlocker.HandleMouseDown(composer, Api, args))
+            {
+                return;
+            }
+        }
+
         if (args.Handled)
         {
             return;
@@ -194,6 +202,14 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     }
     public override void OnMouseUp(MouseEvent args)
     {
+        foreach (var composer in Composers.Values)
+        {
+            if (GuiComposerDropDownBlocker.HandleMouseUp(composer, Api, args))
+            {
+                return;
+            }
+        }
+
         base.OnMouseUp(args);
 
         RotateCharacter = false;
@@ -1058,10 +1074,11 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         {
             Width = skinPart.Size[0],
             Height = skinPart.Size[1],
-            Colors = new int[colorsNumber],
+            Colors = new int[colorsNumber + 1],
             Pixels = new int[skinPart.Size[0] * skinPart.Size[1]]
         };
-        for (int i = 0; i < colorsNumber; i++)
+
+        for (int i = 0; i < canvasData.Colors.Length; i++)
         {
             canvasData.Colors[i] = -1;
         }
@@ -1069,11 +1086,13 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         if (appliedVariant?.Code != null)
         {
             TextureCanvasData appliedCanvasData = TextureCanvasData.Deserialize(appliedVariant.Code);
-            if (canvasData.Width == appliedCanvasData.Width && canvasData.Height == appliedCanvasData.Height)
+            if (canvasData.Width == appliedCanvasData.Width && canvasData.Height == appliedCanvasData.Height && canvasData.Colors.Length == appliedCanvasData.Colors.Length)
             {
                 canvasData = appliedCanvasData;
             }
         }
+
+        canvasData.Colors = canvasData.Colors[1..];
 
         composer.AddCanvasEditor(canvasData, canvasSkinPartBounds, data => onToggleSkinPartCanvas(partCode, data), key: "canvas-" + partCode);
 
@@ -1693,5 +1712,105 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         capi.Network.SendPlayerNowReady();
 
         capi.Event.PushEvent("finishcharacterselection");
+    }
+}
+
+public static class GuiComposerDropDownBlocker
+{
+    private static FieldInfo _interactiveElementsField;
+
+    private static FieldInfo InteractiveElementsField
+    {
+        get
+        {
+            if (_interactiveElementsField == null)
+            {
+                _interactiveElementsField = typeof(GuiComposer).GetField(
+                    "interactiveElements",
+                    BindingFlags.NonPublic | BindingFlags.Instance
+                );
+            }
+            return _interactiveElementsField;
+        }
+    }
+
+    private static Dictionary<string, GuiElement> GetElements(GuiComposer composer)
+    {
+        return InteractiveElementsField?.GetValue(composer) as Dictionary<string, GuiElement>;
+    }
+
+    public static GuiElementScrollableDropDown FindBlockingDropDown(GuiComposer composer, int x, int y)
+    {
+        var elements = GetElements(composer);
+        if (elements == null) return null;
+
+        foreach (var element in elements.Values)
+        {
+            if (element is GuiElementScrollableDropDown dropdown
+                && dropdown.listMenu.IsOpened
+                && dropdown.listMenu.IsPositionInside(x, y))
+            {
+                return dropdown;
+            }
+        }
+
+        return null;
+    }
+
+    public static bool IsBlockedByOpenDropDown(GuiComposer composer, int x, int y)
+    {
+        return FindBlockingDropDown(composer, x, y) != null;
+    }
+
+    /// <summary>
+    /// Handles MouseDown for the composer manually, stopping iteration
+    /// if a dropdown list consumes the event.
+    /// </summary>
+    public static bool HandleMouseDown(GuiComposer composer, ICoreClientAPI api, MouseEvent args)
+    {
+        var elements = GetElements(composer);
+        if (elements == null) return false;
+
+        // First pass: check if any open dropdown list owns this position.
+        // If so, deliver ONLY to that dropdown and stop.
+        foreach (var element in elements.Values)
+        {
+            if (element is GuiElementScrollableDropDown dropdown && dropdown.listMenu.IsOpened)
+            {
+                if (dropdown.listMenu.IsPositionInside(args.X, args.Y))
+                {
+                    dropdown.OnMouseDown(api, args);
+                    args.Handled = true;
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Handles MouseUp for the composer manually, stopping iteration
+    /// if a dropdown list consumes the event.
+    /// </summary>
+    public static bool HandleMouseUp(GuiComposer composer, ICoreClientAPI api, MouseEvent args)
+    {
+        var elements = GetElements(composer);
+        if (elements == null) return false;
+
+        foreach (var element in elements.Values)
+        {
+            if (element is GuiElementScrollableDropDown dropdown && dropdown.listMenu.IsOpened)
+            {
+                if (dropdown.listMenu.IsPositionInside(args.X, args.Y))
+                {
+                    dropdown.OnMouseUp(api, args);
+                    args.Handled = true;
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 }
