@@ -325,7 +325,8 @@ public sealed class CustomModelsSystem : ModSystem
             SneakEyeHeightMultiplier = defaultConfig.SneakEyeHeightMultiplier,
             StepHeight = defaultConfig.StepHeight,
             MaxOxygenFactor = defaultConfig.MaxOxygenFactor,
-            CreateCuboidsForAttachmentPoints = defaultConfig.CreateCuboidsForAttachmentPoints
+            CreateCuboidsForAttachmentPoints = defaultConfig.CreateCuboidsForAttachmentPoints,
+            AnimationsMetaData = defaultConfig.AnimationsMetaData.ToDictionary(entry => entry.Code, entry => entry)
         };
 
         CustomModels.Add(_defaultModelCode, defaultModelData);
@@ -445,7 +446,8 @@ public sealed class CustomModelsSystem : ModSystem
             SneakEyeHeightMultiplier = modelConfig.SneakEyeHeightMultiplier,
             StepHeight = modelConfig.StepHeight,
             MaxOxygenFactor = modelConfig.MaxOxygenFactor,
-            CreateCuboidsForAttachmentPoints = modelConfig.CreateCuboidsForAttachmentPoints
+            CreateCuboidsForAttachmentPoints = modelConfig.CreateCuboidsForAttachmentPoints,
+            AnimationsMetaData = modelConfig.AnimationsMetaData.ToDictionary(entry => entry.Code, entry => entry)
         };
 
         AssetLocation icon = new AssetLocation(modelConfig.Icon).WithPathPrefixOnce("textures/").WithPathAppendixOnce(".png");

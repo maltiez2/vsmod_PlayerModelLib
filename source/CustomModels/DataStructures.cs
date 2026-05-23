@@ -5,6 +5,7 @@ using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
 using Vintagestory.GameContent;
 using OverhaulLib.Utils;
+using System.Runtime.InteropServices;
 
 namespace PlayerModelLib;
 
@@ -61,6 +62,7 @@ public class CustomModelConfig
     public Dictionary<string, string> WearableModelReplacersByShape { get; set; } = [];
     public Dictionary<string, string[]> DisabledElementsByShape { get; set; } = [];
     public Dictionary<string, string[]> EnabledElementsByShape { get; set; } = [];
+    public List<AnimationMetaData> AnimationsMetaData { get; set; } = [];
     public string[] AvailableClasses { get; set; } = [];
     public string[] SkipClasses { get; set; } = [];
     public string[] ExtraTraits { get; set; } = [];
@@ -108,6 +110,7 @@ public class CustomModelData
     public Dictionary<string, string> WearableShapeReplacersByShape { get; set; } = [];
     public Dictionary<string, string[]> DisabledElementsByShape { get; set; } = [];
     public Dictionary<string, string[]> EnabledElementsByShape { get; set; } = [];
+    public Dictionary<string, AnimationMetaData> AnimationsMetaData { get; set; } = [];
     public Vector2 CollisionBox { get; set; }
     public float EyeHeight { get; set; }
     public Vector2 SizeRange { get; set; }

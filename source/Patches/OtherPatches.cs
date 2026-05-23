@@ -67,10 +67,13 @@ internal static class OtherPatches
                 typeof(CharacterSystem).GetMethod("onCharacterSelection", AccessTools.all),
                 prefix: new HarmonyMethod(AccessTools.Method(typeof(OtherPatches), nameof(onCharacterSelection)))
             );
-
         new Harmony(harmonyId).Patch(
                 typeof(ModSystemGliding).GetMethod("get_HasGlider", AccessTools.all),
                 prefix: new HarmonyMethod(AccessTools.Method(typeof(OtherPatches), nameof(ModSystemGliding_get_HasGlider)))
+            );
+        new Harmony(harmonyId).Patch(
+                typeof(AnimationManager).GetMethod("StartAnimation", AccessTools.all, [typeof(AnimationMetaData)]),
+                prefix: new HarmonyMethod(AccessTools.Method(typeof(OtherPatches), nameof(PlayerAnimationManager_StartAnimation_ByMeta)))
             );
     }
 
@@ -87,6 +90,7 @@ internal static class OtherPatches
         new Harmony(harmonyId).Unpatch(typeof(TextureAtlasManager).GetMethod("RegenMipMaps", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
         new Harmony(harmonyId).Unpatch(typeof(CharacterSystem).GetMethod("onCharacterSelection", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
         new Harmony(harmonyId).Unpatch(typeof(ModSystemGliding).GetMethod("get_HasGlider", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
+        new Harmony(harmonyId).Unpatch(typeof(AnimationManager).GetMethod("StartAnimation", AccessTools.all, [typeof(AnimationMetaData)]), HarmonyPatchType.Prefix, harmonyId);
 
         _clientApi = null;
     }
@@ -109,6 +113,22 @@ internal static class OtherPatches
     private static readonly FieldInfo? _characterSystem_createCharDlg = typeof(CharacterSystem).GetField("createCharDlg", BindingFlags.NonPublic | BindingFlags.Instance);
     private static readonly FieldInfo? _characterSystem_capi = typeof(CharacterSystem).GetField("capi", BindingFlags.NonPublic | BindingFlags.Instance);
     private static readonly FieldInfo? _guiDialogHairStyling_currentSkin = typeof(GuiDialogHairStyling).GetField("currentSkin", BindingFlags.NonPublic | BindingFlags.Instance);
+    private static readonly FieldInfo? _playerAnimationManager_entity = typeof(PlayerAnimationManager).GetField("entity", BindingFlags.NonPublic | BindingFlags.Instance);
+
+    private static void PlayerAnimationManager_StartAnimation_ByMeta(AnimationManager __instance, ref AnimationMetaData? animdata)
+    {
+        if (__instance is not PlayerAnimationManager) return;
+        
+        EntityPlayer? player = _playerAnimationManager_entity?.GetValue(__instance) as EntityPlayer;
+        PlayerSkinBehavior? skin = player?.GetBehavior<PlayerSkinBehavior>();
+        if (player == null || skin == null || animdata?.Code == null) return;
+
+        Dictionary<string, AnimationMetaData> animationsData = skin.CurrentModel.AnimationsMetaData;
+
+        if (!animationsData.TryGetValue(animdata.Code, out AnimationMetaData? newData)) return;
+
+        animdata = newData;
+    }
 
     private static bool ModSystemGliding_get_HasGlider(ModSystemGliding __instance, ref bool __result)
     {
@@ -237,7 +257,7 @@ internal static class OtherPatches
     private static bool composeTraitsTab(CharacterSystem __instance, GuiComposer compo)
     {
         if (_clientApi == null) return false;
-        
+
         _composer = compo;
 
         string text = "";
@@ -394,12 +414,12 @@ internal static class OtherPatches
     {
         int cost = 0;
         PlayerSkinBehavior? skinMod = _clientApi?.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
-        var availableSkinParts = skinMod?.AvailableSkinParts.Get();
+        IReadOnlyList<SkinnablePart>? availableSkinParts = skinMod?.AvailableSkinParts.Get();
         if (skinMod == null || availableSkinParts == null)
         {
             return false;
         }
-        
+
         Dictionary<string, string> currentSkin = (Dictionary<string, string>?)_guiDialogHairStyling_currentSkin?.GetValue(__instance) ?? [];
 
         foreach (string code in availableSkinParts.Select(skinpart => skinpart.Code))
@@ -426,7 +446,7 @@ internal static class OtherPatches
                 cost += __instance.hairStylingCost[code];
             }
         }
-        
+
         __result = cost;
 
         return false;
@@ -456,19 +476,19 @@ internal static class OtherPatches
 
             __instance.setCharacterClass(fromPlayer.Entity, p.CharacterClass, !didSelectBefore || fromPlayer.WorldData.CurrentGameMode == EnumGameMode.Creative);
 
-            var bh = fromPlayer.Entity.GetBehavior<PlayerSkinBehavior>();
+            PlayerSkinBehavior? bh = fromPlayer.Entity.GetBehavior<PlayerSkinBehavior>();
             bh?.ApplyVoice(p.VoiceType, p.VoicePitch, false);
 
-            foreach (var skinpart in p.SkinParts)
+            foreach (KeyValuePair<string, string> skinpart in p.SkinParts)
             {
                 bh?.SelectSkinPart(skinpart.Key, skinpart.Value, false);
             }
 
-            var date = DateTime.UtcNow;
+            DateTime date = DateTime.UtcNow;
             fromPlayer.ServerData.LastCharacterSelectionDate = date.ToShortDateString() + " " + date.ToShortTimeString();
 
             // allow players that just joined to immediately re select the class
-            var allowOneFreeClassChange = fromPlayer.Entity.Api.World.Config.GetBool("allowOneFreeClassChange");
+            bool allowOneFreeClassChange = fromPlayer.Entity.Api.World.Config.GetBool("allowOneFreeClassChange");
             if (!didSelectBefore && allowOneFreeClassChange)
             {
                 fromPlayer.ServerData.LastCharacterSelectionDate = null;
