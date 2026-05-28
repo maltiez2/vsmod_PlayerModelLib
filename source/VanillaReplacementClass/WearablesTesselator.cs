@@ -28,7 +28,7 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
 
     public static Dictionary<string, HashSet<int>> SlotsToProcess { get; protected set; } = new()
     {
-        [GlobalConstants.backpackInvClassName] = [0, 1, 2, 3]
+        [GlobalConstants.backpackInvClassName] = [0]//[0, 1, 2, 3]
     };
 
     public override string PropertyName() => "";
