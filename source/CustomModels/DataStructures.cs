@@ -5,7 +5,6 @@ using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
 using Vintagestory.GameContent;
 using OverhaulLib.Utils;
-using System.Runtime.InteropServices;
 
 namespace PlayerModelLib;
 
@@ -20,6 +19,7 @@ public enum EnumTextureOverlayMode
     Darken,
     Lighten,
     Multiply,
+    MultiplyPreserveAlpha,
     Screen,
     ColorDodge,
     ColorBurn,

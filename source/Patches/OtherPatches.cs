@@ -122,6 +122,7 @@ internal static class OtherPatches
         EntityPlayer? player = _playerAnimationManager_entity?.GetValue(__instance) as EntityPlayer;
         PlayerSkinBehavior? skin = player?.GetBehavior<PlayerSkinBehavior>();
         if (player == null || skin == null || animdata?.Code == null) return;
+        if (!skin.Initialized) return;
 
         Dictionary<string, AnimationMetaData> animationsData = skin.CurrentModel.AnimationsMetaData;
 

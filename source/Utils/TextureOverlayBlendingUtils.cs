@@ -33,6 +33,7 @@ public static class TextureOverlayBlendingUtils
                     EnumTextureOverlayMode.Darken => ColorBlend.Darken(basePixels[baseIndex], overlayPixels[overlayIndex]),
                     EnumTextureOverlayMode.Lighten => ColorBlend.Lighten(basePixels[baseIndex], overlayPixels[overlayIndex]),
                     EnumTextureOverlayMode.Multiply => ColorBlend.Multiply(basePixels[baseIndex], overlayPixels[overlayIndex]),
+                    EnumTextureOverlayMode.MultiplyPreserveAlpha => MultiplyPreserveAlpha(basePixels[baseIndex], overlayPixels[overlayIndex]),
                     EnumTextureOverlayMode.Screen => ColorBlend.Screen(basePixels[baseIndex], overlayPixels[overlayIndex]),
                     EnumTextureOverlayMode.ColorDodge => ColorBlend.ColorDodge(basePixels[baseIndex], overlayPixels[overlayIndex]),
                     EnumTextureOverlayMode.ColorBurn => ColorBlend.ColorBurn(basePixels[baseIndex], overlayPixels[overlayIndex]),
@@ -231,6 +232,38 @@ public static class TextureOverlayBlendingUtils
         HslToRgb(overlayH, overlayS, baseL, out int outR, out int outG, out int outB);
 
         return ComposeWithAlpha(baseColor, overlayColor, baseR, baseG, baseB, outR, outG, outB);
+    }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int MultiplyPreserveAlpha(int baseColor, int overlayColor)
+    {
+        int overlayAlpha = (overlayColor >> 24) & 0xFF;
+
+        if (overlayAlpha == 0) return baseColor;
+
+        int baseAlpha = (baseColor >> 24) & 0xFF;
+
+        if (baseAlpha == 0) return 0;
+
+        int baseR = (baseColor >> 16) & 0xFF;
+        int baseG = (baseColor >> 8) & 0xFF;
+        int baseB = baseColor & 0xFF;
+
+        int overlayR = (overlayColor >> 16) & 0xFF;
+        int overlayG = (overlayColor >> 8) & 0xFF;
+        int overlayB = overlayColor & 0xFF;
+
+        int multipliedR = (baseR * overlayR) / 255;
+        int multipliedG = (baseG * overlayG) / 255;
+        int multipliedB = (baseB * overlayB) / 255;
+
+        int inverseOverlayAlpha = 255 - overlayAlpha;
+
+        int outR = (multipliedR * overlayAlpha + baseR * inverseOverlayAlpha) / 255;
+        int outG = (multipliedG * overlayAlpha + baseG * inverseOverlayAlpha) / 255;
+        int outB = (multipliedB * overlayAlpha + baseB * inverseOverlayAlpha) / 255;
+
+        return (baseAlpha << 24) | (outR << 16) | (outG << 8) | outB;
     }
 
 
