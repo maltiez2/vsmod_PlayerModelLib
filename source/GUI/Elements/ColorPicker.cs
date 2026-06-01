@@ -1,5 +1,4 @@
-﻿// ColorPicker.cs
-using Cairo;
+﻿using Cairo;
 using Vintagestory.API.Config;
 using Vintagestory.API.Client;
 

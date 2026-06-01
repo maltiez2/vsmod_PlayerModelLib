@@ -1,7 +1,4 @@
-﻿// Canvas.cs
-using System;
-using System.Collections.Generic;
-using Cairo;
+﻿using Cairo;
 using Vintagestory.API.Client;
 using Vintagestory.API.Config;
 
