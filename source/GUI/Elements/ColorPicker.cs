@@ -1,6 +1,7 @@
 ﻿using Cairo;
-using Vintagestory.API.Config;
 using Vintagestory.API.Client;
+using Vintagestory.API.Config;
+using Vintagestory.GameContent;
 
 namespace PlayerModelLib;
 
@@ -32,7 +33,6 @@ public class GuiElementColorPicker : GuiElement
     // ─────────────────────────────────────────────────────────────
     private double _sliderW;
 
-    // Each slider's Y is computed dynamically based on which are visible
     private double _hueSliderY;
     private double _satSliderY;
     private double _valSliderY;
@@ -75,7 +75,13 @@ public class GuiElementColorPicker : GuiElement
     private string _hexValue = "";
     private bool _hexFocused = false;
     private int _hexCursorPos = 0;
+    private int _hexSelectionStart = 0;
+    private int _hexSelectionEnd = 0;
     private bool _suppressHexCallback;
+
+    private bool HasSelection => _hexSelectionStart != _hexSelectionEnd;
+    private int SelectionMin => Math.Min(_hexSelectionStart, _hexSelectionEnd);
+    private int SelectionMax => Math.Max(_hexSelectionStart, _hexSelectionEnd);
 
     // ─────────────────────────────────────────────────────────────
     //  Clip bounds
@@ -135,7 +141,6 @@ public class GuiElementColorPicker : GuiElement
         _fixedValue = fixedValue;
         _fixedAlpha = fixedAlpha;
 
-        // Seed color state from initial RGBA (if supplied)
         if (initialColorRgba != null && initialColorRgba.Length >= 4)
         {
             RgbToHsv((float)initialColorRgba[0], (float)initialColorRgba[1],
@@ -148,14 +153,12 @@ public class GuiElementColorPicker : GuiElement
             _hue = 0f; _saturation = 1f; _value = 1f; _alpha = 1f;
         }
 
-        // Apply fixed overrides on top of the initial color
         ApplyFixedOverrides();
     }
 
     // ─────────────────────────────────────────────────────────────
     //  Fixed-override helper
     // ─────────────────────────────────────────────────────────────
-    /// <summary>Stamps fixed channel values onto the live state.</summary>
     private void ApplyFixedOverrides()
     {
         if (_fixedHue != null) _hue = _fixedHue.Value;
@@ -165,17 +168,16 @@ public class GuiElementColorPicker : GuiElement
     }
 
     // ─────────────────────────────────────────────────────────────
-    //  Layout  (all values unscaled)
+    //  Layout
     // ─────────────────────────────────────────────────────────────
     private void CalcLayout()
     {
         double innerW = Bounds.InnerWidth / RuntimeEnv.GUIScale;
         _sliderW = Math.Max(10, innerW);
 
-        // Stack only the visible sliders
         double y = 0;
 
-        _hueSliderY = -1;   // sentinel: not visible
+        _hueSliderY = -1;
         _satSliderY = -1;
         _valSliderY = -1;
         _alphaSliderY = -1;
@@ -201,7 +203,6 @@ public class GuiElementColorPicker : GuiElement
             y += SliderHeight + SliderPadding;
         }
 
-        // Remove trailing padding if at least one slider was added
         if (y > 0) y -= SliderPadding;
 
         _bottomRowY = y + BottomPadding;
@@ -265,16 +266,32 @@ public class GuiElementColorPicker : GuiElement
         var font = CairoFont.TextInput();
         font.SetupContext(ctx);
 
-        ctx.SetSourceRGBA(1, 1, 1, _hexFocused ? 1.0 : 0.8);
-
+        double textOffsetX = scaled(3);
         double textY = (h - font.GetFontExtents().Height) / 2.0 + font.GetFontExtents().Ascent;
-        ctx.MoveTo(scaled(3), textY);
+
+        // Draw selection highlight
+        if (_hexFocused && HasSelection)
+        {
+            string beforeSel = _hexValue.Substring(0, SelectionMin);
+            string selText = _hexValue.Substring(SelectionMin, SelectionMax - SelectionMin);
+            double selX = textOffsetX + font.GetTextExtents(beforeSel).XAdvance;
+            double selW = font.GetTextExtents(selText).XAdvance;
+
+            ctx.SetSourceRGBA(0.3, 0.5, 1.0, 0.5);
+            ctx.Rectangle(selX, scaled(2), selW, h - scaled(4));
+            ctx.Fill();
+        }
+
+        // Draw text
+        ctx.SetSourceRGBA(1, 1, 1, _hexFocused ? 1.0 : 0.8);
+        ctx.MoveTo(textOffsetX, textY);
         ctx.ShowText(_hexValue);
 
+        // Draw cursor
         if (_hexFocused)
         {
             string beforeCursor = _hexValue.Substring(0, Math.Min(_hexCursorPos, _hexValue.Length));
-            double cursorX = scaled(3) + font.GetTextExtents(beforeCursor).XAdvance;
+            double cursorX = textOffsetX + font.GetTextExtents(beforeCursor).XAdvance;
             ctx.SetSourceRGBA(1, 1, 1, 0.9);
             ctx.LineWidth = 1.5;
             ctx.MoveTo(cursorX, scaled(3));
@@ -532,6 +549,7 @@ public class GuiElementColorPicker : GuiElement
         if (_hexFocused)
         {
             _hexFocused = false;
+            _hexSelectionStart = _hexSelectionEnd = 0;
             ComposeHexText();
         }
     }
@@ -545,6 +563,7 @@ public class GuiElementColorPicker : GuiElement
         {
             _hexFocused = true;
             _hexCursorPos = _hexValue.Length;
+            _hexSelectionStart = _hexSelectionEnd = _hexCursorPos;
             ComposeHexText();
             mouse.Handled = true;
             return;
@@ -553,6 +572,7 @@ public class GuiElementColorPicker : GuiElement
         if (_hexFocused)
         {
             _hexFocused = false;
+            _hexSelectionStart = _hexSelectionEnd = 0;
             ComposeHexText();
         }
 
@@ -591,56 +611,187 @@ public class GuiElementColorPicker : GuiElement
     {
         if (!_hexFocused) return;
 
+        bool ctrl = args.CtrlPressed;
+        bool shift = args.ShiftPressed;
+
         switch (args.KeyCode)
         {
-            case (int)GlKeys.BackSpace:
-                if (_hexCursorPos > 0 && _hexValue.Length > 0)
-                {
-                    _hexValue = _hexValue.Remove(_hexCursorPos - 1, 1);
-                    _hexCursorPos--;
-                    TryApplyHexInput(_hexValue);
-                    ComposeHexText();
-                }
-                args.Handled = true;
-                break;
-
-            case (int)GlKeys.Delete:
-                if (_hexCursorPos < _hexValue.Length)
-                {
-                    _hexValue = _hexValue.Remove(_hexCursorPos, 1);
-                    TryApplyHexInput(_hexValue);
-                    ComposeHexText();
-                }
-                args.Handled = true;
-                break;
-
-            case (int)GlKeys.Left:
-                if (_hexCursorPos > 0) _hexCursorPos--;
-                ComposeHexText();
-                args.Handled = true;
-                break;
-
-            case (int)GlKeys.Right:
-                if (_hexCursorPos < _hexValue.Length) _hexCursorPos++;
-                ComposeHexText();
-                args.Handled = true;
-                break;
-
-            case (int)GlKeys.Home:
-                _hexCursorPos = 0;
-                ComposeHexText();
-                args.Handled = true;
-                break;
-
-            case (int)GlKeys.End:
+            // ── Ctrl+A: select all ───────────────────────────────
+            case (int)GlKeys.A when ctrl:
+                _hexSelectionStart = 0;
+                _hexSelectionEnd = _hexValue.Length;
                 _hexCursorPos = _hexValue.Length;
                 ComposeHexText();
                 args.Handled = true;
                 break;
 
+            // ── Ctrl+C: copy selection (or whole string) ─────────
+            case (int)GlKeys.C when ctrl:
+                {
+                    string toCopy = HasSelection
+                        ? _hexValue.Substring(SelectionMin, SelectionMax - SelectionMin)
+                        : _hexValue;
+                    if (toCopy.Length > 0)
+                        api.Forms.SetClipboardText(toCopy);
+                    args.Handled = true;
+                    break;
+                }
+
+            // ── Ctrl+X: cut selection ────────────────────────────
+            case (int)GlKeys.X when ctrl:
+                {
+                    if (HasSelection)
+                    {
+                        string toCut = _hexValue.Substring(SelectionMin, SelectionMax - SelectionMin);
+                        api.Forms.SetClipboardText(toCut);
+                        DeleteSelection();
+                        TryApplyHexInput(_hexValue);
+                        ComposeHexText();
+                    }
+                    args.Handled = true;
+                    break;
+                }
+
+            // ── Ctrl+V: paste ────────────────────────────────────
+            case (int)GlKeys.V when ctrl:
+                {
+                    string clipboard = api.Forms.GetClipboardText()?.Trim() ?? "";
+                    if (clipboard.Length > 0)
+                    {
+                        if (HasSelection) DeleteSelection();
+
+                        string filtered = FilterHexInput(clipboard);
+
+                        _hexValue = filtered;
+                        _hexCursorPos = filtered.Length;
+                        _hexSelectionStart = _hexSelectionEnd = _hexCursorPos;
+                        TryApplyHexInput(_hexValue);
+                        ComposeHexText();
+
+                        /*int room = 9 - _hexValue.Length;
+                        if (room > 0 && filtered.Length > 0)
+                        {
+                            string insert = filtered.Substring(0, Math.Min(filtered.Length, room));
+                            _hexValue = _hexValue.Insert(_hexCursorPos, insert);
+                            _hexCursorPos += insert.Length;
+                            _hexSelectionStart = _hexSelectionEnd = _hexCursorPos;
+                            TryApplyHexInput(_hexValue);
+                            ComposeHexText();
+                        }*/
+                    }
+                    args.Handled = true;
+                    break;
+                }
+
+            // ── BackSpace ────────────────────────────────────────
+            case (int)GlKeys.BackSpace:
+                if (HasSelection)
+                {
+                    DeleteSelection();
+                }
+                else if (_hexCursorPos > 0)
+                {
+                    _hexValue = _hexValue.Remove(_hexCursorPos - 1, 1);
+                    _hexCursorPos--;
+                    _hexSelectionStart = _hexSelectionEnd = _hexCursorPos;
+                }
+                TryApplyHexInput(_hexValue);
+                ComposeHexText();
+                args.Handled = true;
+                break;
+
+            // ── Delete ───────────────────────────────────────────
+            case (int)GlKeys.Delete:
+                if (HasSelection)
+                {
+                    DeleteSelection();
+                }
+                else if (_hexCursorPos < _hexValue.Length)
+                {
+                    _hexValue = _hexValue.Remove(_hexCursorPos, 1);
+                    _hexSelectionStart = _hexSelectionEnd = _hexCursorPos;
+                }
+                TryApplyHexInput(_hexValue);
+                ComposeHexText();
+                args.Handled = true;
+                break;
+
+            // ── Left arrow ───────────────────────────────────────
+            case (int)GlKeys.Left:
+                if (shift)
+                {
+                    if (_hexCursorPos > 0) _hexCursorPos--;
+                    _hexSelectionEnd = _hexCursorPos;
+                }
+                else
+                {
+                    if (HasSelection)
+                        _hexCursorPos = SelectionMin;
+                    else if (_hexCursorPos > 0)
+                        _hexCursorPos--;
+                    _hexSelectionStart = _hexSelectionEnd = _hexCursorPos;
+                }
+                ComposeHexText();
+                args.Handled = true;
+                break;
+
+            // ── Right arrow ──────────────────────────────────────
+            case (int)GlKeys.Right:
+                if (shift)
+                {
+                    if (_hexCursorPos < _hexValue.Length) _hexCursorPos++;
+                    _hexSelectionEnd = _hexCursorPos;
+                }
+                else
+                {
+                    if (HasSelection)
+                        _hexCursorPos = SelectionMax;
+                    else if (_hexCursorPos < _hexValue.Length)
+                        _hexCursorPos++;
+                    _hexSelectionStart = _hexSelectionEnd = _hexCursorPos;
+                }
+                ComposeHexText();
+                args.Handled = true;
+                break;
+
+            // ── Home ─────────────────────────────────────────────
+            case (int)GlKeys.Home:
+                if (shift)
+                {
+                    _hexCursorPos = 0;
+                    _hexSelectionEnd = 0;
+                }
+                else
+                {
+                    _hexCursorPos = 0;
+                    _hexSelectionStart = _hexSelectionEnd = 0;
+                }
+                ComposeHexText();
+                args.Handled = true;
+                break;
+
+            // ── End ──────────────────────────────────────────────
+            case (int)GlKeys.End:
+                if (shift)
+                {
+                    _hexCursorPos = _hexValue.Length;
+                    _hexSelectionEnd = _hexCursorPos;
+                }
+                else
+                {
+                    _hexCursorPos = _hexValue.Length;
+                    _hexSelectionStart = _hexSelectionEnd = _hexCursorPos;
+                }
+                ComposeHexText();
+                args.Handled = true;
+                break;
+
+            // ── Escape / Enter ───────────────────────────────────
             case (int)GlKeys.Escape:
             case (int)GlKeys.KeypadEnter:
+            case (int)GlKeys.Enter:
                 _hexFocused = false;
+                _hexSelectionStart = _hexSelectionEnd = 0;
                 ComposeHexText();
                 args.Handled = true;
                 break;
@@ -652,18 +803,50 @@ public class GuiElementColorPicker : GuiElement
         if (!_hexFocused) return;
 
         char c = (char)args.KeyChar;
-        if (_hexValue.Length < 9 && (c == '#' || IsHexChar(c)))
+        if (c == '#' || IsHexChar(c))
         {
-            _hexValue = _hexValue.Insert(_hexCursorPos, c.ToString());
-            _hexCursorPos++;
-            TryApplyHexInput(_hexValue);
-            ComposeHexText();
+            if (HasSelection) DeleteSelection();
+
+            if (_hexValue.Length < 9)
+            {
+                _hexValue = _hexValue.Insert(_hexCursorPos, c.ToString());
+                _hexCursorPos++;
+                _hexSelectionStart = _hexSelectionEnd = _hexCursorPos;
+                TryApplyHexInput(_hexValue);
+                ComposeHexText();
+            }
         }
         args.Handled = true;
     }
 
     private static bool IsHexChar(char c)
         => (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+
+    // ─────────────────────────────────────────────────────────────
+    //  Selection helpers
+    // ─────────────────────────────────────────────────────────────
+    private void DeleteSelection()
+    {
+        if (!HasSelection) return;
+        int min = SelectionMin;
+        int max = SelectionMax;
+        _hexValue = _hexValue.Remove(min, max - min);
+        _hexCursorPos = min;
+        _hexSelectionStart = min;
+        _hexSelectionEnd = min;
+    }
+
+    private static string FilterHexInput(string raw)
+    {
+        var sb = new System.Text.StringBuilder(raw.Length);
+        bool hashUsed = false;
+        foreach (char ch in raw)
+        {
+            if (ch == '#' && !hashUsed) { sb.Append(ch); hashUsed = true; }
+            else if (IsHexChar(ch)) { sb.Append(ch); }
+        }
+        return sb.ToString();
+    }
 
     // ─────────────────────────────────────────────────────────────
     //  Hex apply — respects fixed overrides
@@ -681,9 +864,7 @@ public class GuiElementColorPicker : GuiElement
                 byte g = Convert.ToByte(input.Substring(4, 2), 16);
                 byte b = Convert.ToByte(input.Substring(6, 2), 16);
 
-                // Only update channels that are not fixed
-                float newH, newS, newV;
-                RgbToHsv(r / 255f, g / 255f, b / 255f, out newH, out newS, out newV);
+                RgbToHsv(r / 255f, g / 255f, b / 255f, out float newH, out float newS, out float newV);
                 if (_fixedHue == null) _hue = newH;
                 if (_fixedSaturation == null) _saturation = newS;
                 if (_fixedValue == null) _value = newV;
@@ -697,8 +878,7 @@ public class GuiElementColorPicker : GuiElement
                 byte g = Convert.ToByte(input.Substring(2, 2), 16);
                 byte b = Convert.ToByte(input.Substring(4, 2), 16);
 
-                float newH, newS, newV;
-                RgbToHsv(r / 255f, g / 255f, b / 255f, out newH, out newS, out newV);
+                RgbToHsv(r / 255f, g / 255f, b / 255f, out float newH, out float newS, out float newV);
                 if (_fixedHue == null) _hue = newH;
                 if (_fixedSaturation == null) _saturation = newS;
                 if (_fixedValue == null) _value = newV;
@@ -714,7 +894,6 @@ public class GuiElementColorPicker : GuiElement
     // ─────────────────────────────────────────────────────────────
     private bool HitSlider(double mx, double my, double sliderUnscaledY)
     {
-        // A Y of -1 means the slider is hidden; never match
         if (sliderUnscaledY < 0) return false;
 
         double sy = scaled(sliderUnscaledY);
@@ -755,7 +934,6 @@ public class GuiElementColorPicker : GuiElement
     // ─────────────────────────────────────────────────────────────
     private void OnColorUpdated(bool updateHexField = true)
     {
-        // Re-stamp fixed overrides so nothing can drift
         ApplyFixedOverrides();
 
         if (ShowHueSlider) RecomposeHueSlider();
@@ -769,6 +947,8 @@ public class GuiElementColorPicker : GuiElement
             _suppressHexCallback = true;
             _hexValue = BuildHexString();
             _hexCursorPos = Math.Min(_hexCursorPos, _hexValue.Length);
+            _hexSelectionStart = Math.Min(_hexSelectionStart, _hexValue.Length);
+            _hexSelectionEnd = Math.Min(_hexSelectionEnd, _hexValue.Length);
             _suppressHexCallback = false;
             ComposeHexText();
         }
@@ -837,7 +1017,6 @@ public class GuiElementColorPicker : GuiElement
     {
         RgbToHsv((float)r, (float)g, (float)b, out _hue, out _saturation, out _value);
         _alpha = (float)a;
-        // Fixed overrides win over whatever SetColor provides
         ApplyFixedOverrides();
         OnColorUpdated();
     }
@@ -848,7 +1027,7 @@ public class GuiElementColorPicker : GuiElement
         return new double[] { r, g, b, _alpha };
     }
 
-    // ─────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────���───────────────────
     //  Dispose
     // ─────────────────────────────────────────────────────────────
     public override void Dispose()
@@ -914,7 +1093,10 @@ public static class GuiComposerColorPickerExtension
             composer.AddInteractiveElement(
                 new GuiElementColorPicker(
                     composer.Api, bounds, onColorChanged, initialColor, clipBounds,
-                    fixedHue < 0 ? null : fixedHue, fixedSaturation < 0 ? null : fixedSaturation, fixedValue < 0 ? null : fixedValue, fixedAlpha < 0 ? null : fixedAlpha),
+                    fixedHue < 0 ? null : fixedHue,
+                    fixedSaturation < 0 ? null : fixedSaturation,
+                    fixedValue < 0 ? null : fixedValue,
+                    fixedAlpha < 0 ? null : fixedAlpha),
                 key);
         }
         return composer;
