@@ -457,12 +457,18 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
                 continue;
             }
 
-            if (variants.Length == 0 || index == -1)
+            if (variantCode != null && index == -1 && skinpart.Type == EnumSkinnableType.Texture && skinpart is SkinnablePartExtended extended && (extended.SolidColor || extended.Canvas))
+            {
+
+            }
+            else if(variants.Length == 0 || index == -1)
             {
                 continue;
             }
-
-            variantCode ??= variants[index].Code;
+            else
+            {
+                variantCode ??= variants[index].Code;
+            }
 
             SelectSkinPart(skinpart.Code, variantCode, true, playVoice);
 
