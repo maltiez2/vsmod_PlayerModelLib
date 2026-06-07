@@ -1001,12 +1001,28 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         }
         int rowsNumber = (int)Math.Ceiling((float)colors.Length / 7);
 
+        int sliders = 0;
+        if (skinPart.FixedHue < 0) sliders++;
+        if (skinPart.FixedSaturation < 0) sliders++;
+        if (skinPart.FixedLuminosity < 0) sliders++;
+        if (skinPart.FixedAlpha < 0) sliders++;
+
+        int height = sliders switch
+        {
+            0 => 30,
+            1 => 46,
+            2 => 70,
+            3 => 86,
+            4 => 102,
+            _ => 102
+        };
+
         ElementBounds partBounds = ElementBounds.Fixed(0, 0)
-            .WithFixedSize(skinPartTitleBounds.fixedWidth, skinPartTitleBounds.fixedHeight + padding + colorPickerSkinPartBounds.fixedHeight + padding + (swatchesSkinPartBounds.fixedHeight + padding) * rowsNumber + padding)
+            .WithFixedSize(skinPartTitleBounds.fixedWidth, skinPartTitleBounds.fixedHeight + padding + height + padding + (swatchesSkinPartBounds.fixedHeight + padding) * rowsNumber + padding)
             .WithParent(parentBounds)
             .FixedUnder(previous);
         skinPartTitleBounds = skinPartTitleBounds.FlatCopy().WithFixedOffset(padding, padding).FixedGrow(-padding * 2).WithParent(partBounds);
-        colorPickerSkinPartBounds = colorPickerSkinPartBounds.FlatCopy().WithFixedOffset(padding, padding).FixedGrow(-padding * 2).WithParent(partBounds).FixedUnder(skinPartTitleBounds, padding);
+        colorPickerSkinPartBounds = colorPickerSkinPartBounds.FlatCopy().WithFixedOffset(padding, padding).WithFixedHeight(height).FixedGrow(-padding * 2).WithParent(partBounds).FixedUnder(skinPartTitleBounds, padding);
         swatchesSkinPartBounds = swatchesSkinPartBounds.FlatCopy().WithFixedOffset(padding * 2, padding).WithParent(partBounds).FixedUnder(colorPickerSkinPartBounds, padding);
 
         composer.AddRichtext(Lang.Get("skinpart-" + partCode), CairoFont.WhiteSmallText(), skinPartTitleBounds);
@@ -1021,7 +1037,11 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             rgba => onToggleSkinPartActuallyColor(partCode, rgba),
             colorPickerSkinPartBounds,
             [1.0, 1.0, 1.0, 1.0],
-            key: "colorpicker-" + partCode
+            key: "colorpicker-" + partCode,
+            fixedHue: skinPart.FixedHue,
+            fixedSaturation: skinPart.FixedSaturation,
+            fixedValue: skinPart.FixedLuminosity,
+            fixedAlpha: skinPart.FixedAlpha
             );
 
         double[] color = HexArgbToDoubleArray(appliedVariant?.Code ?? $"#FFFFFFFF");

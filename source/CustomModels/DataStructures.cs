@@ -43,6 +43,10 @@ public class SkinnablePartExtended : SkinnablePart
     public float Priority { get; set; } = 0;
     public int[] Size { get; set; } = [];
     public int[] OverlayOffset { get; set; } = [];
+    public float FixedHue { get; set; } = -1;
+    public float FixedSaturation { get; set; } = -1;
+    public float FixedLuminosity { get; set; } = -1;
+    public float FixedAlpha { get; set; } = -1;
 }
 
 public class CustomModelConfig

@@ -15,10 +15,24 @@ public class GuiElementColorPicker : GuiElement
     private const double BottomPadding = 6;
 
     // ─────────────────────────────────────────────────────────────
+    //  Fixed-value overrides (null = slider is visible & interactive)
+    // ─────────────────────────────────────────────────────────────
+    private readonly float? _fixedHue;
+    private readonly float? _fixedSaturation;
+    private readonly float? _fixedValue;
+    private readonly float? _fixedAlpha;
+
+    private bool ShowHueSlider => _fixedHue == null;
+    private bool ShowSatSlider => _fixedSaturation == null;
+    private bool ShowValSlider => _fixedValue == null;
+    private bool ShowAlphaSlider => _fixedAlpha == null;
+
+    // ─────────────────────────────────────────────────────────────
     //  Derived layout (unscaled, relative to Bounds.renderX/Y)
     // ─────────────────────────────────────────────────────────────
     private double _sliderW;
 
+    // Each slider's Y is computed dynamically based on which are visible
     private double _hueSliderY;
     private double _satSliderY;
     private double _valSliderY;
@@ -54,11 +68,10 @@ public class GuiElementColorPicker : GuiElement
     private LoadedTexture _previewTexture;
 
     // ─────────────────────────────────────────────────────────────
-    //  Hex input — rendered as a texture, not a live element,
-    //  so it moves correctly with scroll and clips properly.
+    //  Hex input
     // ─────────────────────────────────────────────────────────────
-    private LoadedTexture _hexBgTexture;   // inset background baked once
-    private LoadedTexture _hexTextTexture; // text recomposed on value change
+    private LoadedTexture _hexBgTexture;
+    private LoadedTexture _hexTextTexture;
     private string _hexValue = "";
     private bool _hexFocused = false;
     private int _hexCursorPos = 0;
@@ -67,10 +80,6 @@ public class GuiElementColorPicker : GuiElement
     // ─────────────────────────────────────────────────────────────
     //  Clip bounds
     // ─────────────────────────────────────────────────────────────
-    /// <summary>
-    /// Optional scissor/clip bounds. Set this when the picker is inside a scrollable
-    /// area so that it is correctly clipped when scrolled out of view.
-    /// </summary>
     public ElementBounds ClipBounds { get; set; }
 
     // ─────────────────────────────────────────────────────────────
@@ -83,12 +92,31 @@ public class GuiElementColorPicker : GuiElement
     // ─────────────────────────────────────────────────────────────
     //  Constructor
     // ─────────────────────────────────────────────────────────────
+    /// <summary>
+    /// Creates a color picker.
+    /// </summary>
+    /// <param name="fixedHue">
+    ///   When non-null the hue slider is hidden and this value (0–1) is used.
+    /// </param>
+    /// <param name="fixedSaturation">
+    ///   When non-null the saturation slider is hidden and this value (0–1) is used.
+    /// </param>
+    /// <param name="fixedValue">
+    ///   When non-null the value/luminosity slider is hidden and this value (0–1) is used.
+    /// </param>
+    /// <param name="fixedAlpha">
+    ///   When non-null the alpha slider is hidden and this value (0–1) is used.
+    /// </param>
     public GuiElementColorPicker(
         ICoreClientAPI capi,
         ElementBounds bounds,
         Action<double[]> onColorChanged,
         double[] initialColorRgba = null,
-        ElementBounds clipBounds = null)
+        ElementBounds clipBounds = null,
+        float? fixedHue = null,
+        float? fixedSaturation = null,
+        float? fixedValue = null,
+        float? fixedAlpha = null)
         : base(capi, bounds)
     {
         _hueSliderTexture = new LoadedTexture(capi);
@@ -102,6 +130,12 @@ public class GuiElementColorPicker : GuiElement
         _onColorChanged = onColorChanged;
         ClipBounds = clipBounds;
 
+        _fixedHue = fixedHue;
+        _fixedSaturation = fixedSaturation;
+        _fixedValue = fixedValue;
+        _fixedAlpha = fixedAlpha;
+
+        // Seed color state from initial RGBA (if supplied)
         if (initialColorRgba != null && initialColorRgba.Length >= 4)
         {
             RgbToHsv((float)initialColorRgba[0], (float)initialColorRgba[1],
@@ -113,6 +147,21 @@ public class GuiElementColorPicker : GuiElement
         {
             _hue = 0f; _saturation = 1f; _value = 1f; _alpha = 1f;
         }
+
+        // Apply fixed overrides on top of the initial color
+        ApplyFixedOverrides();
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    //  Fixed-override helper
+    // ─────────────────────────────────────────────────────────────
+    /// <summary>Stamps fixed channel values onto the live state.</summary>
+    private void ApplyFixedOverrides()
+    {
+        if (_fixedHue != null) _hue = _fixedHue.Value;
+        if (_fixedSaturation != null) _saturation = _fixedSaturation.Value;
+        if (_fixedValue != null) _value = _fixedValue.Value;
+        if (_fixedAlpha != null) _alpha = _fixedAlpha.Value;
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -121,15 +170,41 @@ public class GuiElementColorPicker : GuiElement
     private void CalcLayout()
     {
         double innerW = Bounds.InnerWidth / RuntimeEnv.GUIScale;
-
         _sliderW = Math.Max(10, innerW);
 
-        _hueSliderY = 0;
-        _satSliderY = _hueSliderY + SliderHeight + SliderPadding;
-        _valSliderY = _satSliderY + SliderHeight + SliderPadding;
-        _alphaSliderY = _valSliderY + SliderHeight + SliderPadding;
+        // Stack only the visible sliders
+        double y = 0;
 
-        _bottomRowY = _alphaSliderY + SliderHeight + BottomPadding;
+        _hueSliderY = -1;   // sentinel: not visible
+        _satSliderY = -1;
+        _valSliderY = -1;
+        _alphaSliderY = -1;
+
+        if (ShowHueSlider)
+        {
+            _hueSliderY = y;
+            y += SliderHeight + SliderPadding;
+        }
+        if (ShowSatSlider)
+        {
+            _satSliderY = y;
+            y += SliderHeight + SliderPadding;
+        }
+        if (ShowValSlider)
+        {
+            _valSliderY = y;
+            y += SliderHeight + SliderPadding;
+        }
+        if (ShowAlphaSlider)
+        {
+            _alphaSliderY = y;
+            y += SliderHeight + SliderPadding;
+        }
+
+        // Remove trailing padding if at least one slider was added
+        if (y > 0) y -= SliderPadding;
+
+        _bottomRowY = y + BottomPadding;
 
         _hexInputX = PreviewSize + SliderPadding;
         _hexInputW = Math.Max(10, innerW - PreviewSize - SliderPadding);
@@ -143,20 +218,19 @@ public class GuiElementColorPicker : GuiElement
         Bounds.CalcWorldBounds();
         CalcLayout();
 
-        // Bake the hex input background (inset box) into its own texture
-        // so it renders dynamically and moves with scroll.
         ComposeHexBackground();
         ComposeHexText();
 
-        RecomposeHueSlider();
-        RecomposeSatSlider();
-        RecomposeValSlider();
-        RecomposeAlphaSlider();
+        if (ShowHueSlider) RecomposeHueSlider();
+        if (ShowSatSlider) RecomposeSatSlider();
+        if (ShowValSlider) RecomposeValSlider();
+        if (ShowAlphaSlider) RecomposeAlphaSlider();
+
         RecomposePreview();
     }
 
     // ─────────────────────────────────────────────────────────────
-    //  Hex input background texture (inset box, baked once)
+    //  Hex input background texture
     // ─────────────────────────────────────────────────────────────
     private void ComposeHexBackground()
     {
@@ -166,12 +240,10 @@ public class GuiElementColorPicker : GuiElement
         ImageSurface surface = new ImageSurface(Format.Argb32, w, h);
         Context ctx = genContext(surface);
 
-        // Dark inset background
         ctx.SetSourceRGBA(0, 0, 0, 0.2);
         ctx.Rectangle(0, 0, w, h);
         ctx.Fill();
 
-        // Inset emboss border
         EmbossRoundRectangleElement(ctx, 0, 0, w, h, true, 1, 1);
 
         generateTexture(surface, ref _hexBgTexture);
@@ -180,7 +252,7 @@ public class GuiElementColorPicker : GuiElement
     }
 
     // ─────────────────────────────────────────────────────────────
-    //  Hex input text texture (recomposed on value change)
+    //  Hex input text texture
     // ─────────────────────────────────────────────────────────────
     private void ComposeHexText()
     {
@@ -193,14 +265,12 @@ public class GuiElementColorPicker : GuiElement
         var font = CairoFont.TextInput();
         font.SetupContext(ctx);
 
-        // Text color
         ctx.SetSourceRGBA(1, 1, 1, _hexFocused ? 1.0 : 0.8);
 
         double textY = (h - font.GetFontExtents().Height) / 2.0 + font.GetFontExtents().Ascent;
         ctx.MoveTo(scaled(3), textY);
         ctx.ShowText(_hexValue);
 
-        // Simple cursor when focused
         if (_hexFocused)
         {
             string beforeCursor = _hexValue.Substring(0, Math.Min(_hexCursorPos, _hexValue.Length));
@@ -397,28 +467,32 @@ public class GuiElementColorPicker : GuiElement
         double bx = Bounds.renderX;
         double by = Bounds.renderY;
 
-        Render2DTexture(_hueSliderTexture.TextureId,
-            bx, by + scaled(_hueSliderY),
-            scaled(_sliderW), scaled(SliderHeight));
+        if (ShowHueSlider)
+            Render2DTexture(_hueSliderTexture.TextureId,
+                bx, by + scaled(_hueSliderY),
+                scaled(_sliderW), scaled(SliderHeight));
 
-        Render2DTexture(_satSliderTexture.TextureId,
-            bx, by + scaled(_satSliderY),
-            scaled(_sliderW), scaled(SliderHeight));
+        if (ShowSatSlider)
+            Render2DTexture(_satSliderTexture.TextureId,
+                bx, by + scaled(_satSliderY),
+                scaled(_sliderW), scaled(SliderHeight));
 
-        Render2DTexture(_valSliderTexture.TextureId,
-            bx, by + scaled(_valSliderY),
-            scaled(_sliderW), scaled(SliderHeight));
+        if (ShowValSlider)
+            Render2DTexture(_valSliderTexture.TextureId,
+                bx, by + scaled(_valSliderY),
+                scaled(_sliderW), scaled(SliderHeight));
 
-        Render2DTexture(_alphaSliderTexture.TextureId,
-            bx, by + scaled(_alphaSliderY),
-            scaled(_sliderW), scaled(SliderHeight));
+        if (ShowAlphaSlider)
+            Render2DTexture(_alphaSliderTexture.TextureId,
+                bx, by + scaled(_alphaSliderY),
+                scaled(_sliderW), scaled(SliderHeight));
 
         // Preview square
         Render2DTexture(_previewTexture.TextureId,
             bx, by + scaled(_bottomRowY),
             scaled(PreviewSize), scaled(PreviewSize));
 
-        // Hex input — background then text, both dynamic
+        // Hex input
         double hexRenderX = bx + scaled(_hexInputX);
         double hexRenderY = by + scaled(_bottomRowY);
         double hexRenderW = scaled(_hexInputW);
@@ -435,7 +509,7 @@ public class GuiElementColorPicker : GuiElement
     }
 
     // ─────────────────────────────────────────────────────────────
-    //  Hex input hit bounds (live, from renderX/Y)
+    //  Hex input hit bounds
     // ─────────────────────────────────────────────────────────────
     private bool IsInsideHexInput(int mx, int my)
     {
@@ -450,10 +524,7 @@ public class GuiElementColorPicker : GuiElement
     // ─────────────────────────────────────────────────────────────
     //  Focus
     // ─────────────────────────────────────────────────────────────
-    public override void OnFocusGained()
-    {
-        base.OnFocusGained();
-    }
+    public override void OnFocusGained() => base.OnFocusGained();
 
     public override void OnFocusLost()
     {
@@ -488,10 +559,10 @@ public class GuiElementColorPicker : GuiElement
         double mx = mouse.X - Bounds.renderX;
         double my = mouse.Y - Bounds.renderY;
 
-        if (HitSlider(mx, my, _hueSliderY)) { _draggingHue = true; UpdateHueFromMouse(mx); mouse.Handled = true; return; }
-        if (HitSlider(mx, my, _satSliderY)) { _draggingSat = true; UpdateSatFromMouse(mx); mouse.Handled = true; return; }
-        if (HitSlider(mx, my, _valSliderY)) { _draggingVal = true; UpdateValFromMouse(mx); mouse.Handled = true; return; }
-        if (HitSlider(mx, my, _alphaSliderY)) { _draggingAlpha = true; UpdateAlphaFromMouse(mx); mouse.Handled = true; }
+        if (ShowHueSlider && HitSlider(mx, my, _hueSliderY)) { _draggingHue = true; UpdateHueFromMouse(mx); mouse.Handled = true; return; }
+        if (ShowSatSlider && HitSlider(mx, my, _satSliderY)) { _draggingSat = true; UpdateSatFromMouse(mx); mouse.Handled = true; return; }
+        if (ShowValSlider && HitSlider(mx, my, _valSliderY)) { _draggingVal = true; UpdateValFromMouse(mx); mouse.Handled = true; return; }
+        if (ShowAlphaSlider && HitSlider(mx, my, _alphaSliderY)) { _draggingAlpha = true; UpdateAlphaFromMouse(mx); mouse.Handled = true; }
     }
 
     public override void OnMouseMove(ICoreClientAPI api, MouseEvent args)
@@ -514,7 +585,7 @@ public class GuiElementColorPicker : GuiElement
     }
 
     // ─────────────────────────────────────────────────────────────
-    //  Keyboard — only active when hex field is focused
+    //  Keyboard
     // ─────────────────────────────────────────────────────────────
     public override void OnKeyDown(ICoreClientAPI api, KeyEvent args)
     {
@@ -568,7 +639,6 @@ public class GuiElementColorPicker : GuiElement
                 break;
 
             case (int)GlKeys.Escape:
-            //case (int)GlKeys.Return:
             case (int)GlKeys.KeypadEnter:
                 _hexFocused = false;
                 ComposeHexText();
@@ -582,7 +652,6 @@ public class GuiElementColorPicker : GuiElement
         if (!_hexFocused) return;
 
         char c = (char)args.KeyChar;
-        // Allow # prefix and hex characters only, max 9 chars (#AARRGGBB)
         if (_hexValue.Length < 9 && (c == '#' || IsHexChar(c)))
         {
             _hexValue = _hexValue.Insert(_hexCursorPos, c.ToString());
@@ -597,7 +666,7 @@ public class GuiElementColorPicker : GuiElement
         => (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
 
     // ─────────────────────────────────────────────────────────────
-    //  Hex apply
+    //  Hex apply — respects fixed overrides
     // ─────────────────────────────────────────────────────────────
     private void TryApplyHexInput(string raw)
     {
@@ -611,8 +680,15 @@ public class GuiElementColorPicker : GuiElement
                 byte r = Convert.ToByte(input.Substring(2, 2), 16);
                 byte g = Convert.ToByte(input.Substring(4, 2), 16);
                 byte b = Convert.ToByte(input.Substring(6, 2), 16);
-                _alpha = a / 255f;
-                RgbToHsv(r / 255f, g / 255f, b / 255f, out _hue, out _saturation, out _value);
+
+                // Only update channels that are not fixed
+                float newH, newS, newV;
+                RgbToHsv(r / 255f, g / 255f, b / 255f, out newH, out newS, out newV);
+                if (_fixedHue == null) _hue = newH;
+                if (_fixedSaturation == null) _saturation = newS;
+                if (_fixedValue == null) _value = newV;
+                if (_fixedAlpha == null) _alpha = a / 255f;
+
                 OnColorUpdated(updateHexField: false);
             }
             else if (input.Length == 6)
@@ -620,7 +696,13 @@ public class GuiElementColorPicker : GuiElement
                 byte r = Convert.ToByte(input.Substring(0, 2), 16);
                 byte g = Convert.ToByte(input.Substring(2, 2), 16);
                 byte b = Convert.ToByte(input.Substring(4, 2), 16);
-                RgbToHsv(r / 255f, g / 255f, b / 255f, out _hue, out _saturation, out _value);
+
+                float newH, newS, newV;
+                RgbToHsv(r / 255f, g / 255f, b / 255f, out newH, out newS, out newV);
+                if (_fixedHue == null) _hue = newH;
+                if (_fixedSaturation == null) _saturation = newS;
+                if (_fixedValue == null) _value = newV;
+
                 OnColorUpdated(updateHexField: false);
             }
         }
@@ -632,6 +714,9 @@ public class GuiElementColorPicker : GuiElement
     // ─────────────────────────────────────────────────────────────
     private bool HitSlider(double mx, double my, double sliderUnscaledY)
     {
+        // A Y of -1 means the slider is hidden; never match
+        if (sliderUnscaledY < 0) return false;
+
         double sy = scaled(sliderUnscaledY);
         double sh = scaled(SliderHeight);
         double sw = scaled(_sliderW);
@@ -670,10 +755,13 @@ public class GuiElementColorPicker : GuiElement
     // ─────────────────────────────────────────────────────────────
     private void OnColorUpdated(bool updateHexField = true)
     {
-        RecomposeHueSlider();
-        RecomposeSatSlider();
-        RecomposeValSlider();
-        RecomposeAlphaSlider();
+        // Re-stamp fixed overrides so nothing can drift
+        ApplyFixedOverrides();
+
+        if (ShowHueSlider) RecomposeHueSlider();
+        if (ShowSatSlider) RecomposeSatSlider();
+        if (ShowValSlider) RecomposeValSlider();
+        if (ShowAlphaSlider) RecomposeAlphaSlider();
         RecomposePreview();
 
         if (updateHexField)
@@ -702,7 +790,8 @@ public class GuiElementColorPicker : GuiElement
     // ─────────────────────────────────────────────────────────────
     //  Color space helpers
     // ─────────────────────────────────────────────────────────────
-    private static void HsvToRgb(float h, float s, float v, out double r, out double g, out double b)
+    private static void HsvToRgb(float h, float s, float v,
+        out double r, out double g, out double b)
     {
         if (s <= 0f) { r = g = b = v; return; }
         float hh = (h * 360f) / 60f;
@@ -722,7 +811,8 @@ public class GuiElementColorPicker : GuiElement
         }
     }
 
-    private static void RgbToHsv(float r, float g, float b, out float h, out float s, out float v)
+    private static void RgbToHsv(float r, float g, float b,
+        out float h, out float s, out float v)
     {
         float max = Math.Max(r, Math.Max(g, b));
         float min = Math.Min(r, Math.Min(g, b));
@@ -747,6 +837,8 @@ public class GuiElementColorPicker : GuiElement
     {
         RgbToHsv((float)r, (float)g, (float)b, out _hue, out _saturation, out _value);
         _alpha = (float)a;
+        // Fixed overrides win over whatever SetColor provides
+        ApplyFixedOverrides();
         OnColorUpdated();
     }
 
@@ -790,8 +882,19 @@ public static class GuiComposerColorPickerExtension
     /// <param name="bounds">The bounds of the color picker.</param>
     /// <param name="initialColor">Optional initial RGBA color.</param>
     /// <param name="clipBounds">
-    /// Optional scissor/clip bounds. Set this when the picker is inside a scrollable
-    /// area so that it is correctly clipped when scrolled out of view.
+    ///   Optional scissor/clip bounds for scrollable containers.
+    /// </param>
+    /// <param name="fixedHue">
+    ///   When non-null the hue slider is hidden and this value (0–1) is locked.
+    /// </param>
+    /// <param name="fixedSaturation">
+    ///   When non-null the saturation slider is hidden and this value (0–1) is locked.
+    /// </param>
+    /// <param name="fixedValue">
+    ///   When non-null the value/luminosity slider is hidden and this value (0–1) is locked.
+    /// </param>
+    /// <param name="fixedAlpha">
+    ///   When non-null the alpha slider is hidden and this value (0–1) is locked.
     /// </param>
     /// <param name="key">The name of this element.</param>
     public static GuiComposer AddColorPicker(
@@ -800,12 +903,18 @@ public static class GuiComposerColorPickerExtension
         ElementBounds bounds,
         double[] initialColor = null,
         ElementBounds clipBounds = null,
+        float fixedHue = -1,
+        float fixedSaturation = -1,
+        float fixedValue = -1,
+        float fixedAlpha = -1,
         string key = null)
     {
         if (!composer.Composed)
         {
             composer.AddInteractiveElement(
-                new GuiElementColorPicker(composer.Api, bounds, onColorChanged, initialColor, clipBounds),
+                new GuiElementColorPicker(
+                    composer.Api, bounds, onColorChanged, initialColor, clipBounds,
+                    fixedHue < 0 ? null : fixedHue, fixedSaturation < 0 ? null : fixedSaturation, fixedValue < 0 ? null : fixedValue, fixedAlpha < 0 ? null : fixedAlpha),
                 key);
         }
         return composer;
