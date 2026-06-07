@@ -1,10 +1,12 @@
 ﻿using HarmonyLib;
+using System.Diagnostics;
 using System.Reflection;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.GameContent;
+using static HarmonyLib.Code;
 
 namespace PlayerModelLib;
 
@@ -209,8 +211,9 @@ public static class StatsPatches
 
         __result *= resultingMultiplier;
 
+        bool sneak = (!__instance.Controls.Sneak && !__instance.PrevFrameCanStandUp) || __instance.Controls.Sneak;
 
-        if (__instance.Controls.Sneak)
+        if (sneak)
         {
             __result *= Math.Clamp(__instance.Stats.GetBlended(SneakSpeedStat), 0, 1000);
         }
