@@ -346,8 +346,17 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     public const string PreviousSelectionFile = "playermodellib-previous-selections.json";
     public const double DialogWidth = 757;
 
-    public ElementBounds? _skinTabLeftColumnBounds { get; set; }
-    public ElementBounds? _skinTabRightColumnBounds { get; set; }
+    public List<double> RightColumnSkinpartPositions { get; } = [];
+    public List<double> LeftColumnSkinpartPositions { get; } = [];
+
+    public int RightColumnCurrentIndex { get; set; } = 0;
+    public int LeftColumnCurrentIndex { get; set; } = 0;
+
+    public double RightColumnSliderPosition { get; set; } = 0;
+    public double LeftColumnSliderPosition { get; set; } = 0;
+
+    public ElementBounds? SkinTabLeftColumnBounds { get; set; }
+    public ElementBounds? SkinTabRightColumnBounds { get; set; }
 
     public new void ComposeGuis()
     {
@@ -685,7 +694,6 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         int colorIconSize = 22;
         double horizontalOffset = -10;
-        double verticalOffset = -5;
         double columnsWidth = 236;
         double previewWidth = 256;
         double columnsHeight = DlgHeight - 54 + 4;
@@ -693,7 +701,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         double buttonsBarHeight = 36;
         double hideClothingHeight = 30;
         double previewInsetHeight = columnsHeight - hideClothingHeight - padding;
-        double scrollBarWidth = 12;
+        double scrollBarWidth = 20;
         double colorPickerheight = 110;
         double canvasHeight = 256;
         double skinPartWidht = columnsWidth - scrollBarWidth;
@@ -716,17 +724,17 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         ElementBounds swatchesSkinPartBounds = ElementBounds.Fixed(0, 0).WithFixedSize(colorIconSize, colorIconSize);
         ElementBounds colorPickerSkinPartBounds = ElementBounds.Fixed(0, 0).WithFixedSize(skinPartWidht, colorPickerheight);
         ElementBounds canvasSkinPartBounds = ElementBounds.Fixed(0, 0).WithFixedSize(skinPartWidht, canvasHeight);
-        ElementBounds skinPartTitleBounds = ElementBounds.Fixed(0, 0).WithFixedSize(skinPartWidht, 22);
+        ElementBounds skinPartTitleBounds = ElementBounds.Fixed(0, 0).WithFixedSize(skinPartWidht, 30);
         // left column
-        ElementBounds leftColumnScrollBarBounds = leftColumnBounds.FlatCopy().WithFixedPosition(0, 0).FixedGrow(-2, -2).WithFixedWidth(scrollBarWidth).WithParent(leftColumnBounds);
-        ElementBounds leftColumnClipBounds = leftColumnBounds.FlatCopy().WithFixedPosition(0, 0).FixedGrow(-scrollBarWidth, -2).WithParent(leftColumnBounds).RightOf(leftColumnScrollBarBounds);
-        ElementBounds leftColumnScrollableBounds = leftColumnClipBounds.FlatCopy().WithFixedPosition(0, 0).WithParent(leftColumnBounds).RightOf(leftColumnScrollBarBounds);
-        _skinTabLeftColumnBounds = leftColumnScrollableBounds;
+        ElementBounds leftColumnScrollBarBounds = leftColumnBounds.FlatCopy().WithFixedPosition(0, 0).FixedGrow(-2, 0).WithFixedWidth(scrollBarWidth).WithParent(leftColumnBounds);
+        ElementBounds leftColumnClipBounds = leftColumnBounds.FlatCopy().WithFixedPosition(0, 0).FixedGrow(-scrollBarWidth, -2).WithParent(leftColumnBounds).RightOf(leftColumnScrollBarBounds, 2);
+        ElementBounds leftColumnScrollableBounds = leftColumnClipBounds.FlatCopy().WithFixedPosition(0, 0).WithParent(leftColumnBounds).RightOf(leftColumnScrollBarBounds, 2);
+        SkinTabLeftColumnBounds = leftColumnScrollableBounds;
         // right column
-        ElementBounds rightColumnClipBounds = rightColumnBounds.FlatCopy().WithFixedPosition(0, 0).FixedGrow(-scrollBarWidth, -2).WithParent(rightColumnBounds);
+        ElementBounds rightColumnClipBounds = rightColumnBounds.FlatCopy().WithFixedPosition(0, 0).FixedGrow(-scrollBarWidth - 2, -2).WithParent(rightColumnBounds);
         ElementBounds rightColumnScrollableBounds = rightColumnClipBounds.FlatCopy().WithFixedPosition(0, 0).WithParent(rightColumnBounds);
-        ElementBounds rightColumnScrollBarBounds = rightColumnBounds.FlatCopy().WithFixedPosition(0, 0).FixedGrow(-2, -2).WithFixedWidth(scrollBarWidth).WithParent(rightColumnBounds).RightOf(rightColumnClipBounds);
-        _skinTabRightColumnBounds = rightColumnScrollableBounds;
+        ElementBounds rightColumnScrollBarBounds = rightColumnBounds.FlatCopy().WithFixedPosition(0, 0).FixedGrow(-2, 0).WithFixedWidth(scrollBarWidth).WithParent(rightColumnBounds).RightOf(rightColumnClipBounds, 2);
+        SkinTabRightColumnBounds = rightColumnScrollableBounds;
 
 
         composer.AddInset(leftColumnBounds, 4, 0.9f);
@@ -743,11 +751,20 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         InsetSlotBounds = insetBounds;
 
-        composer.AddExtendedVerticalScrollbar(OnNewScrollbarValueSkinLeft, leftColumnScrollBarBounds, "skinparts-left-scrollbar", leftColumnScrollBarBounds);
+        composer.AddIndexScroller(OnNewScrollbarValueSkinLeft, leftColumnScrollBarBounds, 0, "skinparts-left-scrollbar", leftColumnScrollBarBounds);
         composer.BeginClip(leftColumnClipBounds);
 
         IEnumerable<SkinnablePartExtended> skinParts = skinBehavior.AvailableSkinParts.Get().OfType<SkinnablePartExtended>();
         ElementBounds previousSkinPartBounds = ElementBounds.Fixed(0, 0).WithFixedSize(0, 0).WithParent(leftColumnScrollableBounds);
+
+        LeftColumnSkinpartPositions.Clear();
+        RightColumnSkinpartPositions.Clear();
+
+        LeftColumnCurrentIndex = 0;
+        RightColumnCurrentIndex = 0;
+
+        RightColumnSliderPosition = 0;
+        LeftColumnSliderPosition = 0;
 
         bool leftColumn = true;
         bool columnBroken = false;
@@ -777,19 +794,26 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
             composer.AddScrollableInset(previousSkinPartBounds, 0, 1);
 
+            ElementBounds separatorBounds = previousSkinPartBounds.FlatCopy().WithFixedHeight(2);
+            composer.AddScrollableInset(separatorBounds, 2, 1);
+
             if (leftColumn)
             {
+                LeftColumnSkinpartPositions.Add(leftColumnContentHeight);
                 leftColumnContentHeight += previousSkinPartBounds.fixedHeight;
             }
             else
             {
+                RightColumnSkinpartPositions.Add(rightColumnContentHeight);
                 rightColumnContentHeight += previousSkinPartBounds.fixedHeight;
             }
 
             if (skinPart.Colbreak && !columnBroken)
             {
+                (composer.GetElement("skinparts-left-scrollbar") as GuiElementIndexScroller)?.SetMaxIndex(LeftColumnSkinpartPositions.Count - 1);
+
                 composer.EndClip();
-                composer.AddExtendedVerticalScrollbar(OnNewScrollbarValueSkinRight, rightColumnScrollBarBounds, "skinparts-right-scrollbar", rightColumnScrollBarBounds);
+                composer.AddIndexScroller(OnNewScrollbarValueSkinRight, rightColumnScrollBarBounds, 0, "skinparts-right-scrollbar", rightColumnScrollBarBounds);
                 composer.BeginClip(rightColumnClipBounds);
 
                 previousSkinPartBounds = ElementBounds.Fixed(0, 0).WithFixedSize(0, 0).WithParent(rightColumnScrollableBounds);
@@ -798,17 +822,14 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             }
         }
 
-        composer.EndClip();
+        (composer.GetElement("skinparts-right-scrollbar") as GuiElementIndexScroller)?.SetMaxIndex(RightColumnSkinpartPositions.Count - 1);
 
-        composer.GetExtendedScrollbar("skinparts-left-scrollbar").SetHeights((float)columnsHeight, (float)Math.Max(leftColumnContentHeight + columnsHeight, columnsHeight));
-        composer.GetExtendedScrollbar("skinparts-right-scrollbar").SetHeights((float)columnsHeight, (float)Math.Max(rightColumnContentHeight + columnsHeight, columnsHeight));
-        composer.GetExtendedScrollbar("skinparts-left-scrollbar").SetScrollbarPosition(0);
-        composer.GetExtendedScrollbar("skinparts-right-scrollbar").SetScrollbarPosition(0);
-        composer.GetExtendedScrollbar("skinparts-left-scrollbar").SetFixedHandleHeight(100);
-        composer.GetExtendedScrollbar("skinparts-right-scrollbar").SetFixedHandleHeight(100);
+        composer.EndClip();
 
         composer.GetToggleButton("showdressedtoggle").SetValue(false);
         OnToggleDressOnOff(false);
+
+        OnNewScrollbarValueSkinLeft(0);
     }
     public void ComposeClassTab(GuiDialogCreateCustomCharacter dialog, GuiComposer composer, double yPosition, double padding, double slotSize, ElementBounds backgroundBounds, ElementBounds dialogBounds)
     {
@@ -1206,21 +1227,35 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         }
     }
 
-    public void OnNewScrollbarValueSkinLeft(float value)
+    public void OnNewScrollbarValueSkinLeft(int value)
     {
-        if (_skinTabLeftColumnBounds != null)
+        if (SkinTabLeftColumnBounds != null)
         {
-            _skinTabLeftColumnBounds.fixedY = -value;
-            _skinTabLeftColumnBounds.CalcWorldBounds();
+            LeftColumnCurrentIndex = Math.Clamp(value, 0, LeftColumnSkinpartPositions.Count - 1);
+            SkinTabLeftColumnBounds.fixedY = -LeftColumnSkinpartPositions[LeftColumnCurrentIndex];
+            SkinTabLeftColumnBounds.CalcWorldBounds();
         }
     }
-    public void OnNewScrollbarValueSkinRight(float value)
+    public void OnNewScrollbarValueSkinRight(int value)
     {
-        if (_skinTabRightColumnBounds != null)
+        if (SkinTabRightColumnBounds != null)
         {
-            _skinTabRightColumnBounds.fixedY = -value;
-            _skinTabRightColumnBounds.CalcWorldBounds();
+            RightColumnCurrentIndex = Math.Clamp(value, 0, RightColumnSkinpartPositions.Count - 1);
+            SkinTabRightColumnBounds.fixedY = -RightColumnSkinpartPositions[RightColumnCurrentIndex];
+            SkinTabRightColumnBounds.CalcWorldBounds();
         }
+    }
+    public double RoundDown(double value, List<double> roundedValues)
+    {
+        foreach (double roundedValue in (roundedValues as IEnumerable<double>).Reverse())
+        {
+            if (roundedValue < value)
+            {
+                return roundedValue;
+            }
+        }
+
+        return value;
     }
 
     public static double[] HexArgbToDoubleArray(string hex)
