@@ -1009,12 +1009,12 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         int height = sliders switch
         {
-            0 => 30,
-            1 => 46,
-            2 => 70,
-            3 => 86,
-            4 => 102,
-            _ => 102
+            0 => 38,
+            1 => 54,
+            2 => 78,
+            3 => 94,
+            4 => 114,
+            _ => 114
         };
 
         ElementBounds partBounds = ElementBounds.Fixed(0, 0)
