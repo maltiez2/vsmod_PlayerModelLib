@@ -26,6 +26,7 @@ public enum EnumTextureOverlayMode
     Overlay,
     OverlayCutout,
     HueBlend,
+    HueShift,
     SaturationBlend,
     LuminosityBlend,
     HueSaturationBlend
@@ -36,6 +37,7 @@ public class SkinnablePartExtended : SkinnablePart
     public string[] TargetSkinParts { get; set; } = [];
     public EnumTextureOverlayMode OverlayMode { get; set; } = EnumTextureOverlayMode.Normal;
     public bool Enabled { get; set; } = true;
+    public string TabCode { get; set; } = "default";
     public Dictionary<string, string[]> DisableElementsByVariantCode { get; set; } = [];
     public bool SolidColor { get; set; } = false;
     public bool Canvas { get; set; } = false;

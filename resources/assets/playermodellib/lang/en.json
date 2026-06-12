@@ -1,8 +1,16 @@
 {
   "game:playermodel-seraph": "Seraph",
+
   "playermodellib:tab-model": "Model",
   "playermodellib:tab-skin": "Skin",
   "playermodellib:tab-class": "Class",
+  
+  "playermodellib:skinpart-tab-default": "Other",
+  "playermodellib:skinpart-tab-head": "Head",
+  "playermodellib:skinpart-tab-eyes": "Eyes",
+  "playermodellib:skinpart-tab-fur": "Fur",
+  "playermodellib:skinpart-tab-face": "Face",
+  
   "game:modeldesc-seraph": "Tall humanoids of mysterious origins, that recently started to appear all over the world.",
   "available-classes": "<strong>Available classes:</strong> ",
   "model-size-slider": "Model size: ",

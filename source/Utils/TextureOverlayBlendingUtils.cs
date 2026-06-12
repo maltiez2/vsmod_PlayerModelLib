@@ -40,6 +40,7 @@ public static class TextureOverlayBlendingUtils
                     EnumTextureOverlayMode.Overlay => ColorBlend.Overlay(basePixels[baseIndex], overlayPixels[overlayIndex]),
                     EnumTextureOverlayMode.OverlayCutout => ColorBlend.OverlayCutout(basePixels[baseIndex], overlayPixels[overlayIndex]),
                     EnumTextureOverlayMode.HueBlend => HueBlend(basePixels[baseIndex], overlayPixels[overlayIndex]),
+                    EnumTextureOverlayMode.HueShift => HueShift(basePixels[baseIndex], overlayPixels[overlayIndex]),
                     EnumTextureOverlayMode.SaturationBlend => SaturationBlend(basePixels[baseIndex], overlayPixels[overlayIndex]),
                     EnumTextureOverlayMode.LuminosityBlend => LuminosityBlend(basePixels[baseIndex], overlayPixels[overlayIndex]),
                     EnumTextureOverlayMode.HueSaturationBlend => HueSaturationBlend(basePixels[baseIndex], overlayPixels[overlayIndex]),
@@ -167,6 +168,27 @@ public static class TextureOverlayBlendingUtils
         RgbToHsl(baseR, baseG, baseB, out float baseH, out float baseS, out float baseL);
         RgbToHsl(overlayR, overlayG, overlayB, out float overlayH, out float overlayS, out float overlayL);
         HslToRgb(overlayH, baseS, baseL, out int outR, out int outG, out int outB);
+
+        return ComposeWithAlpha(baseColor, overlayColor, baseR, baseG, baseB, outR, outG, outB);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int HueShift(int baseColor, int overlayColor)
+    {
+        int overlayAlpha = (overlayColor >> 24) & 0xFF;
+        if (overlayAlpha == 0) return baseColor;
+
+        int baseR = (baseColor >> 16) & 0xFF;
+        int baseG = (baseColor >> 8) & 0xFF;
+        int baseB = baseColor & 0xFF;
+
+        int overlayR = (overlayColor >> 16) & 0xFF;
+        int overlayG = (overlayColor >> 8) & 0xFF;
+        int overlayB = overlayColor & 0xFF;
+
+        RgbToHsl(baseR, baseG, baseB, out float baseH, out float baseS, out float baseL);
+        RgbToHsl(overlayR, overlayG, overlayB, out float overlayH, out float overlayS, out float overlayL);
+        HslToRgb((baseH + overlayL) % 1, baseS, baseL, out int outR, out int outG, out int outB);
 
         return ComposeWithAlpha(baseColor, overlayColor, baseR, baseG, baseB, outR, outG, outB);
     }

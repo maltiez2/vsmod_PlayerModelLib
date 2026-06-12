@@ -57,7 +57,7 @@ public class GuiElementCanvasEditor : GuiElement
     /// Optional scissor/clip bounds. Set this when the canvas editor is inside a
     /// scrollable area so that it is correctly clipped when scrolled out of view.
     /// </summary>
-    public ElementBounds ClipBounds { get; set; }
+    public ElementBounds? ClipBounds { get; set; }
 
     // ── Callback ──────────────────────────────────────────────────────────────
     public event Action<TextureCanvasData>? OnChanged;
@@ -68,7 +68,7 @@ public class GuiElementCanvasEditor : GuiElement
         ICoreClientAPI capi,
         ElementBounds bounds,
         TextureCanvasData data,
-        ElementBounds clipBounds = null)
+        ElementBounds? clipBounds = null)
         : base(capi, bounds)
     {
         _data = data;
@@ -87,8 +87,9 @@ public class GuiElementCanvasEditor : GuiElement
 
     public void SetColors(IEnumerable<int> colors)
     {
-        var list = new List<int> { 0 };
-        foreach (var c in colors)
+        List<int> list = new()
+        { 0 };
+        foreach (int c in colors)
             if (c != 0)
                 list.Add(c);
 
@@ -107,9 +108,10 @@ public class GuiElementCanvasEditor : GuiElement
         _data.Pixels = newData.Pixels ?? Array.Empty<int>();
 
         // Update colors, ensuring transparent slot 0 is always present
-        var list = new List<int> { 0 };
+        List<int> list = new()
+        { 0 };
         if (newData.Colors != null)
-            foreach (var c in newData.Colors)
+            foreach (int c in newData.Colors)
                 if (c != 0)
                     list.Add(c);
 
@@ -142,9 +144,10 @@ public class GuiElementCanvasEditor : GuiElement
 
     private void RebuildColorList()
     {
-        var list = new List<int> { 0 };
+        List<int> list = new()
+        { 0 };
         if (_data.Colors != null)
-            foreach (var c in _data.Colors)
+            foreach (int c in _data.Colors)
                 if (c != 0)
                     list.Add(c);
 
@@ -377,8 +380,8 @@ public class GuiElementCanvasEditor : GuiElement
         int texW = Math.Max(1, (int)_canvasW);
         int texH = Math.Max(1, (int)_canvasH);
 
-        using var surface = new ImageSurface(Format.Argb32, texW, texH);
-        using var ctx = genContext(surface);
+        using ImageSurface surface = new(Format.Argb32, texW, texH);
+        using Context ctx = genContext(surface);
 
         DrawCheckerboard(ctx, 0, 0, texW, texH, _data.Width, _data.Height);
 
@@ -431,8 +434,8 @@ public class GuiElementCanvasEditor : GuiElement
         int texW = Math.Max(1, (int)_paletteW);
         int texH = Math.Max(1, (int)_paletteH);
 
-        using var surface = new ImageSurface(Format.Argb32, texW, texH);
-        using var ctx = genContext(surface);
+        using ImageSurface surface = new(Format.Argb32, texW, texH);
+        using Context ctx = genContext(surface);
 
         double pad = scaled(Pad);
         double swatchGap = scaled(ColorSwatchGap);
@@ -753,8 +756,8 @@ public class GuiElementCanvasEditor : GuiElement
         _wideMode = !_wideMode;
         int w = Math.Max(1, (int)Bounds.OuterWidth);
         int h = Math.Max(1, (int)Bounds.OuterHeight);
-        using var surface = new ImageSurface(Format.Argb32, w, h);
-        using var ctx = genContext(surface);
+        using ImageSurface surface = new(Format.Argb32, w, h);
+        using Context ctx = genContext(surface);
         ComposeElements(ctx, surface);
     }
 
@@ -877,7 +880,7 @@ public static class GuiComposerExtensions
         ElementBounds clipBounds = null,
         string key = "canvasEditor")
     {
-        var element = new GuiElementCanvasEditor(composer.Api, bounds, data, clipBounds);
+        GuiElementCanvasEditor element = new(composer.Api, bounds, data, clipBounds);
         if (onChanged != null)
             element.OnChanged += onChanged;
         composer.AddInteractiveElement(element, key);

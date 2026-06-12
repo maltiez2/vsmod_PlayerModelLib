@@ -1000,9 +1000,7 @@ public sealed class CustomModelsSystem : ModSystem
     }
     private void FixColBreak(SkinnablePartExtended[] parts, string modelCodeForLogging)
     {
-        if (parts.Count(skinPart => skinPart.Colbreak) == 1) return;
-
-        Log.Warn(_api, this, $"Model '{modelCodeForLogging}' has no 'calBreak: true' specified, or has specified it more than once. Will automatically reassign 'calBreak' values.\nColumn break is used so split skin parts into left and right columns in character creation gui dialog.");
+        if (parts.Count(skinPart => skinPart.Colbreak) >= 1) return;
 
         int middleIndex = (parts.Length - 1) / 2;
         for (int index = 0; index < parts.Length; index++)
