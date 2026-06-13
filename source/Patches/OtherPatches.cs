@@ -14,10 +14,15 @@ using Vintagestory.GameContent;
 
 namespace PlayerModelLib;
 
-internal static class OtherPatches
+public static class OtherPatches
 {
+    public delegate void OnGetTraitsTextDelegate(CharacterSystem system, ref string result, ref bool handled);
+
+
     public static float CurrentModelGuiScale { get; set; } = 1;
     public static float CurrentModelScale { get; set; } = 1;
+    public static bool SelectClassOnSelection { get; set; } = true;
+    public static event OnGetTraitsTextDelegate? OnGetTraitsText;
 
     public static void Patch(string harmonyId, ICoreAPI api)
     {
@@ -314,6 +319,14 @@ internal static class OtherPatches
 #pragma warning disable S3241 // Methods should not return values that are never used - harmony prefix need to return bool in this case
     private static bool getClassTraitText(CharacterSystem __instance, ref string __result)
     {
+        bool handled = false;
+        OnGetTraitsText?.Invoke(__instance, ref __result, ref handled);
+        if (handled)
+        {
+            return false;
+        }
+
+
         string? classCode = _clientApi?.World?.Player?.Entity?.WatchedAttributes?.GetString("characterClass");
         CharacterClass? characterClass = __instance.characterClasses.Find(c => c.Code == classCode);
 
@@ -475,7 +488,7 @@ internal static class OtherPatches
         {
             fromPlayer.SetModData<bool>("createCharacter", true);
 
-            __instance.setCharacterClass(fromPlayer.Entity, p.CharacterClass, !didSelectBefore || fromPlayer.WorldData.CurrentGameMode == EnumGameMode.Creative);
+            if (SelectClassOnSelection) __instance.setCharacterClass(fromPlayer.Entity, p.CharacterClass, !didSelectBefore || fromPlayer.WorldData.CurrentGameMode == EnumGameMode.Creative);
 
             PlayerSkinBehavior? bh = fromPlayer.Entity.GetBehavior<PlayerSkinBehavior>();
             bh?.ApplyVoice(p.VoiceType, p.VoicePitch, false);

@@ -28,6 +28,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
     public static event Action<GuiDialogCreateCustomCharacter>? OnCreated;
     public static event Action<GuiDialogCreateCustomCharacter>? BeforeComposed;
+    public static event Action<GuiDialogCreateCustomCharacter>? OnConfirmed;
 
     public GuiDialogCreateCustomCharacter(ICoreClientAPI api, CharacterSystem characterSystem) : base(api, characterSystem)
     {
@@ -1671,6 +1672,8 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     }
     public bool OnConfirm()
     {
+        OnConfirmed?.Invoke(this);
+
         PlayerSkinBehavior? skinMod = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
         if (skinMod != null)
         {
