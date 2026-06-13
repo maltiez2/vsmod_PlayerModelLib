@@ -1,6 +1,5 @@
 ﻿using OverhaulLib.Utils;
 using System.Diagnostics;
-using System.Reflection;
 using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -25,8 +24,10 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     public OrderedDictionary<string, ComposeTabDelegate> Tabs { get; } = [];
     public Dictionary<string, bool> TabsEnabled { get; } = [];
     public OrderedDictionary<string, ComposeTabDelegate> ActiveTabs { get; set; } = [];
+    public Dictionary<string, Action<GuiDialogCreateCustomCharacter, float>> OnRenderIntoTab { get; set; } = [];
 
     public static event Action<GuiDialogCreateCustomCharacter>? OnCreated;
+    public static event Action<GuiDialogCreateCustomCharacter>? BeforeComposed;
 
     public GuiDialogCreateCustomCharacter(ICoreClientAPI api, CharacterSystem characterSystem) : base(api, characterSystem)
     {
@@ -257,9 +258,11 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         RenderState = CurrentTab + 1;
 
-        switch (CurrentTab)
+        string currentActiveTab = ActiveTabs.GetAt(CurrentTab).Key;
+
+        switch (currentActiveTab)
         {
-            case 0:
+            case "model":
                 capi.Render.RenderEntityToGui(
                     deltaTime,
                     capi.World.Player.Entity,
@@ -270,7 +273,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
                     (float)GuiElement.scaled(205),
                     ColorUtil.WhiteArgb);
                 break;
-            case 1:
+            case "skin":
                 capi.Render.RenderEntityToGui(
                     deltaTime,
                     capi.World.Player.Entity,
@@ -281,7 +284,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
                     (float)GuiElement.scaled(330 * CharZoom),
                     ColorUtil.WhiteArgb);
                 break;
-            case 2:
+            case "class":
                 capi.Render.RenderEntityToGui(
                     deltaTime,
                     capi.World.Player.Entity,
@@ -293,6 +296,10 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
                     ColorUtil.WhiteArgb);
                 break;
             default:
+                if (OnRenderIntoTab.TryGetValue(currentActiveTab, out Action<GuiDialogCreateCustomCharacter, float>? renderCallback))
+                {
+                    renderCallback.Invoke(this, deltaTime);
+                }
                 break;
         }
 
@@ -361,6 +368,8 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
     public new void ComposeGuis()
     {
+        BeforeComposed?.Invoke(this);
+
         ActiveTabs.Clear();
         foreach ((string key, ComposeTabDelegate? tab) in Tabs)
         {
@@ -369,17 +378,18 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
                 ActiveTabs.Add(key, tab);
             }
         }
-
+        CurrentTab = Math.Clamp(CurrentTab, 0, Math.Max(0, ActiveTabs.Count - 1));
 
         double padding = GuiElementItemSlotGridBase.unscaledSlotPadding;
         double slotSize = GuiElementPassiveItemSlot.unscaledSlotSize;
         double yPosition = 20 + padding;
+        double dialogWidth = 717;
 
         CharacterInventory = capi.World.Player.InventoryManager.GetOwnInventory(GlobalConstants.characterInvClassName);
 
-        ElementBounds tabBounds = ElementBounds.Fixed(0, -25, 450, 25);
+        ElementBounds tabBounds = ElementBounds.Fixed(0, -25, dialogWidth + 39, 25);
 
-        ElementBounds backgroundBounds = ElementBounds.FixedSize(717, DlgHeight)
+        ElementBounds backgroundBounds = ElementBounds.FixedSize(dialogWidth, DlgHeight)
             .WithFixedPadding(GuiStyle.ElementToDialogPadding);
 
         ElementBounds dialogBounds = ElementBounds.FixedSize(DialogWidth, DlgHeight + 40)
@@ -387,16 +397,15 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             .WithFixedAlignmentOffset(GuiStyle.DialogToScreenPadding, 0);
 
         int tabsCount = 0;
-        GuiTab[] tabs = ActiveTabs.Select(entry => new GuiTab() { Name = Lang.Get($"playermodellib:tab-{entry.Key}"), DataInt = tabsCount++ }).ToArray();
+        GuiTab[] tabs = ActiveTabs.Select(entry => new GuiTab() { Name = Lang.Get($"playermodellib:tab-{entry.Key.Replace(':','-')}"), DataInt = tabsCount++ }).ToArray();
 
-        string tabTitle = Lang.Get($"playermodellib:tab-{ActiveTabs.GetAt(CurrentTab).Key}");
+        string tabTitle = Lang.Get($"playermodellib:tab-{ActiveTabs.GetAt(CurrentTab).Key.Replace(':', '-')}");
 
-        GuiComposer composer = capi.Gui
-            .CreateCompo("createcharacter", dialogBounds)
-            .AddShadedDialogBG(backgroundBounds, true)
-            .AddDialogTitleBar(tabTitle, OnTitleBarClose)
-            .AddHorizontalTabs(tabs, tabBounds, OnTabClicked, CairoFont.WhiteSmallText().WithWeight(Cairo.FontWeight.Bold), CairoFont.WhiteSmallText().WithWeight(Cairo.FontWeight.Bold), "tabs")
-            .BeginChildElements(backgroundBounds);
+        GuiComposer composer = capi.Gui.CreateCompo("createcharacter", dialogBounds);
+        composer.AddShadedDialogBG(backgroundBounds, true);
+        composer.AddDialogTitleBar(tabTitle, OnTitleBarClose);
+        composer.AddHorizontalTabs(tabs, tabBounds, OnTabClicked, CairoFont.WhiteSmallText().WithWeight(Cairo.FontWeight.Bold), CairoFont.WhiteSmallText().WithWeight(Cairo.FontWeight.Bold), "tabs");
+        composer.BeginChildElements(backgroundBounds);
 
         Composer = composer;
 
@@ -409,8 +418,8 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         ActiveTabs.GetAt(CurrentTab).Value.Invoke(this, composer, yPosition, padding, slotSize, backgroundBounds, dialogBounds);
 
         GuiElementHorizontalTabs mainTabsBar = composer.GetHorizontalTabs("tabs");
-        mainTabsBar.unscaledTabSpacing = 20;
-        mainTabsBar.unscaledTabPadding = 10;
+        mainTabsBar.unscaledTabSpacing = 8;
+        mainTabsBar.unscaledTabPadding = 4;
         mainTabsBar.activeElement = CurrentTab;
 
         try
@@ -493,7 +502,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             groupValues,
             groupNames,
             groupIndex,
-            (variantCode, selected) => onToggleModelGroup(variantCode, composer),
+            (variantCode, selected) => OnToggleModelGroup(variantCode, composer),
             groupTextBounds,
             dropDownFont.Clone().WithOrientation(EnumTextOrientation.Left),
             multiSelect: false);
@@ -771,7 +780,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         composer.AddButton(Lang.Get("Last selection"), () => OnRandomizeSkin(GetPreviousSelection()), lastSelectionButtonBounds, CairoFont.WhiteSmallText(), EnumButtonStyle.Small);
         composer.AddButton(Lang.Get("Confirm Skin"), OnNextImpl, confirmButtonBounds, CairoFont.WhiteSmallText(), EnumButtonStyle.Small);
 
-        InsetSlotBounds = insetBounds;  
+        InsetSlotBounds = insetBounds;
 
         if (!skinParts.Any())
         {
@@ -1346,7 +1355,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         return partBounds;
     }
 
-    public void onToggleModelGroup(string groupCode, GuiComposer? composer = null)
+    public void OnToggleModelGroup(string groupCode, GuiComposer? composer = null)
     {
         CustomModelsSystem system = capi.ModLoader.GetModSystem<CustomModelsSystem>();
         GetCustomModels(system, groupCode, out string[] modelValues, out _, out _, out _);
@@ -1454,18 +1463,6 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             SkinTabRightColumnBounds.fixedY = -RightColumnSkinpartPositions[RightColumnCurrentIndex];
             SkinTabRightColumnBounds.CalcWorldBounds();
         }
-    }
-    public double RoundDown(double value, List<double> roundedValues)
-    {
-        foreach (double roundedValue in (roundedValues as IEnumerable<double>).Reverse())
-        {
-            if (roundedValue < value)
-            {
-                return roundedValue;
-            }
-        }
-
-        return value;
     }
 
     public static double[] HexArgbToDoubleArray(string hex)
@@ -1702,12 +1699,12 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         CurrentClassIndex = GameMath.Mod(CurrentClassIndex + dir, availableClasses.Count);
 
         CharacterClass chclass = availableClasses[CurrentClassIndex];
-        Composers["createcharacter"]?.GetDynamicText("className").SetNewText(Lang.Get("characterclass-" + chclass.Code));
+        Composers["createcharacter"]?.GetDynamicText("className").SetNewText(Lang.Get("characterclass-" + ProcessDomainForLang(chclass.Code)));
 
         StringBuilder fulldesc = new();
 
         fulldesc.AppendLine();
-        fulldesc.AppendLine(Lang.Get("characterdesc-" + chclass.Code));
+        fulldesc.AppendLine(Lang.Get("characterdesc-" + ProcessDomainForLang(chclass.Code)));
         fulldesc.AppendLine();
         fulldesc.AppendLine(Lang.Get("traits-title"));
 
@@ -1844,22 +1841,23 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
             if (attributes.Length > 0)
             {
-                fullDescription.AppendLine(Lang.Get("traitwithattributes", Lang.Get("trait-" + trait.Code), attributes));
+                fullDescription.AppendLine(Lang.Get("traitwithattributes", Lang.Get("trait-" + ProcessDomainForLang(trait.Code)), attributes));
             }
             else
             {
-                string? description = Lang.GetIfExists("traitdesc-" + trait.Code);
+                string? description = Lang.GetIfExists("traitdesc-" + ProcessDomainForLang(trait.Code));
                 if (description != null)
                 {
-                    fullDescription.AppendLine(Lang.Get("traitwithattributes", Lang.Get("trait-" + trait.Code), description));
+                    fullDescription.AppendLine(Lang.Get("traitwithattributes", Lang.Get("trait-" + ProcessDomainForLang(trait.Code)), description));
                 }
                 else
                 {
-                    fullDescription.AppendLine(Lang.Get("trait-" + trait.Code));
+                    fullDescription.AppendLine(Lang.Get("trait-" + ProcessDomainForLang(trait.Code)));
                 }
             }
         }
     }
+    public static string ProcessDomainForLang(string value) => value.Replace("game:", "").Replace(':', '-');
     public List<CharacterClass> GetAvailableClasses(CustomModelsSystem system, string model)
     {
         HashSet<string> availableClassesForModel = system.CustomModels[model].AvailableClasses;
@@ -1982,105 +1980,5 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         capi.Network.SendPlayerNowReady();
 
         capi.Event.PushEvent("finishcharacterselection");
-    }
-}
-
-public static class GuiComposerDropDownBlocker
-{
-    private static FieldInfo _interactiveElementsField;
-
-    private static FieldInfo InteractiveElementsField
-    {
-        get
-        {
-            if (_interactiveElementsField == null)
-            {
-                _interactiveElementsField = typeof(GuiComposer).GetField(
-                    "interactiveElements",
-                    BindingFlags.NonPublic | BindingFlags.Instance
-                );
-            }
-            return _interactiveElementsField;
-        }
-    }
-
-    private static Dictionary<string, GuiElement> GetElements(GuiComposer composer)
-    {
-        return InteractiveElementsField?.GetValue(composer) as Dictionary<string, GuiElement>;
-    }
-
-    public static GuiElementScrollableDropDown FindBlockingDropDown(GuiComposer composer, int x, int y)
-    {
-        Dictionary<string, GuiElement> elements = GetElements(composer);
-        if (elements == null) return null;
-
-        foreach (GuiElement element in elements.Values)
-        {
-            if (element is GuiElementScrollableDropDown dropdown
-                && dropdown.listMenu.IsOpened
-                && dropdown.listMenu.IsPositionInside(x, y))
-            {
-                return dropdown;
-            }
-        }
-
-        return null;
-    }
-
-    public static bool IsBlockedByOpenDropDown(GuiComposer composer, int x, int y)
-    {
-        return FindBlockingDropDown(composer, x, y) != null;
-    }
-
-    /// <summary>
-    /// Handles MouseDown for the composer manually, stopping iteration
-    /// if a dropdown list consumes the event.
-    /// </summary>
-    public static bool HandleMouseDown(GuiComposer composer, ICoreClientAPI api, MouseEvent args)
-    {
-        Dictionary<string, GuiElement> elements = GetElements(composer);
-        if (elements == null) return false;
-
-        // First pass: check if any open dropdown list owns this position.
-        // If so, deliver ONLY to that dropdown and stop.
-        foreach (GuiElement element in elements.Values)
-        {
-            if (element is GuiElementScrollableDropDown dropdown && dropdown.listMenu.IsOpened)
-            {
-                if (dropdown.listMenu.IsPositionInside(args.X, args.Y))
-                {
-                    dropdown.OnMouseDown(api, args);
-                    args.Handled = true;
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    /// <summary>
-    /// Handles MouseUp for the composer manually, stopping iteration
-    /// if a dropdown list consumes the event.
-    /// </summary>
-    public static bool HandleMouseUp(GuiComposer composer, ICoreClientAPI api, MouseEvent args)
-    {
-        Dictionary<string, GuiElement> elements = GetElements(composer);
-        if (elements == null) return false;
-
-        foreach (GuiElement element in elements.Values)
-        {
-            if (element is GuiElementScrollableDropDown dropdown && dropdown.listMenu.IsOpened)
-            {
-                if (dropdown.listMenu.IsPositionInside(args.X, args.Y))
-                {
-                    dropdown.OnMouseUp(api, args);
-                    args.Handled = true;
-                    return true;
-                }
-            }
-        }
-
-        return false;
     }
 }
