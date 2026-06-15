@@ -242,11 +242,6 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
             attachableShape.Textures[prefix + textureCode] = texture.Base.Clone();
         }
 
-        foreach ((string textureCode, CompositeTexture texture) in attachableTextures)
-        {
-            AddTextureToAtlas(clientApi, textureCode, texture);
-        }
-
         foreach ((string textureCode, AssetLocation? texturePath) in attachableShape.Textures)
         {
             if (texturePath == null || textureCode == "seraph")
@@ -258,15 +253,20 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
 
             AddTextureToAtlas(clientApi, textureCode, texture);
         }
+
+        foreach ((string textureCode, CompositeTexture texture) in attachableTextures)
+        {
+            AddTextureToAtlas(clientApi, textureCode, texture);
+        }
     }
 
     protected virtual void AddTextureToAtlas(ICoreClientAPI api, string textureCode, CompositeTexture texture)
     {
-        CompositeTexture compositeTexture = new(texture.Base);
+        CompositeTexture copy = texture.Clone();
 
-        compositeTexture.Bake(api.Assets);
+        copy.Bake(api.Assets);
 
-        ThreadSafeUtils.InsertTextureIntoAtlas(compositeTexture, api, entity, onInsert: (textureSubId, position) =>
+        ThreadSafeUtils.InsertTextureIntoAtlas(copy, api, entity, onInsert: (textureSubId, position) =>
         {
             WearableTextures.SetValue(textureCode, position);
         });
