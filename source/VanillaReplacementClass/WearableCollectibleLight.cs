@@ -40,7 +40,7 @@ public class WearableCollectibleLightBehavior : EntityBehavior
             IInventory? inventory = PlayerEntity.Player?.InventoryManager?.GetOwnInventory(inventoryId);
             if (inventory == null)
             {
-                Log.Error(entity.Api, this, $"Unable to get inventory with id '{inventoryId}' for player '{PlayerEntity.Player?.PlayerName}'");
+                Log.Verbose(entity.Api, this, $"Unable to get inventory with id '{inventoryId}' for player '{PlayerEntity.Player?.PlayerName}'");
                 continue;
             }
 
