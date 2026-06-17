@@ -172,8 +172,8 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         entity.WatchedAttributes.RegisterModifiedListener("voicetype", OnVoiceConfigChanged);
         entity.WatchedAttributes.RegisterModifiedListener("voicepitch", OnVoiceConfigChanged);
 
-        OnVoiceConfigChanged();
         OnSkinModelChanged();
+        OnVoiceConfigChanged();
 
         if (entity.Api.Side == EnumAppSide.Server && !GetAppliedSkinParts().Any())
         {

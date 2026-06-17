@@ -876,8 +876,8 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         composer.EndClip();
 
-        composer.GetToggleButton("showdressedtoggle").SetValue(false);
-        OnToggleDressOnOff(false);
+        composer.GetToggleButton("showdressedtoggle").SetValue(HideClothing);
+        OnToggleDressOnOff(HideClothing);
 
         OnNewScrollbarValueSkinLeft(0);
         OnNewScrollbarValueSkinRight(0);
@@ -1042,8 +1042,8 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         composer.EndClip();
 
-        composer.GetToggleButton("showdressedtoggle").SetValue(false);
-        OnToggleDressOnOff(false);
+        composer.GetToggleButton("showdressedtoggle").SetValue(HideClothing);
+        OnToggleDressOnOff(HideClothing);
 
         OnNewScrollbarValueSkinLeft(0);
     }
