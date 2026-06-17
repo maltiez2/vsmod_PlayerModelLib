@@ -696,7 +696,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         PlayerSkinBehavior? skinBehavior = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
         if (skinBehavior == null) return;
 
-        IEnumerable<SkinnablePartExtended> skinParts = skinBehavior.AvailableSkinParts.Get().OfType<SkinnablePartExtended>();
+        IEnumerable<SkinnablePartExtended> skinParts = skinBehavior.AvailableSkinParts.Get().OfType<SkinnablePartExtended>().Where(part => !part.HideFromGui);
         string[] skinPartTabNames = skinParts.Select(part => part.TabCode).Distinct().ToArray();
 
         if (skinPartTabNames.Length == 1)
@@ -954,7 +954,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         InsetSlotBounds = insetBounds;
 
-        IEnumerable<SkinnablePartExtended> skinParts = skinBehavior.AvailableSkinParts.Get().OfType<SkinnablePartExtended>();
+        IEnumerable<SkinnablePartExtended> skinParts = skinBehavior.AvailableSkinParts.Get().OfType<SkinnablePartExtended>().Where(part => !part.HideFromGui);
         ElementBounds previousSkinPartBounds = ElementBounds.Fixed(0, 0).WithFixedSize(0, 0).WithParent(leftColumnScrollableBounds);
 
         if (!skinParts.Any())

@@ -49,6 +49,7 @@ public class SkinnablePartExtended : SkinnablePart
     public float FixedSaturation { get; set; } = -1;
     public float FixedLuminosity { get; set; } = -1;
     public float FixedAlpha { get; set; } = -1;
+    public bool HideFromGui { get; set; } = false;
 }
 
 public class CustomModelConfig
