@@ -254,7 +254,7 @@ public static class TextureUtils
 
         CompositeTexture.wildcardsCache ??= new Dictionary<AssetLocation, List<IAsset>>();
 
-        if (!CompositeTexture.wildcardsCache.TryGetValue(compositeTexture.Base, out List<IAsset> matchingAssets))
+        if (!CompositeTexture.wildcardsCache.TryGetValue(compositeTexture.Base, out List<IAsset>? matchingAssets))
         {
             string pathWithoutWildcard = compositeTexture.Base.Path[..^1];
             matchingAssets = CompositeTexture.wildcardsCache[compositeTexture.Base] =
@@ -311,7 +311,7 @@ public static class TextureUtils
 
         if (isBasicTexture)
         {
-            if (!CompositeTexture.basicTexturesCache.TryGetValue(newLocation, out CompositeTexture cachedTexture))
+            if (!CompositeTexture.basicTexturesCache.TryGetValue(newLocation, out CompositeTexture? cachedTexture))
             {
                 cachedTexture = CompositeTexture.basicTexturesCache[newLocation] = new CompositeTexture(newLocation);
             }

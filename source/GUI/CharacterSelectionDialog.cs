@@ -354,6 +354,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     public readonly ICoreClientAPI Api;
     public const string PreviousSelectionFile = "playermodellib-previous-selections.json";
     public const double DialogWidth = 757;
+    public bool ScrollBarFullMode { get; set; } = true;
 
     public List<double> RightColumnSkinpartPositions { get; } = [];
     public List<double> LeftColumnSkinpartPositions { get; } = [];
@@ -717,13 +718,13 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         int colorIconSize = 22;
         double horizontalOffset = -10;
         double columnsWidth = 236;
-        double previewWidth = 256;
+        double previewWidth = 248;
         double columnsHeight = DlgHeight - 54 + 4;
         double buttonsBarWidth = columnsWidth * 2 + previewWidth + padding * 2;
         double buttonsBarHeight = 36;
         double hideClothingHeight = 30;
         double previewInsetHeight = columnsHeight - hideClothingHeight - padding;
-        double scrollBarWidth = 20;
+        double scrollBarWidth = 16;
         double colorPickerheight = 110;
         double canvasHeight = 256;
         double skinPartWidht = columnsWidth - scrollBarWidth;
@@ -732,8 +733,8 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         // top level bounds
         ElementBounds previewAreaBounds = ElementBounds.Fixed(horizontalOffset, yPosition, previewWidth, columnsHeight);
-        ElementBounds leftColumnBounds = previewAreaBounds.RightCopy(padding + padding, skinPartsGroupBarHeight, 0, 0).WithFixedWidth(columnsWidth).WithFixedHeight(columnsHeight - skinPartsGroupBarHeight);
-        ElementBounds rightColumnBounds = ElementBounds.Fixed(0, yPosition + skinPartsGroupBarHeight, columnsWidth, columnsHeight - skinPartsGroupBarHeight).FixedRightOf(leftColumnBounds, padding);
+        ElementBounds leftColumnBounds = previewAreaBounds.RightCopy(padding + padding, skinPartsGroupBarHeight, 0, 0).WithFixedWidth(columnsWidth + padding).WithFixedHeight(columnsHeight - skinPartsGroupBarHeight);
+        ElementBounds rightColumnBounds = ElementBounds.Fixed(0, yPosition + skinPartsGroupBarHeight, columnsWidth + padding, columnsHeight - skinPartsGroupBarHeight).FixedRightOf(leftColumnBounds, padding);
         ElementBounds bottomButtonsBarBounds = ElementBounds.Fixed(horizontalOffset, padding, buttonsBarWidth, buttonsBarHeight).FixedUnder(leftColumnBounds);
         ElementBounds skinPartsGroupsTabsBounds = ElementBounds.Fixed(horizontalOffset, yPosition - 1, columnsWidth * 2 + padding, skinPartsGroupBarHeight).FixedRightOf(previewAreaBounds, padding);
         // preview area
@@ -743,6 +744,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         ElementBounds randomizeButtonBounds = ElementBounds.Fixed(0, 0).WithFixedOffset(padding, padding).WithParent(bottomButtonsBarBounds).WithFixedPadding(8, 6);
         ElementBounds lastSelectionButtonBounds = ElementBounds.Fixed(0, 0).WithFixedOffset(padding, padding).WithParent(bottomButtonsBarBounds).WithFixedPadding(8, 6).RightOf(randomizeButtonBounds, padding);
         ElementBounds confirmButtonBounds = ElementBounds.Fixed(0, 0).WithFixedOffset(-padding, padding).WithParent(bottomButtonsBarBounds).WithAlignment(EnumDialogArea.RightFixed).WithFixedPadding(12, 6);
+        ElementBounds scrollBarModeButtonBounds = lastSelectionButtonBounds.RightCopy().RightOf(lastSelectionButtonBounds, padding);
         // skin parts
         ElementBounds dropDownSkinPartBounds = ElementBounds.Fixed(0, 0).WithFixedSize(skinPartWidht, dropDownheight);
         ElementBounds swatchesSkinPartBounds = ElementBounds.Fixed(0, 0).WithFixedSize(colorIconSize, colorIconSize);
@@ -780,6 +782,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         composer.AddButton(Lang.Get("Randomize"), () => OnRandomizeSkin([]), randomizeButtonBounds, CairoFont.WhiteSmallText(), EnumButtonStyle.Small);
         composer.AddButton(Lang.Get("Last selection"), () => OnRandomizeSkin(GetPreviousSelection()), lastSelectionButtonBounds, CairoFont.WhiteSmallText(), EnumButtonStyle.Small);
         composer.AddButton(Lang.Get("Confirm Skin"), OnNextImpl, confirmButtonBounds, CairoFont.WhiteSmallText(), EnumButtonStyle.Small);
+        composer.AddButton(Lang.Get("Scroll bars mode toggle"), OnScrollBarModeToggle, scrollBarModeButtonBounds, CairoFont.WhiteSmallText(), EnumButtonStyle.Small);
 
         InsetSlotBounds = insetBounds;
 
@@ -792,7 +795,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         }
 
 
-        composer.AddIndexScroller(OnNewScrollbarValueSkinLeft, leftColumnScrollBarBounds, 0, "skinparts-left-scrollbar", leftColumnScrollBarBounds);
+        composer.AddIndexScroller(OnNewScrollbarValueSkinLeft, leftColumnScrollBarBounds, 0, "skinparts-left-scrollbar", ScrollBarFullMode ? leftColumnBounds : leftColumnScrollBarBounds);
         composer.BeginClip(leftColumnClipBounds);
 
 
@@ -855,7 +858,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
                 (composer.GetElement("skinparts-left-scrollbar") as GuiElementIndexScroller)?.SetMaxIndex(LeftColumnSkinpartPositions.Count - 1);
 
                 composer.EndClip();
-                composer.AddIndexScroller(OnNewScrollbarValueSkinRight, rightColumnScrollBarBounds, 0, "skinparts-right-scrollbar", rightColumnScrollBarBounds);
+                composer.AddIndexScroller(OnNewScrollbarValueSkinRight, rightColumnScrollBarBounds, 0, "skinparts-right-scrollbar", ScrollBarFullMode ? rightColumnBounds : rightColumnScrollBarBounds);
                 composer.BeginClip(rightColumnClipBounds);
 
                 previousSkinPartBounds = ElementBounds.Fixed(0, 0);
@@ -1657,6 +1660,12 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         }
 
         CurrentTab = GameMath.Clamp(CurrentTab + 1, 0, TabsEnabled.Count(entry => entry.Value));
+        ComposeGuis();
+        return true;
+    }
+    public bool OnScrollBarModeToggle()
+    {
+        ScrollBarFullMode = !ScrollBarFullMode;
         ComposeGuis();
         return true;
     }

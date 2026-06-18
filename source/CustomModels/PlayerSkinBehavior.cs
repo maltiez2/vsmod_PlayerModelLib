@@ -1,7 +1,6 @@
 ﻿using HarmonyLib;
 using OpenTK.Mathematics;
 using OverhaulLib.Utils;
-using System.Diagnostics;
 using System.Reflection;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -185,9 +184,11 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
     }
 
 #pragma warning disable CS8765
-    public override void OnTesselation(ref Shape entityShape, string shapePathForLogging, ref bool shapeIsCloned, ref string[]? willDeleteElements)
+    public override void OnTesselation(ref Shape entityShape, string shapePathForLogging, ref bool shapeIsCloned, ref string[] willDeleteElements)
     {
         if (ModelSystem == null || ClientApi == null || !ModelSystem.ModelsLoaded) return;
+
+        willDeleteElements ??= [];
 
         Shape? newShape = Tesselate(shapePathForLogging, ref willDeleteElements);
 
@@ -520,7 +521,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         }
     }
 
-    protected virtual Shape? Tesselate(string shapePathForLogging, ref string[]? willDeleteElements)
+    protected virtual Shape? Tesselate(string shapePathForLogging, ref string[] willDeleteElements)
     {
         if (ModelSystem == null || ClientApi == null || !ModelSystem.ModelsLoaded) return null;
 
@@ -695,7 +696,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         }
     }
 
-    protected virtual void AddSkinParts(ref Shape entityShape, string shapePathForLogging, ref string[]? willDeleteElements)
+    protected virtual void AddSkinParts(ref Shape entityShape, string shapePathForLogging, ref string[] willDeleteElements)
     {
         foreach (AppliedSkinnablePartVariant skinPart in GetAppliedSkinParts())
         {
@@ -709,7 +710,6 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
 
                 if (disabledElements.Length > 0)
                 {
-                    willDeleteElements ??= [];
                     willDeleteElements = willDeleteElements.Concat(disabledElements).ToArray();
                 }
 
@@ -873,7 +873,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         }
     }
 
-    protected virtual void RemoveHiddenElements(Shape entityShape, ref string[]? willDeleteElements)
+    protected virtual void RemoveHiddenElements(Shape entityShape, ref string[] willDeleteElements)
     {
         EntityBehaviorTexturedClothing? texturedClothingBehavior = entity.GetBehavior<EntityBehaviorTexturedClothing>();
         if (texturedClothingBehavior == null || texturedClothingBehavior.hideClothing) return;
@@ -893,7 +893,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
                 RemoveDisabledElements(entityShape, disableElements, skinPartsPrefixes);
             }
 
-            if (keepElements != null && willDeleteElements != null)
+            if (keepElements != null)
             {
                 foreach (string element in keepElements)
                 {

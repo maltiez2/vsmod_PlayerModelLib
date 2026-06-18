@@ -37,7 +37,6 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
 
     public static event BeforeWearableTesselatedDelegate? BeforeWearableTesselated;
     public static event BeforeWearableShapeAttachedDelegate? BeforeWearableShapeAttached;
-    public static event OnTryGetTexturePositionDelegate? OnTryGetTexturePosition;
     public readonly ThreadSafeDictionary<string, TextureAtlasPosition> WearableTextures = new([]);
 
     public bool TesselateItems
@@ -46,7 +45,6 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
         set => TesselateItemsValue.Value = value;
     }
 
-    public event OnTryGetTexturePositionDelegate? OnTryGetTexturePositionByInstance;
 
     public override void AfterInitialized(bool onFirstSpawn)
     {
