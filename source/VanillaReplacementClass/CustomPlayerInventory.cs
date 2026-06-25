@@ -21,10 +21,4 @@ public class CustomPlayerInventory : EntityBehaviorPlayerInventory
     {
         return null;
     }
-
-    public override void OnGameTick(float deltaTime)
-    {
-        string t = entity.Api.EntityTagRegistry.SlowEnumerateTagNames(entity.Tags).Aggregate((a, b) => $"{a}, {b}");
-        Debug.WriteLine($"{entity.Api.Side} - {t}");
-    }
 }
