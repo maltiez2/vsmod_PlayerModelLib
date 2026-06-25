@@ -181,7 +181,7 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
             return;
         }
 
-        if (stack.Item.Textures != null)
+        if (stack.Item?.Textures != null)
         {
             foreach ((string textureCode, CompositeTexture texture) in stack.Item.Textures)
             {
@@ -216,7 +216,7 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
             attachableTextures[textureCode] = new(texturePath);
         }
 
-        if (stack.Item.Textures != null)
+        if (stack.Item?.Textures != null)
         {
             foreach ((string textureCode, CompositeTexture texture) in stack.Item.Textures)
             {
