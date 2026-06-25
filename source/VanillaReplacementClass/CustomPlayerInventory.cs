@@ -1,4 +1,5 @@
-﻿using Vintagestory.API.Client;
+﻿using System.Diagnostics;
+using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.GameContent;
@@ -19,5 +20,11 @@ public class CustomPlayerInventory : EntityBehaviorPlayerInventory
     public override ITexPositionSource? GetTextureSource(ref EnumHandling handling)
     {
         return null;
+    }
+
+    public override void OnGameTick(float deltaTime)
+    {
+        string t = entity.Api.EntityTagRegistry.SlowEnumerateTagNames(entity.Tags).Aggregate((a, b) => $"{a}, {b}");
+        Debug.WriteLine($"{entity.Api.Side} - {t}");
     }
 }
