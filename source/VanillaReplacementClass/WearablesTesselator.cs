@@ -1,5 +1,4 @@
-﻿using OpenTK.Windowing.GraphicsLibraryFramework;
-using OverhaulLib.Utils;
+﻿using OverhaulLib.Utils;
 using System.Collections.Immutable;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -22,13 +21,12 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
     }
 
     public static HashSet<string> InventoriesToProcess { get; protected set; } = [
-        GlobalConstants.characterInvClassName,
-        GlobalConstants.backpackInvClassName
+        GlobalConstants.characterInvClassName
     ];
 
     public static Dictionary<string, HashSet<int>> SlotsToProcess { get; protected set; } = new()
     {
-        [GlobalConstants.backpackInvClassName] = [0]//[0, 1, 2, 3]
+
     };
 
     public override string PropertyName() => "";
@@ -81,6 +79,8 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
 
             ProcessInventory(inventoryId, inventory, ref entityShape, ref willDeleteElements);
         }
+
+        ProcessVanillaBackpack(ref entityShape, ref willDeleteElements);
     }
 
     public override ITexPositionSource GetTextureSource(ref EnumHandling handling)
@@ -257,6 +257,31 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
             AddTextureToAtlas(clientApi, textureCode, texture);
         }
     }
+    protected virtual void ProcessVanillaBackpack(ref Shape entityShape, ref string[] willDeleteElements)
+    {
+        IEnumerable<ItemSlot> backpackSlots = GetVanillaBackpackSlotsToTesselate(out IInventory? backpackInventory);
+        
+        if (backpackInventory == null) return;
+
+        foreach (ItemSlot slot in backpackSlots)
+        {
+            ItemSlot slotToProcess = slot; // as separate variable to pass as a ref
+
+            bool skipSlot = false;
+            BeforeWearableTesselated?.Invoke(this, backpackInventory, ref slotToProcess, ref entityShape, ref willDeleteElements, ref skipSlot);
+            if (skipSlot)
+            {
+                continue;
+            }
+
+            if (slot.Empty)
+            {
+                continue;
+            }
+
+            ProcessSlot(slot, backpackInventory, ref entityShape, ref willDeleteElements);
+        }
+    }
 
     protected virtual void AddTextureToAtlas(ICoreClientAPI api, string textureCode, CompositeTexture texture)
     {
@@ -337,5 +362,20 @@ public class WearablesTesselatorBehavior : EntityBehavior, ITexPositionSource
         }
 
         return ShapeLoadingUtil.StepParentShape(attachableShape, overlayShape);
+    }
+
+    protected virtual IEnumerable<ItemSlot> GetVanillaBackpackSlotsToTesselate(out IInventory? backpackInventory)
+    {
+        backpackInventory = PlayerEntity.Player?.InventoryManager?.GetOwnInventory(GlobalConstants.backpackInvClassName);
+
+        Dictionary<string, ItemSlot> uniqueGear = [];
+        for (int i = 0; backpackInventory != null && i < 4; i++)
+        {
+            ItemSlot slot = backpackInventory[i];
+            if (slot.Empty) continue;
+            uniqueGear[(slot.Itemstack.ItemAttributes?["attachableToEntity"]?["categoryCode"]?.AsString(null) ?? ("" + slot.Itemstack.Class + slot.Itemstack.Collectible.Id))] = slot;
+        }
+
+        return uniqueGear.Values;
     }
 }
