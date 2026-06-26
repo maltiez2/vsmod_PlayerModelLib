@@ -1312,6 +1312,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     {
         string partCode = skinPart.Code;
         AppliedSkinnablePartVariant? appliedVariant = skinBehavior.AppliedSkinParts.Get().FirstOrDefault(variant => variant.PartCode == partCode);
+        SkinnablePartVariant[] variants = skinPart.Variants.Where(variant => variant.Category == "standard" || variant.Category == null || variant.Category == "").ToArray();
 
         ElementBounds partBounds = ElementBounds.Fixed(0, 0)
             .WithFixedSize(skinPartTitleBounds.fixedWidth, skinPartTitleBounds.fixedHeight + padding + canvasSkinPartBounds.fixedHeight + padding)
@@ -1346,6 +1347,15 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         if (appliedVariant?.Code != null)
         {
             TextureCanvasData appliedCanvasData = TextureCanvasData.Deserialize(appliedVariant.Code);
+            if (canvasData.Width == appliedCanvasData.Width && canvasData.Height == appliedCanvasData.Height && canvasData.Colors.Length == appliedCanvasData.Colors.Length)
+            {
+                canvasData = appliedCanvasData;
+            }
+        }
+        else if (variants.Length > 0 && variants[0].Code != null)
+        {
+            SkinnablePartVariant defaultVariant = variants[0];
+            TextureCanvasData appliedCanvasData = TextureCanvasData.Deserialize(defaultVariant.Code);
             if (canvasData.Width == appliedCanvasData.Width && canvasData.Height == appliedCanvasData.Height && canvasData.Colors.Length == appliedCanvasData.Colors.Length)
             {
                 canvasData = appliedCanvasData;
