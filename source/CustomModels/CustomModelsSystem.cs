@@ -1291,7 +1291,7 @@ public sealed class CustomModelsSystem : ModSystem
                 {
                     ProcessSolidColorTexturePart(clientApi, part, model);
                 }
-                else
+                else if (!part.Canvas)
                 {
                     ProcessTexturePart(clientApi, part, model);
                 }
