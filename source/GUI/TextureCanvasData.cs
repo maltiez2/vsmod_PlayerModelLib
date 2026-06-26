@@ -2,14 +2,7 @@
 
 namespace PlayerModelLib;
 
-public readonly struct TextureCanvasSkinPartConfig
-{
-    public readonly int Width;
-    public readonly int Height;
-    public readonly int Colors;
-}
-
-public class TextureCanvasData
+public sealed class TextureCanvasData
 {
     public int Width { get; set; }
     public int Height { get; set; }
