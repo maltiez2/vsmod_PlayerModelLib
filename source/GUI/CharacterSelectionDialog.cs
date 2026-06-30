@@ -354,6 +354,8 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     public readonly ICoreClientAPI Api;
     public const string PreviousSelectionFile = "playermodellib-previous-selections.json";
     public const double DialogWidth = 757;
+    public string ImportSkinCode { get; set; } = "";
+
     public bool ScrollBarFullMode { get; set; } = true;
 
     public List<double> RightColumnSkinpartPositions { get; } = [];
@@ -399,7 +401,7 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             .WithFixedAlignmentOffset(GuiStyle.DialogToScreenPadding, 0);
 
         int tabsCount = 0;
-        GuiTab[] tabs = ActiveTabs.Select(entry => new GuiTab() { Name = Lang.Get($"playermodellib:tab-{entry.Key.Replace(':','-')}"), DataInt = tabsCount++ }).ToArray();
+        GuiTab[] tabs = ActiveTabs.Select(entry => new GuiTab() { Name = Lang.Get($"playermodellib:tab-{entry.Key.Replace(':', '-')}"), DataInt = tabsCount++ }).ToArray();
 
         string tabTitle = Lang.Get($"playermodellib:tab-{ActiveTabs.GetAt(CurrentTab).Key.Replace(':', '-')}");
 
@@ -706,6 +708,8 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             return;
         }
 
+        List<string> skins = GetExistingSkins();
+
         EntityShapeRenderer? renderer = capi.World.Player.Entity.Properties.Client.Renderer as EntityShapeRenderer;
         renderer?.TesselateShape();
 
@@ -743,8 +747,12 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         // buttons bar
         ElementBounds randomizeButtonBounds = ElementBounds.Fixed(0, 0).WithFixedOffset(padding, padding).WithParent(bottomButtonsBarBounds).WithFixedPadding(8, 6);
         ElementBounds lastSelectionButtonBounds = ElementBounds.Fixed(0, 0).WithFixedOffset(padding, padding).WithParent(bottomButtonsBarBounds).WithFixedPadding(8, 6).RightOf(randomizeButtonBounds, padding);
+        ElementBounds exportSelectionButtonBounds = ElementBounds.Fixed(0, 0).WithFixedOffset(padding, padding).WithParent(bottomButtonsBarBounds).WithFixedPadding(8, 6).RightOf(lastSelectionButtonBounds, padding);
+        ElementBounds importSelectionButtonBounds = ElementBounds.Fixed(0, 0).WithFixedOffset(padding, padding).WithParent(bottomButtonsBarBounds).WithFixedPadding(8, 6).RightOf(exportSelectionButtonBounds, padding);
+        ElementBounds loadedSkinsDropdownBounds = ElementBounds.Fixed(0, 0).WithFixedSize(130, 31).WithFixedOffset(padding, padding).WithParent(bottomButtonsBarBounds).RightOf(importSelectionButtonBounds, padding);
+        ElementBounds refreshSkinsButtonBounds = ElementBounds.Fixed(0, 0).WithFixedOffset(padding, padding).WithParent(bottomButtonsBarBounds).WithFixedPadding(8, 6).RightOf(loadedSkinsDropdownBounds, padding);
         ElementBounds confirmButtonBounds = ElementBounds.Fixed(0, 0).WithFixedOffset(-padding, padding).WithParent(bottomButtonsBarBounds).WithAlignment(EnumDialogArea.RightFixed).WithFixedPadding(12, 6);
-        ElementBounds scrollBarModeButtonBounds = lastSelectionButtonBounds.RightCopy().RightOf(lastSelectionButtonBounds, padding);
+        ElementBounds scrollBarModeButtonBounds = ElementBounds.Fixed(500, -16).WithFixedHeight(24);
         // skin parts
         ElementBounds dropDownSkinPartBounds = ElementBounds.Fixed(0, 0).WithFixedSize(skinPartWidht, dropDownheight);
         ElementBounds swatchesSkinPartBounds = ElementBounds.Fixed(0, 0).WithFixedSize(colorIconSize, colorIconSize);
@@ -781,6 +789,10 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         composer.AddToggleButton(Lang.Get("playermodellib:gui-button-hide-clothing"), smallfont, OnToggleDressOnOff, hideClothingButtonBounds, "showdressedtoggle");
         composer.AddButton(Lang.Get("Randomize"), () => OnRandomizeSkin([]), randomizeButtonBounds, CairoFont.WhiteSmallText(), EnumButtonStyle.Small);
         composer.AddButton(Lang.Get("Last selection"), () => OnRandomizeSkin(GetPreviousSelection()), lastSelectionButtonBounds, CairoFont.WhiteSmallText(), EnumButtonStyle.Small);
+        composer.AddButton(Lang.Get("Export"), OnExport, exportSelectionButtonBounds, CairoFont.WhiteSmallText(), EnumButtonStyle.Small);
+        composer.AddButton(Lang.Get("Import"), OnImport, importSelectionButtonBounds, CairoFont.WhiteSmallText(), EnumButtonStyle.Small);
+        composer.AddScrollableDropDown(skins.ToArray(), skins.ToArray(), 0, (variantcode, selected) => OnToggleSkinImport(variantcode), loadedSkinsDropdownBounds, dialogBounds, "dropdown-import-skin");
+        composer.AddButton(Lang.Get("Refresh"), OnRefresh, refreshSkinsButtonBounds, CairoFont.WhiteSmallText(), EnumButtonStyle.Small);
         composer.AddButton(Lang.Get("Confirm Skin"), OnNextImpl, confirmButtonBounds, CairoFont.WhiteSmallText(), EnumButtonStyle.Small);
         composer.AddButton(Lang.Get("Scroll bars mode toggle"), OnScrollBarModeToggle, scrollBarModeButtonBounds, CairoFont.WhiteSmallText(), EnumButtonStyle.Small);
 
@@ -898,6 +910,12 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         CairoFont smallfont = CairoFont.WhiteSmallText();
         Cairo.TextExtents textExt = smallfont.GetTextExtents(Lang.Get("Show dressed"));
 
+        List<string> skins = GetExistingSkins();
+        if (skins.Count == 0)
+        {
+            skins.Add("");
+        }
+
         int colorIconSize = 22;
         double horizontalOffset = -10;
         double columnsWidth = 236;
@@ -924,6 +942,10 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         // buttons bar
         ElementBounds randomizeButtonBounds = ElementBounds.Fixed(0, 0).WithFixedOffset(padding, padding).WithParent(bottomButtonsBarBounds).WithFixedPadding(8, 6);
         ElementBounds lastSelectionButtonBounds = ElementBounds.Fixed(0, 0).WithFixedOffset(padding, padding).WithParent(bottomButtonsBarBounds).WithFixedPadding(8, 6).RightOf(randomizeButtonBounds, padding);
+        ElementBounds exportSelectionButtonBounds = ElementBounds.Fixed(0, 0).WithFixedOffset(padding, padding).WithParent(bottomButtonsBarBounds).WithFixedPadding(8, 6).RightOf(lastSelectionButtonBounds, padding);
+        ElementBounds importSelectionButtonBounds = ElementBounds.Fixed(0, 0).WithFixedOffset(padding, padding).WithParent(bottomButtonsBarBounds).WithFixedPadding(8, 6).RightOf(exportSelectionButtonBounds, padding);
+        ElementBounds loadedSkinsDropdownBounds = ElementBounds.Fixed(0, 0).WithFixedSize(130, 31).WithFixedOffset(padding, padding).WithParent(bottomButtonsBarBounds).RightOf(importSelectionButtonBounds, padding);
+        ElementBounds refreshSkinsButtonBounds = ElementBounds.Fixed(0, 0).WithFixedOffset(padding, padding).WithParent(bottomButtonsBarBounds).WithFixedPadding(8, 6).RightOf(loadedSkinsDropdownBounds, padding);
         ElementBounds confirmButtonBounds = ElementBounds.Fixed(0, 0).WithFixedOffset(-padding, padding).WithParent(bottomButtonsBarBounds).WithAlignment(EnumDialogArea.RightFixed).WithFixedPadding(12, 6);
         // skin parts
         ElementBounds dropDownSkinPartBounds = ElementBounds.Fixed(0, 0).WithFixedSize(skinPartWidht, dropDownheight);
@@ -953,6 +975,10 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         composer.AddToggleButton(Lang.Get("playermodellib:gui-button-hide-clothing"), smallfont, OnToggleDressOnOff, hideClothingButtonBounds, "showdressedtoggle");
         composer.AddButton(Lang.Get("Randomize"), () => OnRandomizeSkin([]), randomizeButtonBounds, CairoFont.WhiteSmallText(), EnumButtonStyle.Small);
         composer.AddButton(Lang.Get("Last selection"), () => OnRandomizeSkin(GetPreviousSelection()), lastSelectionButtonBounds, CairoFont.WhiteSmallText(), EnumButtonStyle.Small);
+        composer.AddButton(Lang.Get("Export"), OnExport, exportSelectionButtonBounds, CairoFont.WhiteSmallText(), EnumButtonStyle.Small);
+        composer.AddButton(Lang.Get("Import"), OnImport, importSelectionButtonBounds, CairoFont.WhiteSmallText(), EnumButtonStyle.Small);
+        composer.AddScrollableDropDown(skins.ToArray(), skins.ToArray(), 0, (variantcode, selected) => OnToggleSkinImport(variantcode), loadedSkinsDropdownBounds, dialogBounds, "dropdown-import-skin");
+        composer.AddButton(Lang.Get("Refresh"), OnRefresh, refreshSkinsButtonBounds, CairoFont.WhiteSmallText(), EnumButtonStyle.Small);
         composer.AddButton(Lang.Get("Confirm Skin"), OnNextImpl, confirmButtonBounds, CairoFont.WhiteSmallText(), EnumButtonStyle.Small);
 
         InsetSlotBounds = insetBounds;
@@ -1404,6 +1430,36 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         Api.StoreModConfig(allSelections, PreviousSelectionFile);
     }
 
+    public void ExportSelection(Dictionary<string, string> selection, string file)
+    {
+        Api.StoreModConfig(selection, $"player-model-skins/{file}.json");
+    }
+    public Dictionary<string, string> ImportSelection(string file)
+    {
+        return Api.LoadModConfig<Dictionary<string, string>>($"player-model-skins/{file}.json");
+    }
+    public Dictionary<string, string> GetCurrentSelection()
+    {
+        PlayerSkinBehavior? skinMod = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
+        return skinMod?.AppliedSkinParts.Get().ToDictionary(part => part.PartCode, part => part.Code) ?? [];
+    }
+    public List<string> GetExistingSkins()
+    {
+        string path = GamePaths.ModConfig;
+        string skinsFolder = "player-model-skins";
+        string folderPath = Path.Combine(path, skinsFolder);
+
+        if (!Directory.Exists(folderPath))
+        {
+            return [];
+        }
+
+        return Directory.EnumerateFiles(folderPath, "*.json", SearchOption.TopDirectoryOnly)
+            .Select(Path.GetFileNameWithoutExtension)
+            .OfType<string>()
+            .ToList();
+    }
+
     public string GetCurrentModel()
     {
         PlayerSkinBehavior? skinBehavior = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
@@ -1477,6 +1533,39 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             SkinTabRightColumnBounds.fixedY = -RightColumnSkinpartPositions[RightColumnCurrentIndex];
             SkinTabRightColumnBounds.CalcWorldBounds();
         }
+    }
+
+    public bool OnExport()
+    {
+        Dictionary<string, string> selection = GetCurrentSelection();
+        PlayerSkinBehavior? skinMod = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
+        string model = skinMod?.CurrentModelCode?.Replace(":", "-") ?? "";
+        string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+        string file = $"{model}_{timestamp}";
+
+        ExportSelection(selection, file);
+
+        return true;
+    }
+    public bool OnImport()
+    {
+        GuiElementScrollableDropDown? dropdown = Composer?.GetScrollableDropDown("dropdown-import-skin");
+        string selected = dropdown?.SelectedValue ?? "";
+
+        Dictionary<string, string> selection = ImportSelection(selected);
+
+        OnRandomizeSkin(selection);
+
+        return true;
+    }
+    public bool OnRefresh()
+    {
+        GuiElementScrollableDropDown? dropdown = Composer?.GetScrollableDropDown("dropdown-import-skin");
+
+        List<string> skins = GetExistingSkins();
+        dropdown?.SetList(skins.ToArray(), skins.ToArray());
+
+        return true;
     }
 
     public static double[] HexArgbToDoubleArray(string hex)
@@ -1583,6 +1672,10 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
     {
         PlayerSkinBehavior? skinMod = capi.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
         skinMod?.SelectSkinPart(partCode, variantCode);
+    }
+    public void OnToggleSkinImport(string code)
+    {
+        ImportSkinCode = code;
     }
     public void OnToggleSkinPartColor(string partCode, int index)
     {
