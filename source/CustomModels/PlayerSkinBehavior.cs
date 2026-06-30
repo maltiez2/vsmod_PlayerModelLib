@@ -1196,11 +1196,8 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
             return;
         }
 
-        //Debug.WriteLine($"InsertOverlayIntoAtlas - try insert {code}");
         ThreadSafeUtils.InsertTextureIntoAtlas(rootNode, api, entity, onInsert: (textureSubId, position) =>
         {
-            //Debug.WriteLine($"InsertOverlayIntoAtlas - inserted {code}");
-            //TextureUtils.ExportTextureAtlasPositionAsPng(api, position, api.DataBasePath + $"/debug/{code}.png");
             OverlaysTexturePositions.SetValue(code, position);
         },
         debugCode: code);

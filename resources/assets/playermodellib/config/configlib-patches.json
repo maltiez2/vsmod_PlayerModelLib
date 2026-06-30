@@ -32,6 +32,12 @@
       "default": true
     },
     {
+      "code": "disable_custom_classes_and_traits",
+      "type": "boolean",
+      "ingui": "playermodellib:setting-disable_custom_classes_and_traits",
+      "default": false
+    },
+    {
       "code": "multi_thread_payer_shape_generation",
       "type": "boolean",
       "ingui": "playermodellib:setting-multi_thread_payer_shape_generation",

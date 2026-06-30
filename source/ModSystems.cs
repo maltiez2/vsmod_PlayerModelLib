@@ -11,6 +11,7 @@ public sealed class Settings
     public bool DisableModelClassesAndTraits { get; set; } = false;
     public bool MultiThreadPayerShapeGeneration { get; set; } = true;
     public bool LogOffThreadTesselationErrors { get; set; } = true;
+    public bool DisableCustomClassesAndTraits { get; set; } = false;
 }
 
 public sealed class LatePlayerModelModSystem : ModSystem

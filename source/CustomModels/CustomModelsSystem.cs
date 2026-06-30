@@ -412,6 +412,8 @@ public sealed class CustomModelsSystem : ModSystem
 
         FixColBreak(modelConfig.SkinnableParts, code);
 
+        bool enableCustomClassesAndTraits = !PlayerModelModSystem.Settings.DisableCustomClassesAndTraits;
+
         CustomModelData modelData = new(code, shape)
         {
             Enabled = modelConfig.Enabled,
@@ -420,9 +422,9 @@ public sealed class CustomModelsSystem : ModSystem
             SkinPartsArray = modelConfig.SkinnableParts,
             MainTextureCodes = [.. mainTextures.Select(textureCode => PrefixTextureCode(code, textureCode))],
             AvailableClasses = [.. modelConfig.AvailableClasses],
-            SkipClasses = [.. modelConfig.SkipClasses],
-            ExclusiveClasses = [.. modelConfig.ExclusiveClasses],
-            ExtraTraits = modelConfig.ExtraTraits,
+            SkipClasses = enableCustomClassesAndTraits ? [.. modelConfig.SkipClasses] : [],
+            ExclusiveClasses = enableCustomClassesAndTraits ? [.. modelConfig.ExclusiveClasses] : [],
+            ExtraTraits = enableCustomClassesAndTraits ? modelConfig.ExtraTraits : [],
             WearableShapeReplacersByShape = modelConfig.WearableModelReplacersByShape,
             DisabledElementsByShape = modelConfig.DisabledElementsByShape,
             EnabledElementsByShape = modelConfig.EnabledElementsByShape,
