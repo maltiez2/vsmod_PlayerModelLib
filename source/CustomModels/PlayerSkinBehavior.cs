@@ -44,9 +44,9 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
 
     public bool Initialized { get; protected set; }
 
-    public readonly ThreadSafeDictionary<string, SkinnablePart> AvailableSkinPartsByCode = new([]);
-    public readonly ThreadSafeList<SkinnablePart> AvailableSkinParts = new([]);
-    public readonly ThreadSafeList<AppliedSkinnablePartVariant> AppliedSkinParts = new([]);
+    public ThreadSafeDictionary<string, SkinnablePart> AvailableSkinPartsByCode { get; } = new([]);
+    public ThreadSafeList<SkinnablePart> AvailableSkinParts { get; } = new([]);
+    public ThreadSafeList<AppliedSkinnablePartVariant> AppliedSkinParts { get; } = new([]);
 
     public string VoiceType { get; set; } = "altoflute";
     public string VoicePitch { get; set; } = "medium";
@@ -462,7 +462,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
             {
 
             }
-            else if(variants.Length == 0 || index == -1)
+            else if (variants.Length == 0 || index == -1)
             {
                 continue;
             }
@@ -471,7 +471,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
                 variantCode ??= variants[index].Code;
             }
 
-            SelectSkinPart(skinpart.Code, variantCode, true, playVoice);
+            SelectSkinPart(skinpart.Code, variantCode, false, playVoice);
 
             SkinRandomizerConstraints ??= entity.Api.Assets.Get("config/seraphrandomizer.json").ToObject<SeraphRandomizerConstraints>();
 
@@ -486,6 +486,8 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
 
             if (skinpart.Code == "voicetype" && variantCode == "high") mustached = false;
         }
+
+        _ = GetAppliedSkinParts();
 
         return true;
     }
