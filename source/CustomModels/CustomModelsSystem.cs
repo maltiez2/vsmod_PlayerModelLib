@@ -228,6 +228,7 @@ public sealed class CustomModelsSystem : ModSystem
     public static string GetSkinPartTexturePrefix(string modelCode, string skinCode) => $"{modelCode.Replace(':', '-')}-{skinCode}-";
 
 
+
     private const string _defaultModelPath = "game:entity/humanoid/seraph-faceless";
     private const string _defaultMainTextureCode = "seraph";
     private const string _playerEntityCode = "game:player";
