@@ -5,6 +5,7 @@ using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
 using Vintagestory.GameContent;
 using OverhaulLib.Utils;
+using Vintagestory.API.Util;
 
 namespace PlayerModelLib;
 
@@ -188,4 +189,15 @@ public sealed class ChangePlayerModelPacket
 public sealed class ChangePlayerModelSizePacket
 {
     public float EntitySize { get; set; } = 1;
+}
+
+
+public class PlayerModelsRemapping
+{
+    public Dictionary<string, string> OldCodeToNewCode { get; set; } = [];
+
+    public void CombineIntoSelf(PlayerModelsRemapping otherMapping)
+    {
+        OldCodeToNewCode.AddRange(otherMapping.OldCodeToNewCode);
+    }
 }

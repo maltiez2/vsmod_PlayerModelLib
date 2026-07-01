@@ -29,6 +29,7 @@ public sealed class CustomModelsSystem : ModSystem
     public Dictionary<string, BaseShapeData> BaseShapesData { get; private set; } = [];
     public bool CanHotLoad => ModelsLoaded;
     public static string SeraphModelCode => _defaultModelCode;
+    public PlayerModelsRemapping ModelsRemapping { get; private set; } = new();
 
     public event Action? OnCustomModelsLoaded;
     public event Action<string>? OnCustomModelHotLoaded;
@@ -70,6 +71,7 @@ public sealed class CustomModelsSystem : ModSystem
     }
     public override void AssetsFinalize(ICoreAPI api)
     {
+        LoadRemappings(api);
         LoadBaseShapes(api);
 
         try
@@ -811,6 +813,15 @@ public sealed class CustomModelsSystem : ModSystem
             {
                 api.EntityTagRegistry.Register(modelConfig.AddTags as IEnumerable<string>);
             }
+        }
+    }
+    private void LoadRemappings(ICoreAPI api)
+    {
+        List<IAsset> remaps = api.Assets.GetManyInCategory("config", "player-model-remaps.json");
+
+        foreach (PlayerModelsRemapping remap in remaps.Select(asset => ParsingUtils.LoadObjectFromFile<PlayerModelsRemapping>(asset, api, caller: this)).OfType<PlayerModelsRemapping>())
+        {
+            ModelsRemapping.CombineIntoSelf(remap);
         }
     }
 

@@ -103,6 +103,13 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
 
         string skinModel = GetPlayerModelAttributeValue();
 
+        if (ModelSystem.ModelsRemapping.OldCodeToNewCode.TryGetValue(skinModel, out string? newSkinModel))
+        {
+            Log.Notify(entity.Api, this, $"(player: {(entity as EntityPlayer)?.GetName()}) Custom model with code '{skinModel}' was remapped to '{newSkinModel}'.");
+            skinModel = newSkinModel;
+            SetModelAttribute(skinModel);
+        }
+
         if (!ModelSystem.CustomModels.ContainsKey(skinModel) && entity.Api.ModLoader.IsModEnabled("customplayermodel"))
         {
             Log.Notify(entity.Api, this, $"(player: {(entity as EntityPlayer)?.GetName()}) Custom model with code '{skinModel}' was not found. Probably was not yet received from player. Will reset model to default until the model is received.");
@@ -120,6 +127,10 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
             if (entity.Api.Side == EnumAppSide.Server && !GetAppliedSkinParts().Any())
             {
                 RandomizeSkin(entity, [], false);
+            }
+            else
+            {
+                ValidateSkin();
             }
 
             ModelSystem.OnCustomModelHotLoaded += (code) =>
@@ -177,6 +188,10 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         if (entity.Api.Side == EnumAppSide.Server && !GetAppliedSkinParts().Any())
         {
             RandomizeSkin(entity, [], false);
+        }
+        else
+        {
+            ValidateSkin();
         }
 
         Initialized = true;
@@ -631,6 +646,12 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         }
     }
 
+    protected virtual void ValidateSkin()
+    {
+        Dictionary<string, string> currentSkin = AppliedSkinParts.Get().ToDictionary(part => part.PartCode, part => part.Code) ?? [];
+        RandomizeSkin(entity, currentSkin, false);
+    }
+
     protected virtual void ReplaceEntityShape()
     {
         if (ModelSystem?.ModelsLoaded != true) return;
@@ -1032,7 +1053,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         {
             texturePath.Path = texturePath.Path.Replace(TextureUtils.TexturesPrefixPath, "");
         }
-        
+
         CompositeTexture overlayComposite = new(texturePath);
         if (RecursiveOverlaysByTextures.TryGetValue(code, out RecusiveOverlaysTextureWithTarget? existingNode))
         {
@@ -1061,7 +1082,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         Vector2i overlayOffset = Vector2i.Zero;
         if (offset.Length == 2)
         {
-            overlayOffset = new (offset[0], offset[1]);
+            overlayOffset = new(offset[0], offset[1]);
         }
 
         CompositeTexture texture = new(texturePath);
@@ -1134,7 +1155,7 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
             InsertOverlayIntoAtlas(api, code);
         }
     }
-    
+
     protected virtual void CombineOverlays()
     {
         IReadOnlyDictionary<string, RecusiveOverlaysTextureWithTarget> overlays = RecursiveOverlaysByTextures.Get();
