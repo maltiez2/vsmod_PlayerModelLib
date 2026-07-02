@@ -1,10 +1,12 @@
 ﻿using HarmonyLib;
 using OpenTK.Mathematics;
 using OverhaulLib.Utils;
+using System.Diagnostics;
 using System.Reflection;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
+using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Util;
@@ -198,7 +200,6 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         OnActuallyInitialize?.Invoke();
     }
 
-#pragma warning disable CS8765
     public override void OnTesselation(ref Shape entityShape, string shapePathForLogging, ref bool shapeIsCloned, ref string[] willDeleteElements)
     {
         if (ModelSystem == null || ClientApi == null || !ModelSystem.ModelsLoaded) return;
@@ -216,7 +217,6 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
 
         OnShapeTesselated?.Invoke(entityShape);
     }
-#pragma warning restore CS8765
 
     public virtual void SetCurrentModel(string code, float size)
     {
@@ -507,6 +507,281 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         return true;
     }
 
+    public virtual void ExportAsCPMModel()
+    {
+        ShapeReplacementUtil.ExportingShape = true;
+        ShapeLoadingUtil.LoadShapesFromCache = false;
+        string[] elementsToDelete = [];
+        Shape? shape = TesselateForExport();
+        ShapeLoadingUtil.LoadShapesFromCache = true;
+        ShapeReplacementUtil.ExportingShape = false;
+        if (shape == null || ClientApi == null) return;
+
+        string cpmModelFolder = System.IO.Path.Combine(GamePaths.ModConfig, "custom-player-models", CurrentModelCode.Replace(':', '-'));
+
+        string prefix = CustomModelsSystem.GetTextureCodePrefix(CurrentModelCode);
+
+        foreach ((string code, _) in shape.Textures)
+        {
+            if (!code.StartsWith(CurrentModelCode.Replace(':', '-')))
+            {
+                shape.Textures[code] = prefix + code;
+            }
+            else
+            {
+                shape.Textures[code] = code;
+            }
+        }
+
+        foreach ((string code, int[]? size) in shape.TextureSizes.ToList())
+        {
+            if (!code.StartsWith(CurrentModelCode.Replace(':', '-')))
+            {
+                shape.TextureSizes[prefix + code] = size;
+            }
+        }
+
+        GamePaths.EnsurePathExists(cpmModelFolder);
+
+        Dictionary<string, BakedBitmap> bakedTextures = ExportTextures(ClientApi);
+        Dictionary<string, Vector2i> textureHalfSizes = bakedTextures.ToDictionary(entry => entry.Key, entry => GetTextureHalfSize(shape, entry.Key));
+        Dictionary<string, TexturePixels> texutres = bakedTextures.ToDictionary(entry => entry.Key, entry => new TexturePixels()
+        {
+            Code = entry.Key,
+            Width = entry.Value.Width,
+            Height = entry.Value.Height,
+            Pixels = entry.Value.TexturePixels,
+            WidthUVFactor = (float)entry.Value.Width / textureHalfSizes[entry.Key].X,
+            HeightUVFactor = (float)entry.Value.Height / textureHalfSizes[entry.Key].Y
+
+        });
+        List<UVForTexture> uvs = CollectShapeUVs(shape, prefix, CurrentModelCode.Replace(':', '-'));
+
+        ProcessTextures(ref texutres, ref uvs, out Dictionary<string, string> remaps);
+
+        foreach ((string textureCode, AssetLocation texturePath) in shape.Textures)
+        {
+            string path = texturePath.Path;
+            if (remaps.TryGetValue(path, out string? newCode))
+            {
+                shape.Textures[textureCode] = newCode;
+            }
+        }
+
+        foreach ((string textureCode, TexturePixels texture) in texutres)
+        {
+            BakedBitmap baked = new() { Width = texture.Width, Height = texture.Height, TexturePixels = texture.Pixels };
+            TextureUtils.ExportBakedBitmapAsPng(baked, System.IO.Path.Combine(cpmModelFolder, $"{textureCode}.png"));
+        }
+
+        string shapeFile = System.IO.Path.Combine(cpmModelFolder, "custom-shape.json");
+        ShapeReplacementUtil.ExportShape(shape, shapeFile);
+    }
+
+    protected Vector2i GetTextureHalfSize(Shape shape, string textureCode)
+    {
+        if (shape.TextureSizes?.ContainsKey(textureCode) == true)
+        {
+            return new(shape.TextureSizes[textureCode][0], shape.TextureSizes[textureCode][1]);
+        }
+
+        return new(shape.TextureWidth, shape.TextureHeight);
+    }
+
+    protected void ProcessTextures(ref Dictionary<string, TexturePixels> textures, ref List<UVForTexture> uvs, out Dictionary<string, string> remaps)
+    {
+        Stack<(TexturePixels uv, TexturePixels original)> uvZonesTextures = [];
+        foreach ((string code, TexturePixels texture) in textures)
+        {
+            textures[code] = CutoutPixelsOutsideUvs(texture, uvs.Where(uv => uv.TextureCode == code), out TexturePixels uvTexture);
+            uvZonesTextures.Push((uvTexture, texture));
+        }
+
+        string cpmModelFolder = System.IO.Path.Combine(GamePaths.ModConfig, "custom-player-models", CurrentModelCode.Replace(':', '-'));
+        foreach ((TexturePixels texture, TexturePixels original) in uvZonesTextures)
+        {
+            BakedBitmap baked = new() { Width = texture.Width, Height = texture.Height, TexturePixels = texture.Pixels };
+            TextureUtils.ExportBakedBitmapAsPng(baked, System.IO.Path.Combine(cpmModelFolder, $"uv-{texture.Code}.png"));
+        }
+
+        FindTexturesToCombine(uvZonesTextures, out Dictionary<string, string> combinations);
+
+        remaps = combinations;
+
+        CombineTextures(ref textures, combinations);
+
+        for (int uvIndex = 0; uvIndex < uvs.Count; uvIndex++)
+        {
+            if (combinations.TryGetValue(uvs[uvIndex].TextureCode, out string? newTextureCode))
+            {
+                uvs[uvIndex] = new() { TextureCode = newTextureCode, UV = uvs[uvIndex].UV };
+            }
+        }
+    }
+
+    protected void CombineTextures(ref Dictionary<string, TexturePixels> textures, Dictionary<string, string> combinations)
+    {
+        foreach ((string childCode, string parentCode) in combinations)
+        {
+            TexturePixels child = textures[childCode];
+            TexturePixels parent = textures[parentCode];
+            for (int pixelIndex = 0; pixelIndex < child.Pixels.Length; pixelIndex++)
+            {
+                if (child.Pixels[pixelIndex] != 0)
+                {
+                    parent.Pixels[pixelIndex] = child.Pixels[pixelIndex];
+                }
+            }
+
+            textures.Remove(childCode);
+        }
+    }
+
+    protected void FindTexturesToCombine(Stack<(TexturePixels uv, TexturePixels original)> textures, out Dictionary<string, string> combinations)
+    {
+        combinations = [];
+
+        if (textures.Count <= 1) return;
+
+        Stack<(TexturePixels uv, TexturePixels original)> currentStack = textures;
+        Stack<(TexturePixels uv, TexturePixels original)> bufferStack = [];
+        Stack<(TexturePixels uv, TexturePixels original)> currentTexture = [];
+        currentTexture.Push(currentStack.Pop());
+        string currentCode = currentTexture.Peek().uv.Code;
+        int texturesLeftLastIteration = currentStack.Count;
+
+        while (currentStack.Any())
+        {
+            (TexturePixels uv, TexturePixels original) textureToCompare = currentStack.Pop();
+            if (currentTexture.All(currentTexture => CanCombine(currentTexture, textureToCompare)))
+            {
+                combinations.Add(textureToCompare.uv.Code, currentCode);
+                currentTexture.Push(textureToCompare);
+            }
+            else
+            {
+                bufferStack.Push(textureToCompare);
+            }
+
+            if (currentStack.Count == 0)
+            {
+                (bufferStack, currentStack) = (currentStack, bufferStack);
+                if (currentStack.Count == 0) return;
+                currentTexture.Clear();
+                currentTexture.Push(currentStack.Pop());
+                currentCode = currentTexture.Peek().uv.Code;
+            }
+        }
+    }
+
+    protected bool CanCombine((TexturePixels uv, TexturePixels original) first, (TexturePixels uv, TexturePixels original) second)
+    {
+        if (first.uv.Width != second.uv.Width || first.uv.Height != second.uv.Height) return false;
+
+        for (int pixelIndex = 0; pixelIndex < first.uv.Pixels.Length; pixelIndex++)
+        {
+            if (first.uv.Pixels[pixelIndex] != 0 && second.uv.Pixels[pixelIndex] != 0)// && first.original.Pixels[pixelIndex] != second.original.Pixels[pixelIndex])
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    protected TexturePixels CutoutPixelsOutsideUvs(TexturePixels texture, IEnumerable<UVForTexture> uvs, out TexturePixels uvTexture)
+    {
+        IEnumerable<int> uvPixels = uvs.SelectMany(uv => GetUVPixels(uv.UV, texture.WidthUVFactor, texture.HeightUVFactor, texture.Width)).Distinct();
+
+        TexturePixels result = new() { Code = texture.Code, Width = texture.Width, Height = texture.Height, Pixels = new int[texture.Width * texture.Height], HeightUVFactor = texture.HeightUVFactor, WidthUVFactor = texture.WidthUVFactor };
+        uvTexture = new() { Code = texture.Code, Width = texture.Width, Height = texture.Height, Pixels = new int[texture.Width * texture.Height], HeightUVFactor = texture.HeightUVFactor, WidthUVFactor = texture.WidthUVFactor };
+
+        Debug.WriteLine(texture.Code);
+
+        foreach (int pixel in uvPixels)
+        {
+            result.Pixels[pixel] = texture.Pixels[pixel];
+            uvTexture.Pixels[pixel] = ColorUtil.WhiteArgb;
+        }
+
+        return result;
+    }
+
+    protected IEnumerable<int> GetUVPixels(UVForTexture uv, Dictionary<string, TexturePixels> textures)
+    {
+        if (!textures.ContainsKey(uv.TextureCode)) return [];
+        TexturePixels texture = textures[uv.TextureCode];
+        return GetUVPixels(uv.UV, texture.WidthUVFactor, texture.HeightUVFactor, texture.Width);
+    }
+
+    protected IEnumerable<int> GetUVPixels(Vector4 uv, float widthFactor, float heightFactor, int width)
+    {
+        Vector4i uvPixels = new((int)(uv.X * widthFactor), (int)(uv.Y * heightFactor), (int)(uv.Z * widthFactor), (int)(uv.W * heightFactor));
+
+        for (int y = uvPixels.Y; y < uvPixels.W; y++)
+        {
+            for (int x = uvPixels.X; x < uvPixels.Z; x++)
+            {
+                yield return x + y * width;
+            }
+        }
+    }
+
+    protected struct TexturePixels
+    {
+        public string Code;
+        public int Width;
+        public int Height;
+        public int[] Pixels;
+        public float WidthUVFactor;
+        public float HeightUVFactor;
+    }
+
+    protected struct UVForTexture
+    {
+        public string TextureCode;
+        public Vector4 UV;
+    }
+
+    protected List<UVForTexture> CollectShapeUVs(Shape shape, string prefix, string check)
+    {
+        List<UVForTexture> result = [];
+
+        foreach (ShapeElement element in shape.Elements)
+        {
+            CollectShapeElementUVs(element, result, prefix, check);
+        }
+
+        return result;
+    }
+
+    protected void CollectShapeElementUVs(ShapeElement element, List<UVForTexture> uvs, string prefix, string check)
+    {
+        if (element.Faces == null) return;
+
+        foreach ((_, ShapeElementFace? face) in element.Faces)
+        {
+            if (face == null) continue;
+
+            string textureCode = face.Texture.Replace("#", "");
+            if (!textureCode.StartsWith(check))
+            {
+                textureCode = prefix + textureCode;
+            }
+            Vector4 uv = new(face.Uv[0], face.Uv[1], face.Uv[2], face.Uv[3]);
+
+            uvs.Add(new() { TextureCode = textureCode, UV = uv });
+        }
+
+        if (element.Children != null)
+        {
+            foreach (ShapeElement child in element.Children)
+            {
+                CollectShapeElementUVs(child, uvs, prefix, check);
+            }
+        }
+    }
+
 
     protected static readonly FieldInfo? EntityBehaviorControlledPhysics_sneakTestCollisionbox = typeof(EntityBehaviorControlledPhysics).GetField("sneakTestCollisionbox", BindingFlags.NonPublic | BindingFlags.Instance);
     protected CustomModelsSystem? ModelSystem;
@@ -538,6 +813,40 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         }
     }
 
+    protected virtual Shape? TesselateForExport()
+    {
+        if (ModelSystem == null || ClientApi == null || !ModelSystem.ModelsLoaded) return null;
+
+        try
+        {
+            AssetLocation shapeLocation = new(ModelSystem.CustomModels[CurrentModelCode].ShapePath);
+            shapeLocation = shapeLocation.WithPathAppendixOnce(".json").WithPathPrefixOnce("shapes/");
+            Shape? entityShape = ShapeLoadingUtil.LoadShape(ClientApi, shapeLocation);
+
+            if (entityShape == null) return null;
+
+            RecursiveOverlaysByTextures.Set([]);
+            OverlaysTexturePositions.Set([]);
+
+            string shapePathForLogging = ModelSystem.CustomModels[CurrentModelCode].ShapePath;
+            string[] willDeleteElements = [];
+
+            AddMainTextures();
+            AddSkinParts(ref entityShape, shapePathForLogging, ref willDeleteElements);
+            AddSkinPartsTextures(ClientApi, entityShape, shapePathForLogging);
+            AddSkinPartsSolidColor(ClientApi, entityShape, shapePathForLogging);
+            AddSkinPartsCanvas(ClientApi, entityShape, shapePathForLogging);
+            RemoveHiddenElements(entityShape, ref willDeleteElements);
+
+            return entityShape;
+        }
+        catch (Exception exception)
+        {
+            Log.Error(ClientApi, this, $"({CurrentModelCode}) Error when tesselating custom player model:\n{exception}");
+        }
+
+        return null;
+    }
     protected virtual Shape? Tesselate(string shapePathForLogging, ref string[] willDeleteElements)
     {
         if (ModelSystem == null || ClientApi == null || !ModelSystem.ModelsLoaded) return null;
@@ -1156,6 +1465,23 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         }
     }
 
+    protected virtual Dictionary<string, BakedBitmap> ExportTextures(ICoreClientAPI api)
+    {
+        Dictionary<string, BakedBitmap> textures = [];
+
+        CombineOverlays();
+        foreach (string code in RecursiveOverlaysByTextures.Get().Keys)
+        {
+            BakedBitmap? texture = ExportOverlay(api, code);
+            if (texture != null)
+            {
+                textures.Add(code, texture);
+            }
+        }
+
+        return textures;
+    }
+
     protected virtual void CombineOverlays()
     {
         IReadOnlyDictionary<string, RecusiveOverlaysTextureWithTarget> overlays = RecursiveOverlaysByTextures.Get();
@@ -1224,6 +1550,16 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
             OverlaysTexturePositions.SetValue(code, position);
         },
         debugCode: code);
+    }
+
+    protected virtual BakedBitmap? ExportOverlay(ICoreClientAPI api, string code)
+    {
+        if (!RecursiveOverlaysByTextures.TryGetValue(code, out RecusiveOverlaysTextureWithTarget? rootNode))
+        {
+            return null;
+        }
+
+        return TextureUtils.LoadCompositeBitmap(api.World as ClientMain, rootNode);
     }
 
     protected virtual void SetZNear()

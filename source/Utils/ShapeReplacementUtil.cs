@@ -1,10 +1,11 @@
 ﻿using Newtonsoft.Json;
+using OverhaulLib.Utils;
 using System.Text.RegularExpressions;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Config;
 using Vintagestory.GameContent;
-using OverhaulLib.Utils;
+using static OpenTK.Graphics.OpenGL.GL;
 
 namespace PlayerModelLib;
 
@@ -79,6 +80,30 @@ public static partial class ShapeReplacementUtil
             .Concat(elements)
             .Distinct()
             .ToArray();
+    }
+
+    public static void ExportShape(Shape shape, string file)
+    {
+        try
+        {
+            ExportingShape = true;
+
+            AddHashesToTextureCodes(shape.Elements);
+            FileInfo? fifo = new(file);
+            if (fifo.Directory == null) return;
+            GamePaths.EnsurePathExists(fifo.Directory.FullName);
+            string json = JsonConvert.SerializeObject(shape, Formatting.Indented);
+
+            FixShapeJson(ref json);
+
+            File.WriteAllText(fifo.FullName, json);
+
+            ExportingShape = false;
+        }
+        catch (Exception exception)
+        {
+            ExportingShape = false;
+        }
     }
 
 
@@ -209,7 +234,29 @@ public static partial class ShapeReplacementUtil
         LowercaseJsonKeys(ref json);
         TurnOffAutoUv(ref json);
         FixAnimationsEnums(ref json);
+        FixNullValues(ref json);
+        FixInvalidCommas(ref json);
         json = json.Replace("keyFrames", "keyframes").Replace("quantityFrames", "quantityframes").Replace("game:", "");
+    }
+    private static void FixNullValues(ref string json)
+    {
+        string pattern = @"^\s*""[^""]*""\s*:\s*null\s*,?\s*\r?\n";
+
+        json = Regex.Replace(json, pattern, string.Empty, RegexOptions.Multiline);
+    }
+    private static void FixInvalidCommas(ref string json)
+    {
+        // Remove trailing commas before closing brackets/braces
+        string trailingCommaPattern = @",\s*([}\]])";
+        json = Regex.Replace(json, trailingCommaPattern, " $1", RegexOptions.Multiline);
+
+        // Remove leading commas after opening brackets/braces
+        string leadingCommaPattern = @"([{\[])\s*,";
+        json = Regex.Replace(json, leadingCommaPattern, "$1 ", RegexOptions.Multiline);
+
+        // Remove double commas
+        string doubleCommaPattern = @",\s*,";
+        json = Regex.Replace(json, doubleCommaPattern, ",", RegexOptions.Multiline);
     }
     private static void FixAnimationsEnums(ref string json)
     {

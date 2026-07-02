@@ -103,6 +103,7 @@ public class CustomModelData
     public string Code { get; set; }
     public string? Name { get; set; }
     public string Group { get; set; } = "";
+    public string ShapePath { get; set; } = "";
     public AssetLocation? Icon { get; set; } = null;
     public AssetLocation? GroupIcon { get; set; } = null;
     public Shape Shape { get; set; }

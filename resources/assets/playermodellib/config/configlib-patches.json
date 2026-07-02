@@ -152,6 +152,12 @@
       "ingui": "playermodellib:setting-export_shape_files",
       "comment": "playermodellib:setting-comment-export_shape_files",
       "default": false
+    },
+    {
+      "code": "export_model_button",
+      "type": "boolean",
+      "ingui": "playermodellib:setting-export_model_button",
+      "default": false
     }
   ]
 }

@@ -296,6 +296,7 @@ public sealed class CustomModelsSystem : ModSystem
         {
             SkinParts = partsByCode,
             SkinPartsArray = parts,
+            ShapePath = _defaultModelPath,
             MainTextureCodes = [PrefixTextureCode(_defaultModelCode, _defaultMainTextureCode)],
             CollisionBox = new(playerProperties.CollisionBoxSize.X, playerProperties.CollisionBoxSize.Y),
             EyeHeight = (float)playerProperties.EyeHeight,
@@ -421,6 +422,7 @@ public sealed class CustomModelsSystem : ModSystem
         {
             Enabled = modelConfig.Enabled,
             Name = modelConfig.Name,
+            ShapePath = modelConfig.ShapePath,
             SkinParts = partsByCode,
             SkinPartsArray = modelConfig.SkinnableParts,
             MainTextureCodes = [.. mainTextures.Select(textureCode => PrefixTextureCode(code, textureCode))],

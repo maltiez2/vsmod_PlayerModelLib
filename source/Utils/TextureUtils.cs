@@ -198,8 +198,8 @@ public static class TextureUtils
         return true;
     }
 
-    
-    
+
+
     private static AssetLocation BuildUniqueName(RecusiveOverlaysTexture node)
     {
         System.Text.StringBuilder sb = new();
