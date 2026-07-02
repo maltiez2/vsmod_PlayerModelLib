@@ -130,10 +130,6 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
             {
                 RandomizeSkin(entity, [], false);
             }
-            else
-            {
-                ValidateSkin();
-            }
 
             ModelSystem.OnCustomModelHotLoaded += (code) =>
             {
@@ -597,12 +593,12 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
             uvZonesTextures.Push((uvTexture, texture));
         }
 
-        string cpmModelFolder = System.IO.Path.Combine(GamePaths.ModConfig, "custom-player-models", CurrentModelCode.Replace(':', '-'));
+        /*string cpmModelFolder = System.IO.Path.Combine(GamePaths.ModConfig, "custom-player-models", CurrentModelCode.Replace(':', '-'));
         foreach ((TexturePixels texture, TexturePixels original) in uvZonesTextures)
         {
             BakedBitmap baked = new() { Width = texture.Width, Height = texture.Height, TexturePixels = texture.Pixels };
             TextureUtils.ExportBakedBitmapAsPng(baked, System.IO.Path.Combine(cpmModelFolder, $"uv-{texture.Code}.png"));
-        }
+        }*/
 
         FindTexturesToCombine(uvZonesTextures, out Dictionary<string, string> combinations);
 
@@ -705,13 +701,6 @@ public class PlayerSkinBehavior : EntityBehavior, ITexPositionSource
         }
 
         return result;
-    }
-
-    protected IEnumerable<int> GetUVPixels(UVForTexture uv, Dictionary<string, TexturePixels> textures)
-    {
-        if (!textures.ContainsKey(uv.TextureCode)) return [];
-        TexturePixels texture = textures[uv.TextureCode];
-        return GetUVPixels(uv.UV, texture.WidthUVFactor, texture.HeightUVFactor, texture.Width);
     }
 
     protected IEnumerable<int> GetUVPixels(Vector4 uv, float widthFactor, float heightFactor, int width)
