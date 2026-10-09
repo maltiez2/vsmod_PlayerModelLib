@@ -37,6 +37,7 @@ public sealed class PlayerModelModSystem : ModSystem
         api.RegisterEntityBehaviorClass("PlayerModelLib:WearablesTesselator", typeof(WearablesTesselatorBehavior));
         api.RegisterEntityBehaviorClass("PlayerModelLib:WearableCollectibleLight", typeof(WearableCollectibleLightBehavior));
         api.RegisterEntityBehaviorClass("PlayerModelLib:EntityTextureSourceBehavior", typeof(EntityTextureSourceBehavior));
+        api.RegisterEntityBehaviorClass("PlayerModelLib:RandomIdleAnimationsBehavior", typeof(RandomIdleAnimationsBehavior)); 
 
         PatchesManager.Patch(api);
 

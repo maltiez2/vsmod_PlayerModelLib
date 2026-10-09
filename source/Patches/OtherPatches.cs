@@ -1,5 +1,6 @@
 ﻿using HarmonyLib;
 using OverhaulLib.Utils;
+using System.Diagnostics;
 using System.Reflection;
 using System.Text;
 using Vintagestory.API.Client;
@@ -80,6 +81,10 @@ public static class OtherPatches
                 typeof(AnimationManager).GetMethod("StartAnimation", AccessTools.all, [typeof(AnimationMetaData)]),
                 prefix: new HarmonyMethod(AccessTools.Method(typeof(OtherPatches), nameof(PlayerAnimationManager_StartAnimation_ByMeta)))
             );
+        new Harmony(harmonyId).Patch(
+                typeof(EntityPlayer).GetMethod("onAnimControls", AccessTools.all),
+                prefix: new HarmonyMethod(AccessTools.Method(typeof(OtherPatches), nameof(EntityPlayer_onAnimControls)))
+            );
     }
 
     public static void Unpatch(string harmonyId)
@@ -96,6 +101,7 @@ public static class OtherPatches
         new Harmony(harmonyId).Unpatch(typeof(CharacterSystem).GetMethod("onCharacterSelection", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
         new Harmony(harmonyId).Unpatch(typeof(ModSystemGliding).GetMethod("get_HasGlider", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
         new Harmony(harmonyId).Unpatch(typeof(AnimationManager).GetMethod("StartAnimation", AccessTools.all, [typeof(AnimationMetaData)]), HarmonyPatchType.Prefix, harmonyId);
+        new Harmony(harmonyId).Unpatch(typeof(EntityPlayer).GetMethod("onAnimControls", AccessTools.all), HarmonyPatchType.Prefix, harmonyId);
 
         _clientApi = null;
     }
@@ -120,6 +126,8 @@ public static class OtherPatches
     private static readonly FieldInfo? _guiDialogHairStyling_currentSkin = typeof(GuiDialogHairStyling).GetField("currentSkin", BindingFlags.NonPublic | BindingFlags.Instance);
     private static readonly FieldInfo? _playerAnimationManager_entity = typeof(PlayerAnimationManager).GetField("entity", BindingFlags.NonPublic | BindingFlags.Instance);
 
+    private static readonly Dictionary<string, bool> _supportedAnimationsCache = [];
+
     private static void PlayerAnimationManager_StartAnimation_ByMeta(AnimationManager __instance, ref AnimationMetaData? animdata)
     {
         if (__instance is not PlayerAnimationManager) return;
@@ -134,6 +142,51 @@ public static class OtherPatches
         if (!animationsData.TryGetValue(animdata.Code, out AnimationMetaData? newData)) return;
 
         animdata = newData;
+    }
+
+    private static bool EntityPlayer_onAnimControls(EntityPlayer __instance, ref bool __result, AnimationMetaData? anim, bool wasActive, bool nowActive)
+    {
+        if (__instance is not EntityPlayer player) return true;
+        PlayerSkinBehavior? skin = player?.GetBehavior<PlayerSkinBehavior>();
+        if (player == null || skin == null || anim?.Attributes == null || !skin.Initialized) return true;
+
+        AnimationMetaDataAttributes attributes = anim.Attributes.AsObject<AnimationMetaDataAttributes>() ?? new();
+        if (attributes.SupportedModels.Length == 0 && attributes.UnsupportedModels.Length == 0) return true;
+
+        string currentModel = skin.CurrentModelCode;
+        string cacheKey = currentModel + anim.Code;
+
+        if (_supportedAnimationsCache.TryGetValue(cacheKey, out bool cachedCheckResult))
+        {
+            if (cachedCheckResult)
+            {
+                __result = false; // dont skip
+                return false;
+            }
+            else
+            {
+                __result = true; // skip
+                return false;
+            }
+        }
+
+        bool supported = attributes.SupportedModels.Length == 0 || attributes.SupportedModels.Any(modelCode => WildcardUtil.Match(modelCode, currentModel));
+        bool unsupported = attributes.UnsupportedModels.Length != 0 && attributes.UnsupportedModels.Any(modelCode => WildcardUtil.Match(modelCode, currentModel));
+
+        bool checkResult = supported && !unsupported;
+
+        _supportedAnimationsCache[cacheKey] = checkResult;
+
+        if (checkResult)
+        {
+            __result = false; // dont skip
+            return false;
+        }
+        else
+        {
+            __result = true; // skip
+            return false;
+        }
     }
 
     private static bool ModSystemGliding_get_HasGlider(ModSystemGliding __instance, ref bool __result)

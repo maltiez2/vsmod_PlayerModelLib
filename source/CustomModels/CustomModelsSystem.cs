@@ -333,7 +333,8 @@ public sealed class CustomModelsSystem : ModSystem
             StepHeight = defaultConfig.StepHeight,
             MaxOxygenFactor = defaultConfig.MaxOxygenFactor,
             CreateCuboidsForAttachmentPoints = defaultConfig.CreateCuboidsForAttachmentPoints,
-            AnimationsMetaData = defaultConfig.AnimationsMetaData.ToDictionary(entry => entry.Code, entry => entry)
+            AnimationsMetaData = defaultConfig.AnimationsMetaData.ToDictionary(entry => entry.Code, entry => entry),
+            RandomIdleAnimations = defaultConfig.RandomIdleAnimations
         };
 
         CustomModels.Add(_defaultModelCode, defaultModelData);
@@ -459,7 +460,8 @@ public sealed class CustomModelsSystem : ModSystem
             StepHeight = modelConfig.StepHeight,
             MaxOxygenFactor = modelConfig.MaxOxygenFactor,
             CreateCuboidsForAttachmentPoints = modelConfig.CreateCuboidsForAttachmentPoints,
-            AnimationsMetaData = modelConfig.AnimationsMetaData.ToDictionary(entry => entry.Code, entry => entry)
+            AnimationsMetaData = modelConfig.AnimationsMetaData.ToDictionary(entry => entry.Code, entry => entry),
+            RandomIdleAnimations = modelConfig.RandomIdleAnimations
         };
 
         AssetLocation icon = new AssetLocation(modelConfig.Icon).WithPathPrefixOnce("textures/").WithPathAppendixOnce(".png");

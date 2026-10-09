@@ -6,7 +6,6 @@ using Vintagestory.API.Datastructures;
 using Vintagestory.GameContent;
 using OverhaulLib.Utils;
 using Vintagestory.API.Util;
-using System.Runtime.InteropServices;
 
 namespace PlayerModelLib;
 
@@ -96,6 +95,8 @@ public class CustomModelConfig
     public float StepHeight { get; set; } = 0.6f;
     public float MaxOxygenFactor { get; set; } = 1;
     public bool CreateCuboidsForAttachmentPoints { get; set; } = true;
+    [CanBeNull]
+    public string[]? RandomIdleAnimations { get; set; } = null;
 
     public CustomModelConfig Clone()
     {
@@ -203,6 +204,7 @@ public class CustomModelData
     public float StepHeight { get; set; } = 0.6f;
     public float MaxOxygenFactor { get; set; } = 1;
     public bool CreateCuboidsForAttachmentPoints { get; set; } = true;
+    public string[]? RandomIdleAnimations { get; set; } = null;
 
     public CustomModelConfig? OriginalConfig { get; set; }
 
@@ -266,4 +268,11 @@ public class PlayerModelsRemapping
     {
         OldCodeToNewCode.AddRange(otherMapping.OldCodeToNewCode);
     }
+}
+
+public class AnimationMetaDataAttributes
+{
+    public string[] SupportedModels { get; set; } = [];
+
+    public string[] UnsupportedModels { get; set; } = [];
 }
