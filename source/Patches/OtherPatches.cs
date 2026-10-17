@@ -1,7 +1,9 @@
 ﻿using HarmonyLib;
 using OverhaulLib.Utils;
 using System.Diagnostics;
+using System.Linq.Expressions;
 using System.Reflection;
+using System.Reflection.Emit;
 using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -257,6 +259,43 @@ public static class OtherPatches
         }
     }
 
+    private static IEnumerable<string> gatherTraits(CharacterSystem __instance, EntityPlayer? eplr){
+        if(eplr == null)
+        {
+            return [];
+        }
+        CustomModelsSystem modelSystem = eplr.Api.ModLoader.GetModSystem<CustomModelsSystem>();
+        PlayerSkinBehavior? skinBehavior = eplr.GetBehavior<PlayerSkinBehavior>();
+        string? modelCode = skinBehavior?.CurrentModelCode;
+        string[] extraModelTraits = modelCode == null ? [] : modelSystem.CustomModels[modelCode].ExtraTraits;
+        string[] extraTraits = eplr.WatchedAttributes.GetStringArray("extraTraits") ?? [];
+        List<string> partTraits = [];
+        if(modelCode != null && !PlayerModelModSystem.Settings.DisableCustomClassesAndTraits)
+        {
+            CustomModelData cmd = modelSystem.CustomModels[modelCode];
+            foreach (var (partCode, variantTraits) in cmd.VariantTraits)
+            {
+#pragma warning disable CS8602 // Dereference of a possibly null reference. - will not be null
+#pragma warning disable CS8620 // Argument cannot be used for parameter due to differences in the nullability of reference types. - will not be null
+                foreach (var partVariant in skinBehavior.GetAppliedSkinParts())
+                {
+                    SkinnablePart part = cmd.SkinParts[partCode];
+                    if (part.VariantsByCode.ContainsKey(partVariant.Code))
+                    {
+                        string[] traits = variantTraits.Get(partVariant.Code) ?? [];
+                        if (traits != null)
+                        {
+                            partTraits.AddRange(traits);
+                        }
+                    }
+                }
+#pragma warning restore CS8620 // Argument cannot be used for parameter due to differences in the nullability of reference types.
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
+            }
+        }
+        CharacterClass? characterClass = __instance.characterClasses?.Find(c => c.Code == eplr.WatchedAttributes.GetString("characterClass"));
+        return extraTraits == null ? characterClass?.Traits ?? [] : (characterClass?.Traits ?? []).Concat(extraModelTraits).Concat(extraTraits).Concat(partTraits).Distinct();
+    }
     private static bool applyTraitAttributes(CharacterSystem __instance, EntityPlayer eplr)
     {
         string classCode = eplr.WatchedAttributes.GetString("characterClass");
@@ -276,13 +315,7 @@ public static class OtherPatches
             }
         }
 
-        CustomModelsSystem modelSystem = eplr.Api.ModLoader.GetModSystem<CustomModelsSystem>();
-        PlayerSkinBehavior? skinBehavior = eplr.GetBehavior<PlayerSkinBehavior>();
-        string? modelCode = skinBehavior?.CurrentModelCode;
-        string[] extraModelTraits = modelCode == null ? [] : modelSystem.CustomModels[modelCode].ExtraTraits;
-        string[] extraTraits = eplr.WatchedAttributes.GetStringArray("extraTraits") ?? [];
-        IEnumerable<string> allTraits = extraTraits == null ? characterClass.Traits : characterClass.Traits.Concat(extraModelTraits).Concat(extraTraits).Distinct();
-
+        IEnumerable<string> allTraits = gatherTraits(__instance,eplr);
         // Aggregate stats values
         Dictionary<string, double> statValues = [];
         foreach (string traitCode in allTraits)
@@ -393,8 +426,7 @@ public static class OtherPatches
         StringBuilder fullDescription = new();
         StringBuilder attributes = new();
 
-        string[] extraTraits = _clientApi?.World?.Player?.Entity.WatchedAttributes.GetStringArray("extraTraits") ?? [];
-        IEnumerable<string> allTraits = characterClass.Traits.Concat(extraTraits);
+        IEnumerable<string> allTraits = gatherTraits(__instance, _clientApi?.World?.Player?.Entity);
         IOrderedEnumerable<Trait> characterTraits = allTraits
             .Where(__instance.TraitsByCode.ContainsKey)
             .Select(code => __instance.TraitsByCode[code])
@@ -541,8 +573,6 @@ public static class OtherPatches
         {
             fromPlayer.SetModData<bool>("createCharacter", true);
 
-            if (SelectClassOnSelection) __instance.setCharacterClass(fromPlayer.Entity, p.CharacterClass, !didSelectBefore || fromPlayer.WorldData.CurrentGameMode == EnumGameMode.Creative);
-
             PlayerSkinBehavior? bh = fromPlayer.Entity.GetBehavior<PlayerSkinBehavior>();
             bh?.ApplyVoice(p.VoiceType, p.VoicePitch, false);
 
@@ -550,6 +580,8 @@ public static class OtherPatches
             {
                 bh?.SelectSkinPart(skinpart.Key, skinpart.Value, false);
             }
+
+            if (SelectClassOnSelection) __instance.setCharacterClass(fromPlayer.Entity, p.CharacterClass, !didSelectBefore || fromPlayer.WorldData.CurrentGameMode == EnumGameMode.Creative);
 
             DateTime date = DateTime.UtcNow;
             fromPlayer.ServerData.LastCharacterSelectionDate = date.ToShortDateString() + " " + date.ToShortTimeString();

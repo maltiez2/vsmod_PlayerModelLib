@@ -52,7 +52,6 @@ public class SkinnablePartExtended : SkinnablePart
     public float FixedAlpha { get; set; } = -1;
     public bool HideFromGui { get; set; } = false;
 }
-
 public class CustomModelConfig
 {
     public bool Enabled { set; get; } = true;
@@ -95,6 +94,8 @@ public class CustomModelConfig
     public float StepHeight { get; set; } = 0.6f;
     public float MaxOxygenFactor { get; set; } = 1;
     public bool CreateCuboidsForAttachmentPoints { get; set; } = true;
+
+    public Dictionary<string, Dictionary<string, string[]>> VariantTraits { get; set; } = [];
     [CanBeNull]
     public string[]? RandomIdleAnimations { get; set; } = null;
 
@@ -212,7 +213,7 @@ public class CustomModelData
     public HashSet<string> SkipClasses { get => PlayerModelModSystem.Settings.DisableModelClassesAndTraits ? [] : _skipClasses; set => _skipClasses = value; }
     public HashSet<string> ExclusiveClasses { get => PlayerModelModSystem.Settings.DisableModelClassesAndTraits ? [] : _exclusiveClasses; set => _exclusiveClasses = value; }
     public string[] ExtraTraits { get => PlayerModelModSystem.Settings.DisableModelClassesAndTraits ? [] : _extraTraits; set => _extraTraits = value; }
-
+    public Dictionary<string, Dictionary<string, string[]>> VariantTraits { get; set; } = [];
 
     public CustomModelData(string code, Shape shape)
     {
