@@ -1263,11 +1263,11 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         string tooltip = Lang.GetIfExists("skinpartdesc-" + partCode);
         if(partTraits.Count > 0)
         {
-            tooltip = tooltip + "" ?? "";
-            tooltip += Lang.GetIfExists("part-traits-title") + "\n";
+            tooltip = tooltip != null ? tooltip + "\n" : "";
+            tooltip += Lang.GetIfExists("part-traits-title");
             foreach (var (key,traits) in partTraits)
             {
-                tooltip += key + ": ";
+                tooltip += "\n" + key + ": ";
                 for (int i = 0; i < traits.Length; i++)
                 {
                     tooltip += traits[i];
@@ -1997,7 +1997,6 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
             }
         }
 
-        Console.WriteLine("S: " + partTraits);
         IOrderedEnumerable<Trait> chartraitsExtra = CustomModelsSystem.CustomModels[skinMod.CurrentModelCode].ExtraTraits
             .Concat(partTraits)
             .Where(CharacterSystem.TraitsByCode.ContainsKey)
