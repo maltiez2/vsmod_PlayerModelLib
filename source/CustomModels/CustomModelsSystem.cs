@@ -422,6 +422,8 @@ public sealed class CustomModelsSystem : ModSystem
 
         bool enableCustomClassesAndTraits = !PlayerModelModSystem.Settings.DisableCustomClassesAndTraits;
 
+        List<string> skinnableTraits = [];
+
         CustomModelData modelData = new(code, shape)
         {
             OriginalConfig = modelConfig,
@@ -461,7 +463,8 @@ public sealed class CustomModelsSystem : ModSystem
             MaxOxygenFactor = modelConfig.MaxOxygenFactor,
             CreateCuboidsForAttachmentPoints = modelConfig.CreateCuboidsForAttachmentPoints,
             AnimationsMetaData = modelConfig.AnimationsMetaData.ToDictionary(entry => entry.Code, entry => entry),
-            RandomIdleAnimations = modelConfig.RandomIdleAnimations
+            RandomIdleAnimations = modelConfig.RandomIdleAnimations,
+            VariantTraits = modelConfig.VariantTraits
         };
 
         AssetLocation icon = new AssetLocation(modelConfig.Icon).WithPathPrefixOnce("textures/").WithPathAppendixOnce(".png");

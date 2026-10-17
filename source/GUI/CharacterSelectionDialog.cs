@@ -1,12 +1,14 @@
 ﻿using OverhaulLib.Utils;
 using System.Diagnostics;
 using System.Text;
+using System.Xml.Linq;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Util;
 using Vintagestory.GameContent;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace PlayerModelLib;
 
@@ -98,10 +100,10 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         CharacterClass characterClass = availableClasses[CurrentClassIndex];
 
-        ClientSelectionDone(CharacterInventory, characterClass.Code, DidSelect);
-
         system.SynchronizePlayerModel(skinMod.CurrentModelCode);
         system.SynchronizePlayerModelSize(CurrentModelSize);
+
+        ClientSelectionDone(CharacterInventory, characterClass.Code, DidSelect);
 
         EntityBehaviorPlayerInventory? invBhv = capi.World.Player.Entity.GetBehavior<EntityBehaviorPlayerInventory>();
         if (invBhv != null)
@@ -1236,11 +1238,15 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
 
         string[] names = new string[variants.Length];
         string[] values = new string[variants.Length];
+        Dictionary<string,string[]> partTraits = [];
+
 
         for (int i = 0; i < variants.Length; i++)
         {
             names[i] = Lang.Get("skinpart-" + partCode + "-" + variants[i].Code);
             values[i] = variants[i].Code;
+            string[] traits = skinBehavior.CurrentModel.VariantTraits.Get(partCode, []).Get(variants[i].Code, []);
+            if (traits.Length > 0) partTraits[names[i]] = traits;
 
             if (appliedVariant?.Code == values[i]) selectedIndex = i;
         }
@@ -1253,8 +1259,25 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         skinPartTitleBounds = skinPartTitleBounds.FlatCopy().WithFixedOffset(padding, padding).FixedGrow(-padding * 2).WithParent(partBounds);
         dropDownSkinPartBounds = dropDownSkinPartBounds.FlatCopy().WithFixedOffset(padding, padding).FixedGrow(-padding * 2).WithParent(partBounds).FixedUnder(skinPartTitleBounds, padding);
 
-        composer.AddRichtext(Lang.Get("skinpart-" + partCode), CairoFont.WhiteSmallText(), skinPartTitleBounds);
+        composer.AddRichtext(partTraits.Count <= 0 ? Lang.Get("skinpart-" + partCode) : "<strong>" + Lang.Get("skinpart-" + partCode)+"</strong>", CairoFont.WhiteSmallText(), skinPartTitleBounds);
         string tooltip = Lang.GetIfExists("skinpartdesc-" + partCode);
+        if(partTraits.Count > 0)
+        {
+            tooltip = tooltip != null ? tooltip + "\n" : "";
+            tooltip += Lang.GetIfExists("part-traits-title");
+            foreach (var (key,traits) in partTraits)
+            {
+                tooltip += "\n" + key + ": ";
+                for (int i = 0; i < traits.Length; i++)
+                {
+                    tooltip += traits[i];
+                    if(i < traits.Length - 1)
+                    {
+                        tooltip += ", ";
+                    }
+                }
+            }
+        }
         if (tooltip != null)
         {
             ElementBounds hoverTextBounds = skinPartTitleBounds.FlatCopy();
@@ -1951,7 +1974,31 @@ public sealed class GuiDialogCreateCustomCharacter : GuiDialogCreateCharacter
         fulldesc.AppendLine(Lang.Get("traits-title"));
 
 
+        List<string> partTraits = [];
+        if (!PlayerModelModSystem.Settings.DisableCustomClassesAndTraits)
+        {
+            CustomModelData cmd = system.CustomModels[skinMod.CurrentModelCode];
+            foreach (var (partCode, variantTraits) in cmd.VariantTraits)
+            {
+#pragma warning disable CS8620 // Argument cannot be used for parameter due to differences in the nullability of reference types. - will not be null
+                foreach (var partVariant in skinMod.GetAppliedSkinParts())
+                {
+                    SkinnablePart part = cmd.SkinParts[partCode];
+                    if (part.VariantsByCode.ContainsKey(partVariant.Code))
+                    {
+                        string[] traits = variantTraits.Get(partVariant.Code) ?? [];
+                        if (traits != null)
+                        {
+                            partTraits.AddRange(traits);
+                        }
+                    }
+                }
+#pragma warning restore CS8620 // Argument cannot be used for parameter due to differences in the nullability of reference types.
+            }
+        }
+
         IOrderedEnumerable<Trait> chartraitsExtra = CustomModelsSystem.CustomModels[skinMod.CurrentModelCode].ExtraTraits
+            .Concat(partTraits)
             .Where(CharacterSystem.TraitsByCode.ContainsKey)
             .Select(code => CharacterSystem.TraitsByCode[code])
             .OrderBy(trait => (int)trait.Type);
